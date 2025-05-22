@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="template" client="site" method="upgrade">
+	<name>moko-cassiopeia</name>
+	<version>1.0</version>
+	<creationDate>2023-05</creationDate>
+	<author>Jonathan Miller || Moko Consulting</author>
+	<authorEmail>jmiller@mokoconsulting.tech</authorEmail>
+	<copyright>(C)GNU General Public License Version 2 - 2023 Meae Wellness, Inc.</copyright>
+	<description>TPL_MOKO-CASSIOPEIA_XML_DESCRIPTION</description>
+	<inheritable>1</inheritable>
+	<files>
+		<filename>component.php</filename>
+		<filename>error.php</filename>
+		<filename>index.php</filename>
+		<filename>joomla.asset.json</filename>
+		<filename>offline.php</filename>
+		<filename>templateDetails.xml</filename>
+		<folder>html</folder>
+	</files>
+	<media destination="templates/site/moko-cassiopeia" folder="media">
+		<folder>js</folder>
+		<folder>css</folder>
+		<folder>images</folder>
+		<folder>fonts</folder>
+	</media>
+	<positions>
+		<position>topbar</position>
+		<position>below-top</position>
+		<position>below-logo</position>
+		<position>menu</position>
+		<position>search</position>
+		<position>banner</position>
+		<position>top-a</position>
+		<position>top-b</position>
+		<position>main-top</position>
+		<position>main-bottom</position>
+		<position>breadcrumbs</position>
+		<position>sidebar-left</position>
+		<position>sidebar-right</position>
+		<position>bottom-a</position>
+		<position>bottom-b</position>
+		<position>footer-menu</position>
+		<position>footer</position>
+		<position>debug</position>
+		<position>offline-header</position>
+		<position>offline</position>
+		<position>offline-footer</position>
+		<position>drawer-left</position>
+		<position>drawer-right</position>
+	</positions>
+	<languages folder="language">
+		<language tag="en-GB">en-GB/tpl_moko-cassiopeia.ini</language>
+		<language tag="en-GB">en-GB/tpl_moko-cassiopeia.sys.ini</language>
+		<language tag="en-US">en-US/tpl_moko-cassiopeia.ini</language>
+		<language tag="en-US">en-US/tpl_moko-cassiopeia.sys.ini</language>
+	</languages>
+	<config>
+		<fields name="params">
+			<fieldset name="advanced">
+				<field
+					name="brand"
+					type="radio"
+					label="TPL_MOKO-CASSIOPEIA_BRAND_LABEL"
+					default="1"
+					layout="joomla.form.field.radio.switcher"
+					filter="boolean"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field
+					name="logoFile"
+					type="media"
+					default="media/templates/site/moko-cassiopeia/images/logo.svg"
+					label="TPL_MOKO-CASSIOPEIA_LOGO_LABEL"
+					showon="brand:1"
+				/>
+
+				<field
+					name="siteTitle"
+					type="text"
+					default=""
+					label="TPL_MOKO-CASSIOPEIA_TITLE"
+					filter="string"
+					showon="brand:1"
+				/>
+
+				<field
+					name="siteDescription"
+					type="text"
+					default=""
+					label="TPL_MOKO-CASSIOPEIA_TAGLINE_LABEL"
+					description="TPL_MOKO-CASSIOPEIA_TAGLINE_DESC"
+					filter="string"
+					showon="brand:1"
+				/>
+				<field
+					name="fA6KitCode"
+					type="text"
+					default=""
+					label="TPL_MOKO-CASSIOPEIA_FA6KITCODE_LABEL"
+					description="TPL_MOKO-CASSIOPEIA_FA6KITCODE_DESC"
+					filter="string"
+				/>
+				<field
+					name="offlineEmbed"
+					type="text"
+					default=""
+					label="TPL_MOKO-CASSIOPEIA_OFFLINEEMBED_LABEL"
+					description="TPL_MOKO-CASSIOPEIA_OFFLINEEMBED_DESC"
+					filter="raw"
+				/>
+				<field
+					name="useFontScheme"
+					type="groupedlist"
+					label="TPL_MOKO-CASSIOPEIA_FONT_LABEL"
+					default="0"
+					>
+					<option value="0">JNONE</option>
+					<group label="TPL_MOKO-CASSIOPEIA_FONT_GROUP_LOCAL">
+						<option value="media/templates/site/moko-cassiopeia/css/global/fonts-local_roboto.css">Roboto (local)</option>
+					</group>
+					<group label="TPL_MOKO-CASSIOPEIA_FONT_GROUP_WEB">
+						<option value="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@100;300;400;700&amp;display=swap">Fira Sans (web)</option>
+						<option value="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@100;300;400;700&amp;family=Roboto:wght@100;300;400;700&amp;display=swap">Roboto + Noto Sans (web)</option>
+					</group>
+				</field>
+
+				<field
+					name="noteFontScheme"
+					type="note"
+					description="TPL_MOKO-CASSIOPEIA_FONT_NOTE_TEXT"
+					class="alert alert-warning"
+				/>
+
+				<field
+					name="colorName"
+					type="filelist"
+					label="TPL_MOKO-CASSIOPEIA_COLOR_NAME_LABEL"
+					default="colors_standard"
+					fileFilter="^custom.+[^min]\.css$"
+					exclude="^colors.+"
+					stripext="true"
+					hide_none="true"
+					hide_default="true"
+					directory="media/templates/site/moko-cassiopeia/css/global/"
+					validate="options"
+					>
+					<option value="colors_standard">TPL_MOKO-CASSIOPEIA_COLOR_NAME_STANDARD</option>
+					<option value="colors_alternative">TPL_MOKO-CASSIOPEIA_COLOR_NAME_ALTERNATIVE</option>
+					<option value="colors_meaewellness">TPL_MOKO-CASSIOPEIA_COLOR_NAME_MEAEWELLNESS</option>
+					<option value="colors_sra">TPL_MOKO-CASSIOPEIA_COLOR_NAME_SRA</option>
+				</field>
+
+				<field
+					name="fluidContainer"
+					type="radio"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					label="TPL_MOKO-CASSIOPEIA_FLUID_LABEL"
+					>
+					<option value="0">TPL_MOKO-CASSIOPEIA_STATIC</option>
+					<option value="1">TPL_MOKO-CASSIOPEIA_FLUID</option>
+				</field>
+
+				<field
+					name="stickyHeader"
+					type="radio"
+					label="TPL_MOKO-CASSIOPEIA_STICKY_LABEL"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					filter="integer"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+
+				<field
+					name="backTop"
+					type="radio"
+					label="TPL_MOKO-CASSIOPEIA_BACKTOTOP_LABEL"
+					layout="joomla.form.field.radio.switcher"
+					default="0"
+					filter="integer"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+			</fieldset>
+			<fieldset name="google">
+				<field
+					name="googletagmanager"
+					type="radio"
+					label="TPL_MOKO-CASSIOPEIA_GOOGLETAGMANAGER_LABEL"
+					description="TPL_MOKO-CASSIOPEIA_GOOGLETAGMANAGER_DESC"
+					layout="joomla.form.field.radio.switcher"
+					filter="boolean"
+					>
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field
+					name="googletagmanagerid"
+					type="text"
+					default=""
+					label="TPL_MOKO-CASSIOPEIA_GOOGLETAGMANAGERID_LABEL"
+					description="TPL_MOKO-CASSIOPEIA_GOOGLETAGMANAGERID_DESC"
+					filter="string"
+					showon="googletagmanager:1"
+				/>
+			</fieldset>
+			<fieldset name="custom_head">
+				<field
+					name="custom_head_start"
+					type="textarea"
+					default=""
+					label="TPL_MOKO-CASSIOPEIA_CUSTOM_HEAD_START_LABEL"
+					description="TPL_MOKO-CASSIOPEIA_CUSTOM_HEAD_START_DESC"
+					filter="raw"/>
+				<field
+					name="custom_head_end"
+					type="textarea"
+					default=""
+					label="TPL_MOKO-CASSIOPEIA_CUSTOM_HEAD_END_LABEL"
+					description="TPL_MOKO-CASSIOPEIA_CUSTOM_HEAD_END_DESC"
+					filter="raw"/>
+			</fieldset>
+			<fieldset name="drawers">
+				<field
+			    name="drawerLeftIcon"
+			    type="text"
+			    default="fa-solid fa-chevron-right"
+			    label="TPL_MOKO_CASSIOPEIA_DRAWER_LEFT_ICON_LABEL"
+			    description="TPL_MOKO_CASSIOPEIA_DRAWER_LEFT_ICON_DESC"
+			    filter="string"
+				/>
+
+				<field
+			    name="drawerRightIcon"
+			    type="text"
+			    default="fa-solid fa-chevron-left"
+			    label="TPL_MOKO_CASSIOPEIA_DRAWER_RIGHT_ICON_LABEL"
+			    description="TPL_MOKO_CASSIOPEIA_DRAWER_RIGHT_ICON_DESC"
+			    filter="string"
+				/>
+
+			</fieldset>
+		</fields>
+	</config>
+</extension>
