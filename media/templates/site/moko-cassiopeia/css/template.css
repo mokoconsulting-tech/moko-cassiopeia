@@ -13362,6 +13362,7 @@ iframe {
   margin-top: 3px;
   margin-bottom: 15px;
   overflow: hidden;
+  max-height: 500px;
 }
 .boxed .blog-item .item-image {
   margin-bottom: 0;

@@ -25,18 +25,16 @@ $params_GoogleTagManager = $this->params->get('googletagmanager', false);
 $params_GoogleTagManagerID = $this->params->get('googletagmanagerid', null);
 $params_custom_head_start = $this->params->get('custom_head_start', null);
 $params_custom_head_end = $this->params->get('custom_head_end', null);
-
-
 $params_leftIcon  = htmlspecialchars(
-    $this->params->get('drawerLeftIcon', 'fa-solid fa-chevron-right'),
+    $this->params->get('drawerLeftIcon', 'fa-solid fa-chevron-left'),
     ENT_COMPAT, 'UTF-8'
 );
 $params_rightIcon = htmlspecialchars(
-    $this->params->get('drawerRightIcon', 'fa-solid fa-chevron-left'),
+    $this->params->get('drawerRightIcon', 'fa-solid fa-chevron-right'),
     ENT_COMPAT, 'UTF-8'
 );
 
-if($params_GoogleTagManager && $params_GoogleTagManagerID) {
+if ($params_GoogleTagManager && $params_GoogleTagManagerID) {
     ?>
     <!-- Google Tag Manager -->
     <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -51,26 +49,20 @@ if($params_GoogleTagManager && $params_GoogleTagManagerID) {
 // Browsers support SVG favicons
 $this->addHeadLink(HTMLHelper::_('image', '../media/templates/site/moko-cassiopeia/images/favicon/favicon.svg', '', [], true, 1), 'icon', 'rel', ['type' => 'image/svg+xml']);
 $this->addHeadLink(HTMLHelper::_('image', '../media/templates/site/moko-cassiopeia/images/favicon/favicon.ico', '', [], true, 1), 'alternate icon', 'rel', ['type' => 'image/vnd.microsoft.icon']);
+$this->addHeadLink(HTMLHelper::_('image', '../media/templates/site/moko-cassiopeia/images/favicon/favicon.svg', '', [], true, 1), 'mask-icon', 'rel', ['color' => '#fff']);
 ?>
-<link rel="apple-touch-icon" sizes="57x57" href="../media/templates/site/moko-cassiopeia/images/favicon/apple-icon-57x57.png">
-<link rel="apple-touch-icon" sizes="60x60" href="../media/templates/site/moko-cassiopeia/images/favicon/apple-icon-60x60.png">
-<link rel="apple-touch-icon" sizes="72x72" href="../media/templates/site/moko-cassiopeia/images/favicon/apple-icon-72x72.png">
-<link rel="apple-touch-icon" sizes="76x76" href="../media/templates/site/moko-cassiopeia/images/favicon/apple-icon-76x76.png">
-<link rel="apple-touch-icon" sizes="114x114" href="../media/templates/site/moko-cassiopeia/images/favicon/apple-icon-114x114.png">
-<link rel="apple-touch-icon" sizes="120x120" href="../media/templates/site/moko-cassiopeia/images/favicon/apple-icon-120x120.png">
-<link rel="apple-touch-icon" sizes="144x144" href="../media/templates/site/moko-cassiopeia/images/favicon/apple-icon-144x144.png">
-<link rel="apple-touch-icon" sizes="152x152" href="../media/templates/site/moko-cassiopeia/images/favicon/apple-icon-152x152.png">
-<link rel="apple-touch-icon" sizes="180x180" href="../media/templates/site/moko-cassiopeia/images/favicon/apple-icon-180x180.png">
-<link rel="icon" type="image/png" sizes="192x192"  href="../media/templates/site/moko-cassiopeia/images/favicon/android-icon-192x192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="../media/templates/site/moko-cassiopeia/images/favicon/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../media/templates/site/moko-cassiopeia/images/favicon/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="96x96" href="../media/templates/site/moko-cassiopeia/images/favicon/favicon-96x96.png">
 <link rel="icon" type="image/png" sizes="16x16" href="../media/templates/site/moko-cassiopeia/images/favicon/favicon-16x16.png">
-<link rel="manifest" href="../media/templates/site/moko-cassiopeia/images/favicon/manifest.json">
+<link rel="manifest" href="../media/templates/site/moko-cassiopeia/images/favicon/site.webmanifest">
+
 <meta name="msapplication-TileColor" content="#ffffff">
 <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
 <meta name="theme-color" content="#ffffff">
 <?php
-//add Bootsrap 5 Support
+// Add Bootstrap 5 Support
+HTMLHelper::_('bootstrap.framework');
+HTMLHelper::_('bootstrap.loadCss', true);
 HTMLHelper::_('bootstrap.alert');
 HTMLHelper::_('bootstrap.button');
 HTMLHelper::_('bootstrap.carousel');
@@ -113,10 +105,10 @@ if ($params_FontScheme) {
         $wa->registerAndUseStyle('fontscheme.current', $params_FontScheme, [], ['media' => 'print', 'rel' => 'lazy-stylesheet', 'onload' => 'this.media=\'all\'', 'crossorigin' => 'anonymous']);
 
         if (preg_match_all('/family=([^?:]*):/i', $params_FontScheme, $matches) > 0) {
-            $fontStyles = '--moko-cassiopeia-font-family-body: "' . str_replace('+', ' ', $matches[1][0]) . '", sans-serif;
-            --moko-cassiopeia-font-family-headings: "' . str_replace('+', ' ', isset($matches[1][1]) ? $matches[1][1] : $matches[1][0]) . '", sans-serif;
-            --moko-cassiopeia-font-weight-normal: 400;
-            --moko-cassiopeia-font-weight-headings: 700;';
+            $fontStyles = '--moko-cassiopeia-font-family-body: "' . str_replace('+', ' ', $matches[1][0]) . '", sans-serif;\n';
+            $fontStyles .= '--moko-cassiopeia-font-family-headings: "' . str_replace('+', ' ', isset($matches[1][1]) ? $matches[1][1] : $matches[1][0]) . '", sans-serif;\n';
+            $fontStyles .= '--moko-cassiopeia-font-weight-normal: 400;\n';
+            $fontStyles .= '--moko-cassiopeia-font-weight-headings: 700;';
         }
     } else {
         $wa->registerAndUseStyle('fontscheme.current', $params_FontScheme, ['version' => 'auto'], ['media' => 'print', 'rel' => 'lazy-stylesheet', 'onload' => 'this.media=\'all\'']);
@@ -129,20 +121,12 @@ $wa->usePreset('template.MOKO-CASSIOPEIA.' . ($this->direction === 'rtl' ? 'rtl'
     ->useStyle('template.active.language')
     ->useStyle('template.user')
     ->useScript('template.user')
-    ->addInlineStyle(":root {
-        --hue: 214;
-        --template-bg-light: #f0f4fb;
-        --template-text-dark: #495057;
-        --template-text-light: #ffffff;
-        --template-link-color: #2a69b8;
-        --template-special-color: #001B4C;
-        $fontStyles
-    }");
+    ->addInlineStyle(":root {\n        --hue: 214;\n        --template-bg-light: #f0f4fb;\n        --template-text-dark: #495057;\n        --template-text-light: #ffffff;\n        --template-link-color: #2a69b8;\n        --template-special-color: #001B4C;\n        $fontStyles\n    }");
 
-// Override 'template.active' asset to set correct ltr/rtl dependency
+// Override 'template.active' asset for correct dependency
 $wa->registerStyle('template.active', '', [], [], ['template.MOKO-CASSIOPEIA.' . ($this->direction === 'rtl' ? 'rtl' : 'ltr')]);
 
-// Logo file or site title param
+// Logo file or site title
 if ($this->params->get('logoFile')) {
     $logo = HTMLHelper::_('image', Uri::root(false) . htmlspecialchars($this->params->get('logoFile'), ENT_QUOTES), $sitename, ['loading' => 'eager', 'decoding' => 'async'], false, 0);
 } elseif ($this->params->get('siteTitle')) {
@@ -152,71 +136,50 @@ if ($this->params->get('logoFile')) {
 }
 
 $hasClass = '';
-
-if ($this->countModules('sidebar-left', true)) {
-    $hasClass .= ' has-sidebar-left';
-}
-
-if ($this->countModules('sidebar-right', true)) {
-    $hasClass .= ' has-sidebar-right';
-}
+if ($this->countModules('sidebar-left', true))  { $hasClass .= ' has-sidebar-left'; }
+if ($this->countModules('sidebar-right', true)) { $hasClass .= ' has-sidebar-right'; }
 if ($this->countModules('drawer-left', true))  { $hasClass .= ' has-drawer-left'; }
 if ($this->countModules('drawer-right', true))  { $hasClass .= ' has-drawer-right'; }
+
+$params_DrawerIconLeft  = $this->params->get('drawerIconLeft',  'fas fa-chevron-right');
+$params_DrawerIconRight = $this->params->get('drawerIconRight', 'fas fa-chevron-left');
 
 // Container
 $wrapper = $this->params->get('fluidContainer') ? 'wrapper-fluid' : 'wrapper-static';
 
 $this->setMetaData('viewport', 'width=device-width, initial-scale=1');
-
 $stickyHeader = $this->params->get('stickyHeader') ? 'position-sticky sticky-top' : '';
 
-if($this->params->get('fA6KitCode')){
-    //build unique kit embed code
-    $fa6Kit="https://kit.fontawesome.com/".$this->params->get('fA6KitCode').".js";
-
-    //adding FontAwesome V6 Kit Code
-    JHtml::_('script', $fa6Kit, array('crossorigin' => 'anonymous'));
+if ($this->params->get('fA6KitCode')) {
+    $fa6Kit = "https://kit.fontawesome.com/" . $this->params->get('fA6KitCode') . ".js";
+    JHtml::_('script', $fa6Kit, ['crossorigin' => 'anonymous']);
 } else {
-    // Defer fontawesome  for increased performance. Once the page is loaded javascript changes it to a stylesheet.
     $wa->getAsset('style', 'fontawesome')->setAttribute('rel', 'lazy-stylesheet');
 }
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>">
 <head>
-    <?php if (trim($params_custom_head_start)) : ?>
-    <?php echo $params_custom_head_start; ?>
-  <?php endif; ?>
+    <?php if (trim($params_custom_head_start)) : ?><?php echo $params_custom_head_start; ?><?php endif; ?>
     <jdoc:include type="head" />
-    <?php if (trim($params_custom_head_end)) : ?>
-    <?php echo $params_custom_head_end; ?>
-  <?php endif; ?>
+    <?php if (trim($params_custom_head_end)) : ?><?php echo $params_custom_head_end; ?><?php endif; ?>
 </head>
-
-<body class="site <?php echo $option
-    . ' ' . $wrapper
-    . ' view-' . $view
-    . ($layout ? ' layout-' . $layout : ' no-layout')
-    . ($task ? ' task-' . $task : ' no-task')
-    . ($itemid ? ' itemid-' . $itemid : '')
-    . ($pageclass ? ' ' . $pageclass : '')
-    . $hasClass
-    . ($this->direction == 'rtl' ? ' rtl' : '');
-?>">
-<?php if($params_GoogleTagManager && $params_GoogleTagManagerID) { ?>
+<body class="site <?php echo $option . ' ' . $wrapper . ' view-' . $view . ($layout ? ' layout-' . $layout : ' no-layout') . ($task ? ' task-' . $task : ' no-task') . ($itemid ? ' itemid-' . $itemid : '') . ($pageclass ? ' ' . $pageclass : '') . $hasClass . ($this->direction == 'rtl' ? ' rtl' : ''); ?>">
+<?php if ($params_GoogleTagManager && $params_GoogleTagManagerID) : ?>
     <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=<?php echo $params_GoogleTagManagerID;?>"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=<?php echo $params_GoogleTagManagerID; ?>" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
-<?php } ?>
-    <header class="header container-header full-width<?php echo $stickyHeader ? ' ' . $stickyHeader : ''; ?>">
+<?php endif; ?>
 
-        <?php if ($this->countModules('topbar')) : ?>
-            <div class="container-topbar">
+<header class="header container-header full-width<?php echo $stickyHeader ? ' ' . $stickyHeader : ''; ?>">
+
+    <?php if ($this->countModules('topbar')) : ?>
+        <div class="container-topbar">
             <jdoc:include type="modules" name="topbar" style="none" />
-            </div>
-        <?php endif; ?>
-        <div class="header-top">
+        </div>
+    <?php endif; ?>
+
+    <div class="header-top">
         <?php if ($this->countModules('below-top')) : ?>
             <div class="grid-child container-below-top">
                 <jdoc:include type="modules" name="below-top" style="none" />
@@ -242,6 +205,7 @@ if($this->params->get('fA6KitCode')){
             </div>
         <?php endif; ?>
     </div>
+
     <!-- Drawer Toggle Buttons -->
 <?php if ($this->countModules('drawer-left')) : ?>
   <button class="drawer-toggle-left btn btn-outline-secondary me-2"
@@ -262,85 +226,86 @@ if($this->params->get('fA6KitCode')){
     <span class="<?php echo $params_rightIcon; ?>"></span>
   </button>
 <?php endif; ?>
-        <?php if ($this->countModules('menu', true) || $this->countModules('search', true)) : ?>
-            <div class="grid-child container-nav">
-                <?php if ($this->countModules('menu', true)) : ?>
-                    <jdoc:include type="modules" name="menu" style="none" />
-                <?php endif; ?>
-                <?php if ($this->countModules('search', true)) : ?>
-                    <div class="container-search">
-                        <jdoc:include type="modules" name="search" style="none" />
-                    </div>
-                <?php endif; ?>
-            </div>
-        <?php endif; ?>
-    </header>
 
-    <div class="site-grid">
-        <?php if ($this->countModules('banner', true)) : ?>
-            <div class="container-banner full-width">
-                <jdoc:include type="modules" name="banner" style="none" />
-            </div>
-        <?php endif; ?>
+    <?php if ($this->countModules('menu', true) || $this->countModules('search', true)) : ?>
+        <div class="grid-child container-nav">
+            <?php if ($this->countModules('menu', true)) : ?>
+                <jdoc:include type="modules" name="menu" style="none" />
+            <?php endif; ?>
+            <?php if ($this->countModules('search', true)) : ?>
+                <div class="container-search">
+                    <jdoc:include type="modules" name="search" style="none" />
+                </div>
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+</header>
 
-        <?php if ($this->countModules('top-a', true)) : ?>
+<div class="site-grid">
+    <?php if ($this->countModules('banner', true)) : ?>
+        <div class="container-banner full-width">
+            <jdoc:include type="modules" name="banner" style="none" />
+        </div>
+    <?php endif; ?>
+
+    <?php if ($this->countModules('top-a', true)) : ?>
         <div class="grid-child container-top-a">
             <jdoc:include type="modules" name="top-a" style="card" />
         </div>
-        <?php endif; ?>
+    <?php endif; ?>
 
-        <?php if ($this->countModules('top-b', true)) : ?>
+    <?php if ($this->countModules('top-b', true)) : ?>
         <div class="grid-child container-top-b">
             <jdoc:include type="modules" name="top-b" style="card" />
         </div>
-        <?php endif; ?>
+    <?php endif; ?>
 
-        <?php if ($this->countModules('sidebar-left', true)) : ?>
+    <?php if ($this->countModules('sidebar-left', true)) : ?>
         <div class="grid-child container-sidebar-left">
             <jdoc:include type="modules" name="sidebar-left" style="card" />
         </div>
-        <?php endif; ?>
+    <?php endif; ?>
 
-        <div class="grid-child container-component">
-            <jdoc:include type="modules" name="breadcrumbs" style="none" />
-            <jdoc:include type="modules" name="main-top" style="card" />
-            <jdoc:include type="message" />
-            <main>
+    <div class="grid-child container-component">
+        <jdoc:include type="modules" name="breadcrumbs" style="none" />
+        <jdoc:include type="modules" name="main-top" style="card" />
+        <jdoc:include type="message" />
+        <main>
             <jdoc:include type="component" />
-            </main>
-            <jdoc:include type="modules" name="main-bottom" style="card" />
-        </div>
+        </main>
+        <jdoc:include type="modules" name="main-bottom" style="card" />
+    </div>
 
-        <?php if ($this->countModules('sidebar-right', true)) : ?>
+    <?php if ($this->countModules('sidebar-right', true)) : ?>
         <div class="grid-child container-sidebar-right">
             <jdoc:include type="modules" name="sidebar-right" style="card" />
         </div>
-        <?php endif; ?>
+    <?php endif; ?>
 
-        <?php if ($this->countModules('bottom-a', true)) : ?>
+    <?php if ($this->countModules('bottom-a', true)) : ?>
         <div class="grid-child container-bottom-a">
             <jdoc:include type="modules" name="bottom-a" style="card" />
         </div>
-        <?php endif; ?>
+    <?php endif; ?>
 
-        <?php if ($this->countModules('bottom-b', true)) : ?>
+    <?php if ($this->countModules('bottom-b', true)) : ?>
         <div class="grid-child container-bottom-b">
             <jdoc:include type="modules" name="bottom-b" style="card" />
         </div>
-        <?php endif; ?>
-    </div>
+    <?php endif; ?>
+</div>
 
 <footer class="container-footer footer full-width">
-<?php if ($this->countModules('footer-menu', true)) : ?>
-    <div class="grid-child footer-menu">
-        <jdoc:include type="modules" name="footer-menu" />
-    </div>
-<?php endif; ?>
-<?php if ($this->countModules('footer', true)) : ?>
-    <div class="grid-child">
-        <jdoc:include type="modules" name="footer" style="none" />
-    </div>
-<?php endif; ?>
+    <?php if ($this->countModules('footer-menu', true)) : ?>
+        <div class="grid-child footer-menu">
+            <jdoc:include type="modules" name="footer-menu" />
+        </div>
+    <?php endif; ?>
+    <?php if ($this->countModules('footer', true)) : ?>
+        <div class="grid-child">
+            <jdoc:include type="modules" name="footer" style="none" />
+        </div>
+    <?php endif; ?>
 </footer>
 
 <?php if ($this->params->get('backTop') == 1) : ?>
@@ -348,7 +313,6 @@ if($this->params->get('fA6KitCode')){
         <span class="icon-arrow-up icon-fw" aria-hidden="true"></span>
     </a>
 <?php endif; ?>
-
 
 <?php if ($this->countModules('drawer-left', true)) : ?>
 <!-- Left Offcanvas Drawer -->
@@ -375,6 +339,7 @@ if($this->params->get('fA6KitCode')){
   </div>
 </aside>
 <?php endif; ?>
+
 <jdoc:include type="modules" name="debug" style="none" />
 </body>
 </html>
