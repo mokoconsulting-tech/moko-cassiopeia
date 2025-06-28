@@ -1,8 +1,7 @@
 :root, [data-bs-theme="light"] {
-  --moko-cassiopeia-color-primary: hsl(351, 54%, 37%);
-  --moko-cassiopeia-color-link: hsl(207, 49%, 37%);
-  --moko-cassiopeia-color-hover: hsl(351, 33%, 44%);
-
+  --moko-cassiopeia-color-primary: #112855;
+  --moko-cassiopeia-color-link: #224FAA;
+  --moko-cassiopeia-color-hover: #224FAA;
 
   --moko-cassiopeia-header-background-image: url('../../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');
   --moko-cassiopeia-header-background-position: auto;
@@ -11,14 +10,7 @@
   --moko-cassiopeia-header-background-size: auto;
 
   --nav-text-color: white;
-  --nav-bg-color: #224FAA;
-  --accent-color-primary: #3f8ff0;
-  --accent-color-secondary: #3f8ff0;
-  --border: 5px;
-  --mainmenu-nav-link-color: white;
-
-  --nav-text-color: white;
-  --nav-bg-color: #224FAA;
+  --nav-bg-color: #fd7e17;
   --accent-color-primary: #3f8ff0;
   --accent-color-secondary: #3f8ff0;
   --border: 5px;
@@ -90,7 +82,7 @@
   --font-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --gradient: linear-gradient(180deg, #ffffff26, #fff0);
-  --body-font-family: var(--optain-cassiopeia-font-family-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+  --body-font-family: var(--moko-cassiopeia-font-family-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
   --body-font-size: 1rem;
   --body-font-weight: 400;
   --body-line-height: 1.5;
@@ -427,4 +419,24 @@
   --btn-box-shadow: none;
   --btn-focus-shadow-rgb: 39, 39, 111;
   text-decoration: underline;
+}
+.btn-link:focus-visible {
+  color: var(--btn-color);
+}
+.btn-link:hover {
+  color: var(--btn-hover-color);
+}
+
+.btn-lg, .btn-group-lg > .btn {
+  --btn-padding-y: 0.5rem;
+  --btn-padding-x: 1rem;
+  --btn-font-size: 1.25rem;
+  --btn-border-radius: 0.3rem;
+}
+
+.btn-sm, .btn-group-sm > .btn {
+  --btn-padding-y: 0.25rem;
+  --btn-padding-x: 0.5rem;
+  --btn-font-size: 0.875rem;
+  --btn-border-radius: 0.2rem;
 }

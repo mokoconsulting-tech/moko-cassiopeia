@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<updates>
+  <update>
+    <name>moko-cassiopeia</name>
+    <element>moko-cassiopeia</element>
+    <type>template</type>
+    <client>site</client>
+    <version>1.10</version>
+    <creationDate>2023-05</creationDate>
+    <author>Jonathan Miller || Moko Consulting</author>
+    <authorEmail>jmiller@mokoconsulting.tech</authorEmail>
+    <copyright>(C)GNU General Public License Version 2 - 2025 Moko Consulting</copyright>
+    <infourl title="MOKO-CASSIOPEIA Info">https://mokoconsulting.tech/moko-cassiopeia</infourl>
+    <downloads>
+      <downloadurl type="full" format="zip">https://mokoconsulting.tech/updates/moko-cassiopeia_v1.10.zip</downloadurl>
+    </downloads>
+    <tags>
+      <tag>stable</tag>
+    </tags>
+    <maintainer>Jonathan Miller</maintainer>
+    <maintainerurl>https://mokoconsulting.tech</maintainerurl>
+    <targetplatform name="joomla" version="4.0"/>
+    <description><![CDATA[
+      <h3>MOKO-CASSIOPEIA Template Description</h3>
+      <p>
+        <strong>MOKO-CASSIOPEIA</strong> continues Joomla’s tradition of space-themed default templates—
+        building on the legacy of <em>Solarflare</em> from Joomla 1.0, <em>Milkyway</em> from Joomla 1.5,
+        and <em>Protostar</em> from Joomla 3.0.
+      </p>
+      <p>
+        This template is a customized fork of the <strong>Cassiopeia</strong> template introduced in Joomla 4,
+        preserving its modern, accessible, and mobile-first foundation while introducing new stylistic
+        enhancements and structural refinements specifically tailored for use by Moko Consulting.
+      </p>
+      <p>
+        <strong>MOKO-CASSIOPEIA</strong> is designed to serve as a versatile, production-ready base for
+        contemporary Joomla websites, emphasizing speed, clarity, and open-source philosophy.
+      </p>
+
+      <h4>Features</h4>
+      <ul>
+        <li>Fully responsive and mobile-first layout</li>
+        <li>Based on Joomla 4+ template architecture</li>
+        <li>Enhanced SCSS and CSS overrides for custom styling</li>
+        <li>Built-in support for Bootstrap 5</li>
+        <li>
+          Integrated dynamic Table of Contents via
+          <a href="https://afeld.github.io/bootstrap-toc/" target="_blank" rel="noopener">Bootstrap TOC</a>
+        </li>
+        <li>Optimized template structure for performance and maintainability</li>
+        <li>Custom module positions and layout presets</li>
+        <li>Accessible, lightweight, and extensible</li>
+        <li>Ideal for professional services, portfolios, and informational websites</li>
+      </ul>
+
+      <h4>Code Attribution</h4>
+      <p>
+        This template is based on the original <strong>Cassiopeia</strong> template developed by the
+        <a href="https://www.joomla.org" target="_blank" rel="noopener">Joomla! Project</a> and released under the GNU General Public License.
+      </p>
+      <p>
+        Modifications and enhancements have been made by Moko Consulting in accordance with open-source licensing standards.
+      </p>
+      <p>
+        It includes integration with
+        <a href="https://afeld.github.io/bootstrap-toc/" target="_blank" rel="noopener">Bootstrap TOC</a>,
+        an open-source table of contents generator by A. Feld, licensed under the MIT License.
+      </p>
+      <p>
+        All third-party libraries and assets remain the property of their respective authors and are credited within their source files where applicable.
+      </p>
+    ]]></description>
+  </update>
+</updates>

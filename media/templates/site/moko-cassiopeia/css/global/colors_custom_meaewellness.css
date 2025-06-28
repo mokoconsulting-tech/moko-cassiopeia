@@ -2,11 +2,13 @@
   --moko-cassiopeia-color-primary: #30638d;
   --moko-cassiopeia-color-link: #15496e;
   --moko-cassiopeia-color-hover: #448344;
+
   --moko-cassiopeia-header-background-image: url('../../../../../../media/templates/site/moko-cassiopeia/images/meaewellness/background.png');
   --moko-cassiopeia-header-background-position: center center;
   --moko-cassiopeia-header-background-attachment: fixed;
   --moko-cassiopeia-header-background-repeat: no-repeat;
   --moko-cassiopeia-header-background-size: cover;
+
   --nav-text-color: black;
   --nav-bg-color: #79ec3d6b;
   --accent-color-primary: #3f8ff0;
@@ -14,35 +16,35 @@
   --border: 5px;
   --mainmenu-nav-link-color: black;
 
-
-  --blue: hsl(240, 98%, 17%);
-  --indigo: hsl(263, 90%, 51%);
-  --purple: hsl(261, 51%, 51%);
-  --pink: hsl(332, 79%, 58%);
-  --red: hsl(3, 75%, 37%);
-  --orange: hsl(27, 98%, 54%);
-  --yellow: hsl(34, 100%, 34%);
-  --green: hsl(120, 32%, 39%);
-  --teal: hsl(194, 66%, 61%);
-  --cyan: hsl(207, 49%, 37%);
-  --white: hsl(0, 0%, 100%);
-  --gray-100: hsl(210, 17%, 98%);
-  --gray-200: hsl(210, 16%, 93%);
-  --gray-300: hsl(210, 14%, 89%);
-  --gray-400: hsl(210, 14%, 83%);
-  --gray-500: hsl(210, 11%, 71%);
-  --gray-600: hsl(210, 7%, 46%);
-  --gray-700: hsl(210, 9%, 31%);
-  --gray-800: hsl(210, 10%, 23%);
-  --gray-900: hsl(210, 11%, 15%);
-  --primary: hsl(240, 98%, 17%);
-  --secondary: hsl(210, 7%, 46%);
-  --success: hsl(120, 32%, 39%);
-  --info: hsl(207, 49%, 37%);
-  --warning: hsl(34, 100%, 34%);
-  --danger: hsl(3, 75%, 37%);
-  --light: hsl(210, 17%, 98%);
-  --dark: hsl(210, 10%, 23%);
+  --blue: #010156;
+  --black: #000;
+  --indigo: #6812f3;
+  --purple: #6f42c2;
+  --pink: #e93f8e;
+  --red: #a51f18;
+  --orange: #fd7e17;
+  --yellow: #ad6200;
+  --green: #448344;
+  --teal: #5abfdd;
+  --cyan: #30638d;
+  --white: #fff;
+  --gray-100: #f9fafb;
+  --gray-200: #eaedf0;
+  --gray-300: #dfe3e7;
+  --gray-400: #ced4da;
+  --gray-500: #adb5bd;
+  --gray-600: #6d757e;
+  --gray-700: #484f56;
+  --gray-800: #353b41;
+  --gray-900: #22262a;
+  --primary: #010156;
+  --secondary: #6d757e;
+  --success: #448344;
+  --info: #30638d;
+  --warning: #ad6200;
+  --danger: #a51f18;
+  --light: #f9fafb;
+  --dark: #353b41;
   --primary-rgb: 1, 1, 86;
   --secondary-rgb: 109, 117, 126;
   --success-rgb: 68, 131, 68;
@@ -51,33 +53,84 @@
   --danger-rgb: 165, 31, 24;
   --light-rgb: 249, 250, 251;
   --dark-rgb: 53, 59, 65;
+  --primary-text-emphasis: #002;
+  --secondary-text-emphasis: #2c2f32;
+  --success-text-emphasis: #1b351b;
+  --info-text-emphasis: #132838;
+  --warning-text-emphasis: #452700;
+  --danger-text-emphasis: #420c09;
+  --light-text-emphasis: #484f56;
+  --dark-text-emphasis: #484f56;
+  --primary-bg-subtle: #ccd;
+  --secondary-bg-subtle: #e2e3e5;
+  --success-bg-subtle: #dae6da;
+  --info-bg-subtle: #d6e0e8;
+  --warning-bg-subtle: #efe0cc;
+  --danger-bg-subtle: #edd2d1;
+  --light-bg-subtle: #fcfcfd;
+  --dark-bg-subtle: #ced4da;
+  --primary-border-subtle: #99b;
+  --secondary-border-subtle: #c5c8cb;
+  --success-border-subtle: #b4ceb4;
+  --info-border-subtle: #acc1d1;
+  --warning-border-subtle: #dec099;
+  --danger-border-subtle: #dba5a2;
+  --light-border-subtle: #eaedf0;
+  --dark-border-subtle: #adb5bd;
   --white-rgb: 255, 255, 255;
   --black-rgb: 0, 0, 0;
-  --body-color-rgb: 34, 38, 42;
-  --body-bg-rgb: 255, 255, 255;
   --font-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
-  --body-font-family: var(--moko-cassiopeia-font-family-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+  --gradient: linear-gradient(180deg, #ffffff26, #fff0);
+  --body-font-family: var(--optain-cassiopeia-font-family-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
   --body-font-size: 1rem;
   --body-font-weight: 400;
   --body-line-height: 1.5;
-  --body-color: hsl(210, 11%, 15%);
-  --body-bg: hsl(0, 0%, 100%);
+  --body-color: #22262a;
+  --body-color-rgb: 34, 38, 42;
+  --body-bg: #fff;
+  --body-bg-rgb: 255, 255, 255;
+  --emphasis-color: #000;
+  --emphasis-color-rgb: 0, 0, 0;
+  --secondary-color: #22262abf;
+  --secondary-color-rgb: 34, 38, 42;
+  --secondary-bg: #eaedf0;
+  --secondary-bg-rgb: 234, 237, 240;
+  --tertiary-color: #22262a80;
+  --tertiary-color-rgb: 34, 38, 42;
+  --tertiary-bg: #f9fafb;
+  --tertiary-bg-rgb: 249, 250, 251;
+  --heading-color: inherit;
+  --link-color: #224faa;
+  --link-color-rgb: 34, 79, 170;
+  --link-decoration: underline;
+  --link-hover-color: #424077;
+  --link-hover-color-rgb: 66, 64, 119;
+  --code-color: #e93f8e;
+  --highlight-color: #22262a;
+  --highlight-bg: #fbeea8;
   --border-width: 1px;
   --border-style: solid;
-  --border-color: hsl(210, 14%, 89%);
-  --border-color-translucent: rgba(0, 0, 0, 0.175);
-  --border-radius: 0.25rem;
-  --border-radius-sm: 0.2rem;
-  --border-radius-lg: 0.3rem;
-  --border-radius-xl: 0.3rem;
-  --border-radius-2xl: 0.3rem;
+  --border-color: #dfe3e7;
+  --border-color-translucent: #0000002d;
+  --border-radius: .25rem;
+  --border-radius-sm: .2rem;
+  --border-radius-lg: .3rem;
+  --border-radius-xl: .3rem;
+  --border-radius-xxl: 2rem;
+  --border-radius-2xl: var(--border-radius-xxl);
   --border-radius-pill: 50rem;
-  --link-color: var(--moko-cassiopeia-color-link);
-  --link-hover-color: var(--moko-cassiopeia-color-hover);
-  --code-color: hsl(332, 79%, 58%);
-  --highlight-bg: #fbeea8;
+  --box-shadow: 0 .5rem 1rem #00000026;
+  --box-shadow-sm: 0 .125rem .25rem #00000013;
+  --box-shadow-lg: 0 1rem 3rem #0000002d;
+  --box-shadow-inset: inset 0 1px 2px #00000013;
+  --focus-ring-width: .25rem;
+  --focus-ring-opacity: .25;
+  --focus-ring-color: #01015640;
+  --form-valid-color: #448344;
+  --form-valid-border-color: #448344;
+  --form-invalid-color: #a51f18;
+  --form-invalid-border-color: #a51f18;
 }
 
 .btn-primary {
@@ -366,27 +419,4 @@
   --btn-box-shadow: none;
   --btn-focus-shadow-rgb: 39, 39, 111;
   text-decoration: underline;
-}
-.btn-link:focus-visible {
-  color: var(--btn-color);
-}
-.btn-link:hover {
-  color: var(--btn-hover-color);
-}
-
-.btn-lg, .btn-group-lg > .btn {
-  --btn-padding-y: 0.5rem;
-  --btn-padding-x: 1rem;
-  --btn-font-size: 1.25rem;
-  --btn-border-radius: 0.3rem;
-}
-
-.btn-sm, .btn-group-sm > .btn {
-  --btn-padding-y: 0.25rem;
-  --btn-padding-x: 0.5rem;
-  --btn-font-size: 0.875rem;
-  --btn-border-radius: 0.2rem;
-}
-.container-header {
-  background-image:var(--moko-cassiopeia-header-background-image)!important;
 }

@@ -47,14 +47,14 @@ if ($params_GoogleTagManager && $params_GoogleTagManagerID) {
 }
 
 // Browsers support SVG favicons
-$this->addHeadLink(HTMLHelper::_('image', '../media/templates/site/moko-cassiopeia/images/favicon/favicon.svg', '', [], true, 1), 'icon', 'rel', ['type' => 'image/svg+xml']);
-$this->addHeadLink(HTMLHelper::_('image', '../media/templates/site/moko-cassiopeia/images/favicon/favicon.ico', '', [], true, 1), 'alternate icon', 'rel', ['type' => 'image/vnd.microsoft.icon']);
-$this->addHeadLink(HTMLHelper::_('image', '../media/templates/site/moko-cassiopeia/images/favicon/favicon.svg', '', [], true, 1), 'mask-icon', 'rel', ['color' => '#fff']);
+$this->addHeadLink(HTMLHelper::_('image', '/media/templates/site/moko-cassiopeia/images/favicon/favicon.svg', '', [], true, 1), 'icon', 'rel', ['type' => 'image/svg+xml']);
+$this->addHeadLink(HTMLHelper::_('image', '/media/templates/site/moko-cassiopeia/images/favicon/favicon.ico', '', [], true, 1), 'alternate icon', 'rel', ['type' => 'image/vnd.microsoft.icon']);
+$this->addHeadLink(HTMLHelper::_('image', '/media/templates/site/moko-cassiopeia/images/favicon/favicon.svg', '', [], true, 1), 'mask-icon', 'rel', ['color' => '#fff']);
 ?>
-<link rel="apple-touch-icon" sizes="180x180" href="../media/templates/site/moko-cassiopeia/images/favicon/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../media/templates/site/moko-cassiopeia/images/favicon/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="../media/templates/site/moko-cassiopeia/images/favicon/favicon-16x16.png">
-<link rel="manifest" href="../media/templates/site/moko-cassiopeia/images/favicon/site.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="/media/templates/site/moko-cassiopeia/images/favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/media/templates/site/moko-cassiopeia/images/favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/media/templates/site/moko-cassiopeia/images/favicon/favicon-16x16.png">
+<link rel="manifest" href="/media/templates/site/moko-cassiopeia/images/favicon/site.webmanifest">
 
 <meta name="msapplication-TileColor" content="#ffffff">
 <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
@@ -156,15 +156,46 @@ if ($this->params->get('fA6KitCode')) {
 } else {
     $wa->getAsset('style', 'fontawesome')->setAttribute('rel', 'lazy-stylesheet');
 }
+// Add Bootstrap TOC CSS
+$this->addStyleSheet('https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.css');
+
+// Add Bootstrap TOC JS (should be loaded after Bootstrap JS)
+$this->addScript('https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js');
+
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>">
 <head>
     <?php if (trim($params_custom_head_start)) : ?><?php echo $params_custom_head_start; ?><?php endif; ?>
     <jdoc:include type="head" />
+    <script>
+  window.addEventListener('DOMContentLoaded', function () {
+    var ua = navigator.userAgent || navigator.vendor || window.opera;
+    var isFacebookBrowser = ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1;
+
+    if (isFacebookBrowser) {
+      var warning = document.createElement('div');
+      warning.textContent = '⚠️ KNOWN ISSUE: Images do not load in Facebook Web browser. Please open in external browser for full experience.';
+      warning.style.position = 'fixed';
+      warning.style.top = '0';
+      warning.style.left = '0';
+      warning.style.right = '0';
+      warning.style.zIndex = '10000';
+      warning.style.backgroundColor = '#007bff'; // Blue background
+      warning.style.color = '#fff';
+      warning.style.padding = '15px';
+      warning.style.textAlign = 'center';
+      warning.style.fontWeight = 'bold';
+      warning.style.fontSize = '16px';
+      warning.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+
+      document.body.appendChild(warning);
+    }
+  });
+</script>
     <?php if (trim($params_custom_head_end)) : ?><?php echo $params_custom_head_end; ?><?php endif; ?>
 </head>
-<body class="site <?php echo $option . ' ' . $wrapper . ' view-' . $view . ($layout ? ' layout-' . $layout : ' no-layout') . ($task ? ' task-' . $task : ' no-task') . ($itemid ? ' itemid-' . $itemid : '') . ($pageclass ? ' ' . $pageclass : '') . $hasClass . ($this->direction == 'rtl' ? ' rtl' : ''); ?>">
+<body data-bs-spy="scroll" data-bs-target="#toc" class="site <?php echo $option . ' ' . $wrapper . ' view-' . $view . ($layout ? ' layout-' . $layout : ' no-layout') . ($task ? ' task-' . $task : ' no-task') . ($itemid ? ' itemid-' . $itemid : '') . ($pageclass ? ' ' . $pageclass : '') . $hasClass . ($this->direction == 'rtl' ? ' rtl' : ''); ?>">
 <?php if ($params_GoogleTagManager && $params_GoogleTagManagerID) : ?>
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=<?php echo $params_GoogleTagManagerID; ?>" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>

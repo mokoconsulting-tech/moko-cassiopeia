@@ -34,6 +34,33 @@ body {
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
+form {
+  margin-block-end: 1em;
+}
+.table-of-contents-ck-wrap {
+  width: 30%;
+  float: right;
+  border: 1px solid var(--moko-cassiopeia-color-primary);
+}
+.table-of-contents-ck-toggler {
+  font-size: 2em;
+  font-weight: bold;
+  background-color: var(--gray-500);
+  padding: var(--btn-padding-y);
+  color: var(--moko-cassiopeia-color-link);
+  text-align: center;
+}
+.table-of-contents-ck-toggler a {
+  font-size: .5em;
+  font-weight: normal;
+  color: var(--moko-cassiopeia-color-link);
+  display:block;
+  text-align: center;
+}
+.table-of-contents-ck, .table-of-contents-ck a {
+  font-size: 1.25em;
+  color: var(--moko-cassiopeia-color-link);
+}
 .offcanvas-start,
 .offcanvas-end {
   width: 280px;
@@ -12772,12 +12799,10 @@ fieldset > * {
 .container-header {
   position: relative;
   z-index: 10;
-  background-color: var(--moko-cassiopeia-color-primary);
-  background: linear-gradient(135deg, var(--moko-cassiopeia-color-primary) 0%, var(--moko-cassiopeia-color-link) 100%);
-  background-attachment: var(--moko-cassiopeia-header-background-position);
-  background-image: var(--moko-cassiopeia-header-background-image);
--webkit-box-shadow: 0 5px 5px hsla(0, 0%, 0%, 0.03) inset;
-          box-shadow: 0 5px 5px hsla(0, 0%, 0%, 0.03) inset;
+  background: var(--moko-cassiopeia-header-background-image);
+  background-size: var(--moko-cassiopeia-header-background-size);
+  -webkit-box-shadow: 0 5px 5px hsla(0, 0%, 0%, 0.03) inset;
+  box-shadow: 0 5px 5px hsla(0, 0%, 0%, 0.03) inset;
 }
 @media (max-width: 991.98px) {
   .container-header {
@@ -13077,13 +13102,19 @@ iframe {
   position: relative;
 }
 
-.container-topbar,
+.container-topbar {
+  color: hsl(0, 0%, 100%);
+  background-color: var(--moko-cassiopeia-color-primary);
+}
 .container-below-top {
   color: hsl(0, 0%, 100%);
 }
-.container-topbar a,
+.container-topbar a {
+  color: hsl(0, 0%, 100%)!important;
+
+}
 .container-below-top a {
-  color: currentColor;
+  color: hsl(100%, 100%, 100%)!!important;
 }
 
 .container-banner {
@@ -13744,13 +13775,7 @@ joomla-alert {
 .left.item-image {
   float: left;
 }
-.full-width .left.item-image {
-  width: 100%;
-  //height: 200px;
-  overflow: hidden;
-  float: unset;
-  max-width: unset;
-}
+
 .view-article .left.item-image{
   max-width: 300px;
 }
@@ -15382,4 +15407,109 @@ Joomla
 }
 .osm-plan-title {
   color: white;
+}
+
+.btn-link:focus-visible {
+  color: var(--btn-color);
+}
+.btn-link:hover {
+  color: var(--btn-hover-color);
+}
+
+.btn-lg, .btn-group-lg > .btn {
+  --btn-padding-y: 0.5rem;
+  --btn-padding-x: 1rem;
+  --btn-font-size: 1.25rem;
+  --btn-border-radius: 0.3rem;
+}
+
+.btn-sm, .btn-group-sm > .btn {
+  --btn-padding-y: 0.25rem;
+  --btn-padding-x: 0.5rem;
+  --btn-font-size: 0.875rem;
+  --btn-border-radius: 0.2rem;
+}
+ .hero {
+      padding: 4rem 2rem;
+      background: #f8f9fa;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+.hero-text {
+  max-width: 550px;
+}
+.hero h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #10646e;
+}
+.hero p {
+  font-size: 1.5rem;
+}
+.hero p.lead {
+  font-size: 2rem;
+  color: #343a40;
+  font-weight: bold;
+}
+/* Bootstrap TOC right-float styling */
+#toc {
+  width: 250px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  display: inline-block;
+  float: right;
+  margin: 1rem;
+}
+#toc::before {
+  content: "Table of Contents";
+  display: block;
+  font-size: 1.17em; /* equivalent to h3 size */
+  font-weight: bold;
+  margin-bottom: 0.5em;
+}
+
+ul.checklist {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+ul.checklist li {
+  position: relative;
+  padding-left: 2em;
+  margin-bottom: 0.5em;
+  font-family: sans-serif;
+  cursor: default;
+}
+
+ul.checklist li::before {
+  content: "☐"; /* unchecked box */
+  position: absolute;
+  left: 0;
+  font-size: 1.2em;
+  color: #333;
+}
+
+ul.checklist li.checked::before {
+  content: "☑"; /* checked box */
+  color: #0073e6; /* accent color for checked items */
+}
+figure.item-image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* optional, prevents image overflow */
+}
+
+figure.item-image img {
+    max-width: 100%;
+    height: auto;
+    display: block;
 }
