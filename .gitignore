@@ -66,3 +66,4 @@ sync.ffs_db
 *.back
 *.bak
 *.old
+sftp-config.json
