@@ -4,7 +4,7 @@
 	  <server type="extension" name="Moko Consulting">https://mokoconsulting.tech/updates/updates.xml</server>
 	</updateservers>
 	<name>moko-cassiopeia</name>
-	<version>1.11</version>
+	<version>1.12</version>
 	<creationDate>2023-05</creationDate>
 	<author>Jonathan Miller || Moko Consulting</author>
 	<authorEmail>jmiller@mokoconsulting.tech</authorEmail>

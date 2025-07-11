@@ -30,10 +30,9 @@
   .container-sidebar-left,
   .container-bottom-a,
   .container-bottom-b,
-  #lhc_container_v2 *,
   footer,
   .fb-comments,
-   {
+  #lhc_container_v2 *{
     display: none!important;
   }
 }
