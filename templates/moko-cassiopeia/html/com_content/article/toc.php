@@ -99,12 +99,9 @@ $isExpired         = !is_null($this->item->publish_down) && $this->item->publish
             echo $this->item->toc;
         endif; ?>
     <div itemprop="articleBody" class="com-content-article__body">
+        <nav id="toc" data-toggle="toc"></nav>
         <?php
-            if (strpos($this->pageclass_sfx, 'no-toc') === false) {
-                echo '<nav id="toc" data-toggle="toc"></nav>';
-            }
-        ?>
-        <?php echo $this->item->text; ?>
+            echo $this->item->text; ?>
     </div>
 
         <?php if ($info == 1 || $info == 2) : ?>

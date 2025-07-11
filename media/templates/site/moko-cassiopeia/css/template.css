@@ -21,6 +21,22 @@
     scroll-behavior: smooth;
   }
 }
+@media print {
+  nav,
+  .container-topbar,
+  .container-nav,
+  #rssocial-133,
+  .container-sidebar-right,
+  .container-sidebar-left,
+  .container-bottom-a,
+  .container-bottom-b,
+  #lhc_container_v2 *,
+  footer,
+  .fb-comments,
+   {
+    display: none!important;
+  }
+}
 
 body {
   margin: 0;

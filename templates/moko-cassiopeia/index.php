@@ -157,10 +157,10 @@ if ($this->params->get('fA6KitCode')) {
     $wa->getAsset('style', 'fontawesome')->setAttribute('rel', 'lazy-stylesheet');
 }
 // Add Bootstrap TOC CSS
-$this->addStyleSheet('https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.css');
+$this->addStyleSheet($templatePath . '/css/vendor/afeld/bootstrap-toc.min.css');
 
 // Add Bootstrap TOC JS (should be loaded after Bootstrap JS)
-$this->addScript('https://cdn.rawgit.com/afeld/bootstrap-toc/v1.0.1/dist/bootstrap-toc.min.js');
+$this->addScript($templatePath . '/js/vendor/afeld/bootstrap-toc.min.js');
 
 ?>
 <!DOCTYPE html>
