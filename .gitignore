@@ -66,4 +66,6 @@ sync.ffs_db
 *.back
 *.bak
 *.old
-sftp-config.json
+
+#Custom CSS Brands
+/media/templates/site/moko-cassiopeia/css/global/colors_custom_*.css

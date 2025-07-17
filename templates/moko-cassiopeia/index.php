@@ -46,20 +46,6 @@ if ($params_GoogleTagManager && $params_GoogleTagManagerID) {
     <?php
 }
 
-// Browsers support SVG favicons
-$this->addHeadLink(HTMLHelper::_('image', '/media/templates/site/moko-cassiopeia/images/favicon/favicon.svg', '', [], true, 1), 'icon', 'rel', ['type' => 'image/svg+xml']);
-$this->addHeadLink(HTMLHelper::_('image', '/media/templates/site/moko-cassiopeia/images/favicon/favicon.ico', '', [], true, 1), 'alternate icon', 'rel', ['type' => 'image/vnd.microsoft.icon']);
-$this->addHeadLink(HTMLHelper::_('image', '/media/templates/site/moko-cassiopeia/images/favicon/favicon.svg', '', [], true, 1), 'mask-icon', 'rel', ['color' => '#fff']);
-?>
-<link rel="apple-touch-icon" sizes="180x180" href="/media/templates/site/moko-cassiopeia/images/favicon/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/media/templates/site/moko-cassiopeia/images/favicon/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/media/templates/site/moko-cassiopeia/images/favicon/favicon-16x16.png">
-<link rel="manifest" href="/media/templates/site/moko-cassiopeia/images/favicon/site.webmanifest">
-
-<meta name="msapplication-TileColor" content="#ffffff">
-<meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
-<meta name="theme-color" content="#ffffff">
-<?php
 // Add Bootstrap 5 Support
 HTMLHelper::_('bootstrap.framework');
 HTMLHelper::_('bootstrap.loadCss', true);

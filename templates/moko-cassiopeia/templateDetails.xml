@@ -153,9 +153,6 @@
 					<option value="colors_standard">TPL_MOKO-CASSIOPEIA_COLOR_NAME_STANDARD</option>
 					<option value="colors_alternative">TPL_MOKO-CASSIOPEIA_COLOR_NAME_ALTERNATIVE</option>
 					<option value="colors_custom">TPL_MOKO-CASSIOPEIA_COLOR_NAME_CUSTOM</option>
-					<option value="colors_custom_meaewellness">TPL_MOKO-CASSIOPEIA_COLOR_NAME_CUSTOM_MEAEWELLNESS</option>
-					<option value="colors_custom_sra">TPL_MOKO-CASSIOPEIA_COLOR_NAME_CUSTOM_SRA</option>
-					<option value="colors_custom_optain">TPL_MOKO-CASSIOPEIA_COLOR_NAME_CUSTOM_OPTAIN</option>
 				</field>
 
 				<field
