@@ -1,21 +1,13 @@
 :root, [data-bs-theme="light"] {
-  --moko-cassiopeia-color-primary: hsl(351, 54%, 37%);
-  --moko-cassiopeia-color-link: hsl(207, 49%, 37%);
-  --moko-cassiopeia-color-hover: hsl(351, 33%, 44%);
+  --moko-cassiopeia-color-primary: #112855;
+  --moko-cassiopeia-color-link: #224FAA;
+  --moko-cassiopeia-color-hover: #224FAA;
 
-
-  --moko-cassiopeia-header-background-image: url('../../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');
+  --moko-cassiopeia-header-background-image: url('../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');
   --moko-cassiopeia-header-background-position: auto;
   --moko-cassiopeia-header-background-attachment: fixed;
   --moko-cassiopeia-header-background-repeat: repeat;
   --moko-cassiopeia-header-background-size: auto;
-
-  --nav-text-color: white;
-  --nav-bg-color: #224FAA;
-  --accent-color-primary: #3f8ff0;
-  --accent-color-secondary: #3f8ff0;
-  --border: 5px;
-  --mainmenu-nav-link-color: white;
 
   --nav-text-color: white;
   --nav-bg-color: #224FAA;
