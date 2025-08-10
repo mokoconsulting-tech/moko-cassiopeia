@@ -1,11 +1,15 @@
 <?php
-
 /**
  * @package     Joomla.Site
- * @subpackage  Templates.Moko-Cassiopeia
+ * @subpackage  Templates.moko-cassiopeia
+ * @file        /templates/moko-cassiopeia/error.php
  *
- * @copyright   (C) 2017 Open Source Matters, Inc. <https://www.joomla.org>
+ * @copyright   © 2025 Moko Consulting — All Rights Reserved
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ *
+ * Website: https://mokoconsulting.tech
+ * Email: hello@mokoconsulting.tech
+ * Phone: +1 (931) 279-6313
  */
 
 defined('_JEXEC') or die;
@@ -72,10 +76,10 @@ if ($paramsFontScheme) {
         $wa->registerAndUseStyle('fontscheme.current', $paramsFontScheme, [], ['media' => 'print', 'rel' => 'lazy-stylesheet', 'onload' => 'this.media=\'all\'', 'crossorigin' => 'anonymous']);
 
         if (preg_match_all('/family=([^?:]*):/i', $paramsFontScheme, $matches) > 0) {
-            $fontStyles = '--moko-cassiopeia-font-family-body: "' . str_replace('+', ' ', $matches[1][0]) . '", sans-serif;
-			--moko-cassiopeia-font-family-headings: "' . str_replace('+', ' ', isset($matches[1][1]) ? $matches[1][1] : $matches[1][0]) . '", sans-serif;
-			--moko-cassiopeia-font-weight-normal: 400;
-			--moko-cassiopeia-font-weight-headings: 700;';
+            $fontStyles = '--font-family-body: "' . str_replace('+', ' ', $matches[1][0]) . '", sans-serif;
+			--font-family-headings: "' . str_replace('+', ' ', isset($matches[1][1]) ? $matches[1][1] : $matches[1][0]) . '", sans-serif;
+			--font-weight-normal: 400;
+			--font-weight-headings: 700;';
         }
     } else {
         $wa->registerAndUseStyle('fontscheme.current', $paramsFontScheme, ['version' => 'auto'], ['media' => 'print', 'rel' => 'lazy-stylesheet', 'onload' => 'this.media=\'all\'']);

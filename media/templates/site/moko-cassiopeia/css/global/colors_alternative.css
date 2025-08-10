@@ -1,13 +1,26 @@
-:root, [data-bs-theme="light"] {
-  --moko-cassiopeia-color-primary: #112855;
-  --moko-cassiopeia-color-link: #224FAA;
-  --moko-cassiopeia-color-hover: #224FAA;
+/*!
+ * @package     Joomla.Site
+ * @subpackage  Templates.moko-cassiopeia
+ * @file        /media/templates/sote/moko-cassiopeia/css/global/colors_alternative.css
+ *
+ * © 2025 Moko Consulting — All Rights Reserved
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ *
+ * Website: https://mokoconsulting.tech
+ * Email: hello@mokoconsulting.tech
+ * Phone: +1 (931) 279-6313
+ */
 
-  --moko-cassiopeia-header-background-image: url('../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');
-  --moko-cassiopeia-header-background-position: auto;
-  --moko-cassiopeia-header-background-attachment: fixed;
-  --moko-cassiopeia-header-background-repeat: repeat;
-  --moko-cassiopeia-header-background-size: auto;
+:root, [data-bs-theme="light"] {
+  --color-primary: #112855;
+  --color-link: #224FAA;
+  --color-hover: #224FAA;
+
+  --header-background-image: url('../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');
+  --header-background-position: auto;
+  --header-background-attachment: fixed;
+  --header-background-repeat: repeat;
+  --header-background-size: auto;
 
   --nav-text-color: white;
   --nav-bg-color: #224FAA;

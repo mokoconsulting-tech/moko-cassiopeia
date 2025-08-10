@@ -49,7 +49,7 @@
   --font-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   --gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
-  --body-font-family: var(--moko-cassiopeia-font-family-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+  --body-font-family: var(--font-family-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
   --body-font-size: 1rem;
   --body-font-weight: 400;
   --body-line-height: 1.5;
@@ -65,8 +65,8 @@
   --border-radius-xl: 0.3rem;
   --border-radius-2xl: 0.3rem;
   --border-radius-pill: 50rem;
-  --link-color: var(--moko-cassiopeia-color-link);
-  --link-hover-color: var(--moko-cassiopeia-color-hover);
+  --link-color: var(--color-link);
+  --link-hover-color: var(--color-hover);
   --code-color: hsl(332, 79%, 58%);
   --highlight-bg: #fbeea8;
 }
@@ -6251,7 +6251,7 @@ textarea.form-control-lg {
   display: block;
   padding: var(--tooltip-arrow-height);
   margin: var(--tooltip-margin);
-  font-family: var(--moko-cassiopeia-font-family-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+  font-family: var(--font-family-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
   font-style: normal;
   font-weight: 400;
   line-height: 1.5;
@@ -6353,7 +6353,7 @@ textarea.form-control-lg {
   z-index: var(--popover-zindex);
   display: block;
   max-width: var(--popover-max-width);
-  font-family: var(--moko-cassiopeia-font-family-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+  font-family: var(--font-family-body, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
   font-style: normal;
   font-weight: 400;
   line-height: 1.5;
@@ -12238,8 +12238,8 @@ h5,
 .h5,
 h6,
 .h6 {
-  font-family: var(--moko-cassiopeia-font-family-headings, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
-  font-weight: var(--moko-cassiopeia-font-weight-headings, 700);
+  font-family: var(--font-family-headings, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji");
+  font-weight: var(--font-weight-headings, 700);
 }
 
 .display-1 {
@@ -12263,25 +12263,25 @@ h6,
 }
 
 a {
-  color: var(--moko-cassiopeia-color-link);
+  color: var(--color-link);
 }
 a:not([class]) {
   text-decoration: underline;
 }
 a:hover, a:focus {
-  color: var(--moko-cassiopeia-color-hover);
+  color: var(--color-hover);
 }
 a.navbar-brand {
-  color: var(--moko-cassiopeia-color-brand);
+  color: var(--color-brand);
 }
 
 .btn-primary {
-  background-color: var(--moko-cassiopeia-color-primary);
-  border-color: var(--moko-cassiopeia-color-primary);
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 .btn-primary:hover, .btn-primary:focus {
-  background-color: var(--moko-cassiopeia-color-hover);
-  border-color: var(--moko-cassiopeia-color-hover);
+  background-color: var(--color-hover);
+  border-color: var(--color-hover);
 }
 
 .btn-group {
@@ -12319,7 +12319,7 @@ dd {
 }
 
 th dd {
-  font-weight: var(--moko-cassiopeia-font-weight-normal, 400);
+  font-weight: var(--font-weight-normal, 400);
 }
 
 .com-contact__thumbnail {
@@ -12413,10 +12413,10 @@ meter {
 }
 
 .page-link {
-  color: var(--moko-cassiopeia-color-link);
+  color: var(--color-link);
 }
 .page-link:hover {
-  color: var(--moko-cassiopeia-color-link);
+  color: var(--color-link);
 }
 
 .pager .pagination {
@@ -12485,10 +12485,10 @@ meter {
   bottom: 1rem;
   z-index: 10000;
   padding: 0.5em;
-  color: var(--moko-cassiopeia-color-primary, hsl(220, 67%, 20%));
+  color: var(--color-primary, hsl(220, 67%, 20%));
   pointer-events: all;
   background-color: var(--white, hsl(0, 0%, 100%));
-  border: 1px solid var(--moko-cassiopeia-color-primary, hsl(220, 67%, 20%));
+  border: 1px solid var(--color-primary, hsl(220, 67%, 20%));
   border-radius: 0.25rem;
   opacity: 0;
   -webkit-transition: opacity 200ms ease-in;
@@ -12500,7 +12500,7 @@ meter {
 }
 .back-to-top-link:hover, .back-to-top-link:focus {
   color: var(--white, hsl(0, 0%, 100%));
-  background-color: var(--moko-cassiopeia-color-hover);
+  background-color: var(--color-hover);
   border-color: var(--white, hsl(0, 0%, 100%));
 }
 
@@ -12558,9 +12558,9 @@ meter {
 .footer {
   margin-top: 1em;
   color: hsl(0, 0%, 100%);
-  background-color: var(--moko-cassiopeia-color-primary);
-  background-image:  -o-linear-gradient(315deg, var(--moko-cassiopeia-color-hover) 0%, var(--moko-cassiopeia-color-primary) 100%) ;
-  background-image:  linear-gradient(135deg, var(--moko-cassiopeia-color-hover) 0%, var(--moko-cassiopeia-color-primary) 100%) ;
+  background-color: var(--color-primary);
+  background-image:  -o-linear-gradient(315deg, var(--color-hover) 0%, var(--color-primary) 100%) ;
+  background-image:  linear-gradient(135deg, var(--color-hover) 0%, var(--color-primary) 100%) ;
 }
 .footer .grid-child {
   -webkit-box-align: center;
@@ -12578,7 +12578,7 @@ meter {
   position: relative;
 }
 .footer .metismenu.mod-menu .mm-collapse {
-  background: var(--moko-cassiopeia-color-primary);
+  background: var(--color-primary);
 }
 @media (max-width: 991.98px) {
   .footer .grid-child {
@@ -12737,7 +12737,7 @@ fieldset > * {
   left: 0;
   right: auto;
   z-index: 900;
-  color: var(--moko-cassiopeia-color-link);
+  color: var(--color-link);
   background-color: rgba(255, 255, 255, 0.5);
   border: 1px solid #58595a;
   border-radius: 0.25rem;
@@ -12746,9 +12746,9 @@ fieldset > * {
 .container-header {
   position: relative;
   z-index: 10;
-  background-color: var(--moko-cassiopeia-color-primary);
-  background-image: -o-linear-gradient(225deg, var(--moko-cassiopeia-color-primary) 0%, var(--moko-cassiopeia-color-hover) 100%);
-  background-image: linear-gradient(-135deg, var(--moko-cassiopeia-color-primary) 0%, var(--moko-cassiopeia-color-hover) 100%);
+  background-color: var(--color-primary);
+  background-image: -o-linear-gradient(225deg, var(--color-primary) 0%, var(--color-hover) 100%);
+  background-image: linear-gradient(-135deg, var(--color-primary) 0%, var(--color-hover) 100%);
   -webkit-box-shadow: 0 5px 5px hsla(0, 0%, 0%, 0.03) inset;
           box-shadow: 0 5px 5px hsla(0, 0%, 0%, 0.03) inset;
 }
@@ -13192,7 +13192,7 @@ iframe {
 }
 
 .modal-title {
-  font-weight: var(--moko-cassiopeia-font-weight-normal, 400);
+  font-weight: var(--font-weight-normal, 400);
   line-height: 3rem;
 }
 
@@ -13310,8 +13310,8 @@ iframe {
 }
 .boxed .blog-item {
   background-color: hsl(0, 0%, 100%);
-  -webkit-box-shadow: 0 0 2px hsla(216, 13%, 23%, 0.1), 0 2px 5px hsla(216, 13%, 23%, 0.08), 0 5px 15px hsla(216, 13%, 23%, 0.08), inset 0 3px 0 var(--moko-cassiopeia-color-primary);
-          box-shadow: 0 0 2px hsla(216, 13%, 23%, 0.1), 0 2px 5px hsla(216, 13%, 23%, 0.08), 0 5px 15px hsla(216, 13%, 23%, 0.08), inset 0 3px 0 var(--moko-cassiopeia-color-primary);
+  -webkit-box-shadow: 0 0 2px hsla(216, 13%, 23%, 0.1), 0 2px 5px hsla(216, 13%, 23%, 0.08), 0 5px 15px hsla(216, 13%, 23%, 0.08), inset 0 3px 0 var(--color-primary);
+          box-shadow: 0 0 2px hsla(216, 13%, 23%, 0.1), 0 2px 5px hsla(216, 13%, 23%, 0.08), 0 5px 15px hsla(216, 13%, 23%, 0.08), inset 0 3px 0 var(--color-primary);
 }
 .boxed .blog-item .item-content {
   padding: 25px;
@@ -13909,7 +13909,7 @@ body:not(.has-sidebar-left) .site-grid .container-component {
 }
 .form-select[multiple] option:checked, [multiple].custom-select option:checked {
   color: hsl(0, 0%, 100%);
-  background-color: var(--moko-cassiopeia-color-primary) !important;
+  background-color: var(--color-primary) !important;
 }
 .form-select.form-select-success, .form-select-success.custom-select, .form-select.custom-select-success, .custom-select-success.custom-select {
   color: hsl(120, 32%, 39%);
@@ -13937,11 +13937,11 @@ body:not(.has-sidebar-left) .site-grid .container-component {
 .accordion .card-header {
   display: block;
   font-size: 1.25rem;
-  font-weight: var(--moko-cassiopeia-font-weight-headings, 700);
+  font-weight: var(--font-weight-headings, 700);
   line-height: 1.2;
 }
 .accordion .list-group-item {
-  color: var(--moko-cassiopeia-color-link);
+  color: var(--color-link);
 }
 
 .dropdown-menu {
@@ -14085,7 +14085,7 @@ body:not(.has-sidebar-left) .site-grid .container-component {
 .nav.nav-tabs .nav-link {
   position: relative;
   padding: 0.75em 1em;
-  color: var(--moko-cassiopeia-color-primary);
+  color: var(--color-primary);
   border: 0;
   border-top-right-radius: 0;
   border-top-left-radius: 0;
@@ -14111,7 +14111,7 @@ body:not(.has-sidebar-left) .site-grid .container-component {
   right: 0;
   height: 5px;
   content: "";
-  background-color: var(--moko-cassiopeia-color-primary);
+  background-color: var(--color-primary);
   opacity: 0.8;
 }
 

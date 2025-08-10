@@ -1,11 +1,15 @@
 <?php
-
 /**
  * @package     Joomla.Site
- * @subpackage  com_content
+ * @subpackage  Templates.moko-cassiopeia
+ * @file       \templates\moko-cassiopeia\html\com_content\article\toc-right.php
  *
- * @copyright   (C) 2006 Open Source Matters, Inc. <https://www.joomla.org>
+ * © 2025 Moko Consulting — All Rights Reserved
  * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ *
+ * Website: https://mokoconsulting.tech
+ * Email: hello@mokoconsulting.tech
+ * Phone: +1 (931) 279-6313
  */
 
 defined('_JEXEC') or die;
@@ -94,14 +98,23 @@ $isExpired         = !is_null($this->item->publish_down) && $this->item->publish
         if (!empty($this->item->pagination) && !$this->item->paginationposition && !$this->item->paginationrelative) :
             echo $this->item->pagination;
         endif;
-        ?>
-        <?php if (isset($this->item->toc)) :
-            echo $this->item->toc;
-        endif; ?>
-    <div itemprop="articleBody" class="com-content-article__body">
+    ?>
+<div itemprop="articleBody" class="com-content-article__body">
+    <div class="container-toc-right">
+        <?php
+        // Table of Contents header using template language string
 
-        <?php echo $this->item->text; ?>
-    </div>
+        echo '<h2>' . Text::_('TPL_MOKO-CASSIOPEIA_TOC') . '</h2>';
+    ?>
+
+    <nav id="toc" data-toggle="toc"></nav>
+</div>
+    <?php
+        echo $this->item->text;
+    ?>
+
+</div>
+
 
         <?php if ($info == 1 || $info == 2) : ?>
             <?php if ($useDefList) : ?>

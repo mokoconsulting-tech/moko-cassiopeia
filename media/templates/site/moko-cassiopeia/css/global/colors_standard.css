@@ -1,13 +1,82 @@
-:root, [data-bs-theme="light"] {
-  --moko-cassiopeia-color-primary: #112855;
-  --moko-cassiopeia-color-link: #224FAA;
-  --moko-cassiopeia-color-hover: #224FAA;
+/*!
+ * @package     Joomla.Site
+ * @subpackage  Templates.moko-cassiopeia
+ * @file        /media/templates/sote/moko-cassiopeia/css/global/colors_standard.css
+ *
+ * © 2025 Moko Consulting — All Rights Reserved
+ * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ *
+ * Website: https://mokoconsulting.tech
+ * Email: hello@mokoconsulting.tech
+ * Phone: +1 (931) 279-6313
+ */
 
-  --moko-cassiopeia-header-background-image: url('../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');
-  --moko-cassiopeia-header-background-position: auto;
-  --moko-cassiopeia-header-background-attachment: fixed;
-  --moko-cassiopeia-header-background-repeat: repeat;
-  --moko-cassiopeia-header-background-size: auto;
+:root, [data-bs-theme="light"] {
+  --color-primary: #112855;
+  --color-link: #224FAA;
+  --color-hover: #224FAA;
+
+  --header-background-image: url('../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');
+  --header-background-attachment: fixed;
+  --header-background-repeat: repeat;
+  --header-background-size: auto;
+
+  --container-below-topbar-bg-image: url('../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');
+  --container-below-topbar-bg-color: gray;
+  --container-below-topbar-bg-position: auto;
+  --container-below-topbar-bg-attachment: fixed;
+  --container-below-topbar-bg-repeat: repeat;
+  --container-below-topbar-bg-size: auto;
+  --container-below-topbar-border: 0px solid black;
+  --container-below-topbar-border-radius: 5px;
+
+  --container-top-a-bg-image: url('../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');
+  --container-top-a-bg-color: gray;
+  --container-top-a-bg-position: auto;
+  --container-top-a-bg-attachment: fixed;
+  --container-top-a-bg-repeat: repeat;
+  --container-top-a-bg-size: auto;
+  --container-top-a-border: 1px solid black;
+  --container-top-a-border-radius: 5px;
+
+  --container-top-b-bg-image: url('../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');
+  --container-top-b-bg-color: gray;
+  --container-top-b-bg-position: auto;
+  --container-top-b-bg-attachment: fixed;
+  --container-top-b-bg-repeat: repeat;
+  --container-top-b-bg-size: auto;
+  --container-top-b-border: 1px solid black;
+  --container-top-b-border-radius: 5px;
+
+  --container-toc-bg: white;
+  --container-toc-color: var(--color-primary);
+
+  --container-sidebar-bg-image: url('../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');
+  --container-sidebar-bg-color: gray;
+  --container-sidebar-bg-position: auto;
+  --container-sidebar-bg-attachment: scroll;
+  --container-sidebar-bg-repeat: repeat;
+  --container-sidebar-bg-size: auto;
+  --container-sidebar-border: 1px solid black;
+  --container-sidebar-border-radius: 5px;
+
+  --container-bottom-a-bg-image: url('../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');
+  --container-bottom-a-bg-color: gray;
+  --container-bottom-a-bg-position: auto;
+  --container-bottom-a-bg-attachment: fixed;
+  --container-bottom-a-bg-repeat: repeat;
+  --container-bottom-a-bg-size: auto;
+  --container-bottom-a-border: 1px solid black;
+  --container-bottom-a-border-radius: 5px;
+
+  --container-bottom-b-bg-image: url('../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');
+  --container-bottom-b-bg-color: gray;
+  --container-bottom-b-bg-position: auto;
+  --container-bottom-b-bg-attachment: fixed;
+  --container-bottom-b-bg-repeat: repeat;
+  --container-bottom-b-bg-size: auto;
+  --container-bottom-b-border: 1px solid black;
+  --container-bottom-b-border-radius: 5px;
 
   --nav-text-color: white;
   --nav-bg-color: #224FAA;

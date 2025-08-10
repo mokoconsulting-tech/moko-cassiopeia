@@ -392,14 +392,14 @@
 .choices__list--multiple .choices__item {
   position: relative;
   margin: 2px;
-  background-color: var(--moko-cassiopeia-color-primary);
+  background-color: var(--color-primary);
   -webkit-margin-end: 2px;
           margin-inline-end: 2px;
   border: 0;
   border-radius: 0.25rem;
 }
 .choices__list--multiple .choices__item.is-highlighted {
-  background-color: var(--moko-cassiopeia-color-primary);
+  background-color: var(--color-primary);
   opacity: 0.9;
 }
 

@@ -43,9 +43,9 @@ body {
 footer {
   padding: 0 6em;
   color: hsl(0, 0%, 100%);
-  background-color: var(--moko-cassiopeia-color-primary);
-  background-image: -o-linear-gradient(315deg, var(--moko-cassiopeia-color-primary) 0%, var(--moko-cassiopeia-color-hover) 100%);
-  background-image: linear-gradient(135deg, var(--moko-cassiopeia-color-primary) 0%, var(--moko-cassiopeia-color-hover) 100%);
+  background-color: var(--color-primary);
+  background-image: -o-linear-gradient(315deg, var(--color-primary) 0%, var(--color-hover) 100%);
+  background-image: linear-gradient(135deg, var(--color-primary) 0%, var(--color-hover) 100%);
   border-radius: 5px 5px 0 0;
 }
 .footer{
@@ -71,14 +71,14 @@ footer {
   margin: 0;
   color: hsl(0, 0%, 100%);
   text-align: center;
-  background-color: var(--moko-cassiopeia-color-primary);
-  background-image: -o-linear-gradient(315deg, var(--moko-cassiopeia-color-primary) 0%, var(--moko-cassiopeia-color-hover) 100%);
-  background-image: linear-gradient(135deg, var(--moko-cassiopeia-color-primary) 0%, var(--moko-cassiopeia-color-hover) 100%);
+  background-color: var(--color-primary);
+  background-image: -o-linear-gradient(315deg, var(--color-primary) 0%, var(--color-hover) 100%);
+  background-image: linear-gradient(135deg, var(--color-primary) 0%, var(--color-hover) 100%);
   border-radius: 5px 5px 0 0;
 }
 [dir=rtl] .header {
-  background-image: -o-linear-gradient(315deg, var(--moko-cassiopeia-color-hover) 0%, var(--moko-cassiopeia-color-primary) 100%);
-  background-image: linear-gradient(135deg, var(--moko-cassiopeia-color-hover) 0%, var(--moko-cassiopeia-color-primary) 100%);
+  background-image: -o-linear-gradient(315deg, var(--color-hover) 0%, var(--color-primary) 100%);
+  background-image: linear-gradient(135deg, var(--color-hover) 0%, var(--color-primary) 100%);
 }
 
 .login {
