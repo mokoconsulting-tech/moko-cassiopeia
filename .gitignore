@@ -69,4 +69,5 @@ sync.ffs_db
 
 #Custom CSS Brands
 /media/templates/site/moko-cassiopeia/css/global/colors_custom_*.css
-/updates/*
+/updates
+/updates
