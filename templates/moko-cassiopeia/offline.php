@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package     Joomla.Site
  * @subpackage  Templates.moko-cassiopeia
@@ -259,3 +260,4 @@ if ($app->get('offline_image')){
     <jdoc:include type="modules" name="debug" style="none" />
 </body>
 </html>
+

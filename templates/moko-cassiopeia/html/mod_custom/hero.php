@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  mod_custom
@@ -30,3 +31,4 @@ if ($params->get('backgroundimage')) {
         <?php echo $module->content; ?>
     </div>
 </div>
+

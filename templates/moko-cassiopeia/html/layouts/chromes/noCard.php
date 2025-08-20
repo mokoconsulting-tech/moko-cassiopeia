@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  Templates.Moko-Cassiopeia
@@ -51,3 +52,4 @@ $header = '<' . $headerTag . ' ' . ArrayHelper::toString($headerAttribs) . '>' .
     <?php endif; ?>
     <?php echo $module->content; ?>
 </<?php echo $moduleTag; ?>>
+

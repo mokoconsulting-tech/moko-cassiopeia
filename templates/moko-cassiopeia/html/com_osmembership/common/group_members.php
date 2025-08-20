@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -23,3 +24,4 @@ foreach ($rowMembers as $rowMember)
 }
 
 echo implode("\r\n", $names);
+

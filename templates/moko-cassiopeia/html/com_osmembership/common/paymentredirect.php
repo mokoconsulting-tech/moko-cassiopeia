@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -32,3 +33,4 @@ defined('_JEXEC') or die;
         document.payment_form.submit();
 	</script>
 </form>
+

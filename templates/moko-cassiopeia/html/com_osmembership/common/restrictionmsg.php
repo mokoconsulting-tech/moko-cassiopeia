@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -26,4 +27,5 @@ if (isset($introText))
 <div class="text-info">
 	<?php echo $msg; ?>
 </div>
+
 

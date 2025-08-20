@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -71,3 +72,4 @@ $controlsClass     = $bootstrapHelper->getClassMapping('controls');
 		<?php echo $editor->display('third_reminder_email_body', $this->item->third_reminder_email_body, '100%', '250', '75', '8'); ?>
 	</div>
 </div>
+

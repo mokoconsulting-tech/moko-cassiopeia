@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  com_content
@@ -345,3 +346,4 @@ $currentDate = Factory::getDate()->format('Y-m-d H:i:s');
         <input type="hidden" name="task" value="">
     </div>
 </form>
+

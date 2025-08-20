@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -41,3 +42,4 @@ use Joomla\CMS\Router\Route;
 	}
 	?>
 </div>
+

@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  com_content
@@ -29,3 +30,4 @@ $wa->usePreset('com_categories.shared-categories-accordion');
         echo $this->loadTemplate('items');
     ?>
 </div>
+

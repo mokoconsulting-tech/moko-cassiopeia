@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -125,3 +126,4 @@ $symbol          = $item->currency_symbol ?: $item->currency;
 	}
 	?>
 </table>
+

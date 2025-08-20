@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -64,5 +65,6 @@ else
 {
 	echo Text::_('OSM_FREE') . ($subscriptionLengthText ? "<sub> /$subscriptionLengthText</sub>" : '');
 }
+
 
 

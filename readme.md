@@ -11,13 +11,13 @@ A modern, lightweight enhancement layer for Joomla’s Cassiopeia template. Moko
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [Configuration](#configuration)
-  - [Global Params](#global-params)
-  - [Font Awesome 6](#font-awesome-6)
-  - [Bootstrap 5 Helpers](#bootstrap-5-helpers)
-  - [TOC Function](#toc-function)
-  - [Moko Expansions](#moko-expansions)
-    - [Google Tag Manager](#google-tag-manager)
-    - [Google Analytics (GA4)](#google-analytics-ga4)
+	- [Global Params](#global-params)
+	- [Font Awesome 6](#font-awesome-6)
+	- [Bootstrap 5 Helpers](#bootstrap-5-helpers)
+	- [TOC Function](#toc-function)
+	- [Moko Expansions](#moko-expansions)
+		- [Google Tag Manager](#google-tag-manager)
+		- [Google Analytics (GA4)](#google-analytics-ga4)
 - [CSS Variables](#css-variables)
 - [Usage Examples](#usage-examples)
 - [Best Practices](#best-practices)
@@ -33,8 +33,8 @@ A modern, lightweight enhancement layer for Joomla’s Cassiopeia template. Moko
 - **Bootstrap 5**: Utility classes, grid, and components available to your layouts and modules.
 - **Auto TOC**: Generate an in‑page Table of Contents from headings with a single data attribute.
 - **Moko Expansions**:
-  - **GTM**: Drop‑in dataLayer and container injection with a template param.
-  - **GA4**: Native GA4 Measurement ID support (with or without GTM).
+	- **GTM**: Drop‑in dataLayer and container injection with a template param.
+	- **GA4**: Native GA4 Measurement ID support (with or without GTM).
 - **Production‑safe**: Assets loaded conditionally; no duplicate library loads if another extension already enqueues them.
 - **Accessible by default**: TOC anchors and focus styles follow a11y guidelines.
 
@@ -89,10 +89,10 @@ If 'load\_bootstrap5' is enabled, grid and utilities are available:
 
 ```html
 <div class='container'>
-  <div class='row g-3'>
-    <div class='col-12 col-md-6'>Left</div>
-    <div class='col-12 col-md-6'>Right</div>
-  </div>
+	<div class='row g-3'>
+		<div class='col-12 col-md-6'>Left</div>
+		<div class='col-12 col-md-6'>Right</div>
+	</div>
 </div>
 ```
 
@@ -114,10 +114,10 @@ Moko-Cassiopeia ships a tiny script that scans within a container for headings (
 
 ```html
 <article id='article-body'>
-  <h2>Section A</h2>
-  <p>...</p>
-  <h3>Subsection A.1</h3>
-  <p>...</p>
+	<h2>Section A</h2>
+	<p>...</p>
+	<h3>Subsection A.1</h3>
+	<p>...</p>
 </article>
 ```
 
@@ -143,13 +143,13 @@ You can push events from modules or overrides like so:
 
 ```html
 <script>
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({
-    'event': 'moko_event',
-    'moko_category': 'ui',
-    'moko_action': 'toc_opened',
-    'moko_label': 'sidebar'
-  });
+	window.dataLayer = window.dataLayer || [];
+	window.dataLayer.push({
+		'event': 'moko_event',
+		'moko_category': 'ui',
+		'moko_action': 'toc_opened',
+		'moko_label': 'sidebar'
+	});
 </script>
 ```
 
@@ -163,8 +163,8 @@ Two options:
 
 ```html
 <script>
-  window.dataLayer = window.dataLayer || [];
-  window.dataLayer.push({ 'event': 'page_view' });
+	window.dataLayer = window.dataLayer || [];
+	window.dataLayer.push({ 'event': 'page_view' });
 </script>
 ```
 
@@ -176,15 +176,15 @@ Moko-Cassiopeia exposes custom properties for theme tuning. Example set:
 
 ```css
 :root {
-  --moko-cassiopeia-color-primary: #0b4008;
-  --moko-cassiopeia-color-link: #0b4008;
-  --moko-cassiopeia-color-hover: #000000;
+	--moko-cassiopeia-color-primary: #0b4008;
+	--moko-cassiopeia-color-link: #0b4008;
+	--moko-cassiopeia-color-hover: #000000;
 
-  --moko-cassiopeia-header-background-image: linear-gradient(30deg, #fefcf9, var(--accent-color-primary));
-  --moko-cassiopeia-header-background-position: auto;
-  --moko-cassiopeia-header-background-attachment: fixed;
-  --moko-cassiopeia-header-background-repeat: repeat;
-  --moko-cassiopeia-header-background-size: auto;
+	--moko-cassiopeia-header-background-image: linear-gradient(30deg, #fefcf9, var(--accent-color-primary));
+	--moko-cassiopeia-header-background-position: auto;
+	--moko-cassiopeia-header-background-attachment: fixed;
+	--moko-cassiopeia-header-background-repeat: repeat;
+	--moko-cassiopeia-header-background-size: auto;
 }
 ```
 
@@ -196,8 +196,8 @@ Moko-Cassiopeia exposes custom properties for theme tuning. Example set:
 
 ```html
 <a class='btn btn-primary d-inline-flex align-items-center' href='#'>
-  <i class='fa-solid fa-bolt me-2' aria-hidden='true'></i>
-  <span>Action</span>
+	<i class='fa-solid fa-bolt me-2' aria-hidden='true'></i>
+	<span>Action</span>
 </a>
 ```
 
@@ -205,7 +205,7 @@ Moko-Cassiopeia exposes custom properties for theme tuning. Example set:
 
 ```html
 <aside class='position-sticky top-0 pt-3'>
-  <nav class='toc' data-moko-toc='true' data-moko-toc-target='#content'></nav>
+	<nav class='toc' data-moko-toc='true' data-moko-toc-target='#content'></nav>
 </aside>
 ```
 
@@ -217,7 +217,7 @@ Moko-Cassiopeia exposes custom properties for theme tuning. Example set:
 $label = 'cta_hero';
 ?>
 <button class='btn btn-outline-primary' onclick='window.dataLayer && window.dataLayer.push({"event": "cta_click", "label": "<?php echo $label; ?>"})'>
-  Click me
+	Click me
 </button>
 ```
 
@@ -234,7 +234,7 @@ $label = 'cta_hero';
 ## Development
 
 - Source structure follows Joomla template conventions:
-  - '/css', '/js', '/images', '/html' (overrides), 'templateDetails.xml'
+	- '/css', '/js', '/images', '/html' (overrides), 'templateDetails.xml'
 - Scripts are enqueued via the template's 'index.php' with conditional params.
 - Build/compile steps (if using bundlers) are noted in 'package.json' (when applicable).
 
@@ -245,7 +245,8 @@ $label = 'cta_hero';
 
 ## Changelog
 
-- 1.0.0: Initial public release with FA6, BS5, TOC, GTM/GA hooks.
+- 1.15: Added CSS theme seletor (dark/light)
+- 1.00: Initial public release with FA6, BS5, TOC, GTM/GA hooks.
 
 ## License
 

@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  com_content
@@ -81,3 +82,4 @@ $groups = $user->getAuthorisedViewLevels();
         <?php endif; ?>
     <?php endforeach; ?>
 <?php endif; ?>
+

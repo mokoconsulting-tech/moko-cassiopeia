@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -34,3 +35,4 @@ $pullLeftClass = $this->bootstrapHelper->getClassMapping('pull-left');
 		echo $this->pagination->getLimitBox();
 	?>
 </div>
+

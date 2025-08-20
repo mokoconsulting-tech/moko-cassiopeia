@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -30,3 +31,4 @@ foreach ($form->getFieldset() as $field)
 {
 	echo $field->input;
 }
+

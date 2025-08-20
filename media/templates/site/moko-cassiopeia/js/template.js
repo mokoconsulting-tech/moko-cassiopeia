@@ -1,3 +1,4 @@
+/* MOKO-COPYRIGHT: © 2025-08-10 Jonathan Miller || Moko Consulting — https://mokoconsulting.tech */
 /**
  * @package     Joomla.Site
  * @subpackage  Templates.Moko-Cassiopeia
@@ -72,3 +73,4 @@ Joomla = window.Joomla || {};
   document.addEventListener('joomla:updated', initTemplate);
 
 })(Joomla, document);
+

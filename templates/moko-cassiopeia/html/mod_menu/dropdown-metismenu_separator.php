@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  mod_menu
@@ -57,3 +58,4 @@ if ($showAll && $item->deeper) {
 } else {
     echo '<span ' . ArrayHelper::toString($attributes) . '>' . $linktype . '</span>';
 }
+

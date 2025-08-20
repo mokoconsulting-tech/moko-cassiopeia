@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -219,3 +220,4 @@ foreach ($this->languages as $language)
 }
 
 echo HTMLHelper::_('bootstrap.endTabSet');
+

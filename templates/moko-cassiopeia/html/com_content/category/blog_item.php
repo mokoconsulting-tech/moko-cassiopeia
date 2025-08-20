@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  com_content
@@ -97,4 +98,5 @@ $isUnpublished = ($this->item->state == ContentComponent::CONDITION_UNPUBLISHED 
     <?php echo $this->item->event->afterDisplayContent; ?>
 </div>
 </section>
+
 

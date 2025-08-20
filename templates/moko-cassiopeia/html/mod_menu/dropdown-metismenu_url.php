@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  mod_menu
@@ -72,3 +73,4 @@ echo HTMLHelper::link(OutputFilter::ampReplace(htmlspecialchars($item->flink, EN
 if ($showAll && $item->deeper) {
     echo '<button class="mm-collapsed mm-toggler mm-toggler-link" aria-haspopup="true" aria-expanded="false" aria-label="' . $item->title . '"></button>';
 }
+

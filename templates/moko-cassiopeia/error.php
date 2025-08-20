@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package     Joomla.Site
  * @subpackage  Templates.moko-cassiopeia
@@ -228,3 +229,4 @@ $wa->getAsset('style', 'fontawesome')->setAttribute('rel', 'lazy-stylesheet');
     <jdoc:include type="modules" name="debug" style="none" />
 </body>
 </html>
+

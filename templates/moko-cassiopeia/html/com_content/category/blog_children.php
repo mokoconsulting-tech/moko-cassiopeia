@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  com_content
@@ -82,3 +83,4 @@ if ($this->maxLevel != 0 && count($this->children[$this->category->id]) > 0) : ?
     <?php endforeach; ?>
 
 <?php endif;
+

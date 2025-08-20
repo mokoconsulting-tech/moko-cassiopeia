@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -42,3 +43,4 @@ $controlsClass     = $bootstrapHelper->getClassMapping('controls');
         <?php echo $editor->display('card_layout', $this->item->card_layout, '100%', '550', '75', '8') ;?>
     </div>
 </div>
+

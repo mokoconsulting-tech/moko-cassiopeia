@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -169,3 +170,4 @@ if ($this->item->id && !$this->item->recurring_subscription)
         <textarea name="conversion_tracking_code" class="form-control input-large" rows="10"><?php echo $this->item->conversion_tracking_code;?></textarea>
     </div>
 </div>
+

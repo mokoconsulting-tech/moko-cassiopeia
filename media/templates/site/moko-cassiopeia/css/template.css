@@ -1,3 +1,4 @@
+/* MOKO-COPYRIGHT: © 2025-08-10 Jonathan Miller  — | Moko Consulting|https://mokoconsulting.tech */
 @charset "UTF-8";
 /*!
  * @package     Joomla.Site
@@ -14255,6 +14256,12 @@ th dd {
 
 .com-contact__thumbnail {
 	text-align: left;
+	margin: 2em;
+	padding:1rem;
+}
+
+[data-bs-theme='dark'] .com-contact__thumbnail {
+	background-color: var(--nav-text-color);
 }
 
 @media (min-width: 1200px) {
@@ -14289,9 +14296,8 @@ th dd {
 	}
 
 	.com-contact__container .com-contact__thumbnail {
-		grid-column: 3/5;
+		grid-column: 1/5;
 		grid-row: 2/5;
-		margin-bottom: 1em;
 		text-align: right;
 	}
 
@@ -15403,7 +15409,7 @@ iframe {
 }
 
 .boxed .blog-item {
-	background-color: hsl(0, 0%, 100%);
+	background-color: var(--bs-body-bg);
 }
 
 .boxed .blog-item figure.item-image {
@@ -15944,7 +15950,7 @@ body.wrapper-fluid header>.grid-child {
 }
 
 footer .grid-child>div {
-	padding: 0 4em;
+	padding: 1rem 4em;
 }
 
 header .grid-child .navbar-brand {
@@ -17301,3 +17307,4 @@ form .form-select {
 	border-radius: var(--container-bottom-b-border-radius);
 	border: var(--container-bottom-b-border);
 }
+

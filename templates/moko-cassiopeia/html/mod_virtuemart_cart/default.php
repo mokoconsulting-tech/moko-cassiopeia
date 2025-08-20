@@ -1,5 +1,6 @@
 <?php
 
+
 defined('_JEXEC') or die('Restricted access');
 
 \Joomla\CMS\HTML\HTMLHelper::_('bootstrap.dropdown');

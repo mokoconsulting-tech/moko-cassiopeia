@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package   AkeebaEngage
  * @copyright Copyright (c)2020-2025 Nicholas K. Dionysopoulos / Akeeba Ltd

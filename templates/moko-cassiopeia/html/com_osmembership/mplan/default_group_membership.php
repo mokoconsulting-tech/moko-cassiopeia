@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -41,3 +42,4 @@ $controlsClass     = $bootstrapHelper->getClassMapping('controls');
 		<?php echo $this->lists['number_members_field']; ?>
 	</div>
 </div>
+

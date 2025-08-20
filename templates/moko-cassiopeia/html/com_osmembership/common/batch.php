@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -31,3 +32,4 @@ $message = "alert(Joomla.JText._('JLIB_HTML_PLEASE_MAKE_A_SELECTION_FROM_THE_LIS
 	<span class="icon-checkbox-partial" aria-hidden="true"></span>
 	<?php echo $title; ?>
 </button>
+

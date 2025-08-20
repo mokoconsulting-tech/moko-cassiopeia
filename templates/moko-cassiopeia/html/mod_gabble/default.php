@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package Tabaoca.Component.Gabble.Site
  * @subpackage mod_gabble
@@ -33,7 +34,7 @@ if ( !$currentuser->get("id")){
 				</div>
 			</div>
 		</div>';
-   
+
    return;
 
 }
@@ -41,7 +42,7 @@ if ( !$currentuser->get("id")){
 $input = $app->input;
 
 if ($input->get('option') == 'com_gabble') {
-	
+
 	echo '<div class="content">
 			<div id="mod_gabble">
 				<div id="mod_lists_gabble">
@@ -50,9 +51,9 @@ if ($input->get('option') == 'com_gabble') {
 				</div>
 			</div>
 		</div>';
-	
+
 	return;
-	
+
 }
 
 $document->addScript('media/com_gabble/js/gabble_com.js');
@@ -60,16 +61,16 @@ $document->addScript('media/com_gabble/js/gabble_com.js');
 ?>
 
 <div class="content">
-	
+
 	<div id="mod_gabble">
-	
+
 		<div id="list_windows" class="list-windows"></div>
 		<div id="main_windows" class="main-windows"></div>
-		
+
 		<div id="lists_gabble">
 
 			<div id="select_list" class="row">
-				
+
 				<div class="col-md-4 notifications" title="<?php echo Text::_('COM_GABBLE_CHATS'); ?>">
 					<button id="list_chats" class="button_list" title="Chats" onclick="select_list(1);"><i class="icon-comments-2"></i></button>
 					<div id="n_notifications" class="n-notifications" title="Users" hidden=""></div>
@@ -80,9 +81,9 @@ $document->addScript('media/com_gabble/js/gabble_com.js');
 				<div class="col-md-4" title="<?php echo Text::_('COM_GABBLE_GABBLE_CHAT'); ?>">
 					<button id="btn_gabble" class="button_list" onclick="window.location.href = &quot;<?php echo Uri::root().'index.php?option=com_gabble&view=gabble'; ?>&quot;;"><i class="icon-expand-2"></i></button>
 				</div>
-				
+
 			</div>
-				
+
 			<div id="options_list" hidden="">
 				<select id="users_list" name="users_list" onchange="select_list(2);">
 					<option value="0"><?php echo Text::_('COM_GABBLE_USERS_ON'); ?></option>
@@ -139,9 +140,9 @@ $document->addScript('media/com_gabble/js/gabble_com.js');
 			<div id="openai_btn" title="OpenAi GPT" onclick="open_user(0); event.stopPropagation();">
 				<img src="<?php echo Uri::root() . "media/com_gabble/images/logo_openai.png"; ?>" alt="OpenAI GPT">
 			</div>
-			
+
 		</div>
-		
+
 	</div>
 
 	<input type="hidden" id="gabble_type" value="mod">
@@ -151,8 +152,9 @@ $document->addScript('media/com_gabble/js/gabble_com.js');
 
 	<input type="hidden" id="openai_gpt" value="<?php echo $config->get('openai_gpt'); ?>">
 	<input type="hidden" id="openai_gpt_name" value="<?php echo $config->get('openai_gpt_name'); ?>">
-	
+
 
 </div>
 
 <p style="text-align:right;" ><?php echo Text::_('COM_GABBLE_POWERED');?> <a href="https://tabaoca.org">Tabaoca</a></p>
+

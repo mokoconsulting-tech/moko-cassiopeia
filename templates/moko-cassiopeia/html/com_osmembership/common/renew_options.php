@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -125,3 +126,4 @@ use Joomla\CMS\Language\Text;
 <div class="form-actions">
 	<input type="submit" class="<?php echo $this->bootstrapHelper->getClassMapping('btn btn-primary'); ?>" value="<?php echo Text::_('OSM_PROCESS_RENEW'); ?>"/>
 </div>
+

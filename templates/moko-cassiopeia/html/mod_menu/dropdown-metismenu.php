@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  mod_menu
@@ -106,3 +107,4 @@ $start = (int) $params->get('startLevel', 1);
     endswitch;
 }
 ?></ul>
+

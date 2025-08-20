@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  com_content
@@ -23,3 +24,4 @@ use Joomla\Component\Content\Site\Helper\RouteHelper;
         </li>
     <?php endforeach; ?>
 </ol>
+

@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  mod_menu
@@ -24,3 +25,4 @@ HTMLHelper::_('bootstrap.collapse');
         <?php require __DIR__ . '/dropdown-metismenu.php'; ?>
     </div>
 </nav>
+

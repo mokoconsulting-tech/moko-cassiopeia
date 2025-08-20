@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -52,3 +53,4 @@ for ($i = 0 , $n = count($items) ; $i < $n ; $i++)
 	</div>
 <?php
 }
+

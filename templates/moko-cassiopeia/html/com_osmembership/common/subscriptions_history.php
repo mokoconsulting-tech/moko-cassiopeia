@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -171,4 +172,5 @@ $hiddenPhoneClass = $bootstrapHelper->getClassMapping('hidden-phone');
 	}
 	?>
 </table>
+
 

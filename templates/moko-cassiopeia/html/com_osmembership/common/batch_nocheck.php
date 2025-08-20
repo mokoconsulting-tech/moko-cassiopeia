@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package            Joomla
  * @subpackage         Membership Pro
@@ -20,3 +21,4 @@ defined('_JEXEC') or die;
 	<span class="icon-checkbox-partial" aria-hidden="true"></span>
 	<?php echo $title; ?>
 </button>
+

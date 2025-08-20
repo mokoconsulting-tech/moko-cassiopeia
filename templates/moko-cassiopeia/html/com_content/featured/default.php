@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  com_content
@@ -71,3 +72,4 @@ defined('_JEXEC') or die;
     <?php endif; ?>
 
 </div>
+

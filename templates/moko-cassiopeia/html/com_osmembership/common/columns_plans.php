@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -111,9 +112,9 @@ foreach ($items as $item)
 				if ($item->thumb)
 				{
 				?>
-				<a href="<?php echo $url; ?>" title="<?php echo $item->title; ?>">	
+				<a href="<?php echo $url; ?>" title="<?php echo $item->title; ?>">
 					<img src="<?php echo $imgSrc; ?>" class="osm-thumb-left <?php echo $imgClass; ?>" />
-				</a>	
+				</a>
 				<?php
 				}
 

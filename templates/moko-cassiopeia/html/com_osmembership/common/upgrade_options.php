@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -44,3 +45,4 @@ use Joomla\CMS\Language\Text;
 	}
 	?>
 </ul>
+

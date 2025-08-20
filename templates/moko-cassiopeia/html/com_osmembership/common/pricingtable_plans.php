@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -257,3 +258,4 @@ if ($i % $numberColumns != 0)
 {
 	echo '</div>' ;
 }
+

@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  com_content
@@ -21,3 +22,4 @@ echo LayoutHelper::render('joomla.content.category_default', $this);
 ?>
 
 </div>
+

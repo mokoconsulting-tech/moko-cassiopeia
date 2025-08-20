@@ -1,5 +1,6 @@
 <?php
 
+
 /**
  * @package     Joomla.Site
  * @subpackage  Layout
@@ -84,3 +85,4 @@ $header = '<' . $headerTag . ' ' . ArrayHelper::toString($headerAttribs) . '>' .
 	<?php endif; ?>
 	<?php echo $module->content; ?>
 </<?php echo $moduleTag; ?>>
+

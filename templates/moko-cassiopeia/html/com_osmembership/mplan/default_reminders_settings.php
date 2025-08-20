@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -58,3 +59,4 @@ $controlsClass     = $bootstrapHelper->getClassMapping('controls');
 		}
 	?>
 </fieldset>
+

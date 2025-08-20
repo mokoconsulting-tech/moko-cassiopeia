@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -162,3 +163,4 @@ if ((int)$this->item->expired_date)
         <?php echo $editor->display('description', $this->item->description, '100%', '250', '75', '10') ; ?>
     </div>
 </div>
+

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package   AkeebaEngage
  * @copyright Copyright (c)2020-2025 Nicholas K. Dionysopoulos / Akeeba Ltd
@@ -282,3 +283,4 @@ $bsCommentStateClass =  ($comment->enabled == 1) ? 'secondary' : (($comment->ena
 		</li>
 	<?php endif; ?>
 <?php endfor; ?>
+

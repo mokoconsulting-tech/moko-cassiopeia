@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @package        Joomla
  * @subpackage     Membership Pro
@@ -137,3 +138,4 @@ OSMembershipHelperHtml::addJSStrings($keys);
         <input type="hidden" id="recurring" name="recurring" value="<?php echo (int) $this->item->recurring_subscription;?>" />
     </form>
 </div>
+
