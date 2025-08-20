@@ -51,8 +51,7 @@ Thumbs.db
 *.sublime-project
 *.sublime-workspace
 sftp-config*.json
-sync.ffs_db
-*.ffs_gui
+*.ffs*
 
 # Editor and IDE files
 .vscode/
