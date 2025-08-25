@@ -48,8 +48,7 @@ desktop.ini
 .DS_Store
 Thumbs.db
 .idea/
-*.sublime-project
-*.sublime-workspace
+*.sublime*
 sftp-config*.json
 *.ffs*
 
@@ -59,10 +58,8 @@ sftp-config*.json
 
 # Other
 *.lock
+upgrade.unlock
 *conf*.php
-*.back
+*.back*
+*.bak*
 *.old
-
-#Custom CSS Brands
-/media/templates/site/moko-cassiopeia/css/global/colors_custom_*.css
-/updates
