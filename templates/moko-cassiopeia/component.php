@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * @package     Joomla.Site
  * @subpackage  Templates.Moko-Cassiopeia
@@ -48,7 +47,7 @@ if ($paramsFontScheme) {
 }
 
 // Enable assets
-$wa->usePreset('template.MOKO-CASSIOPEIA.' . ($this->direction === 'rtl' ? 'rtl' : 'ltr'))
+$wa->usePreset('template.moko-cassiopeia.' . ($this->direction === 'rtl' ? 'rtl' : 'ltr'))
     ->useStyle('template.active.language')
     ->useStyle('template.user')
     ->useScript('template.user')
@@ -64,7 +63,7 @@ $wa->usePreset('template.MOKO-CASSIOPEIA.' . ($this->direction === 'rtl' ? 'rtl'
 
 
 // Override 'template.active' asset to set correct ltr/rtl dependency
-$wa->registerStyle('template.active', '', [], [], ['template.MOKO-CASSIOPEIA.' . ($this->direction === 'rtl' ? 'rtl' : 'ltr')]);
+$wa->registerStyle('template.active', '', [], [], ['template.moko-cassiopeia.' . ($this->direction === 'rtl' ? 'rtl' : 'ltr')]);
 
 // Browsers support SVG favicons
 $this->addHeadLink(HTMLHelper::_('image', 'joomla-favicon.svg', '', [], true, 1), 'icon', 'rel', ['type' => 'image/svg+xml']);
@@ -87,4 +86,3 @@ $wa->getAsset('style', 'fontawesome')->setAttribute('rel', 'lazy-stylesheet');
     <jdoc:include type="component" />
 </body>
 </html>
-

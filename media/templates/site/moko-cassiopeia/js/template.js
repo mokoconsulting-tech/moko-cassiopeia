@@ -1,76 +1,120 @@
-/* MOKO-COPYRIGHT: © 2025-08-10 Jonathan Miller || Moko Consulting — https://mokoconsulting.tech */
 /**
+ * template.js — Custom JavaScript for the Moko Cassiopeia Joomla template
+ *
  * @package     Joomla.Site
  * @subpackage  Templates.Moko-Cassiopeia
- * @copyright   (C) 2017 Open Source Matters, Inc. <https://www.joomla.org>
- * @license     GNU General Public License version 2 or later; see LICENSE.txt
- * @since       4.0.0
+ * @file        /media/templates/site/moko-cassiopeia/js/template.js
+ * @version     2.0
+ *
+ * @copyright   (C) 2025 Moko Consulting
+ * @author      Jonathan Miller
+ * @website     https://mokoconsulting.tech
+ * @email       hello@mokoconsulting.tech
+ * @phone       +1 (931) 279-6313
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * This file is part of a Moko Consulting project.
+ *
+ * This program is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-Joomla = window.Joomla || {};
+(function (win, doc) {
+	"use strict";
 
-(function(Joomla, document) {
-  'use strict';
+	/**
+	 * Utility: smooth scroll to top
+	 */
+	function backToTop() {
+		win.scrollTo({ top: 0, behavior: "smooth" });
+	}
 
-  function initTemplate(event) {
-    var target = event && event.target ? event.target : document;
+	/**
+	 * Utility: toggle body class on scroll for sticky header styling
+	 */
+	function handleScroll() {
+		if (win.scrollY > 50) {
+			doc.body.classList.add("scrolled");
+		} else {
+			doc.body.classList.remove("scrolled");
+		}
+	}
 
-    /**
-     * Prevent clicks on buttons within a disabled fieldset
-     */
-    var fieldsets = target.querySelectorAll('fieldset.btn-group');
-    for (var i = 0; i < fieldsets.length; i++) {
-      var self = fieldsets[i];
-      if (self.getAttribute('disabled') ===  true) {
-        self.style.pointerEvents = 'none';
-        var btns = self.querySelectorAll('.btn');
-        for (var ib = 0; ib < btns.length; ib++) {
-          btns[ib].classList.add('disabled');
-        }
-      }
-    }
-  }
+	/**
+	 * Initialize Bootstrap TOC if #toc element exists.
+	 * Requires bootstrap-toc.min.js to be loaded.
+	 */
+	function initTOC() {
+		if (typeof win.Toc === "function" && doc.querySelector("#toc")) {
+			win.Toc.init({
+				$nav: $("#toc"),
+				$scope: $("main")
+			});
+		}
+	}
 
-  document.addEventListener('DOMContentLoaded', function (event) {
-    initTemplate(event);
+	/**
+	 * Initialize offcanvas drawer buttons for left/right drawers.
+	 * Uses Bootstrap's offcanvas component.
+	 */
+	function initDrawers() {
+		var leftBtn = doc.querySelector(".drawer-toggle-left");
+		var rightBtn = doc.querySelector(".drawer-toggle-right");
+		if (leftBtn) {
+			leftBtn.addEventListener("click", function () {
+				var target = doc.querySelector(leftBtn.getAttribute("data-bs-target"));
+				if (target) new bootstrap.Offcanvas(target).show();
+			});
+		}
+		if (rightBtn) {
+			rightBtn.addEventListener("click", function () {
+				var target = doc.querySelector(rightBtn.getAttribute("data-bs-target"));
+				if (target) new bootstrap.Offcanvas(target).show();
+			});
+		}
+	}
 
-    /**
-     * Back to top
-     */
-    var backToTop = document.getElementById('back-top');
+	/**
+	 * Initialize back-to-top link if present
+	 */
+	function initBackTop() {
+		var backTop = doc.getElementById("back-top");
+		if (backTop) {
+			backTop.addEventListener("click", function (e) {
+				e.preventDefault();
+				backToTop();
+			});
+		}
+	}
 
-    if (backToTop) {
+	/**
+	 * Run all template JS initializations
+	 */
+	function init() {
+		// Sticky header behavior
+		handleScroll();
+		win.addEventListener("scroll", handleScroll);
 
-      function checkScrollPos() {
-        if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
-          backToTop.classList.add('visible');
-        } else {
-          backToTop.classList.remove('visible')
-        }
-      }
+		// Init features
+		initTOC();
+		initDrawers();
+		initBackTop();
+	}
 
-      checkScrollPos();
-
-      window.onscroll = function() {
-        checkScrollPos();
-      };
-
-      backToTop.addEventListener('click', function(event) {
-        event.preventDefault();
-        window.scrollTo(0, 0);
-      });
-    }
-
-    [].slice.call(document.head.querySelectorAll('link[rel="lazy-stylesheet"]'))
-      .forEach(function($link){
-        $link.rel = "stylesheet";
-      });
-  });
-
-  /**
-   * Initialize when a part of the page was updated
-   */
-  document.addEventListener('joomla:updated', initTemplate);
-
-})(Joomla, document);
-
+	if (doc.readyState === "loading") {
+		doc.addEventListener("DOMContentLoaded", init);
+	} else {
+		init();
+	}
+})(window, document);
