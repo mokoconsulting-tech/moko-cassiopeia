@@ -1,22 +1,31 @@
 <!--
-Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+=========================================================================
+ Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
 
-This file is part of a Moko Consulting project.
+ This file is part of a Moko Consulting project.
 
-This documentation is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+ SPDX-License-Identifier: GPL-3.0-or-later
 
-This documentation is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.
 
-You should have received a copy of the GNU General Public License
-along with this documentation. If not, see <https://www.gnu.org/licenses/>.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
 
-SPDX-License-Identifier: GPL-3.0-or-later
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see https://www.gnu.org/licenses/ .
+ =========================================================================
+ FILE INFORMATION
+ DEFGROUP: Joomla
+ INGROUP: Moko-Cassiopeia
+ PATH: CODE_OF_CONDUCT.md
+ VERSION: 02.00
+ BRIEF: Contributor Code of Conduct for Moko-Cassiopeia project
+ =========================================================================
 -->
 
 # Code of Conduct

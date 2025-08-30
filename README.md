@@ -1,254 +1,304 @@
-# Moko-Cassiopeia
+<!--
+=========================================================================
+ Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
 
-A modern, lightweight enhancement layer for Joomla’s Cassiopeia template. Moko-Cassiopeia adds **Font Awesome 6**, **Bootstrap 5** helpers, an automatic **Table of Contents (TOC)** utility, and optional **Moko Expansions** including **Google Tag Manager** and **Google Analytics (GA4)** hooks—all while keeping core template overrides minimal and upgrade‑friendly.
+ This file is part of a Moko Consulting project.
+
+ SPDX-License-Identifier: GPL-3.0-or-later
+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see https://www.gnu.org/licenses/ .
+ =========================================================================
+ FILE INFORMATION
+ DEFGROUP: Joomla
+ INGROUP: Moko-Cassiopeia
+ PATH: README.md
+ VERSION: 02.00
+ BRIEF: Project readme for Moko-Cassiopeia, including features, setup, and usage
+ =========================================================================
+-->
+
+
+# Moko-Cassiopeia v02.00 — README
+
+> Joomla! site template by **Moko Consulting**
+> License: **GPL-3.0-or-later**
+> Compatibility: **Joomla 4.4+ / 5.x** (PHP 8.1+)
 
 ---
 
-## Table of Contents
+## Overview
 
-- [Features](#features)
-- [Requirements](#requirements)
-- [Quick Start](#quick-start)
-- [Installation](#installation)
-- [Configuration](#configuration)
-	- [Global Params](#global-params)
-	- [Font Awesome 6](#font-awesome-6)
-	- [Bootstrap 5 Helpers](#bootstrap-5-helpers)
-	- [TOC Function](#toc-function)
-	- [Moko Expansions](#moko-expansions)
-		- [Google Tag Manager](#google-tag-manager)
-		- [Google Analytics (GA4)](#google-analytics-ga4)
-- [CSS Variables](#css-variables)
-- [Usage Examples](#usage-examples)
-- [Best Practices](#best-practices)
-- [Development](#development)
-- [Changelog](#changelog)
-- [License](#license)
+Moko-Cassiopeia is a streamlined, Bootstrap-friendly Joomla template with a tokenized color system, Google Tag Manager / Analytics hooks, and performance-minded assets.
+
+* **v02.00 (2025-08-30)** introduces **Dark Mode** with OS auto-detection **and** an optional **Dark Mode Toggle** (ID **25**) so users can manually switch themes; their preference persists.
+* **v01.00** was the initial public release (FA6, BS5, TOC, GTM/GA hooks).
+
+Public roadmap: **[https://mokoconsulting.tech/support/joomla-cms/moko-cassiopeia-roadmap](https://mokoconsulting.tech/support/joomla-cms/moko-cassiopeia-roadmap)**
+
+---
+
+## What’s New in v02.00
+
+* **Dark Mode** with `prefers-color-scheme` auto-detect.
+* **Dark Mode Toggle** (Template param **ID 25**) with positions **Header / Navbar / Footer**.
+
+	* Persists choice to `localStorage` (key: `moko.theme`).
+	* Keyboard- and screen-reader-friendly; focus ring uses theme tokens.
+	* Admin option **“Show Theme Toggle”** (`On/Off`).
+* CSS refactor to **variables**: light tokens in `:root`, dark overrides in `[data-theme="dark"]`.
+* Lowered CSS specificity, `rem` units for scalable typography/spacing.
+* Stabilized WebAsset registrations (LTR/RTL presets).
 
 ---
 
 ## Features
 
-- **Font Awesome 6**: Solid, Regular, Brands (locally enqueued or CDN with Subresource Integrity).
-- **Bootstrap 5**: Utility classes, grid, and components available to your layouts and modules.
-- **Auto TOC**: Generate an in‑page Table of Contents from headings with a single data attribute.
-- **Moko Expansions**:
-	- **GTM**: Drop‑in dataLayer and container injection with a template param.
-	- **GA4**: Native GA4 Measurement ID support (with or without GTM).
-- **Production‑safe**: Assets loaded conditionally; no duplicate library loads if another extension already enqueues them.
-- **Accessible by default**: TOC anchors and focus styles follow a11y guidelines.
+* **Dark Mode + Toggle**
+	Auto-detect plus manual switch; persistent per user.
+
+* **Bootstrap-friendly CSS**
+	Low specificity, variable-driven utilities for buttons, alerts, typography, spacing.
+
+* **GTM / GA Hooks**
+	Clean injection points for Google Tag Manager and optional direct GA4 tag.
+
+* **LTR / RTL Presets**
+	Stable asset registration pattern for palette and template styles.
+
+* **A11y & Performance**
+	Clear focus styling and balanced contrast; minified bundles in production.
+
+---
 
 ## Requirements
 
-- Joomla 4.4+ or Joomla 5+
-- PHP 8.1+
-- Cassiopeia as the active base template (Moko-Cassiopeia may be installed as a child/override set)
+* Joomla **4.4+** / **5.x**
+* PHP **8.1+**
+* Modern evergreen browsers (graceful fallback if `prefers-color-scheme` isn’t available)
 
-## Quick Start
-
-1. Install the template package via Joomla Extension Manager.
-2. In the Template Style settings, enable the features you want (FA6, BS5, TOC, GTM/GA).
-3. (Optional) Add a TOC container to any article or module using the data attribute shown below.
+---
 
 ## Installation
 
-1. Go to 'System' → 'Install' → 'Extensions'.
-2. Upload 'Moko-Cassiopeia.zip'.
-3. After installation, go to 'System' → 'Site Templates' → 'Styles' and open 'Moko-Cassiopeia'.
-4. Choose 'Default' to make it your active style (or assign per menu item).
+1. **Install** via *Extensions → Manage → Install* (upload the template `.zip`).
+2. **Set as default** in *System → Templates → Site Templates*.
+3. **Clear caches**: *System → Clear Cache* and hard-reload your browser.
 
-## Configuration
+---
 
-Configuration lives in the Template Style parameters. Common params are listed below. Names may vary slightly depending on release.
+## Template Options (high-level)
 
-### Global Params
+**Theme**
 
-- 'load\_bootstrap5' (bool): Enqueue Bootstrap 5 core CSS/JS if not provided by Joomla context.
-- 'load\_fontawesome6' (bool): Enqueue Font Awesome 6 (solid, regular, brands).
-- 'use\_cdn' (bool): Use CDN with SRI instead of local assets.
-- 'minified' (bool): Prefer '.min' assets.
-- 'defer\_js' (bool): Add 'defer' to template‑injected scripts where safe.
+* **Force Theme**: `Auto` (default) | `Light` | `Dark`
+* **Show Theme Toggle** (ID **25**): `On` | `Off`
+* **Toggle Position**: `Header` | `Navbar` | `Footer`
+* **Default Theme** (when not using Auto): `Light`
 
-### Font Awesome 6
+**GTM / Analytics**
 
-When enabled, the template registers FA6 and exposes the standard icon syntax:
+* **GTM Container ID** (e.g., `GTM-XXXXXXX`)
+* **Analytics Tag ID** (optional GA4 if not using GTM)
 
-```html
-<i class='fa-solid fa-circle-check' aria-hidden='true'></i>
-<span class='visually-hidden'>Success</span>
-```
+**Performance**
 
-**Notes**
+* **Development Mode**
 
-- Icons are decorative unless paired with text or 'aria-label'.
-- Prefer the 'fa-solid', 'fa-regular', or 'fa-brands' families explicitly.
+	* `Off` → `.min.css` / `.min.js` bundles
+	* `On` → unminified sources for debugging
 
-### Bootstrap 5 Helpers
+---
 
-If 'load\_bootstrap5' is enabled, grid and utilities are available:
+## Dark Mode — Tokens & Toggle
 
-```html
-<div class='container'>
-	<div class='row g-3'>
-		<div class='col-12 col-md-6'>Left</div>
-		<div class='col-12 col-md-6'>Right</div>
-	</div>
-</div>
-```
-
-You can also use helpers like 'ratio', 'visually-hidden', 'd-flex', and spacing utilities (e.g., 'mt-3', 'px-4').
-
-### TOC Function
-
-Moko-Cassiopeia ships a tiny script that scans within a container for headings (h2–h6) and builds a nested TOC with anchor links.
-
-**Enable**: Turn on 'auto\_toc' in Template Style.
-
-**Place a TOC container**:
-
-```html
-<nav class='toc' data-moko-toc='true' data-moko-toc-target='#article-body' aria-label='Table of contents'></nav>
-```
-
-**Mark your content region**:
-
-```html
-<article id='article-body'>
-	<h2>Section A</h2>
-	<p>...</p>
-	<h3>Subsection A.1</h3>
-	<p>...</p>
-</article>
-```
-
-**Options via data attributes**
-
-- 'data-moko-toc-target': CSS selector for the content area (default: 'main').
-- 'data-moko-toc-levels': CSV or range string like '2-4' (default: '2-4').
-- 'data-moko-toc-collapsible': 'true'|'false' to make nested lists collapsible.
-
-**Styling**
-
-A minimal stylesheet is included. Customize using the CSS variables below or add your own overrides.
-
-### Moko Expansions
-
-#### Google Tag Manager
-
-Enable GTM by entering your container ID (e.g., 'GTM-XXXXXXX') in Template Style under 'Moko Expansions'. The template will inject the standard script and 'noscript' iframe per Google guidance.
-
-**Data Layer**
-
-You can push events from modules or overrides like so:
-
-```html
-<script>
-	window.dataLayer = window.dataLayer || [];
-	window.dataLayer.push({
-		'event': 'moko_event',
-		'moko_category': 'ui',
-		'moko_action': 'toc_opened',
-		'moko_label': 'sidebar'
-	});
-</script>
-```
-
-#### Google Analytics (GA4)
-
-Two options:
-
-1. **Direct GA4**: Provide 'G-' Measurement ID (e.g., 'G-ABC123XYZ'). The template injects the GA4 base script.
-
-2. **Via GTM**: Leave GA4 field empty and configure GA4 inside your GTM container.
-
-```html
-<script>
-	window.dataLayer = window.dataLayer || [];
-	window.dataLayer.push({ 'event': 'page_view' });
-</script>
-```
-
-> Tip: When both GTM and direct GA4 are set, the template prefers GTM to avoid duplicate pageviews.
-
-## CSS Variables
-
-Moko-Cassiopeia exposes custom properties for theme tuning. Example set:
+**Color tokens**
 
 ```css
 :root {
-	--moko-cassiopeia-color-primary: #0b4008;
-	--moko-cassiopeia-color-link: #0b4008;
-	--moko-cassiopeia-color-hover: #000000;
+	--color-bg: #ffffff;
+	--color-surface: #f8f9fa;
+	--color-text: #1d2125;
+	--color-text-muted: #6c757d;
+	--color-border: #dee2e6;
 
-	--moko-cassiopeia-header-background-image: linear-gradient(30deg, #fefcf9, var(--accent-color-primary));
-	--moko-cassiopeia-header-background-position: auto;
-	--moko-cassiopeia-header-background-attachment: fixed;
-	--moko-cassiopeia-header-background-repeat: repeat;
-	--moko-cassiopeia-header-background-size: auto;
+	--color-primary: #0d6efd;
+	--color-primary-contrast: #ffffff;
+
+	--color-link: var(--color-primary);
+	--color-link-hover: #0b5ed7;
+
+	--focus-ring: 0 0 0 .2rem rgba(13,110,253,.25);
+}
+
+[data-theme="dark"] {
+	--color-bg: #0e1116;
+	--color-surface: #151922;
+	--color-text: #e7eaf0;
+	--color-text-muted: #a4acb9;
+	--color-border: #2a3240;
+
+	--color-primary: #66b2ff;
+	--color-primary-contrast: #0d1117;
+
+	--color-link: var(--color-primary);
+	--color-link-hover: #99ccff;
+
+	--focus-ring: 0 0 0 .2rem rgba(102,178,255,.35);
 }
 ```
 
-> Apply these in a custom stylesheet or template options if provided. Use semantic variables where possible to maintain consistency.
+**Programmatic switch (optional)**
 
-## Usage Examples
-
-### 1) FA6 Icon Buttons
-
-```html
-<a class='btn btn-primary d-inline-flex align-items-center' href='#'>
-	<i class='fa-solid fa-bolt me-2' aria-hidden='true'></i>
-	<span>Action</span>
-</a>
+```js
+// Apply and persist a choice
+document.documentElement.dataset.theme = 'dark'; // or 'light'
+localStorage.setItem('moko.theme', 'dark');      // namespaced key
 ```
 
-### 2) Sticky Sidebar TOC
+---
 
-```html
-<aside class='position-sticky top-0 pt-3'>
-	<nav class='toc' data-moko-toc='true' data-moko-toc-target='#content'></nav>
-</aside>
+## CSS Architecture
+
+* **`template.css`** = structure/layout and component scaffolding
+* **No hard-coded hex** in core selectors; all colors reference tokens
+* **Units**: `rem` (replacing `em`) for scalable typography/spacing
+* **Low specificity** to play nicely with Bootstrap and content plugins
+
+---
+
+## GTM / Analytics Integration
+
+* Enter **GTM Container ID** in Template Options to inject the GTM snippet.
+* Optionally add a **GA4 Measurement ID** if not routing GA via GTM.
+* Output uses Joomla rendering events to avoid duplication.
+
+> Verify tags with DevTools / Tag Assistant.
+
+---
+
+## RTL / LTR Assets (WebAsset JSON)
+
+Minimal pattern:
+
+```json
+{
+	"$schema": "https://developer.joomla.org/schemas/json/schema_web_assets.json",
+	"name": "template.moko-cassiopeia",
+	"assets": [
+		{ "name": "template.moko-cassiopeia.styles",  "type": "style", "uri": "templates/moko-cassiopeia/css/template.min.css" },
+		{ "name": "template.moko-cassiopeia.palette", "type": "style", "uri": "templates/moko-cassiopeia/css/colors_standard.min.css" },
+		{ "name": "template.moko-cassiopeia", "type": "preset", "dependencies": ["template.moko-cassiopeia.styles","template.moko-cassiopeia.palette"] }
+	]
+}
 ```
 
-### 3) Module‑driven GA Event
+In `index.php`:
 
 ```php
-<?php
-// In a custom module layout
-$label = 'cta_hero';
-?>
-<button class='btn btn-outline-primary' onclick='window.dataLayer && window.dataLayer.push({"event": "cta_click", "label": "<?php echo $label; ?>"})'>
-	Click me
-</button>
+/** @var Joomla\CMS\WebAsset\WebAssetManager $wa */
+$wa = $this->getWebAssetManager();
+$wa->usePreset('template.moko-cassiopeia');
 ```
 
-> Note: We use single quotes in HTML where possible to keep consistency with PHP string style preferences.
+---
 
-## Best Practices
+## Upgrade Notes
 
-- **One source of truth** for analytics injection (prefer GTM, or direct GA4—not both).
-- **Defer non‑critical JS** using the 'defer\_js' param when feasible.
-- **Avoid duplicate libraries** if another extension already loads FA6/BS5.
-- **Respect a11y**: Provide visible focus, 'visually-hidden' labels, and heading order for the TOC.
-- **Cache smartly**: After enabling new features, clear Joomla cache and any CDN cache to propagate assets.
+**1.0 → 2.0**
 
-## Development
+* Clear Joomla + browser caches.
+* Convert any hard-coded colors in overrides to **tokens** (e.g., `var(--color-text-muted)`).
+* Review spacing/typography where `rem` replaces `em`.
+* Verify asset names if you referenced WebAsset handles directly.
+* If you previously added a custom dark-mode toggle, remove it and enable **Show Theme Toggle** (ID **25**).
 
-- Source structure follows Joomla template conventions:
-	- '/css', '/js', '/images', '/html' (overrides), 'templateDetails.xml'
-- Scripts are enqueued via the template's 'index.php' with conditional params.
-- Build/compile steps (if using bundlers) are noted in 'package.json' (when applicable).
+---
 
-**Local overrides**
+## Accessibility
 
-- Place site‑specific CSS in '/css/custom.css'.
-- Use '/html' for component/module layout overrides as needed.
+* Improved contrast targets across light/dark.
+* Visible, consistent focus indicators.
+* Toggle is keyboard-navigable and labeled for assistive tech.
 
-## Changelog
+---
 
-- 1.15: Added CSS theme seletor (dark/light)
-- 1.00: Initial public release with FA6, BS5, TOC, GTM/GA hooks.
+## Troubleshooting
 
-## License
+* **Toggle not visible** → Ensure “Show Theme Toggle” is on and placed in a visible position.
+* **Preference not persisting** → Check `localStorage` availability and console for JS errors.
+* **Asset dependency warnings** → Confirm preset/asset names match your `joomla.asset.json`.
 
-Distributed under the GNU General Public License v3. See 'LICENSE' for details.
+---
 
+## Feature Rundown & Comparison
+
+### Moko-Cassiopeia v01.00 — Initial public release
+
+* **Font Awesome 6** integrated; **Bootstrap 5** helpers.
+* **TOC utility** hooks for article table of contents.
+* **GTM/GA hooks** with safe injection points.
+* Minimal, upgrade-friendly overrides; variable-ready CSS.
+
+### Moko-Cassiopeia v02.00 — Dark Mode + Toggle (ID 25)
+
+* **Dark Mode** with OS auto-detect.
+* **Optional Dark Mode Toggle** (ID 25) in Header / Navbar / Footer; persisted per user.
+* **Tokenized palette** (`:root` + `[data-theme="dark"]`).
+* **CSS refactor**: low specificity; `rem` units; Bootstrap-friendly utilities.
+* Stabilized **Web Asset** registrations (LTR/RTL presets).
+
+### Baseline: Cassiopeia (Joomla 4.4 / 5.x)
+
+* Responsive, accessible core site template with Bootstrap-friendly markup.
+* Template options for color preset, layout width, sticky header, and module menu layouts.
+* Web Asset Manager integration (`joomla.asset.json`, `$this->getWebAssetManager()`).
+
+---
+
+## Roadmap
+
+Public roadmap: **[https://mokoconsulting.tech/support/joomla-cms/moko-cassiopeia-roadmap](https://mokoconsulting.tech/support/joomla-cms/moko-cassiopeia-roadmap)**
+
+---
+
+## Changelog (1.0 → 2.0)
+
+### 02.00 — 2025-08-30 — “Dark Mode”
+
+**Added**
+
+* Dark Mode with OS auto-detection (`prefers-color-scheme`).
+* **Dark Mode Toggle** (param **ID 25**) with positions Header / Navbar / Footer; persists choice via `localStorage` (`moko.theme`); accessible markup and focus styling.
+* Tokenized CSS palette with `[data-theme="dark"]` overrides.
+* Admin override to force Light/Dark/Auto.
+* Bootstrap-friendly utility hooks mapped to tokens.
+
+**Changed**
+
+* `template.css` now structure/layout only; colors via tokens.
+* `em` → `rem`; reduced specificity; standardized focus indicators.
+
+**Fixed**
+
+* WebAsset registrations (LTR/RTL/preset deps) and dark-theme link/muted contrast.
+
+**Removed / Deprecated**
+
+* Hard-coded color declarations and legacy hex-based helper classes.
+
+---
+
+### 01.00 — Initial public release
+
+* **FA6**, **BS5**, **TOC**, **GTM/GA** hooks.
