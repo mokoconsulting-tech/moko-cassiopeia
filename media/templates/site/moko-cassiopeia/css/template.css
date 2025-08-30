@@ -1,15 +1,31 @@
 @charset "UTF-8";
-/*!
- * @package     Joomla.Site
- * @subpackage  Templates.moko-cassiopeia
- * @file        /media/templates/sote/moko-cassiopeia/css/template.css
+/* =========================================================================
+ * Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
  *
- * @copyright 	2025 Moko Consulting <https://mokoconsulting.tech>
- * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ * This file is part of a Moko Consulting project.
  *
- * Website: https://mokoconsulting.tech
- * Email: hello@mokoconsulting.tech
- * Phone: +1 (931) 279-6313
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see https://www.gnu.org/licenses/ .
+ * =========================================================================
+ * FILE INFORMATION
+ * DEFGROUP: Joomla
+ * INGROUP: Moko-Cassiopeia
+ * PATH: media/templates/site/moko-cassiopeia/css/template.css
+ * VERSION: 02.00
+ * BRIEF: Main stylesheet providing layout, typography, and component styles for Moko-Cassiopeia
+ * =========================================================================
  */
 
 *,
@@ -17205,6 +17221,42 @@ body.site.error-page {
 		padding: .5rem .9rem;
 		text-decoration: none;
 	}
+
+	#mokoThemeFab .knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--border-radius-xxl);
+  background: var(--bs-body-bg, #fff);
+  box-shadow: var(--box-shadow);
+  transition: transform .2s ease;
+}
+
+#mokoThemeFab [role="switch"][aria-checked="true"] .knob {
+  transform: translateX(20px);
+}
+
+#mokoThemeFab [role="switch"][aria-checked="true"] .switch {
+  background: rgba(var(--secondary-color), .15);
+}
+
+button#mokoThemeSwitch {
+  border: unset;
+  background-color: unset;
+}
+
+#mokoThemeFab .label {
+  user-select: none;
+  font-size: .875rem;
+}
+
+#mokoThemeFab.debug-outline {
+  outline: 2px dashed var(--pink);
+  outline-offset: 2px;
+}
+
 
 	/* SOCIAL MEDIA DEMOS */
 	@import url("global/social-media-demos.css");

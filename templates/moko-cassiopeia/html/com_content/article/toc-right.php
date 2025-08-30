@@ -1,16 +1,31 @@
 <?php
-
-/**
- * @package     Joomla.Site
- * @subpackage  Templates.moko-cassiopeia
- * @file       \templates\moko-cassiopeia\html\com_content\article\toc-right.php
+/* =========================================================================
+ * Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
  *
- * © 2025 Moko Consulting — All Rights Reserved
- * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ * This file is part of a Moko Consulting project.
  *
- * Website: https://mokoconsulting.tech
- * Email: hello@mokoconsulting.tech
- * Phone: +1 (931) 279-6313
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see https://www.gnu.org/licenses/ .
+ * =========================================================================
+ * FILE INFORMATION
+ * DEFGROUP: Joomla
+ * INGROUP: Moko-Cassiopeia
+ * PATH: templates/moko-cassiopeia/html/com_content/article/toc-right.php
+ * VERSION: 02.00
+ * BRIEF: Template override for Joomla articles with Table of Contents aligned right
+ * =========================================================================
  */
 
 defined('_JEXEC') or die;
@@ -40,121 +55,121 @@ $isNotPublishedYet = $this->item->publish_up > $currentDate;
 $isExpired         = !is_null($this->item->publish_down) && $this->item->publish_down < $currentDate;
 ?>
 <div class="com-content-article item-page<?php echo $this->pageclass_sfx; ?>" itemscope itemtype="https://schema.org/Article">
-    <meta itemprop="inLanguage" content="<?php echo ($this->item->language === '*') ? Factory::getApplication()->get('language') : $this->item->language; ?>">
-    <?php if ($this->params->get('show_page_heading')) : ?>
-    <div class="page-header">
-        <h1> <?php echo $this->escape($this->params->get('page_heading')); ?> </h1>
-    </div>
-    <?php endif;
-    if (!empty($this->item->pagination) && !$this->item->paginationposition && $this->item->paginationrelative) {
-        echo $this->item->pagination;
-    }
-    ?>
+	<meta itemprop="inLanguage" content="<?php echo ($this->item->language === '*') ? Factory::getApplication()->get('language') : $this->item->language; ?>">
+	<?php if ($this->params->get('show_page_heading')) : ?>
+	<div class="page-header">
+		<h1> <?php echo $this->escape($this->params->get('page_heading')); ?> </h1>
+	</div>
+	<?php endif;
+	if (!empty($this->item->pagination) && !$this->item->paginationposition && $this->item->paginationrelative) {
+		echo $this->item->pagination;
+	}
+	?>
 
-    <?php $useDefList = $params->get('show_modify_date') || $params->get('show_publish_date') || $params->get('show_create_date')
-    || $params->get('show_hits') || $params->get('show_category') || $params->get('show_parent_category') || $params->get('show_author') || $assocParam; ?>
+	<?php $useDefList = $params->get('show_modify_date') || $params->get('show_publish_date') || $params->get('show_create_date')
+	|| $params->get('show_hits') || $params->get('show_category') || $params->get('show_parent_category') || $params->get('show_author') || $assocParam; ?>
 
-    <?php if ($params->get('show_title')) : ?>
-    <div class="page-header">
-        <<?php echo $htag; ?> itemprop="headline">
-            <?php echo $this->escape($this->item->title); ?>
-        </<?php echo $htag; ?>>
-        <?php if ($this->item->state == ContentComponent::CONDITION_UNPUBLISHED) : ?>
-            <span class="badge bg-warning text-light"><?php echo Text::_('JUNPUBLISHED'); ?></span>
-        <?php endif; ?>
-        <?php if ($isNotPublishedYet) : ?>
-            <span class="badge bg-warning text-light"><?php echo Text::_('JNOTPUBLISHEDYET'); ?></span>
-        <?php endif; ?>
-        <?php if ($isExpired) : ?>
-            <span class="badge bg-warning text-light"><?php echo Text::_('JEXPIRED'); ?></span>
-        <?php endif; ?>
-    </div>
-    <?php endif; ?>
-    <?php if ($canEdit) : ?>
-        <?php echo LayoutHelper::render('joomla.content.icons', ['params' => $params, 'item' => $this->item]); ?>
-    <?php endif; ?>
+	<?php if ($params->get('show_title')) : ?>
+	<div class="page-header">
+		<<?php echo $htag; ?> itemprop="headline">
+			<?php echo $this->escape($this->item->title); ?>
+		</<?php echo $htag; ?>>
+		<?php if ($this->item->state == ContentComponent::CONDITION_UNPUBLISHED) : ?>
+			<span class="badge bg-warning text-light"><?php echo Text::_('JUNPUBLISHED'); ?></span>
+		<?php endif; ?>
+		<?php if ($isNotPublishedYet) : ?>
+			<span class="badge bg-warning text-light"><?php echo Text::_('JNOTPUBLISHEDYET'); ?></span>
+		<?php endif; ?>
+		<?php if ($isExpired) : ?>
+			<span class="badge bg-warning text-light"><?php echo Text::_('JEXPIRED'); ?></span>
+		<?php endif; ?>
+	</div>
+	<?php endif; ?>
+	<?php if ($canEdit) : ?>
+		<?php echo LayoutHelper::render('joomla.content.icons', ['params' => $params, 'item' => $this->item]); ?>
+	<?php endif; ?>
 
-    <?php // Content is generated by content plugin event "onContentAfterTitle" ?>
-    <?php echo $this->item->event->afterDisplayTitle; ?>
+	<?php // Content is generated by content plugin event "onContentAfterTitle" ?>
+	<?php echo $this->item->event->afterDisplayTitle; ?>
 
-    <?php if ($useDefList && ($info == 0 || $info == 2)) : ?>
-        <?php echo LayoutHelper::render('joomla.content.info_block', ['item' => $this->item, 'params' => $params, 'position' => 'above']); ?>
-    <?php endif; ?>
+	<?php if ($useDefList && ($info == 0 || $info == 2)) : ?>
+		<?php echo LayoutHelper::render('joomla.content.info_block', ['item' => $this->item, 'params' => $params, 'position' => 'above']); ?>
+	<?php endif; ?>
 
-    <?php if ($info == 0 && $params->get('show_tags', 1) && !empty($this->item->tags->itemTags)) : ?>
-        <?php $this->item->tagLayout = new FileLayout('joomla.content.tags'); ?>
+	<?php if ($info == 0 && $params->get('show_tags', 1) && !empty($this->item->tags->itemTags)) : ?>
+		<?php $this->item->tagLayout = new FileLayout('joomla.content.tags'); ?>
 
-        <?php echo $this->item->tagLayout->render($this->item->tags->itemTags); ?>
-    <?php endif; ?>
+		<?php echo $this->item->tagLayout->render($this->item->tags->itemTags); ?>
+	<?php endif; ?>
 
-    <?php // Content is generated by content plugin event "onContentBeforeDisplay" ?>
-    <?php echo $this->item->event->beforeDisplayContent; ?>
+	<?php // Content is generated by content plugin event "onContentBeforeDisplay" ?>
+	<?php echo $this->item->event->beforeDisplayContent; ?>
 
-    <?php if ((int) $params->get('urls_position', 0) === 0) : ?>
-        <?php echo $this->loadTemplate('links'); ?>
-    <?php endif; ?>
-    <?php if ($params->get('access-view')) : ?>
-        <?php echo LayoutHelper::render('joomla.content.full_image', $this->item); ?>
-        <?php
-        if (!empty($this->item->pagination) && !$this->item->paginationposition && !$this->item->paginationrelative) :
-            echo $this->item->pagination;
-        endif;
-    ?>
+	<?php if ((int) $params->get('urls_position', 0) === 0) : ?>
+		<?php echo $this->loadTemplate('links'); ?>
+	<?php endif; ?>
+	<?php if ($params->get('access-view')) : ?>
+		<?php echo LayoutHelper::render('joomla.content.full_image', $this->item); ?>
+		<?php
+		if (!empty($this->item->pagination) && !$this->item->paginationposition && !$this->item->paginationrelative) :
+			echo $this->item->pagination;
+		endif;
+	?>
 <div itemprop="articleBody" class="com-content-article__body">
-    <div class="container-toc-right">
-        <?php
-        // Table of Contents header using template language string
+	<div class="container-toc-right">
+		<?php
+		// Table of Contents header using template language string
 
-        echo '<h2>' . Text::_('TPL_MOKO-CASSIOPEIA_TOC') . '</h2>';
-    ?>
+		echo '<h2>' . Text::_('TPL_MOKO-CASSIOPEIA_TOC') . '</h2>';
+	?>
 
-    <nav id="toc" data-toggle="toc"></nav>
+	<nav id="toc" data-toggle="toc"></nav>
 </div>
-    <?php
-        echo $this->item->text;
-    ?>
+	<?php
+		echo $this->item->text;
+	?>
 
 </div>
 
 
-        <?php if ($info == 1 || $info == 2) : ?>
-            <?php if ($useDefList) : ?>
-                <?php echo LayoutHelper::render('joomla.content.info_block', ['item' => $this->item, 'params' => $params, 'position' => 'below']); ?>
-            <?php endif; ?>
-            <?php if ($params->get('show_tags', 1) && !empty($this->item->tags->itemTags)) : ?>
-                <?php $this->item->tagLayout = new FileLayout('joomla.content.tags'); ?>
-                <?php echo $this->item->tagLayout->render($this->item->tags->itemTags); ?>
-            <?php endif; ?>
-        <?php endif; ?>
+		<?php if ($info == 1 || $info == 2) : ?>
+			<?php if ($useDefList) : ?>
+				<?php echo LayoutHelper::render('joomla.content.info_block', ['item' => $this->item, 'params' => $params, 'position' => 'below']); ?>
+			<?php endif; ?>
+			<?php if ($params->get('show_tags', 1) && !empty($this->item->tags->itemTags)) : ?>
+				<?php $this->item->tagLayout = new FileLayout('joomla.content.tags'); ?>
+				<?php echo $this->item->tagLayout->render($this->item->tags->itemTags); ?>
+			<?php endif; ?>
+		<?php endif; ?>
 
-        <?php
-        if (!empty($this->item->pagination) && $this->item->paginationposition && !$this->item->paginationrelative) :
-            echo $this->item->pagination;
-            ?>
-        <?php endif; ?>
-        <?php if ((int) $params->get('urls_position', 0) === 1) : ?>
-            <?php echo $this->loadTemplate('links'); ?>
-        <?php endif; ?>
-        <?php // Optional teaser intro text for guests ?>
-    <?php elseif ($params->get('show_noauth') == true && $user->get('guest')) : ?>
-        <?php echo LayoutHelper::render('joomla.content.intro_image', $this->item); ?>
-        <?php echo HTMLHelper::_('content.prepare', $this->item->introtext); ?>
-        <?php // Optional link to let them register to see the whole article. ?>
-        <?php if ($params->get('show_readmore') && $this->item->fulltext != null) : ?>
-            <?php $menu = Factory::getApplication()->getMenu(); ?>
-            <?php $active = $menu->getActive(); ?>
-            <?php $itemId = $active->id; ?>
-            <?php $link = new Uri(Route::_('index.php?option=com_users&view=login&Itemid=' . $itemId, false)); ?>
-            <?php $link->setVar('return', base64_encode(RouteHelper::getArticleRoute($this->item->slug, $this->item->catid, $this->item->language))); ?>
-            <?php echo LayoutHelper::render('joomla.content.readmore', ['item' => $this->item, 'params' => $params, 'link' => $link]); ?>
-        <?php endif; ?>
-    <?php endif; ?>
-    <?php
-    if (!empty($this->item->pagination) && $this->item->paginationposition && $this->item->paginationrelative) :
-        echo $this->item->pagination;
-        ?>
-    <?php endif; ?>
-    <?php // Content is generated by content plugin event "onContentAfterDisplay" ?>
-    <?php echo $this->item->event->afterDisplayContent; ?>
+		<?php
+		if (!empty($this->item->pagination) && $this->item->paginationposition && !$this->item->paginationrelative) :
+			echo $this->item->pagination;
+			?>
+		<?php endif; ?>
+		<?php if ((int) $params->get('urls_position', 0) === 1) : ?>
+			<?php echo $this->loadTemplate('links'); ?>
+		<?php endif; ?>
+		<?php // Optional teaser intro text for guests ?>
+	<?php elseif ($params->get('show_noauth') == true && $user->get('guest')) : ?>
+		<?php echo LayoutHelper::render('joomla.content.intro_image', $this->item); ?>
+		<?php echo HTMLHelper::_('content.prepare', $this->item->introtext); ?>
+		<?php // Optional link to let them register to see the whole article. ?>
+		<?php if ($params->get('show_readmore') && $this->item->fulltext != null) : ?>
+			<?php $menu = Factory::getApplication()->getMenu(); ?>
+			<?php $active = $menu->getActive(); ?>
+			<?php $itemId = $active->id; ?>
+			<?php $link = new Uri(Route::_('index.php?option=com_users&view=login&Itemid=' . $itemId, false)); ?>
+			<?php $link->setVar('return', base64_encode(RouteHelper::getArticleRoute($this->item->slug, $this->item->catid, $this->item->language))); ?>
+			<?php echo LayoutHelper::render('joomla.content.readmore', ['item' => $this->item, 'params' => $params, 'link' => $link]); ?>
+		<?php endif; ?>
+	<?php endif; ?>
+	<?php
+	if (!empty($this->item->pagination) && $this->item->paginationposition && $this->item->paginationrelative) :
+		echo $this->item->pagination;
+		?>
+	<?php endif; ?>
+	<?php // Content is generated by content plugin event "onContentAfterDisplay" ?>
+	<?php echo $this->item->event->afterDisplayContent; ?>
 </div>
 

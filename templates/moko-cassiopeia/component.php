@@ -1,11 +1,31 @@
 <?php
-
-/**
- * @package     Joomla.Site
- * @subpackage  Templates.Moko-Cassiopeia
+/* =========================================================================
+ * Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
  *
- * @copyright   (C) 2017 Open Source Matters, Inc. <https://www.joomla.org>
- * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ * This file is part of a Moko Consulting project.
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see https://www.gnu.org/licenses/ .
+ * =========================================================================
+ * FILE INFORMATION
+ * DEFGROUP: Joomla
+ * INGROUP: Moko-Cassiopeia
+ * PATH: templates/moko-cassiopeia/component.php
+ * VERSION: 02.00
+ * BRIEF: Minimal component-only template file for Moko-Cassiopeia
+ * =========================================================================
  */
 
 defined('_JEXEC') or die;
@@ -28,30 +48,30 @@ $paramsFontScheme = $this->params->get('useFontScheme', false);
 $fontStyles       = '';
 
 if ($paramsFontScheme) {
-    if (stripos($paramsFontScheme, 'https://') === 0) {
-        $this->getPreloadManager()->preconnect('https://fonts.googleapis.com/', ['crossorigin' => 'anonymous']);
-        $this->getPreloadManager()->preconnect('https://fonts.gstatic.com/', ['crossorigin' => 'anonymous']);
-        $this->getPreloadManager()->preload($paramsFontScheme, ['as' => 'style', 'crossorigin' => 'anonymous']);
-        $wa->registerAndUseStyle('fontscheme.current', $paramsFontScheme, [], ['media' => 'print', 'rel' => 'lazy-stylesheet', 'onload' => 'this.media=\'all\'', 'crossorigin' => 'anonymous']);
+	if (stripos($paramsFontScheme, 'https://') === 0) {
+		$this->getPreloadManager()->preconnect('https://fonts.googleapis.com/', ['crossorigin' => 'anonymous']);
+		$this->getPreloadManager()->preconnect('https://fonts.gstatic.com/', ['crossorigin' => 'anonymous']);
+		$this->getPreloadManager()->preload($paramsFontScheme, ['as' => 'style', 'crossorigin' => 'anonymous']);
+		$wa->registerAndUseStyle('fontscheme.current', $paramsFontScheme, [], ['media' => 'print', 'rel' => 'lazy-stylesheet', 'onload' => 'this.media=\'all\'', 'crossorigin' => 'anonymous']);
 
-        if (preg_match_all('/family=([^?:]*):/i', $paramsFontScheme, $matches) > 0) {
-            $fontStyles = '--font-family-body: "' . str_replace('+', ' ', $matches[1][0]) . '", sans-serif;
+		if (preg_match_all('/family=([^?:]*):/i', $paramsFontScheme, $matches) > 0) {
+			$fontStyles = '--font-family-body: "' . str_replace('+', ' ', $matches[1][0]) . '", sans-serif;
 			--font-family-headings: "' . str_replace('+', ' ', isset($matches[1][1]) ? $matches[1][1] : $matches[1][0]) . '", sans-serif;
 			--font-weight-normal: 400;
 			--font-weight-headings: 700;';
-        }
-    } else {
-        $wa->registerAndUseStyle('fontscheme.current', $paramsFontScheme, ['version' => 'auto'], ['media' => 'print', 'rel' => 'lazy-stylesheet', 'onload' => 'this.media=\'all\'']);
-        $this->getPreloadManager()->preload($wa->getAsset('style', 'fontscheme.current')->getUri() . '?' . $this->getMediaVersion(), ['as' => 'style']);
-    }
+		}
+	} else {
+		$wa->registerAndUseStyle('fontscheme.current', $paramsFontScheme, ['version' => 'auto'], ['media' => 'print', 'rel' => 'lazy-stylesheet', 'onload' => 'this.media=\'all\'']);
+		$this->getPreloadManager()->preload($wa->getAsset('style', 'fontscheme.current')->getUri() . '?' . $this->getMediaVersion(), ['as' => 'style']);
+	}
 }
 
 // Enable assets
 $wa->usePreset('template.moko-cassiopeia.' . ($this->direction === 'rtl' ? 'rtl' : 'ltr'))
-    ->useStyle('template.active.language')
-    ->useStyle('template.user')
-    ->useScript('template.user')
-    ->addInlineStyle(":root {
+	->useStyle('template.active.language')
+	->useStyle('template.user')
+	->useScript('template.user')
+	->addInlineStyle(":root {
 		--hue: 214;
 		--template-bg-light: #f0f4fb;
 		--template-text-dark: #495057;
@@ -76,13 +96,13 @@ $wa->getAsset('style', 'fontawesome')->setAttribute('rel', 'lazy-stylesheet');
 <!DOCTYPE html>
 <html lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>">
 <head>
-    <jdoc:include type="metas" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <jdoc:include type="styles" />
-    <jdoc:include type="scripts" />
+	<jdoc:include type="metas" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<jdoc:include type="styles" />
+	<jdoc:include type="scripts" />
 </head>
 <body class="<?php echo $this->direction === 'rtl' ? 'rtl' : ''; ?>">
-    <jdoc:include type="message" />
-    <jdoc:include type="component" />
+	<jdoc:include type="message" />
+	<jdoc:include type="component" />
 </body>
 </html>

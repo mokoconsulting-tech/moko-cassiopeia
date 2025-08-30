@@ -1,20 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-		@copyright 	 © 2025 Moko Consulting — All Rights Reserved
-		@license     GNU General Public License version 2 or later; see LICENSE.txt
+<!-- =========================================================================
+  Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
 
-		Website: https://mokoconsulting.tech
-		Email: hello@mokoconsulting.tech
-		Phone: +1 (931) 279-6313
+  This file is part of a Moko Consulting project.
 
-		@package     Joomla.Site
-		@subpackage  Templates.moko-cassiopeia
-		@file        /templates/moko-cassiopeia/templateDetails.xml
+  SPDX-License-Identifier: GPL-3.0-or-later
 
-		This program is distributed in the hope that it will be useful,
-		but WITHOUT ANY WARRANTY; without even the implied warranty of
-		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-		GNU General Public License for more details.
+  This program is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program. If not, see https://www.gnu.org/licenses/ .
+  =========================================================================
+  FILE INFORMATION
+  DEFGROUP: Joomla
+  INGROUP: Moko-Cassiopeia
+  PATH: templates/moko-cassiopeia/templateDetails.xml
+  VERSION: 02.00
+  BRIEF: Template manifest XML file for Moko-Cassiopeia
+  =========================================================================
 -->
 <extension type="template" client="site" method="upgrade">
 	<updateservers>

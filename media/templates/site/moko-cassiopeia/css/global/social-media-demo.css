@@ -1,16 +1,33 @@
-/*!
- * @package     Joomla.Site
- * @subpackage  Templates.moko-cassiopeia
- * @file        /media/templates/sote/moko-cassiopeia/css/global/csocial-media-demos.css
+@charset "UTF-8";
+/* =========================================================================
+ * Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
  *
- * @copyright 	2025 Moko Consulting <https://mokoconsulting.tech>
- * @license     GNU General Public License version 2 or later; see LICENSE.txt
+ * This file is part of a Moko Consulting project.
  *
- * Website: https://mokoconsulting.tech
- * Email: hello@mokoconsulting.tech
- * Phone: +1 (931) 279-6313
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see https://www.gnu.org/licenses/ .
+ * =========================================================================
+ * FILE INFORMATION
+ * DEFGROUP: Joomla
+ * INGROUP: Moko-Cassiopeia
+ * PATH: media/templates/site/moko-cassiopeia/css/global/social-media-demo.css
+ * VERSION: 02.00
+ * BRIEF: Demo styles for showcasing social media elements in Moko-Cassiopeia template
+ * =========================================================================
  */
- *
+
 /*
 ======================================================================
 Social Media Demo — FULL CSS (Joomla-safe, fully scoped)
@@ -19,10 +36,10 @@ Usage:   Wrap your article markup in <div class="social-media-demo"> ... </div>
 Version: 2.0 (2025-08-23)
 
 How it’s organized:
-  1) Container-level CSS variables (IMAGES ONLY). Colors are hard-coded per brand below.
-  2) Base/layout styles (sections, header shell, placeholders, buttons).
-  3) Platform brand colors (hard-coded) and cover height tweaks.
-  4) Image assignments (map classes like .fb-cover → variable --fb-cover-img).
+	1) Container-level CSS variables (IMAGES ONLY). Colors are hard-coded per brand below.
+	2) Base/layout styles (sections, header shell, placeholders, buttons).
+	3) Platform brand colors (hard-coded) and cover height tweaks.
+	4) Image assignments (map classes like .fb-cover → variable --fb-cover-img).
 
 INSTRUCTIONS:
  - Save the images in their requried sizes into the [SITEROOT]/images/social/ folder with the exact names.
@@ -32,77 +49,77 @@ INSTRUCTIONS:
 REQUIRED IMAGE SIZES — Social Media Demo Wireframes
 
  Facebook
-   --fb-cover-img   → Cover: 820×312 (desktop), 640×360 (mobile safe)
-   --fb-avatar-img  → Profile: 176×176 (shown as circle, but use square image)
+	 --fb-cover-img   → Cover: 820×312 (desktop), 640×360 (mobile safe)
+	 --fb-avatar-img  → Profile: 176×176 (shown as circle, but use square image)
 
  Twitter / X
-   --x-cover-img    → Header: 1500×500
-   --x-avatar-img   → Profile: up to 400×400 (shown as circle, but use square image)
+	 --x-cover-img    → Header: 1500×500
+	 --x-avatar-img   → Profile: up to 400×400 (shown as circle, but use square image)
 
  LinkedIn Company
-   --li-cover-img   → Banner: ~1128×191
-   --li-logo-img    → Logo: up to 300×300 (rounded square)
+	 --li-cover-img   → Banner: ~1128×191
+	 --li-logo-img    → Logo: up to 300×300 (rounded square)
 
  Google Business Profile
-   --gmb-cover-img  → Banner: ~960×200 (mobile ~960×140)
-   --gmb-logo-img   → Logo: up to 300×300 (shown as circle, but use square image)
+	 --gmb-cover-img  → Banner: ~960×200 (mobile ~960×140)
+	 --gmb-logo-img   → Logo: up to 300×300 (shown as circle, but use square image)
 
  Instagram Business
-   --ig-cover-img   → Not always visible, safe 1080×608 for highlight background
-   --ig-avatar-img  → Profile: 320×320 (shown as circle, but use square image)
+	 --ig-cover-img   → Not always visible, safe 1080×608 for highlight background
+	 --ig-avatar-img  → Profile: 320×320 (shown as circle, but use square image)
 
  YouTube Channel
-   --yt-cover-img   → Channel art: 2560×1440 (safe area ~1546×423 center)
-   --yt-avatar-img  → Channel icon: 800×800 (shown as circle, but use square image)
+	 --yt-cover-img   → Channel art: 2560×1440 (safe area ~1546×423 center)
+	 --yt-avatar-img  → Channel icon: 800×800 (shown as circle, but use square image)
 
  TikTok Business
-   --tt-cover-img   → Profile header: ~900×500 (safe area ~720×405)
-   --tt-avatar-img  → Profile: 200×200 (shown as circle, but use square image)
+	 --tt-cover-img   → Profile header: ~900×500 (safe area ~720×405)
+	 --tt-avatar-img  → Profile: 200×200 (shown as circle, but use square image)
 
  Pinterest Business
-   --pin-cover-img  → Board/brand banner: ~800×450
-   --pin-avatar-img → Profile: 165×165 (shown as circle, but use square image)
+	 --pin-cover-img  → Board/brand banner: ~800×450
+	 --pin-avatar-img → Profile: 165×165 (shown as circle, but use square image)
 
  Snapchat Public Profile
-   --sc-cover-img   → Banner: ~1080×1920 (stories/poster)
-   --sc-avatar-img  → Bitmoji/Profile: 320×320 (shown as circle, but use square image)
+	 --sc-cover-img   → Banner: ~1080×1920 (stories/poster)
+	 --sc-avatar-img  → Bitmoji/Profile: 320×320 (shown as circle, but use square image)
 
  Reddit Community
-   --rd-cover-img   → Banner: 1920×384
-   --rd-avatar-img  → Community icon: 256×256 (shown as circle, but use square image)
+	 --rd-cover-img   → Banner: 1920×384
+	 --rd-avatar-img  → Community icon: 256×256 (shown as circle, but use square image)
  ====================================================================== */
 
 /* Container variables — IMAGES ONLY (safe-scoped) */
 .social-media-demo {
-  --fb-cover-img: url('../../../../../image/social/fb-cover.jpg');
-  --fb-avatar-img: url('../../../../../image/social/fb-avatar.jpg');
+	--fb-cover-img: url('../../../../../image/social/fb-cover.jpg');
+	--fb-avatar-img: url('../../../../../image/social/fb-avatar.jpg');
 
-  --x-cover-img:  url('../../../../../image/social/x-cover.jpg');
-  --x-avatar-img: url('../../../../../image/social/x-avatar.jpg');
+	--x-cover-img:  url('../../../../../image/social/x-cover.jpg');
+	--x-avatar-img: url('../../../../../image/social/x-avatar.jpg');
 
-  --li-cover-img: url('../../../../../image/social/li-cover.jpg');
-  --li-logo-img:  url('../../../../../image/social/li-logo.jpg');
+	--li-cover-img: url('../../../../../image/social/li-cover.jpg');
+	--li-logo-img:  url('../../../../../image/social/li-logo.jpg');
 
-  --gmb-cover-img: url('../../../../../image/social/gmb-cover.jpg');
-  --gmb-logo-img:  url('../../../../../image/social/gmb-logo.jpg');
+	--gmb-cover-img: url('../../../../../image/social/gmb-cover.jpg');
+	--gmb-logo-img:  url('../../../../../image/social/gmb-logo.jpg');
 
-  --ig-cover-img: url('../../../../../image/social/ig-cover.jpg');
-  --ig-avatar-img: url('../../../../../image/social/ig-avatar.jpg');
+	--ig-cover-img: url('../../../../../image/social/ig-cover.jpg');
+	--ig-avatar-img: url('../../../../../image/social/ig-avatar.jpg');
 
-  --yt-cover-img: url('../../../../../image/social/yt-cover.jpg');
-  --yt-avatar-img: url('../../../../../image/social/yt-avatar.jpg');
+	--yt-cover-img: url('../../../../../image/social/yt-cover.jpg');
+	--yt-avatar-img: url('../../../../../image/social/yt-avatar.jpg');
 
-  --tt-cover-img: url('../../../../../image/social/tt-cover.jpg');
-  --tt-avatar-img: url('../../../../../image/social/tt-avatar.jpg');
+	--tt-cover-img: url('../../../../../image/social/tt-cover.jpg');
+	--tt-avatar-img: url('../../../../../image/social/tt-avatar.jpg');
 
-  --pin-cover-img: url('../../../../../image/social/pin-cover.jpg');
-  --pin-avatar-img: url('../../../../../image/social/pin-avatar.jpg');
+	--pin-cover-img: url('../../../../../image/social/pin-cover.jpg');
+	--pin-avatar-img: url('../../../../../image/social/pin-avatar.jpg');
 
-  --sc-cover-img: url('../../../../../image/social/sc-cover.jpg');
-  --sc-avatar-img: url('../../../../../image/social/sc-avatar.jpg');
+	--sc-cover-img: url('../../../../../image/social/sc-cover.jpg');
+	--sc-avatar-img: url('../../../../../image/social/sc-avatar.jpg');
 
-  --rd-cover-img: url('../../../../../image/social/rd-cover.jpg');
-  --rd-avatar-img: url('../../../../../image/social/rd-avatar.jpg');
+	--rd-cover-img: url('../../../../../image/social/rd-cover.jpg');
+	--rd-avatar-img: url('../../../../../image/social/rd-avatar.jpg');
 }
 
 /* DO NOT TOUCH */
