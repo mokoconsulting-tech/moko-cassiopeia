@@ -30,11 +30,11 @@
 
 Changelog — Moko-Cassiopeia
 
-#Version 2.0 (2025-08-30)
+# Version 2.0 (2025-08-30)
 
 **Major Release** — introduces the long-awaited **Dark Mode Toggle**, streamlining accessibility and usability enhancements.
 
-##Added
+## Added
 
 * **Dark Mode Toggle**
 
@@ -53,14 +53,14 @@ Changelog — Moko-Cassiopeia
 	* Automatic TOC injection when enabled.
 	* User selects placement via article > options > layout (`toc-left` or `toc-right`).
 
-##Improved
+## Improved
 
 * Cleaned up `index.php` by removing **skip-to-content** duplicate calls.
 * Consolidated JavaScript asset loading (ensuring dark-mode script is loaded correctly from external JS file).
 * Streamlined CSS for **toggle switch**, ensuring it inherits Bootstrap/Cassiopeia defaults.
 * General accessibility refinements in typography and color contrast.
 
-##Fixed
+## Fixed
 
 * Fixed missing **logo param** in header output.
 * Corrected stylesheet inconsistencies between Bootstrap 5 helpers and template overrides.
@@ -70,7 +70,7 @@ Changelog — Moko-Cassiopeia
 
 #Previous Versions
 
-##1.0
+## 1.0
 
 * **Initial Public Release** with:
 
