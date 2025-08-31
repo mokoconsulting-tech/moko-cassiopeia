@@ -101,7 +101,6 @@ $wa->useStyle('template.base');   // css/template.css
 $wa->useStyle('template.user');   // css/user.css
 
 // Optional vendor CSS
-$wa->useStyle('vendor.vmbasic');
 $wa->useStyle('vendor.gable');
 $wa->useStyle('vendor.bootstrap-toc');
 

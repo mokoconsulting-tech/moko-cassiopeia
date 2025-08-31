@@ -44,15 +44,6 @@
 			}
 		},
 		{
-			"name": "vendor.vmbasic",
-			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/vendor/vmbasic.css",
-			"attributes":
-			{
-				"media": "all"
-			}
-		},
-		{
 			"name": "vendor.gable",
 			"type": "style",
 			"uri": "media/templates/site/moko-cassiopeia/css/vendor/gable.css",
