@@ -22,7 +22,7 @@
  * DEFGROUP: Joomla
  * INGROUP: Moko-Cassiopeia
  * PATH: media/templates/site/moko-cassiopeia/js/darkmode-toggle.js
- * VERSION: 02.00
+ * VERSION: 02.01.05-dev
  * BRIEF: JavaScript logic for dark mode toggle functionality in Moko-Cassiopeia
  * =========================================================================
  */

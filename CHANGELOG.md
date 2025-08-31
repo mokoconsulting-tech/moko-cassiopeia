@@ -23,7 +23,7 @@
  DEFGROUP: Joomla
  INGROUP: Moko-Cassiopeia
  PATH: CHANGELOG.md
- VERSION: 02.00
+ VERSION: 02.01.05-dev
  BRIEF: Changelog file documenting version history of Moko-Cassiopeia
  =========================================================================
 -->

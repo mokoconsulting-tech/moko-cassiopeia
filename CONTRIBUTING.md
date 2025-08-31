@@ -23,7 +23,7 @@
  DEFGROUP: Joomla
  INGROUP: Moko-Cassiopeia
  PATH: CONTRIBUTING.md
- VERSION: 02.00
+ VERSION: 02.01.05-dev
  BRIEF: Contribution guidelines for the Moko-Cassiopeia project
  =========================================================================
 -->

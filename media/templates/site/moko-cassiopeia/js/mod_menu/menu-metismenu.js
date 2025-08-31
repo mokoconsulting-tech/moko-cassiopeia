@@ -22,7 +22,7 @@
  * DEFGROUP: Joomla
  * INGROUP: Moko-Cassiopeia
  * PATH: media/templates/site/moko-cassiopeia/js/mod_menu/menu-metismenu.js
- * VERSION: 02.00
+ * VERSION: 02.01.05-dev
  * BRIEF: Modern MetisMenu script for Joomla mod_menu in Moko-Cassiopeia
  * =========================================================================
  */

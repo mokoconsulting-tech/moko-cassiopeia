@@ -23,7 +23,7 @@
  * DEFGROUP: Joomla
  * INGROUP: Moko-Cassiopeia
  * PATH: templates/moko-cassiopeia/error.php
- * VERSION: 02.00
+ * VERSION: 02.01.05-dev
  * BRIEF: Error page template file for Moko-Cassiopeia
  * =========================================================================
  */

@@ -22,7 +22,7 @@
  * DEFGROUP: Joomla
  * INGROUP: Moko-Cassiopeia
  * PATH: media/templates/site/moko-cassiopeia/js/template.js
- * VERSION: 02.00
+ * VERSION: 02.01.05-dev
  * BRIEF: Core JavaScript utilities and behaviors for Moko-Cassiopeia template
  * =========================================================================
  */

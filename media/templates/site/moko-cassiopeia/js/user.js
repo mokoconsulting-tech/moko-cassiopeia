@@ -22,7 +22,7 @@
  * DEFGROUP: Joomla
  * INGROUP: Moko-Cassiopeia
  * PATH: media/templates/site/moko-cassiopeia/js/user.js
- * VERSION: 02.00
+ * VERSION: 02.01.05-dev
  * BRIEF: JavaScript for handling user-specific interactions in Moko-Cassiopeia template
  * =========================================================================
  */
