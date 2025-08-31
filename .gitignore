@@ -1,65 +1,70 @@
-@ -0,0 +1,47 @@
-# Logs and databases
-/logs/
-/tmp/
-/documents/
-/administrator/logs/
-/packages/*
-
-#Dev related
-build/
-dev/
-scripts/
-
-#Configuration files
-/configuration.php
-/htdocs/conf/*
-
-# Joomla-generated files
-installation/
-/cache/
-/media/com_joomlaupdate/
-
-# Backup files
-*.bak
-*.backup
-/backups/
-/htdocs/solo/
-
-# Environment-specific files
+# ============================================================
 .env
 .env.local
 .env.*.local
+*.local.php
+*.secret.php
 
-# Node.js dependencies (if using npm for template development)
-node_modules/
-npm-debug.log*
+# ============================================================
+# Logs, dumps & databases
+# ============================================================
+*.log
+*.pid
+*.seed
+*.sql
+*.sql.gz
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
 
-# Build files
-/dist/
-/build/
+# ============================================================
+# OS / Editor / IDE cruft
+# ============================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+# Windows artifacts
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+$RECYCLE.BIN/
+System Volume Information/
+*.lnk
+Icon?
+.idea/
+.vscode/
+*.code-workspace
+*.sublime*
+.project
+.settings/
+.buildpath
 
-# Compiled assets
+# ============================================================
+# Dev scripts & scratch
+# ============================================================
+$1TODO
+todo
+
+# ============================================================
+# Maps & compiled asset helpers
+# ============================================================
 *.css.map
 *.js.map
 
-# System files
-desktop.ini
-.DS_Store
-Thumbs.db
-.idea/
-*.sublime*
+# ============================================================
+# SFTP / sync tools
+# ============================================================
 sftp-config*.json
 *.ffs*
 
-# Editor and IDE files
-.vscode/
-*.swp
+# ============================================================
+# Replit / cloud IDE
+# ============================================================
+.replit
+replit.md
 
-# Other
-*.lock
-upgrade.unlock
-*conf*.php
-*.back*
-*.bak*
-*.old
+# ============================================================
+# Keep-empty folders helper
+# ============================================================
+!.gitkeep
