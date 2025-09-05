@@ -23,7 +23,7 @@
  DEFGROUP: Joomla
  INGROUP: Moko-Cassiopeia
  PATH: CODE_OF_CONDUCT.md
- VERSION: 02.01.05-dev
+ VERSION: 02.01.05
  BRIEF: Contributor Code of Conduct for Moko-Cassiopeia project
  =========================================================================
 -->

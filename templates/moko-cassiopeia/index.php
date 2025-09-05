@@ -23,7 +23,7 @@
  * DEFGROUP: Joomla
  * INGROUP: Moko-Cassiopeia
  * PATH: templates/moko-cassiopeia/index.php
- * VERSION: 02.01.05-dev
+ * VERSION: 02.01.05
  * BRIEF: Main template index file for Moko-Cassiopeia rendering site layout
  * =========================================================================
  */
@@ -101,8 +101,6 @@ $wa->useStyle('template.base');   // css/template.css
 $wa->useStyle('template.user');   // css/user.css
 
 // Optional vendor CSS
-$wa->useStyle('vendor.vmbasic');
-$wa->useStyle('vendor.gable');
 $wa->useStyle('vendor.bootstrap-toc');
 
 // Color theme (light + optional dark)

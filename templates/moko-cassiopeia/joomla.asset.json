@@ -1,7 +1,7 @@
 {
 	"$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
 	"name": "tpl_moko-cassiopeia",
-	"version": "02.00",
+	"version": "02.01.05",
 	"description": "Moko-Cassiopeia template assets",
 	"license": "GPL-3.0-or-later",
 	"x-header":
@@ -38,24 +38,6 @@
 			"name": "template.editor",
 			"type": "style",
 			"uri": "media/templates/site/moko-cassiopeia/css/editor.css",
-			"attributes":
-			{
-				"media": "all"
-			}
-		},
-		{
-			"name": "vendor.vmbasic",
-			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/vendor/vmbasic.css",
-			"attributes":
-			{
-				"media": "all"
-			}
-		},
-		{
-			"name": "vendor.gable",
-			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/vendor/gable.css",
 			"attributes":
 			{
 				"media": "all"

@@ -23,7 +23,7 @@
  * DEFGROUP: Joomla
  * INGROUP: Moko-Cassiopeia
  * PATH: templates/moko-cassiopeia/html/com_content/article/toc-right.php
- * VERSION: 02.01.05-dev
+ * VERSION: 02.01.05
  * BRIEF: Template override for Joomla articles with Table of Contents aligned right
  * =========================================================================
  */

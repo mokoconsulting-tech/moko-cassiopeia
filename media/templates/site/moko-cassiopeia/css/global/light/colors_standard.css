@@ -23,7 +23,7 @@
  * DEFGROUP: Joomla
  * INGROUP: Moko-Cassiopeia
  * PATH: media/templates/site/moko-cassiopeia/css/global/light/colors_standard.css
- * VERSION: 02.01.05-dev
+ * VERSION: 02.01.05
  * BRIEF: Standard light mode color definitions for Moko-Cassiopeia template
  * =========================================================================
  */
@@ -105,7 +105,7 @@
 	--container-bottom-b-border: ;
 	--container-bottom-b-border-radius: ;
 
-	--nav-text-color: var(--mainmenu-nav-link-color);
+	--nav-text-color: white;
 	--nav-bg-color: var(--color-link);
 	--border: 5px;
 

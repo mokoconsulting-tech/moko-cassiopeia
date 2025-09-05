@@ -23,14 +23,22 @@
  DEFGROUP: Joomla
  INGROUP: Moko-Cassiopeia
  PATH: CHANGELOG.md
- VERSION: 02.01.05-dev
+ VERSION: 02.01.05
  BRIEF: Changelog file documenting version history of Moko-Cassiopeia
  =========================================================================
 -->
 
 Changelog — Moko-Cassiopeia
 
-# Version 2.0 (2025-08-30)
+# Version 02.01.05 (2025-09-04)
+**Minor Release**
+
+## Fixed
+- Removed vmbasic.css
+- Repaired temaplte.css and colors_standard.css
+
+
+# Version 02.00.00 (2025-08-30)
 
 **Major Release** — introduces the long-awaited **Dark Mode Toggle**, streamlining accessibility and usability enhancements.
 
@@ -70,7 +78,7 @@ Changelog — Moko-Cassiopeia
 
 #Previous Versions
 
-## 1.0
+## 01.00.00
 
 * **Initial Public Release** with:
 

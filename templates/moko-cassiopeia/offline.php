@@ -23,7 +23,7 @@
  * DEFGROUP: Joomla
  * INGROUP: Moko-Cassiopeia
  * PATH: templates/moko-cassiopeia/offline.php
- * VERSION: 02.01.05-dev
+ * VERSION: 02.01.05
  * BRIEF: Offline page template file for Moko-Cassiopeia
  * =========================================================================
  */

@@ -23,7 +23,7 @@
  * DEFGROUP: Joomla
  * INGROUP: Moko-Cassiopeia
  * PATH: media/templates/site/moko-cassiopeia/css/template.css
- * VERSION: 02.01.05-dev
+ * VERSION: 02.01.05
  * BRIEF: Main stylesheet providing layout, typography, and component styles for Moko-Cassiopeia
  * =========================================================================
  */
@@ -5135,7 +5135,7 @@ fieldset:disabled .btn {
 	--card-spacer-x: 1rem;
 	--card-title-spacer-y: 0.5rem;
 	--card-border-width: 1px;
-	--card-border-color: hsl(210, 14%, 89%);
+	--card-border-color: var(--color-secondary);
 	--card-border-radius: 0.25rem;
 	--card-box-shadow: ;
 	--card-inner-border-radius: calc(0.25rem - 1px);
@@ -5145,7 +5145,7 @@ fieldset:disabled .btn {
 	--card-cap-color: ;
 	--card-height: ;
 	--card-color: ;
-	--card-bg: hsl(0, 0%, 100%);
+	--card-bg: var(--nav-text-color);
 	--card-img-overlay-padding: 1rem;
 	--card-group-margin: 0.5em;
 	position: relative;
@@ -5520,7 +5520,7 @@ fieldset:disabled .btn {
 	--breadcrumb-border-radius: ;
 	--breadcrumb-divider-color: hsl(210, 7%, 46%);
 	--breadcrumb-item-padding-x: 0.5rem;
-	--breadcrumb-item-active-color: hsl(210, 9%, 31%);
+	--breadcrumb-item-active-color: val(var(--link-color));
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -14575,7 +14575,7 @@ li.current a {
 .container-header .mod-menu>li>a,
 .container-header .mod-menu>li>span {
 	position: relative;
-	color: var(--nav-text-color);
+	color: var(--mainmenu-nav-link-color);
 	text-decoration: none;
 }
 

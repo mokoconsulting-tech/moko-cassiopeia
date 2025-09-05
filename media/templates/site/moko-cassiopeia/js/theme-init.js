@@ -22,7 +22,7 @@
  * DEFGROUP: Joomla
  * INGROUP: Moko-Cassiopeia
  * PATH: media/templates/site/moko-cassiopeia/js/theme-init.js
- * VERSION: 02.01.05-dev
+ * VERSION: 02.01.05
  * BRIEF: Initialization script for Moko-Cassiopeia theme features and behaviors
  * =========================================================================
  */

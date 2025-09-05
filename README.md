@@ -23,14 +23,14 @@
     FILE INFORMATION
     INGROUP:   Template
     FILE:      README.md
-    VERSION:   02.01.05-dev (In Development)
-    BRIEF:     Documentation for Moko-Cassiopeia template (in-development 2.1.5)
+    VERSION:   02.01.05
+    BRIEF:     Documentation for Moko-Cassiopeia template
     PATH:      /templates/moko-cassiopeia/
     NOTE:      Includes Dark Mode and Soft Offline Mode
     VARIABLES: None
 -->
 
-# Moko-Cassiopeia
+# Moko-Cassiopeia (v02.01.05)
 
 A modern, lightweight enhancement layer for Joomla's Cassiopeia
 template.

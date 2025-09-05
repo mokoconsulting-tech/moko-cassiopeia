@@ -23,7 +23,7 @@
  * DEFGROUP: Joomla
  * INGROUP: Moko-Cassiopeia
  * PATH: templates/moko-cassiopeia/error.php
- * VERSION: 02.01.05-dev
+ * VERSION: 02.01.05
  * BRIEF: Error page template file for Moko-Cassiopeia
  * =========================================================================
  */
@@ -59,8 +59,6 @@ $params_rightIcon = htmlspecialchars($params->get('drawerRightIcon', 'fa-solid f
 // ------------------ Styles ------------------
 $wa->useStyle('template.base');
 $wa->useStyle('template.user');
-$wa->useStyle('vendor.vmbasic');
-$wa->useStyle('vendor.gable');
 
 // Light/Dark variable sheets (load before consumers)
 if ($wa->assetExists('style', 'template.light.' . $colorLight)) {
