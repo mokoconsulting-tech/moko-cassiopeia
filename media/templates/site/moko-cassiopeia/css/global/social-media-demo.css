@@ -1,38 +1,31 @@
 @charset "UTF-8";
-/* =========================================================================
- * Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
- *
- * This file is part of a Moko Consulting project.
- *
- * SPDX-License-Identifier: GPL-3.0-or-later
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see https://www.gnu.org/licenses/ .
- * =========================================================================
- * FILE INFORMATION
- * DEFGROUP: Joomla
- * INGROUP: Moko-Cassiopeia
- * PATH: media/templates/site/moko-cassiopeia/css/global/social-media-demo.css
- * VERSION: 02.01.05
- * BRIEF: Demo styles for showcasing social media elements in Moko-Cassiopeia template
- * =========================================================================
+/* Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+
+ This file is part of a Moko Consulting project.
+
+ SPDX-License-Identifier: GPL-3.0-or-later
+
+ This program is free software; you can redistribute it and/or modify  it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License along with this program. If not, see https://www.gnu.org/licenses/ .
+
+ # FILE INFORMATION
+ DEFGROUP: Joomla
+ INGROUP: Moko-Cassiopeia
+ PATH: media/templates/site/moko-cassiopeia/css/global/social-media-demo.css
+ VERSION: 02.01.05
+ BRIEF: Demo styles for showcasing social media elements in Moko-Cassiopeia template
  */
 
 /*
 ======================================================================
 Social Media Demo — FULL CSS (Joomla-safe, fully scoped)
-Scope:   All selectors prefixed with .social-media-demo to avoid leakage
-Usage:   Wrap your article markup in <div class="social-media-demo"> ... </div>
+Scope: All selectors prefixed with .social-media-demo to avoid leakage
+Usage: Wrap your article markup in <div class="social-media-demo"> ... </div>
 Version: 2.0 (2025-08-23)
 
 How it’s organized:
@@ -94,14 +87,14 @@ REQUIRED IMAGE SIZES — Social Media Demo Wireframes
 	--fb-cover-img: url('../../../../../image/social/fb-cover.jpg');
 	--fb-avatar-img: url('../../../../../image/social/fb-avatar.jpg');
 
-	--x-cover-img:  url('../../../../../image/social/x-cover.jpg');
+	--x-cover-img: url('../../../../../image/social/x-cover.jpg');
 	--x-avatar-img: url('../../../../../image/social/x-avatar.jpg');
 
 	--li-cover-img: url('../../../../../image/social/li-cover.jpg');
-	--li-logo-img:  url('../../../../../image/social/li-logo.jpg');
+	--li-logo-img: url('../../../../../image/social/li-logo.jpg');
 
 	--gmb-cover-img: url('../../../../../image/social/gmb-cover.jpg');
-	--gmb-logo-img:  url('../../../../../image/social/gmb-logo.jpg');
+	--gmb-logo-img: url('../../../../../image/social/gmb-logo.jpg');
 
 	--ig-cover-img: url('../../../../../image/social/ig-cover.jpg');
 	--ig-avatar-img: url('../../../../../image/social/ig-avatar.jpg');
