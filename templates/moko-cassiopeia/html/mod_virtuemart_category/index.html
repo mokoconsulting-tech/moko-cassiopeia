@@ -1,29 +1,22 @@
-<!--
- * Copyright (C) 2025 Moko Consulting <jmiller@mokoconsulting.tech>
- *
- * This file is part of a Moko Consulting project.
- *
- * SPDX-License-Identifier: GPL-3.0-or-later
- *
- * This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 3 of the License, or
- *  (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- *   along with this program. If not, see <https://www.gnu.org/licenses/>.
- -->
+<!-- Copyright (C) 2025 Moko Consulting <jmiller@mokoconsulting.tech>
 
-<!--FILE INFORMATION
- * DEFGROUP: 	Joomla.Site
- * INGROUP:  	Templates.Moko-Cassiopeia
- * FILE: 			index.html
- * BRIEF: 		Security redirect page to block folder access and forward to site root.
+ This file is part of a Moko Consulting project.
+
+ SPDX-License-Identifier: GPL-3.0-or-later
+
+ This program is free software; you can redistribute it and/or modify  it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+ You should have received a copy of the GNU General Public License along with this program. If not, see https://www.gnu.org/licenses/ .
+
+ # FILE INFORMATION
+ DEFGROUP: Joomla.Site
+ INGROUP: Templates.Moko-Cassiopeia
+ FILE: ./index.html
+ BRIEF: Security redirect page to block folder access and forward to site root.
 -->
 
 <!doctype html>
@@ -44,28 +37,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 	<script>
-	/**
-	 * @defgroup Dolibarr
-	 * @file index.html (embedded script)
-	 * @version 1.0.0
-	 * @brief Security redirect logic. Replaces the current history entry with the site root.
-	 * @details This script computes the absolute root URL using `location.origin` and
-	 *          forwards the user immediately. It prevents leaving the protected folder
-	 *          in the browser history by default.
-	 *
-	 * @section VARIABLES
-	 * @var {Object} opts                Configuration options for the redirect behavior.
-	 * @var {string} opts.fallbackPath   Path used when `location.origin` cannot be determined.
-	 * @var {number} opts.delayMs        Optional delay in milliseconds before redirecting.
-	 * @var {"replace"|"assign"} opts.behavior Navigation method used for the redirect.
-	 *
-	 * @section OPTIONS
-	 *  - opts.fallbackPath: default "/" (root path)
-	 *  - opts.delayMs: default 0 (immediate)
-	 *  - opts.behavior: one of
-	 *      * "replace" — calls `location.replace(url)`; does not keep the folder page in history.
-	 *      * "assign"  — calls `location.assign(url)`; keeps an extra history entry.
-	 */
+
 	(function redirectToRoot() {
 		// Configuration object with safe defaults.
 		var opts = {

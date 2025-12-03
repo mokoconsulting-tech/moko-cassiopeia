@@ -1,36 +1,27 @@
-<!--
-    ========================================================================
-    Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+<!-- Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
 
-    This file is part of a Moko Consulting project.
+ This file is part of a Moko Consulting project.
 
-    SPDX-License-Identifier: GPL-3.0-or-later
+ SPDX-License-Identifier: GPL-3.0-or-later
 
-    This program is free software; you can redistribute it and/or modify 
-    it under the terms of the GNU General Public License as published by 
-    the Free Software Foundation; either version 3 of the License, or 
+ This program is free software; you can redistribute it and/or modify  it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or 
     (at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the 
-    GNU General Public License for more details. 
+ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the  GNU General Public License for more details. 
 
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see https://www.gnu.org/licenses/ .
-    ========================================================================
+ You should have received a copy of the GNU General Public License along with this program. If not, see https://www.gnu.org/licenses/ .
 
-    FILE INFORMATION
-    INGROUP:   Template
-    FILE:      README.md
-    VERSION:   02.01.05
-    BRIEF:     Documentation for Moko-Cassiopeia template
-    PATH:      /templates/moko-cassiopeia/
-    NOTE:      Includes Dark Mode and Soft Offline Mode
-    VARIABLES: None
--->
+ # FILE INFORMATION
+ DEFGROUP: Joomla
+ INGROUP: Template
+ FILE: ./README.md
+ VERSION: 03.00 RC
+ BRIEF: Documentation for Moko-Cassiopeia template
+ PATH: /templates/moko-cassiopeia/
+ NOTE: Includes Dark Mode and Soft Offline Mode
+ -->
 
-# Moko-Cassiopeia (v02.01.05)
+# Moko-Cassiopeia (v03.00 RC)
 
 A modern, lightweight enhancement layer for Joomla's Cassiopeia
 template.
@@ -39,8 +30,6 @@ automatic **Table of Contents (TOC)** utility, and optional **Moko
 Expansions** including **Google Tag Manager** and **Google Analytics
 (GA4)** hooks---all while keeping core template overrides minimal and
 upgrade-friendly.
-
-------------------------------------------------------------------------
 
 ## Table of Contents
 
@@ -57,8 +46,6 @@ upgrade-friendly.
 	-   [Soft Offline Mode](#soft-offline-mode)\
 -   [Changelog](#changelog)\
 -   [Roadmap](#roadmap)
-
-------------------------------------------------------------------------
 
 ## Features
 
@@ -89,15 +76,11 @@ upgrade-friendly.
 		during maintenance.\
 	-   Admin can configure which categories remain accessible.
 
-------------------------------------------------------------------------
-
 ## Requirements
 
 -   Joomla **4.4.x** or **5.x**\
 -   PHP **8.0+**\
 -   MySQL/MariaDB compatible database
-
-------------------------------------------------------------------------
 
 ## Quick Start
 
@@ -106,15 +89,11 @@ upgrade-friendly.
 3.  Configure template options under **System → Site Templates →
 	Moko-Cassiopeia**.
 
-------------------------------------------------------------------------
-
 ## Installation
 
 Upload and install through Joomla's extension manager.\
 If upgrading from a prior version, Joomla will safely overwrite files
 --- no manual uninstall required.
-
-------------------------------------------------------------------------
 
 ## Configuration
 
@@ -151,13 +130,9 @@ If upgrading from a prior version, Joomla will safely overwrite files
 	offline/maintenance mode.\
 -   Useful for compliance, legal, or policy content.
 
-------------------------------------------------------------------------
-
 ## Changelog
 
 See the [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
-
-------------------------------------------------------------------------
 
 ## Roadmap
 

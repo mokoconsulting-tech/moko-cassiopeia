@@ -37,7 +37,7 @@ for ($i = 0 , $n = count($items) ; $i < $n ; $i++)
 				<a href="<?php echo $link; ?>" class="osm-item-title-link">
 					<?php echo $item->title;?>
 				</a>
-				<span class="<?php echo $bootstrapHelper->getClassMapping('badge badge-info'); ?>"><?php echo $item->total_plans ;?> <?php echo $item->total_plans > 1 ? Text::_('OSM_PLANS') :  Text::_('OSM_PLAN') ; ?></span>
+				<span class="<?php echo $bootstrapHelper->getClassMapping('badge badge-info'); ?>"><?php echo $item->total_plans ;?> <?php echo $item->total_plans > 1 ? Text::_('OSM_PLANS') : Text::_('OSM_PLAN') ; ?></span>
 			</h3>
 		</div>
 		<?php
