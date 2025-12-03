@@ -21,7 +21,7 @@
  NOTE: Includes Dark Mode and Soft Offline Mode
  -->
 
-# Moko-Cassiopeia (v03.00 RC)
+# Moko-Cassiopeia (v03.00-RC)
 
 A modern, lightweight enhancement layer for Joomla's Cassiopeia
 template.
