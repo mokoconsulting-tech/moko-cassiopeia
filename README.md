@@ -12,12 +12,12 @@
  You should have received a copy of the GNU General Public License along with this program. If not, see https://www.gnu.org/licenses/ .
 
  # FILE INFORMATION
- DEFGROUP: Joomla
+ DEFGROUP: Joomla.Template.Site
  INGROUP: Template
- FILE: ./README.md
- VERSION: 03.00 RC
+ FILE: README.md
+ VERSION: 03.00-RC
  BRIEF: Documentation for Moko-Cassiopeia template
- PATH: /templates/moko-cassiopeia/
+ PATH: .//templates/moko-cassiopeia/
  NOTE: Includes Dark Mode and Soft Offline Mode
  -->
 

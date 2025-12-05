@@ -8,16 +8,15 @@
  This program is free software; you can redistribute it and/or modify  it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or
  (at your option) any later version.
 
- This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
  You should have received a copy of the GNU General Public License along with this program. If not, see https://www.gnu.org/licenses/ .
 
  # FILE INFORMATION
- DEFGROUP: Joomla
+ DEFGROUP: Joomla.Template
  INGROUP: Moko-Cassiopeia
- PATH: templates/moko-cassiopeia/templateDetails.xml
- VERSION: 03.00 RC
+ PATH: ./templates/moko-cassiopeia/templateDetails.xml
+ VERSION: 03.00-RC
  BRIEF: Template manifest XML file for Moko-Cassiopeia
  -->
 <extension type="template" client="site" method="upgrade">
@@ -25,8 +24,8 @@
 		<server type="extension" name="Moko Consulting">https://raw.githubusercontent.com/mokoconsulting-tech/MokoUpdates/refs/heads/main/joomla/moko-cassiopeia/updates.xml</server>
 	</updateservers>
 	<name>moko-cassiopeia</name>
-	<version>02.01.05</version>
-	<creationDate>2025-09-23</creationDate>
+	<version>03.00-RC</version>
+	<creationDate>2025-12-06</creationDate>
 	<author>Jonathan Miller || Moko Consulting</author>
 	<authorEmail>hello@mokoconsulting.tech</authorEmail>
 	<copyright>(C)GNU General Public License Version 2 - 2025 Moko Consulting</copyright>
@@ -85,12 +84,10 @@
 		<fields name="params">
 			<!-- Advanced tab (non-theme/system options only) -->
 			<fieldset name="advanced">
-				<!--
 				<field name="developmentmode" type="radio" label="TPL_MOKO-CASSIOPEIA_DEVELOPMENTMODE_LABEL" description="TPL_MOKO-CASSIOPEIA_DEVELOPMENTMODE_DESC" default="1" layout="joomla.form.field.radio.switcher" filter="boolean">
 					<option value="0">JNO</option>
 					<option value="1">JYES</option>
 				</field>
-			-->
 				<field name="fluidContainer" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="TPL_MOKO-CASSIOPEIA_FLUID_LABEL">
 					<option value="0">TPL_MOKO-CASSIOPEIA_STATIC</option>
 					<option value="1">TPL_MOKO-CASSIOPEIA_FLUID</option>
