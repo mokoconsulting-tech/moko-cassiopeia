@@ -15,7 +15,7 @@
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia
  PATH: ./media/templates/site/moko-cassiopeia/js/mod_menu/menu-metismenu-es5.js
- VERSION: 02.01.05
+ VERSION: 03.00-RC
  BRIEF: ES5-compatible MetisMenu script for Joomla mod_menu in Moko-Cassiopeia
  */
 
