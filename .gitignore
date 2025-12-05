@@ -4,6 +4,7 @@
 .env.*.local
 *.local.php
 *.secret.php
+color_custom.css
 
 # ============================================================
 # Logs, dumps & databases
