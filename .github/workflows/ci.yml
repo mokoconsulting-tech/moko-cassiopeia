@@ -1,0 +1,45 @@
+# Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+#
+# This file is part of a Moko Consulting project.
+#
+# SPDX-LICENSE-IDENTIFIER: GPL-3.0-or-later
+#
+# This program is free software; you can redistribute it and/or modify it under the terms of the
+# GNU General Public License as published by the Free Software Foundation; either version 3 of the
+# License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+# without even the IMPLIED WARRANTY of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License (./LICENSE.md).
+#
+# FILE INFORMATION
+# DEFGROUP: # INGROUP: Documentation
+# REPO: # FILE: ci.yml
+# VERSION: # BRIEF: Baseline CI workflow
+# PATH: ./.github/workflows/ci.yml
+# NOTE: name: ci
+
+on: push: branches: ["main"]
+  pull_request: branches: ["main"]
+
+jobs: lint-and-test: runs-on: ubuntu-latest
+    steps: - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with: node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+        continue-on-error: true
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Test
+        run: npm test
+        continue-on-error: true
