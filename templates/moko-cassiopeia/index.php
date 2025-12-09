@@ -35,7 +35,10 @@ $input = $app->getInput();
 $wa    = $this->getWebAssetManager();
 
 // Template params
-$params_ColorName          = (string) $this->params->get('colorName', 'colors_standard'); // colors_standard|colors_alternative|colors_custom
+$params_LightColorName          = (string) $this->params->get('colorLightName', 'colors_standard'); // colors_standard|colors_alternative|colors_custom
+
+$params_DarkColorName          = (string) $this->params->get('colorDarkName', 'colors_standard'); // colors_standard|colors_alternative|colors_custom
+
 $params_googletagmanager   = $this->params->get('googletagmanager', false);
 $params_googletagmanagerid = $this->params->get('googletagmanagerid', null);
 $params_googleanalytics    = $this->params->get('googleanalytics', false);
@@ -96,19 +99,21 @@ $wa->useStyle('template.user');   // css/user.css
 $wa->useStyle('vendor.bootstrap-toc');
 
 // Color theme (light + optional dark)
-$colorKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_ColorName));
-$lightKey  = 'template.light.' . $colorKey;
-$darkKey   = 'template.dark.' . $colorKey;
+$colorLightKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_LightColorName));
+$colorDarkKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_DarkColorName));
+
+$lightKey  = 'template.light.' . $colorLightKey;
+$darkKey   = 'template.dark.' . $colorDarkKey;
 
 try {
 	$wa->useStyle($lightKey);
 } catch (\Throwable $e) {
-	$wa->registerAndUseStyle('template.light.dynamic', $templatePath . '/css/global/colors/light/' . $params_ColorName . '.css');
+	$wa->registerAndUseStyle('template.light.dynamic', $templatePath . '/css/global/light/' . $colorLightKey . '.css');
 }
 try {
 	$wa->useStyle($darkKey);
 } catch (\Throwable $e) {
-	// optional; omit if not present
+	$wa->registerAndUseStyle('template.dark.dynamic', $templatePath . '/css/global/dark/' . $colorDarkKey . '.css');
 }
 
 // Scripts
@@ -119,7 +124,7 @@ $wa->useScript('vendor.bootstrap-toc.js');
 
 // Font scheme (external or local) + CSS custom properties
 $params_FontScheme = $this->params->get('useFontScheme', false);
-$fontStyles        = '';
+$fontStyles = '';
 
 if ($params_FontScheme) {
 	if (stripos($params_FontScheme, 'https://') === 0) {

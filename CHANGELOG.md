@@ -31,9 +31,7 @@
  
 ### Updated
  - Copyright Headers to MokoCodingDefaults standards
-
-### Added
- - 
+ - Fixed `./templates/moko-cassiopeia/index.php` style injection
 
 ## [02.01.05] 2025-09-04
 - Removed vmbasic.css
