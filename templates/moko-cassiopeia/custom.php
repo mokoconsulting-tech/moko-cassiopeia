@@ -16,7 +16,7 @@
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia
  PATH: ./templates/moko-cassiopeia/custom.php
- VERSION: 03.00-RC
+ VERSION: 03.00
  BRIEF: Custom entry template file for Moko-Cassiopeia with user-defined overrides
  */
 

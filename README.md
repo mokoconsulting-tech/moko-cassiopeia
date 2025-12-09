@@ -15,13 +15,13 @@
  DEFGROUP: Joomla.Template.Site
  INGROUP: Template
  FILE: README.md
- VERSION: 03.00-RC
+ VERSION: 03.00
  BRIEF: Documentation for Moko-Cassiopeia template
  PATH: .//templates/moko-cassiopeia/
  NOTE: Includes Dark Mode and Soft Offline Mode
  -->
 
-# Moko-Cassiopeia (v03.00-RC)
+# Moko-Cassiopeia (v03.00)
 
 A modern, lightweight enhancement layer for Joomla's Cassiopeia
 template.

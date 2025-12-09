@@ -16,7 +16,7 @@
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia
  PATH: ./templates/moko-cassiopeia/index.php
- VERSION: 03.00-RC
+ VERSION: 03.00
  BRIEF: Main template index file for Moko-Cassiopeia rendering site layout
  */
 

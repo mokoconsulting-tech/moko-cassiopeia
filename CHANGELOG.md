@@ -15,7 +15,7 @@
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia
  PATH: ./CHANGELOG.md
- VERSION: 03.00-RC
+ VERSION: 03.00
  BRIEF: Changelog file documenting version history of Moko-Cassiopeia
  -->
 
@@ -24,7 +24,7 @@
 ## [TODO]
 - `./docs/*`
 
-## [03.00-RC]
+## [03.00]
 ### Removed
  - `./CODE_OF_CONDUCT.md`
  - `./CONTRIBUTING.md`
