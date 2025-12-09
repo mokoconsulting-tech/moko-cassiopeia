@@ -101,10 +101,18 @@ $wa->useStyle('vendor.bootstrap-toc');
 // Color theme (light + optional dark)
 $colorLightKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_LightColorName));
 $colorDarkKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_DarkColorName));
-
 $lightKey  = 'template.light.' . $colorLightKey;
 $darkKey   = 'template.dark.' . $colorDarkKey;
-
+try {
+	$wa->useStyle('template.light.colors_standard');
+} catch (\Throwable $e) {
+	$wa->registerAndUseStyle('template.light.colors_standard', $templatePath . '/css/global/light/colors_standard.css');
+}
+try {
+	$wa->useStyle('template.dark.colors_standard');
+} catch (\Throwable $e) {
+	$wa->registerAndUseStyle('template.dark.colors_standard', $templatePath . '/css/global/dark/colors_standard.css');
+}
 try {
 	$wa->useStyle($lightKey);
 } catch (\Throwable $e) {
