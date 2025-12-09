@@ -134,11 +134,18 @@ If upgrading from a prior version, Joomla will safely overwrite files
 
 See the [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
 
-## Roadmap
+---
 
--   **2.2 (Planned)**
-	-   Lazy load media for performance.\
-	-   Expanded template overrides for more layout control.
--   **Future Considerations**
-	-   Multi-tenancy support.\
-	-   Visual layout builder for drag-and-drop template positions.
+## Metadata
+
+* Maintainer: Moko Consulting Engineering
+* Repository: [https: //github.com/mokoconsulting-tech/moko-cassiopeoa](https: //github.com/mokoconsulting-tech/moko-cassiopeoa)
+* File: README.md
+* Version: 3.0
+* Classification: Public Open Source Standards
+
+## Revision History
+
+| Version | Date       | Author 													| Description 													|
+| ------- | ---------- | -----------------------------_-- | ------------------------------------- |
+| 3.0     | 2025-12-09 | Jonathan Miller (@jmiller-moko) 	| Added Metadata and Revision History  	|
