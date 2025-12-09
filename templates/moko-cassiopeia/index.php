@@ -45,8 +45,7 @@ $params_googleanalytics    = $this->params->get('googleanalytics', false);
 $params_googleanalyticsid  = $this->params->get('googleanalyticsid', null);
 $params_custom_head_start  = $this->params->get('custom_head_start', null);
 $params_custom_head_end    = $this->params->get('custom_head_end', null);
-$params_leftIcon           = htmlspecialchars($this->params->get('drawerLeftIcon', 'fa-solid fa-chevron-left'), ENT_COMPAT, 'UTF-8');
-$params_rightIcon          = htmlspecialchars($this->params->get('drawerRightIcon', 'fa-solid fa-chevron-right'), ENT_COMPAT, 'UTF-8');
+$params_developmentmode = $this->params->get('developmentmode', false);
 
 // Bootstrap behaviors (assets handled via WAM)
 HTMLHelper::_('bootstrap.framework');
@@ -165,9 +164,6 @@ if ($params_FontScheme) {
 	}
 }
 
-// Expose CSS variables (and any computed font variables)
-$wa->addInlineStyle(":root {\n    --hue: 214;\n    --template-bg-light: #f0f4fb;\n    --template-text-dark: #495057;\n    --template-text-light: #ffffff;\n    --template-link-color: #2a69b8;\n    --template-special-color: #001B4C;\n    $fontStyles\n}");
-
 // -------------------------------------
 // Brand: logo from params OR siteTitle
 // -------------------------------------
@@ -206,11 +202,43 @@ $stickyHeader = $this->params->get('stickyHeader') ? 'position-sticky sticky-top
 // Meta
 $this->setMetaData('viewport', 'width=device-width, initial-scale=1');
 
-// Optional Font Awesome Kit (not defined in JSON)
-if ($this->params->get('fA6KitCode')) {
-	$fa6Kit = "https://kit.fontawesome.com/" . $this->params->get('fA6KitCode') . ".js";
-	HTMLHelper::_('script', $fa6Kit, ['crossorigin' => 'anonymous']);
+if ($this->params->get('faKitCode')) {
+	$faKit = "https://kit.fontawesome.com/" . $this->params->get('faKitCode') . ".js";
+	HTMLHelper::_('script', $faKit, ['crossorigin' => 'anonymous']);
+} else {
+		try {
+			if($params_developmentmode){
+				$wa->useStyle('vendor.fa7free.all');
+				$wa->useStyle('vendor.fa7free.brands');
+				$wa->useStyle('vendor.fa7free.fontawesome');
+				$wa->useStyle('vendor.fa7free.regular');
+				$wa->useStyle('vendor.fa7free.solid');
+			} else {
+				$wa->useStyle('vendor.fa7free.all.min');
+				$wa->useStyle('vendor.fa7free.brands.min');
+				$wa->useStyle('vendor.fa7free.fontawesome.min');
+				$wa->useStyle('vendor.fa7free.regular.min');
+				$wa->useStyle('vendor.fa7free.solid.min');
+			}
+	} catch (\Throwable $e) {
+		if($params_developmentmode){
+			$wa->registerAndUseStyle('vendor.fa7free.all.dynamic', $templatePath . '/vendor/fa7free/css/all.css');
+			$wa->registerAndUseStyle('vendor.fa7free.brands.dynamic', $templatePath . '/vendor/fa7free/css/brands.css');
+			$wa->registerAndUseStyle('vendor.fa7free.fontawesome.dynamic', $templatePath . '/vendor/fa7free/css/fontawesome.css');
+			$wa->registerAndUseStyle('vendor.fa7free.regular.dynamic', $templatePath . '/vendor/fa7free/css/regular.css');
+			$wa->registerAndUseStyle('vendor.fa7free.solid.dynamic', $templatePath . '/vendor/fa7free/css/solid.css');
+		} else {
+			$wa->registerAndUseStyle('vendor.fa7free.all.min.dynamic', $templatePath . '/vendor/fa7free/css/all.min.css');
+				$wa->registerAndUseStyle('vendor.fa7free.brands.min.dynamic', $templatePath . '/vendor/fa7free/css/brands.min.css');
+				$wa->registerAndUseStyle('vendor.fa7free.fontawesome.min.dynamic', $templatePath . '/vendor/fa7free/css/fontawesome.min.css');
+				$wa->registerAndUseStyle('vendor.fa7free.regular.min.dynamic', $templatePath . '/vendor/fa7free/css/regular.min.css');
+				$wa->registerAndUseStyle('vendor.fa7free.solid.min.dynamic', $templatePath . '/vendor/fa7free/css/solid.min.css');
+		}
+
+	}
 }
+$params_leftIcon           = htmlspecialchars($this->params->get('drawerLeftIcon', 'fa-solid fa-chevron-left'), ENT_COMPAT, 'UTF-8');
+$params_rightIcon          = htmlspecialchars($this->params->get('drawerRightIcon', 'fa-solid fa-chevron-right'), ENT_COMPAT, 'UTF-8');
 
 ?>
 <!DOCTYPE html>

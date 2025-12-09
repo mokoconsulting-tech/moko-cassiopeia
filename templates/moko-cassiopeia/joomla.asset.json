@@ -46,7 +46,7 @@
 		{
 			"name": "vendor.bootstrap-toc",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/vendor/afeld/bootstrap-toc.min.css",
+			"uri": "media/templates/site/moko-cassiopeia/vendor/afeld/bootstrap-toc.min.css",
 			"attributes":
 			{
 				"media": "all"
@@ -123,11 +123,61 @@
 		{
 			"name": "vendor.bootstrap-toc.js",
 			"type": "script",
-			"uri": "media/templates/site/moko-cassiopeia/js/vendor/afeld/bootstrap-toc.min.js",
+			"uri": "media/templates/site/moko-cassiopeia/vendor/afeld/bootstrap-toc.min.js",
 			"attributes":
 			{
 				"defer": true
 			}
+		},
+		{
+			"name": "vendor.fa7free.all",
+			"type": "style",
+			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/all.css"
+		},
+		{
+			"name": "vendor.fa7free.all.min",
+			"type": "style",
+			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/all.min.css"
+		},
+		{
+			"name": "vendor.fa7free.brands",
+			"type": "style",
+			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/brands.css"
+		},
+		{
+			"name": "vendor.fa7free.brands.min",
+			"type": "style",
+			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/brands.min.css"
+		},
+		{
+			"name": "vendor.fa7free.fontawesome",
+			"type": "style",
+			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/fontawesome.css"
+		},
+		{
+			"name": "vendor.fa7free.fontawesome.min",
+			"type": "style",
+			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/fontawesome.min.css"
+		},
+		{
+			"name": "vendor.fa7free.regular",
+			"type": "style",
+			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/regular.css"
+		},
+		{
+			"name": "vendor.fa7free.regular.min",
+			"type": "style",
+			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/regular.min.css"
+		},
+		{
+			"name": "vendor.fa7free.solid",
+			"type": "style",
+			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/solid.css"
+		},
+		{
+			"name": "vendor.fa7free.solid.min",
+			"type": "style",
+			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/solid.min.css"
 		}
 	]
 }

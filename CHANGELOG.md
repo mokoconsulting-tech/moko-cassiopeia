@@ -31,7 +31,9 @@
  
 ### Updated
  - Copyright Headers to MokoCodingDefaults standards
- - Fixed `./templates/moko-cassiopeia/index.php` style injection
+ - Fixed `./templates/moko-cassiopeia/index.php` color style injection
+ - Upgraded `FontAwesome 6` to `FontAwesome 7 Free`
+ - Added `Font Awesome 7 Free` style fallback
 
 ## [02.01.05] 2025-09-04
 - Removed vmbasic.css

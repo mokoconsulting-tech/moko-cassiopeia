@@ -48,6 +48,7 @@
 		<folder>css</folder>
 		<folder>images</folder>
 		<folder>fonts</folder>
+		<folder>vendor</folder>
 	</media>
 	<positions>
 		<position>topbar</position>
@@ -185,9 +186,6 @@
 				<field name="theme_sep_typo" type="spacer" label="Typography" hr="false" class="text fw-bold" />
 				<field name="useFontScheme" type="groupedlist" label="TPL_MOKO-CASSIOPEIA_FONT_LABEL" default="0">
 					<option value="0">JNONE</option>
-					<group label="TPL_MOKO-CASSIOPEIA_FONT_GROUP_LOCAL">
-						<option value="media/templates/site/moko-cassiopeia/css/global/fonts-local_roboto.css">Roboto (local)</option>
-					</group>
 					<group label="TPL_MOKO-CASSIOPEIA_FONT_GROUP_WEB">
 						<option value="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@100;300;400;700&amp;display=swap">Fira Sans (web)</option>
 						<option value="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@100;300;400;700&amp;family=Roboto:wght@100;300;400;700&amp;display=swap">Roboto + Noto Sans (web)</option>
@@ -204,7 +202,7 @@
 				<field name="logoFile" type="media" default="media/templates/site/moko-cassiopeia/images/logo.svg" label="TPL_MOKO-CASSIOPEIA_LOGO_LABEL" showon="brand:1" />
 				<field name="siteTitle" type="text" default="" label="TPL_MOKO-CASSIOPEIA_TITLE" filter="string" showon="brand:1" />
 				<field name="siteDescription" type="text" default="" label="TPL_MOKO-CASSIOPEIA_TAGLINE_LABEL" description="TPL_MOKO-CASSIOPEIA_TAGLINE_DESC" filter="string" showon="brand:1" />
-				<field name="fA6KitCode" type="text" default="" label="TPL_MOKO-CASSIOPEIA_FA6KITCODE_LABEL" description="TPL_MOKO-CASSIOPEIA_FA6KITCODE_DESC" filter="string" />
+				<field name="faKitCode" type="text" default="" label="TPL_MOKO-CASSIOPEIA_FAKITCODE_LABEL" description="TPL_MOKO-CASSIOPEIA_FA6KITCODE_DESC" filter="string" />
 
 				<!-- Header & Navigation UI -->
 				<field name="theme_sep_header" type="spacer" label="Header &amp; Navigation" hr="false" class="text fw-bold" />

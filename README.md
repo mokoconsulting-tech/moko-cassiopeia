@@ -18,14 +18,13 @@
  VERSION: 03.00
  BRIEF: Documentation for Moko-Cassiopeia template
  PATH: .//templates/moko-cassiopeia/
- NOTE: Includes Dark Mode and Soft Offline Mode
  -->
 
 # Moko-Cassiopeia (v03.00)
 
 A modern, lightweight enhancement layer for Joomla's Cassiopeia
 template.
-Moko-Cassiopeia adds **Font Awesome 6**, **Bootstrap 5** helpers, an
+Moko-Cassiopeia adds **Font Awesome 7**, **Bootstrap 5** helpers, an
 automatic **Table of Contents (TOC)** utility, and optional **Moko
 Expansions** including **Google Tag Manager** and **Google Analytics
 (GA4)** hooks---all while keeping core template overrides minimal and
@@ -103,7 +102,7 @@ If upgrading from a prior version, Joomla will safely overwrite files
 -   **Color Scheme**: Toggle light/dark defaults.\
 -   **Analytics/GTM**: Enable/disable optional expansions.
 
-### Font Awesome 6
+### Font Awesome 7
 
 -   Fully integrated into Joomla's asset manager.\
 -   No extra scripts required.
