@@ -24,7 +24,7 @@
 ## [TODO]
 - `./docs/*`
 
-## [03.00]
+## [03.00] 2025-12-09
 ### Removed
  - `./CODE_OF_CONDUCT.md`
  - `./CONTRIBUTING.md`
