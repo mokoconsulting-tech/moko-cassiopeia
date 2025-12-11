@@ -97,7 +97,7 @@ vendor/* -diff
 *.min.css linguist-generated=true
 
 ###############################################################################
-# Joomla  Specific
+# Joomla Template Specific
 ###############################################################################
 README.md export-ignore
 CHANGELOG.md export-ignore
@@ -106,19 +106,27 @@ CHANGELOG.md export-ignore
 media_src/ export-ignore
 scss/ export-ignore
 less/ export-ignore
+*/media_src/ export-ignore
+*/scss/ export-ignore
+*/less/ export-ignore
 
 # Prevent diff noise in compiled Joomla assets
 media/*.min.js -diff
 media/*.min.css -diff
+*/media/*.min.js -diff
+*/media/*.min.css -diff
 
 # Treat Joomla manifest and config files as XML for linguist
 templateDetails.xml linguist-language=XML
+*/templateDetails.xml linguist-language=XML
 config.xml linguist-language=XML
 
 # Ensure PHP files in tmpl layouts are recognized consistently
 html/**/*.php linguist-language=PHP
+*/html/**/*.php linguist-language=PHP
 
 # Exclude local override folders commonly used during site development
 html_overrides/ export-ignore
 local_templates/ export-ignore
-
+*/html_overrides/ export-ignore
+*/local_templates/ export-ignore
