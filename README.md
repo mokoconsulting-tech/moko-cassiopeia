@@ -32,35 +32,35 @@ upgrade-friendly.
 
 ## Table of Contents
 
--   [Features](#features)\
--   [Requirements](#requirements)\
--   [Quick Start](#quick-start)\
--   [Installation](#installation)\
+-   [Features](#features)
+-   [Requirements](#requirements)
+-   [Quick Start](#quick-start)
+-   [Installation](#installation)
 -   [Configuration](#configuration)
-	-   [Global Params](#global-params)\
-	-   [Font Awesome 6](#font-awesome-6)\
-	-   [Bootstrap 5 Helpers](#bootstrap-5-helpers)\
-	-   [Table of Contents](#table-of-contents)\
-	-   [Dark Mode Toggle](#dark-mode-toggle)\
-	-   [Soft Offline Mode](#soft-offline-mode)\
--   [Changelog](#changelog)\
+	-   [Global Params](#global-params)
+	-   [Font Awesome 6](#font-awesome-6)
+	-   [Bootstrap 5 Helpers](#bootstrap-5-helpers)
+	-   [Table of Contents](#table-of-contents)
+	-   [Dark Mode Toggle](#dark-mode-toggle)
+	-   [Soft Offline Mode](#soft-offline-mode)
+-   [Changelog](#changelog)
 -   [Roadmap](#roadmap)
 
 ## Features
 
 ### Core Enhancements
 
--   Built on top of Joomla's default **Cassiopeia** template.\
--   **Font Awesome 6** integration.\
--   **Bootstrap 5** helpers (grid, utility classes).\
+-   Built on top of Joomla's default **Cassiopeia** template.
+-   **Font Awesome 6** integration.
+-   **Bootstrap 5** helpers (grid, utility classes).
 -   **Automatic TOC** insertion for articles (activated via layout
 	`toc-left` or `toc-right`).
 
 ### Added in 2.0
 
 -   **Dark Mode Toggle**
-	-   User-facing switch in the header.\
-	-   Persists preference with local storage.\
+	-   User-facing switch in the header.
+	-   Persists preference with local storage.
 	-   Admins can override default mode in template settings.
 -   **Improved Template Params**
 	-   Configure logo, GTM container ID, and dark mode defaults
@@ -70,27 +70,27 @@ upgrade-friendly.
 
 -   **Soft Offline Mode**
 	-   Keeps articles in specific categories available when the site is
-		offline.\
+		offline.
 	-   Example: legal or policy documents remain publicly viewable even
-		during maintenance.\
+		during maintenance.
 	-   Admin can configure which categories remain accessible.
 
 ## Requirements
 
--   Joomla **4.4.x** or **5.x**\
--   PHP **8.0+**\
+-   Joomla **4.4.x** or **5.x**
+-   PHP **8.0+**
 -   MySQL/MariaDB compatible database
 
 ## Quick Start
 
-1.  Install `moko-cassiopeia.zip` via Joomla's Template Installer.\
-2.  Set **Moko-Cassiopeia** as your default template.\
+1.  Install `moko-cassiopeia.zip` via Joomla's Template Installer.
+2.  Set **Moko-Cassiopeia** as your default template.
 3.  Configure template options under **System → Site Templates →
 	Moko-Cassiopeia**.
 
 ## Installation
 
-Upload and install through Joomla's extension manager.\
+Upload and install through Joomla's extension manager.
 If upgrading from a prior version, Joomla will safely overwrite files
 --- no manual uninstall required.
 
@@ -98,13 +98,13 @@ If upgrading from a prior version, Joomla will safely overwrite files
 
 ### Global Params
 
--   **Logo**: Upload a custom site logo.\
--   **Color Scheme**: Toggle light/dark defaults.\
+-   **Logo**: Upload a custom site logo.
+-   **Color Scheme**: Toggle light/dark defaults.
 -   **Analytics/GTM**: Enable/disable optional expansions.
 
 ### Font Awesome 7
 
--   Fully integrated into Joomla's asset manager.\
+-   Fully integrated into Joomla's asset manager.
 -   No extra scripts required.
 
 ### Bootstrap 5 Helpers
@@ -118,15 +118,15 @@ If upgrading from a prior version, Joomla will safely overwrite files
 
 ### Dark Mode Toggle
 
--   User-facing switch in the header.\
--   Remembers preference via local storage.\
+-   User-facing switch in the header.
+-   Remembers preference via local storage.
 -   Default behavior can be set in template settings.
 
 ### Soft Offline Mode
 
--   Introduced in **2.1.5**.\
+-   Introduced in **2.1.5**.
 -   Allows articles in selected categories to remain viewable during
-	offline/maintenance mode.\
+	offline/maintenance mode.
 -   Useful for compliance, legal, or policy content.
 
 ## Changelog
