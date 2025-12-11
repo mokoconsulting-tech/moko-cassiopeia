@@ -14,6 +14,7 @@
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia.Documentation
+ REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./README.md
  VERSION: 03.00.00
  BRIEF: Documentation for Moko-Cassiopeia template
