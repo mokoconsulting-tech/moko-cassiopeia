@@ -24,6 +24,9 @@
 ## [TODO]
 - `./docs/*`
 
+## [03.01.00] 2025-12-11
+- Removed `min` files
+
 ## [03.00] 2025-12-09
 ### Removed
  - `./CODE_OF_CONDUCT.md`
