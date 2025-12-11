@@ -14,6 +14,7 @@
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia
+ REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./media/templates/site/moko-cassiopeia/js/darkmode-toggle.js
  VERSION: 03.00.00
  BRIEF: JavaScript logic for dark mode toggle functionality in Moko-Cassiopeia

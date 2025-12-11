@@ -14,6 +14,7 @@
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia
+ REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./media/templates/site/moko-cassiopeia/js/user.js
  VERSION: 03.00.00
  BRIEF: JavaScript for handling user-specific interactions in Moko-Cassiopeia template

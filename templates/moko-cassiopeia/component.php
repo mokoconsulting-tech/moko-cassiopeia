@@ -15,6 +15,7 @@
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia
+ REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./templates/moko-cassiopeia/component.php
  VERSION: 03.00.00
  BRIEF: Minimal component-only template file for Moko-Cassiopeia

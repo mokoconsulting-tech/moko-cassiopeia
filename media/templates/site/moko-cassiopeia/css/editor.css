@@ -15,6 +15,7 @@
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia
+ REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./media/templates/site/moko-cassiopeia/css/editor.css
  VERSION: 02.01.05
  BRIEF: Stylesheet for Joomla editor content within Moko-Cassiopeia template
