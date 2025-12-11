@@ -13,9 +13,9 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Template
+ INGROUP: Moko-Cassiopeia.Documentation
  FILE: README.md
- VERSION: 03.00
+ VERSION: 03.00.00
  BRIEF: Documentation for Moko-Cassiopeia template
  PATH: .//templates/moko-cassiopeia/
  -->
@@ -38,7 +38,7 @@ upgrade-friendly.
 -   [Installation](#installation)
 -   [Configuration](#configuration)
 	-   [Global Params](#global-params)
-	-   [Font Awesome 6](#font-awesome-6)
+	-   [Font Awesome 7](#font-awesome-7)
 	-   [Bootstrap 5 Helpers](#bootstrap-5-helpers)
 	-   [Table of Contents](#table-of-contents)
 	-   [Dark Mode Toggle](#dark-mode-toggle)
@@ -51,7 +51,7 @@ upgrade-friendly.
 ### Core Enhancements
 
 -   Built on top of Joomla's default **Cassiopeia** template.
--   **Font Awesome 6** integration.
+-   **Font Awesome 7** integration.
 -   **Bootstrap 5** helpers (grid, utility classes).
 -   **Automatic TOC** insertion for articles (activated via layout
 	`toc-left` or `toc-right`).
@@ -145,6 +145,6 @@ See the [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
 
 ## Revision History
 
-| Version | Date       | Author 													| Description 													|
-| ------- | ---------- | -----------------------------_-- | ------------------------------------- |
-| 3.0     | 2025-12-09 | Jonathan Miller (@jmiller-moko) 	| Added Metadata and Revision History  	|
+| Version 	| Date       | Author 										| Description 	|
+| --------- | ---------- | --------------------------------- | ------------ |
+| 03.00.00 	| 2025-12-09 | Jonathan Miller (@jmiller-moko) 	| Added Metadata and Revision History |
