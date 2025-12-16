@@ -30,16 +30,20 @@ jobs:
     steps:
       - name: Preflight validation
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.MOKO_ADMIN_TOKEN }}
+          API_URL: ${{ github.api_url }}
+          SERVER_URL: ${{ github.server_url }}
         run: |
           set -euo pipefail
 
-          if [ -z "${{ secrets.MOKO_ADMIN_TOKEN }}" ]; then
+          if [ -z "${GH_TOKEN}" ]; then
             echo "ERROR: Missing secret MOKO_ADMIN_TOKEN."
             echo "Action required: Add it at repo scope: Settings -> Secrets and variables -> Actions -> New repository secret."
             exit 1
           fi
 
-          if [ -z "${{ github.api_url }}" ] || [ -z "${{ github.server_url }}" ]; then
+          if [ -z "${API_URL}" ] || [ -z "${SERVER_URL}" ]; then
             echo "ERROR: Missing GitHub runtime context (github.api_url or github.server_url)."
             exit 1
           fi
@@ -56,6 +60,7 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
           RUN_ID: ${{ github.run_id }}
+          REPO_FULL: ${{ github.repository }}
         shell: bash
         run: |
           set -euo pipefail
@@ -73,13 +78,22 @@ jobs:
             fi
           }
 
-          # Do not echo GH_TOKEN
+          is_integer() {
+            case "$1" in
+              (''|*[!0-9]*) return 1 ;;
+              (*) return 0 ;;
+            esac
+          }
+
           require "GH_TOKEN" "${GH_TOKEN}"
           require "ENV_NAME" "${ENV_NAME}"
           require "API_URL" "${API_URL}"
           require "SERVER_URL" "${SERVER_URL}"
           require "OWNER" "${OWNER}"
           require "REPO" "${REPO}"
+          require "REPO_FULL" "${REPO_FULL}"
+          require "UPDATE_XML_BRANCH" "${UPDATE_XML_BRANCH}"
+          require "UPDATE_XML_PATH" "${UPDATE_XML_PATH}"
 
           # Determine which repo hosts updates.xml
           if [ -n "${UPDATE_XML_REPO_INPUT}" ]; then
@@ -88,29 +102,33 @@ jobs:
             UPDATE_XML_REPO="${OWNER}/${REPO}"
           fi
 
-          require "UPDATE_XML_BRANCH" "${UPDATE_XML_BRANCH}"
-          require "UPDATE_XML_PATH" "${UPDATE_XML_PATH}"
-
           # Construct the canonical file URL that downstream workflows parse
           UPDATESERVER_FILE_URL="${SERVER_URL}/${UPDATE_XML_REPO}/blob/${UPDATE_XML_BRANCH}/${UPDATE_XML_PATH}"
 
           echo "Target environment: ${ENV_NAME}"
           echo "Variable UPDATESERVER_FILE_URL: ${UPDATESERVER_FILE_URL}"
 
-          # Lightweight JSON escaper for the variable payload
-          json_escape() {
+          # JSON escaper for a single string value
+          json_escape_string() {
             python - << 'PY'
-import json, os, sys
+import json
+import sys
 print(json.dumps(sys.stdin.read())[1:-1])
 PY
           }
 
-          # API caller that captures status and body for auditability
+          # API caller that captures status, body, and curl transport errors
+          # Usage: api_call METHOD URL DATA_FILE OUT_FILE
+          # - DATA_FILE may be empty string for no body
           api_call() {
             local method="$1"
             local url="$2"
-            local data_file="$3"  # optional path to JSON file
+            local data_file="$3"
             local out_file="$4"
+            local err_file="${out_file}.err"
+
+            : > "${out_file}"
+            : > "${err_file}"
 
             local args=(
               -sS
@@ -126,14 +144,90 @@ PY
               args+=( -H "Content-Type: application/json" --data-binary "@${data_file}" )
             fi
 
-            curl "${args[@]}" "${url}"
+            local http_code
+            http_code=$(curl "${args[@]}" "${url}" 2> "${err_file}" || echo "000")
+
+            if ! is_integer "${http_code}"; then
+              http_code="000"
+            fi
+
+            echo "${http_code}"
+          }
+
+          show_response() {
+            local label="$1"
+            local http_code="$2"
+            local out_file="$3"
+            local err_file="${out_file}.err"
+
+            echo "${label} HTTP: ${http_code}"
+
+            if [ -s "${out_file}" ]; then
+              cat "${out_file}" || true
+            else
+              echo "(no response body)"
+            fi
+
+            if [ -s "${err_file}" ]; then
+              echo "(curl diagnostics)"
+              cat "${err_file}" || true
+            fi
           }
 
           print_hint_for_403() {
             echo ""
             echo "403 troubleshooting checklist:"
-            echo "- Token resource owner must be the organization that owns the repo."
+            echo "- Token resource owner must be the organization that owns the repo (${REPO_FULL})."
             echo "- Token must be approved by the org if fine grained token approvals are enabled."
             echo "- Token must have Administration read/write for environments."
             echo "- Token must have Actions read/write for environment variables."
             echo "- If org uses SSO, token must be SSO-authorized."
+            echo "Audit reference: run id ${RUN_ID}"
+          }
+
+          # Temp payloads
+          ENV_PAYLOAD="/tmp/env_payload.json"
+          VAR_PAYLOAD="/tmp/var_payload.json"
+          ENV_RESP="/tmp/env_response.json"
+          VAR_RESP="/tmp/var_response.json"
+
+          echo '{}' > "${ENV_PAYLOAD}"
+
+          # Create or update environment
+          echo "Creating or updating environment..."
+          ENV_URL="${API_URL}/repos/${OWNER}/${REPO}/environments/${ENV_NAME}"
+          ENV_CODE=$(api_call "PUT" "${ENV_URL}" "${ENV_PAYLOAD}" "${ENV_RESP}")
+          show_response "Environment API" "${ENV_CODE}" "${ENV_RESP}"
+
+          if [ "${ENV_CODE}" -lt 200 ] || [ "${ENV_CODE}" -ge 300 ]; then
+            if [ "${ENV_CODE}" = "403" ]; then
+              print_hint_for_403
+            fi
+            die "Environment creation failed with HTTP ${ENV_CODE}"
+          fi
+
+          # Create or update environment variable
+          echo "Creating or updating environment variable UPDATESERVER_FILE_URL..."
+
+          ESCAPED_VALUE=$(printf '%s' "${UPDATESERVER_FILE_URL}" | json_escape_string)
+          printf '{"name":"UPDATESERVER_FILE_URL","value":"%s"}
+' "${ESCAPED_VALUE}" > "${VAR_PAYLOAD}"
+
+          VAR_URL="${API_URL}/repos/${OWNER}/${REPO}/environments/${ENV_NAME}/variables/UPDATESERVER_FILE_URL"
+          VAR_CODE=$(api_call "PUT" "${VAR_URL}" "${VAR_PAYLOAD}" "${VAR_RESP}")
+          show_response "Variable API" "${VAR_CODE}" "${VAR_RESP}"
+
+          if [ "${VAR_CODE}" -lt 200 ] || [ "${VAR_CODE}" -ge 300 ]; then
+            if [ "${VAR_CODE}" = "403" ]; then
+              print_hint_for_403
+            fi
+            die "Variable write failed with HTTP ${VAR_CODE}"
+          fi
+
+          echo "Applied: ${ENV_NAME}.UPDATESERVER_FILE_URL"
+
+          # Emit outputs for optional downstream use
+          {
+            echo "updateserver_file_url=${UPDATESERVER_FILE_URL}"
+            echo "environment_name=${ENV_NAME}"
+          } >> "$GITHUB_OUTPUT"
