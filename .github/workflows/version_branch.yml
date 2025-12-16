@@ -1,290 +1,290 @@
 name: Create version branch and bump versions
 on:
-	workflow_dispatch:
-		inputs:
-			new_version:
-				description: "New version in format NN.NN.NN (example xx.yy.zz)"
-				required: true
-			base_branch:
-				description: "Base branch to branch from"
-				required: false
-				default: "main"
-			branch_prefix:
-				description: "Prefix for the new version branch"
-				required: false
-				default: "version/"
-			commit_changes:
-				description: "Commit and push changes"
-				required: false
-				default: "true"
-				type: choice
-				options:
-					- "true"
-					- "false"
+  workflow_dispatch:
+    inputs:
+      new_version:
+        description: "New version in format NN.NN.NN (example 03.01.00)"
+        required: true
+      base_branch:
+        description: "Base branch to branch from"
+        required: false
+        default: "main"
+      branch_prefix:
+        description: "Prefix for the new version branch"
+        required: false
+        default: "version/"
+      commit_changes:
+        description: "Commit and push changes"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
 
 permissions:
-	contents: write
+  contents: write
 
 jobs:
-	version-bump:
-		runs-on: ubuntu-latest
+  version-bump:
+    runs-on: ubuntu-latest
 
-		env:
-			NEW_VERSION: ${{ github.event.inputs.new_version }}
-			BASE_BRANCH: ${{ github.event.inputs.base_branch }}
-			BRANCH_PREFIX: ${{ github.event.inputs.branch_prefix }}
-			COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
+    env:
+      NEW_VERSION: ${{ github.event.inputs.new_version }}
+      BASE_BRANCH: ${{ github.event.inputs.base_branch }}
+      BRANCH_PREFIX: ${{ github.event.inputs.branch_prefix }}
+      COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
 
-		steps:
-			- name: Checkout repository
-				uses: actions/checkout@v4
-				with:
-					fetch-depth: 0
-					ref: ${{ env.BASE_BRANCH }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.BASE_BRANCH }}
 
-			- name: Validate inputs
-				shell: bash
-				run: |
-					set -Eeuo pipefail
-					trap 'echo "[FATAL] Validation error at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+      - name: Validate inputs
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Validation error at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
-					echo "[INFO] Inputs received:"
-					echo "  NEW_VERSION=${NEW_VERSION}"
-					echo "  BASE_BRANCH=${BASE_BRANCH}"
-					echo "  BRANCH_PREFIX=${BRANCH_PREFIX}"
-					echo "  COMMIT_CHANGES=${COMMIT_CHANGES}"
+          echo "[INFO] Inputs received:"
+          echo "  NEW_VERSION=${NEW_VERSION}"
+          echo "  BASE_BRANCH=${BASE_BRANCH}"
+          echo "  BRANCH_PREFIX=${BRANCH_PREFIX}"
+          echo "  COMMIT_CHANGES=${COMMIT_CHANGES}"
 
-					[[ -n "${NEW_VERSION}" ]] || { echo "[ERROR] new_version missing" >&2; exit 2; }
-					[[ "${NEW_VERSION}" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{2}$ ]] || { echo "[ERROR] Invalid version format: ${NEW_VERSION}" >&2; exit 2; }
+          [[ -n "${NEW_VERSION}" ]] || { echo "[ERROR] new_version missing" >&2; exit 2; }
+          [[ "${NEW_VERSION}" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{2}$ ]] || { echo "[ERROR] Invalid version format: ${NEW_VERSION}" >&2; exit 2; }
 
-					git ls-remote --exit-code --heads origin "${BASE_BRANCH}" >/dev/null 2>&1 || {
-						echo "[ERROR] Base branch does not exist on origin: ${BASE_BRANCH}" >&2
-						echo "[INFO] Remote branches:"
-						git ls-remote --heads origin | awk '{sub("refs/heads/","",$2); print $2}'
-						exit 2
-					}
+          git ls-remote --exit-code --heads origin "${BASE_BRANCH}" >/dev/null 2>&1 || {
+            echo "[ERROR] Base branch does not exist on origin: ${BASE_BRANCH}" >&2
+            echo "[INFO] Remote branches:"
+            git ls-remote --heads origin | awk '{sub("refs/heads/","",$2); print $2}'
+            exit 2
+          }
 
-					echo "[INFO] Input validation passed"
+          echo "[INFO] Input validation passed"
 
-			- name: Configure git identity
-				shell: bash
-				run: |
-					set -Eeuo pipefail
-					trap 'echo "[FATAL] Git identity step failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+      - name: Configure git identity
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Git identity step failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
-					git config user.name "github-actions[bot]"
-					git config user.email "github-actions[bot]@users.noreply.github.com"
-					echo "[INFO] Git identity configured"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "[INFO] Git identity configured"
 
-			- name: Create version branch
-				shell: bash
-				run: |
-					set -Eeuo pipefail
-					trap 'echo "[FATAL] Branch creation failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+      - name: Create version branch
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Branch creation failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
-					BRANCH_NAME="${BRANCH_PREFIX}${NEW_VERSION}"
-					echo "[INFO] Creating branch: ${BRANCH_NAME} from origin/${BASE_BRANCH}"
+          BRANCH_NAME="${BRANCH_PREFIX}${NEW_VERSION}"
+          echo "[INFO] Creating branch: ${BRANCH_NAME} from origin/${BASE_BRANCH}"
 
-					git fetch --all --tags --prune
+          git fetch --all --tags --prune
 
-					if git ls-remote --exit-code --heads origin "${BRANCH_NAME}" >/dev/null 2>&1; then
-						echo "[ERROR] Branch already exists on origin: ${BRANCH_NAME}" >&2
-						exit 2
-					fi
+          if git ls-remote --exit-code --heads origin "${BRANCH_NAME}" >/dev/null 2>&1; then
+            echo "[ERROR] Branch already exists on origin: ${BRANCH_NAME}" >&2
+            exit 2
+          fi
 
-					git checkout -B "${BRANCH_NAME}" "origin/${BASE_BRANCH}"
-					echo "BRANCH_NAME=${BRANCH_NAME}" >> "$GITHUB_ENV"
+          git checkout -B "${BRANCH_NAME}" "origin/${BASE_BRANCH}"
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> "$GITHUB_ENV"
 
-			- name: Preflight discovery (src and docs only)
-				shell: bash
-				run: |
-					set -Eeuo pipefail
-					trap 'echo "[FATAL] Preflight failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+      - name: Preflight discovery (src and docs only)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Preflight failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
-					TARGET_DIRS=("src" "docs")
+          TARGET_DIRS=("src" "docs")
 
-					echo "[INFO] Confirming target directories exist"
-					FOUND_ANY=0
-					for d in "${TARGET_DIRS[@]}"; do
-						if [[ -d "${d}" ]]; then
-							echo "[INFO] Found directory: ${d}"
-							FOUND_ANY=1
-						else
-							echo "[WARN] Missing directory: ${d}"
-						fi
-					done
+          echo "[INFO] Confirming target directories exist"
+          FOUND_ANY=0
+          for d in "${TARGET_DIRS[@]}"; do
+            if [[ -d "${d}" ]]; then
+              echo "[INFO] Found directory: ${d}"
+              FOUND_ANY=1
+            else
+              echo "[WARN] Missing directory: ${d}"
+            fi
+          done
 
-					if [[ "${FOUND_ANY}" -ne 1 ]]; then
-						echo "[ERROR] Neither ./src nor ./docs exists in this checkout" >&2
-						exit 2
-					fi
+          if [[ "${FOUND_ANY}" -ne 1 ]]; then
+            echo "[ERROR] Neither ./src nor ./docs exists in this checkout" >&2
+            exit 2
+          fi
 
-					echo "[INFO] Searching for VERSION: lines under src and docs"
-					HIT_VERSION=0
-					for d in "${TARGET_DIRS[@]}"; do
-						[[ -d "${d}" ]] || continue
-						COUNT=$(grep -RIn --exclude-dir=.git -E "VERSION[[:space:]]*:" "${d}" | wc -l || true)
-						echo "[INFO] VERSION: hits in ${d}: ${COUNT}"
-						HIT_VERSION=$((HIT_VERSION + COUNT))
-					done
+          echo "[INFO] Searching for VERSION: lines under src and docs"
+          HIT_VERSION=0
+          for d in "${TARGET_DIRS[@]}"; do
+            [[ -d "${d}" ]] || continue
+            COUNT=$(grep -RIn --exclude-dir=.git -E "VERSION[[:space:]]*:" "${d}" | wc -l || true)
+            echo "[INFO] VERSION: hits in ${d}: ${COUNT}"
+            HIT_VERSION=$((HIT_VERSION + COUNT))
+          done
 
-					echo "[INFO] Searching for XML <version> tags under src and docs"
-					HIT_XML=0
-					for d in "${TARGET_DIRS[@]}"; do
-						[[ -d "${d}" ]] || continue
-						COUNT=$(grep -RIn --exclude-dir=.git "<version" "${d}" | wc -l || true)
-						echo "[INFO] <version> hits in ${d}: ${COUNT}"
-						HIT_XML=$((HIT_XML + COUNT))
-					done
+          echo "[INFO] Searching for XML <version> tags under src and docs"
+          HIT_XML=0
+          for d in "${TARGET_DIRS[@]}"; do
+            [[ -d "${d}" ]] || continue
+            COUNT=$(grep -RIn --exclude-dir=.git "<version" "${d}" | wc -l || true)
+            echo "[INFO] <version> hits in ${d}: ${COUNT}"
+            HIT_XML=$((HIT_XML + COUNT))
+          done
 
-					echo "[INFO] Total VERSION: hits: ${HIT_VERSION}"
-					echo "[INFO] Total <version> hits: ${HIT_XML}"
+          echo "[INFO] Total VERSION: hits: ${HIT_VERSION}"
+          echo "[INFO] Total <version> hits: ${HIT_XML}"
 
-			- name: Bump versions in headers and XML (src and docs only)
-				shell: bash
-				run: |
-					set -Eeuo pipefail
-					trap 'echo "[FATAL] Version bump failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+      - name: Bump versions in headers and XML (src and docs only)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Version bump failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
-					python3 - <<'PY'
-					import os
-					import re
-					from pathlib import Path
-					from collections import defaultdict
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+          from collections import defaultdict
 
-					new_version = os.environ.get("NEW_VERSION", "").strip()
-					if not new_version:
-						raise SystemExit("[FATAL] NEW_VERSION env var missing")
+          new_version = os.environ.get("NEW_VERSION", "").strip()
+          if not new_version:
+            raise SystemExit("[FATAL] NEW_VERSION env var missing")
 
-					root = Path(".").resolve()
-					targets = [root / "src", root / "docs"]
+          root = Path(".").resolve()
+          targets = [root / "src", root / "docs"]
 
-					header_re = re.compile(r"(?i)(VERSION\s*:\s*)([^\s\n]+)")
-					xml_re = re.compile(r"(?is)(<version\s*>)([^<]*?)(</version\s*>)")
+          header_re = re.compile(r"(?i)(VERSION\s*:\s*)([^\s\n]+)")
+          xml_re = re.compile(r"(?is)(<version\s*>)([^<]*?)(</version\s*>)")
 
-					skip_ext = {".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".pdf", ".zip", ".7z", ".tar", ".gz", ".woff", ".woff2", ".ttf", ".otf", ".mp3", ".mp4"}
-					skip_dirs = {".git", "node_modules", "vendor", ".venv", "dist", "build"}
+          skip_ext = {".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".pdf", ".zip", ".7z", ".tar", ".gz", ".woff", ".woff2", ".ttf", ".otf", ".mp3", ".mp4"}
+          skip_dirs = {".git", "node_modules", "vendor", ".venv", "dist", "build"}
 
-					counters = defaultdict(int)
-					updated = []
+          counters = defaultdict(int)
+          updated = []
 
-					def should_skip(p: Path) -> bool:
-						if p.suffix.lower() in skip_ext:
-							counters["skipped_by_ext"] += 1
-							return True
-						parts = {x.lower() for x in p.parts}
-						if any(d in parts for d in skip_dirs):
-							counters["skipped_by_dir"] += 1
-							return True
-						return False
+          def should_skip(p: Path) -> bool:
+            if p.suffix.lower() in skip_ext:
+              counters["skipped_by_ext"] += 1
+              return True
+            parts = {x.lower() for x in p.parts}
+            if any(d in parts for d in skip_dirs):
+              counters["skipped_by_dir"] += 1
+              return True
+            return False
 
-					existing_targets = [t for t in targets if t.exists() and t.is_dir()]
-					if not existing_targets:
-						raise SystemExit("[ERROR] Neither ./src nor ./docs exists in this checkout")
+          existing_targets = [t for t in targets if t.exists() and t.is_dir()]
+          if not existing_targets:
+            raise SystemExit("[ERROR] Neither ./src nor ./docs exists in this checkout")
 
-					print("[INFO] Scanning directories:")
-					for t in existing_targets:
-						print(f"  - {t}")
+          print("[INFO] Scanning directories:")
+          for t in existing_targets:
+            print(f"  - {t}")
 
-					for base in existing_targets:
-						for p in base.rglob("*"):
-							if not p.is_file():
-								continue
-							if should_skip(p):
-								continue
+          for base in existing_targets:
+            for p in base.rglob("*"):
+              if not p.is_file():
+                continue
+              if should_skip(p):
+                continue
 
-							try:
-								text = p.read_text(encoding="utf-8")
-							except UnicodeDecodeError:
-								counters["skipped_non_utf8"] += 1
-								continue
-							except Exception as e:
-								counters["skipped_read_error"] += 1
-								print(f"[WARN] Read error: {p} :: {e}")
-								continue
+              try:
+                text = p.read_text(encoding="utf-8")
+              except UnicodeDecodeError:
+                counters["skipped_non_utf8"] += 1
+                continue
+              except Exception as e:
+                counters["skipped_read_error"] += 1
+                print(f"[WARN] Read error: {p} :: {e}")
+                continue
 
-							original = text
+              original = text
 
-							text, n1 = header_re.subn(r"\1" + new_version, text)
-							if n1:
-								counters["header_replacements"] += n1
+              text, n1 = header_re.subn(r"\1" + new_version, text)
+              if n1:
+                counters["header_replacements"] += n1
 
-							if p.suffix.lower() == ".xml":
-								text2, n2 = xml_re.subn(r"\\1" + new_version + r"\\3", text)
-								text = text2
-								if n2:
-									counters["xml_replacements"] += n2
+              if p.suffix.lower() == ".xml":
+                text2, n2 = xml_re.subn(r"\\1" + new_version + r"\\3", text)
+                text = text2
+                if n2:
+                  counters["xml_replacements"] += n2
 
-							if text != original:
-								try:
-									p.write_text(text, encoding="utf-8")
-									updated.append(str(p))
-								except Exception as e:
-									raise SystemExit(f"[FATAL] Write failed: {p} :: {e}")
+              if text != original:
+                try:
+                  p.write_text(text, encoding="utf-8")
+                  updated.append(str(p))
+                except Exception as e:
+                  raise SystemExit(f"[FATAL] Write failed: {p} :: {e}")
 
-					print("[INFO] Scan summary")
-					for k in sorted(counters.keys()):
-						print(f"  {k}: {counters[k]}")
+          print("[INFO] Scan summary")
+          for k in sorted(counters.keys()):
+            print(f"  {k}: {counters[k]}")
 
-					print(f"[INFO] Updated files: {len(updated)}")
-					for f in updated[:200]:
-						print(f"  [UPDATED] {f}")
-					if len(updated) > 200:
-						print(f"  [INFO] (truncated) +{len(updated) - 200} more")
+          print(f"[INFO] Updated files: {len(updated)}")
+          for f in updated[:200]:
+            print(f"  [UPDATED] {f}")
+          if len(updated) > 200:
+            print(f"  [INFO] (truncated) +{len(updated) - 200} more")
 
-					if not updated:
-						print("[ERROR] No files updated within src and docs")
-						print("[DIAG] Confirm these exist in src or docs:")
-						print("  - A line containing: VERSION: <value>")
-						print("  - An XML tag: <version>...</version>")
-						raise SystemExit(1)
-					PY
+          if not updated:
+            print("[ERROR] No files updated within src and docs")
+            print("[DIAG] Confirm these exist in src or docs:")
+            print("  - A line containing: VERSION: <value>")
+            print("  - An XML tag: <version>...</version>")
+            raise SystemExit(1)
+          PY
 
-			- name: Show git status
-				shell: bash
-				run: |
-					set -Eeuo pipefail
-					trap 'echo "[FATAL] git status failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
-					git status --porcelain=v1
+      - name: Show git status
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] git status failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          git status --porcelain=v1
 
-			- name: Commit changes
-				if: ${{ env.COMMIT_CHANGES == 'true' }}
-				shell: bash
-				run: |
-					set -Eeuo pipefail
-					trap 'echo "[FATAL] Commit failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+      - name: Commit changes
+        if: ${{ env.COMMIT_CHANGES == 'true' }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Commit failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
-					git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "[ERROR] Not inside a git work tree" >&2; exit 2; }
+          git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "[ERROR] Not inside a git work tree" >&2; exit 2; }
 
-					if [[ -z "$(git status --porcelain=v1)" ]]; then
-						echo "[INFO] No changes detected. Skipping commit and push."
-						exit 0
-					fi
+          if [[ -z "$(git status --porcelain=v1)" ]]; then
+            echo "[INFO] No changes detected. Skipping commit and push."
+            exit 0
+          fi
 
-					ADD_PATHS=()
-					[[ -d "src" ]] && ADD_PATHS+=("src")
-					[[ -d "docs" ]] && ADD_PATHS+=("docs")
+          ADD_PATHS=()
+          [[ -d "src" ]] && ADD_PATHS+=("src")
+          [[ -d "docs" ]] && ADD_PATHS+=("docs")
 
-					if [[ "${#ADD_PATHS[@]}" -eq 0 ]]; then
-						echo "[ERROR] Neither ./src nor ./docs exists at commit time" >&2
-						exit 2
-					fi
+          if [[ "${#ADD_PATHS[@]}" -eq 0 ]]; then
+            echo "[ERROR] Neither ./src nor ./docs exists at commit time" >&2
+            exit 2
+          fi
 
-					echo "[INFO] Staging paths: ${ADD_PATHS[*]}"
-					git add -- "${ADD_PATHS[@]}"
+          echo "[INFO] Staging paths: ${ADD_PATHS[*]}"
+          git add -- "${ADD_PATHS[@]}"
 
-					git commit -m "chore(release): bump version to ${NEW_VERSION}"
+          git commit -m "chore(release): bump version to ${NEW_VERSION}"
 
-			- name: Push branch
-				shell: bash
-				run: |
-					set -Eeuo pipefail
-					trap 'echo "[FATAL] Push failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+      - name: Push branch
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Push failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
-					git push --set-upstream origin "${BRANCH_NAME}"
+          git push --set-upstream origin "${BRANCH_NAME}"
 
-			- name: Output branch name
-				shell: bash
-				run: |
-					set -Eeuo pipefail
-					echo "[INFO] Created branch: ${BRANCH_NAME}"
+      - name: Output branch name
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          echo "[INFO] Created branch: ${BRANCH_NAME}"
