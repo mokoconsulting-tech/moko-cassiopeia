@@ -160,13 +160,16 @@ jobs:
             text.insert(idx + 1, '- Placeholder TODO item\n')
             j = idx + 2
 
-          if j < len(text) and h2_re.match(text[j]):
-            print('[INFO] TODO block already followed by an H2. No action taken.')
+          # Do not duplicate the same version H2
+          target_prefix = "## [" + new_version + "] "
+          if any(line.strip().startswith(target_prefix) for line in text):
+            print('[INFO] Version H2 already present. No action taken.')
             raise SystemExit(0)
 
+          # Always insert the new version between TODO section and existing version entries
           stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-          insert = "\n## [{}] {}\n".format(new_version, stamp)
-          print('[INFO] Inserting initial H2 after TODO block')
+          insert = chr(10) + "## [" + new_version + "] " + stamp + chr(10)
+          print('[INFO] Inserting version H2 after TODO block')
 
           text.insert(j, insert)
           p.write_text(''.join(text), encoding='utf-8')
