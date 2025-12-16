@@ -4,224 +4,154 @@ on:
   workflow_dispatch:
     inputs:
       new_version:
-        description: "New version (for example: 01.02.00). Leave blank to auto-increment from highest version/* branch."
-        required: false
-        default: ""
+        description: "New version in format NN.NN.NN (example 01.03.00)"
+        required: true
       base_branch:
-        description: "Base branch to create version branch from"
+        description: "Base branch to branch from"
         required: false
         default: "main"
+      branch_prefix:
+        description: "Prefix for the new version branch"
+        required: false
+        default: "version/"
+      commit_changes:
+        description: "Commit and push changes"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
 
 permissions:
   contents: write
 
 jobs:
-  create-version-branch:
-    name: Create version branch and update versions
+  version-bump:
     runs-on: ubuntu-latest
 
     env:
+      NEW_VERSION: ${{ github.event.inputs.new_version }}
       BASE_BRANCH: ${{ github.event.inputs.base_branch }}
+      BRANCH_PREFIX: ${{ github.event.inputs.branch_prefix }}
+      COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
 
     steps:
-      - name: Check out repository
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: ${{ env.BASE_BRANCH }}
 
-      - name: Determine new version (input or auto-increment)
-        id: version
-        env:
-          INPUT_VERSION: ${{ github.event.inputs.new_version }}
+      - name: Validate inputs
+        shell: bash
         run: |
-          python << 'PY'
-          import os
-          import re
-          import subprocess
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Validation error at line $LINENO" >&2' ERR
 
-          input_version = os.environ.get("INPUT_VERSION", "").strip()
+          echo "[INFO] Inputs received:"
+          echo "  NEW_VERSION=${NEW_VERSION}"
+          echo "  BASE_BRANCH=${BASE_BRANCH}"
+          echo "  BRANCH_PREFIX=${BRANCH_PREFIX}"
 
-          if input_version:
-              new_version = input_version
-          else:
-              completed = subprocess.run(
-                  ["git", "ls-remote", "--heads", "origin"],
-                  check=True,
-                  capture_output=True,
-                  text=True,
-              )
+          [[ -n "${NEW_VERSION}" ]] || { echo "[ERROR] new_version missing"; exit 2; }
+          [[ "${NEW_VERSION}" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{2}$ ]] || {
+            echo "[ERROR] Invalid version format: ${NEW_VERSION}"
+            exit 2
+          }
 
-              pattern = re.compile(r"refs/heads/version/([0-9]+\.[0-9]+\.[0-9]+)$")
-              versions = []
+          git show-ref --verify --quiet "refs/remotes/origin/${BASE_BRANCH}" || {
+            echo "[ERROR] Base branch does not exist on origin: ${BASE_BRANCH}"
+            git branch -a
+            exit 2
+          }
 
-              for line in completed.stdout.splitlines():
-                  parts = line.split()
-                  if len(parts) != 2:
-                      continue
-                  ref = parts[1]
-                  m = pattern.search(ref)
-                  if not m:
-                      continue
+          echo "[INFO] Input validation passed"
 
-                  v_str = m.group(1)
-                  try:
-                      major, minor, patch = map(int, v_str.split("."))
-                  except ValueError:
-                      continue
-                  versions.append((major, minor, patch))
-
-              if versions:
-                  major, minor, patch = max(versions)
-                  patch += 1
-              else:
-                  major, minor, patch = 1, 0, 0
-
-              new_version = f"{major:02d}.{minor:02d}.{patch:02d}"
-
-          print(f"Using version {new_version}")
-
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
-              fh.write(f"new_version={new_version}\n")
-          PY
-
-      - name: Compute branch name
-        id: branch
-        env:
-          NEW_VERSION: ${{ steps.version.outputs.new_version }}
+      - name: Configure git identity
+        shell: bash
         run: |
-          SAFE_VERSION="${NEW_VERSION// /-}"
-          BRANCH_NAME="version/${SAFE_VERSION}"
-          echo "Using branch name: $BRANCH_NAME"
-          echo "branch_name=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
-
-      - name: Create version branch from base
-        run: |
-          git checkout -b "${{ steps.branch.outputs.branch_name }}"
-
-      - name: Bump version strings across repo
-        env:
-          NEW_VERSION: ${{ steps.version.outputs.new_version }}
-        run: |
-          echo "Updating version strings to ${NEW_VERSION} across repository"
-
-          python << 'PY'
-          import os
-          import re
-          from pathlib import Path
-
-          new_version = os.environ["NEW_VERSION"]
-
-          targets = [
-              Path("src"),
-              Path("docs"),
-          ]
-
-          patterns = [
-              (re.compile(r"\(VERSION\s+[0-9]+\.[0-9]+\.[0-9]+\)"), lambda v: f"(VERSION {v})"),
-              (re.compile(r"(VERSION[:\s]+)([0-9]+\.[0-9]+\.[0-9]+)"), lambda v: r"\1" + v),
-              (re.compile(r"(<version>)([0-9]+\.[0-9]+\.[0-9]+)(</version>)"), lambda v: r"\1" + v + r"\3"),
-              (re.compile(r'(<extension\\b[^>]*\\bversion=")([0-9]+\.[0-9]+\.[0-9]+)(")'), lambda v: r"\1" + v + r"\3"),
-              (re.compile(r'(\"version\"\s*:\s*\")(\d+\.\d+\.\d+)(\")'), lambda v: r"\1" + v + r"\3"),
-          ]
-
-          def update_file(path: Path) -> bool:
-              try:
-                  text = path.read_text(encoding="utf-8")
-              except UnicodeDecodeError:
-                  return False
-
-              original = text
-              for regex, repl in patterns:
-                  text = regex.sub(lambda m, r=repl: r(m), text)
-
-              if text != original:
-                  path.write_text(text, encoding="utf-8")
-                  print(f"Updated version in {path}")
-                  return True
-
-              return False
-
-          for root in targets:
-              if not root.exists():
-                  continue
-
-              for path in root.rglob("*"):
-                  if not path.is_file():
-                      continue
-
-                  if path.suffix.lower() in {
-                      ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico",
-                      ".zip", ".pdf", ".tar", ".gz",
-                  }:
-                      continue
-
-                  update_file(path)
-
-          repo_root = Path(".").resolve()
-
-          def is_under_any_target(p: Path) -> bool:
-              for t in targets:
-                  if not t.exists():
-                      continue
-                  try:
-                      p.resolve().relative_to(t.resolve())
-                      return True
-                  except ValueError:
-                      continue
-              return False
-
-          # Explicitly update README.md and CHANGELOG.md
-          for fname in ["README.md", "CHANGELOG.md"]:
-              p = Path(fname)
-              if p.exists() and p.is_file():
-                  update_file(p)
-
-          # Update remaining markdown files outside src/docs
-          for path in repo_root.rglob("*.md"):
-              if not path.is_file():
-                  continue
-
-              if path.name.lower() in {"readme.md", "changelog.md"}:
-                  continue
-
-              if is_under_any_target(path):
-                  continue
-
-              update_file(path)
-          PY
-
-      - name: Update CHANGELOG using script
-        env:
-          NEW_VERSION: ${{ steps.version.outputs.new_version }}
-        run: |
-          if [ ! -f "scripts/update_changelog.sh" ]; then
-            echo "scripts/update_changelog.sh not found. Failing version branch creation."
-            exit 1
-          fi
-
-          chmod +x scripts/update_changelog.sh
-          ./scripts/update_changelog.sh "${NEW_VERSION}"
-
-      - name: Configure git user
-        run: |
+          set -Eeuo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "[INFO] Git identity configured"
 
-      - name: Commit version bump
-        env:
-          NEW_VERSION: ${{ steps.version.outputs.new_version }}
+      - name: Create version branch
+        shell: bash
         run: |
-          git status
-          if git diff --quiet; then
-            echo "No changes detected after version bump. Skipping commit."
-            exit 0
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Branch creation failed at line $LINENO" >&2' ERR
+
+          BRANCH_NAME="${BRANCH_PREFIX}${NEW_VERSION}"
+          echo "[INFO] Creating branch ${BRANCH_NAME}"
+
+          git fetch --all --tags --prune
+
+          if git ls-remote --exit-code --heads origin "${BRANCH_NAME}" >/dev/null 2>&1; then
+            echo "[ERROR] Branch already exists on origin: ${BRANCH_NAME}"
+            exit 2
           fi
 
-          git add -A
+          git checkout -B "${BRANCH_NAME}" "origin/${BASE_BRANCH}"
 
-          git commit -m "chore: bump version to ${NEW_VERSION}"
-
-      - name: Push version branch
+      - name: Bump versions in headers and XML
+        shell: bash
         run: |
-          git push -u origin "${{ steps.branch.outputs.branch_name }}"
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Version bump failed at line $LINENO" >&2' ERR
+
+          python3 - <<'PY'
+          import re
+          from pathlib import Path
+          import os
+
+          new_version = os.environ["NEW_VERSION"]
+          root = Path(".").resolve()
+
+          header_re = re.compile(r"(?m)^(\\s*VERSION\\s*:\\s*)(\\d{2}\\.\\d{2}\\.\\d{2})(\\s*)$")
+          xml_re = re.compile(r"(?is)(<version\\s*>)(\\s*\\d{2}\\.\\d{2}\\.\\d{2}\\s*)(</version\\s*>)")
+
+          updated = []
+
+          for p in root.rglob("*"):
+            if not p.is_file():
+              continue
+            if p.suffix.lower() == ".json":
+              continue
+            try:
+              text = p.read_text(encoding="utf-8")
+            except Exception:
+              continue
+
+            original = text
+            text = header_re.sub(r"\\1" + new_version + r"\\3", text)
+            if p.suffix.lower() == ".xml":
+              text = xml_re.sub(r"\\1" + new_version + r"\\3", text)
+
+            if text != original:
+              p.write_text(text, encoding="utf-8")
+              updated.append(str(p))
+
+          if not updated:
+            raise SystemExit("[ERROR] No files updated. Check headers and XML manifests.")
+
+          print(f"[INFO] Updated {len(updated)} files")
+          for f in updated:
+            print(f"  - {f}")
+          PY
+
+      - name: Commit changes
+        if: ${{ env.COMMIT_CHANGES == 'true' }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git status --porcelain
+          git add -A
+          git commit -m "chore(release): bump version to ${NEW_VERSION}"
+
+      - name: Push branch
+        if: ${{ env.COMMIT_CHANGES == 'true' }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git push --set-upstream origin "${BRANCH_PREFIX}${NEW_VERSION}"
