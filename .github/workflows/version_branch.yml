@@ -168,8 +168,8 @@ jobs:
 
           # Always insert the new version between TODO section and existing version entries
           stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-          insert = chr(10) + "## [" + new_version + "] " + stamp + chr(10)
-          print('[INFO] Inserting version H2 after TODO block')
+          insert = chr(10) + "## [" + new_version + "] " + stamp + chr(10) + " - Version bump" + chr(10) + chr(10)
+          print('[INFO] Inserting version Version after TODO block')
 
           text.insert(j, insert)
           p.write_text(''.join(text), encoding='utf-8')
