@@ -8,7 +8,7 @@ on:
       base_branch:
         description: "Base branch to branch from"
         required: false
-        default: "dev"
+        default: "main"
       branch_prefix:
         description: "Prefix for the new version branch"
         required: false
@@ -21,6 +21,10 @@ on:
         options:
           - "true"
           - "false"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.repository }}-${{ github.event.inputs.new_version }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -76,7 +80,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           echo "[INFO] Git identity configured"
 
-      - name: Create version branch
+      - name: Create and push version branch
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -94,6 +98,9 @@ jobs:
 
           git checkout -B "${BRANCH_NAME}" "origin/${BASE_BRANCH}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> "$GITHUB_ENV"
+
+          echo "[INFO] Pushing new branch to origin"
+          git push --set-upstream origin "${BRANCH_NAME}"
 
       - name: Ensure CHANGELOG.md has an H2 immediately after TODO block (repo creation)
         shell: bash
@@ -160,28 +167,58 @@ jobs:
             text.insert(idx + 1, '- Placeholder TODO item\n')
             j = idx + 2
 
-          # Do not duplicate the same version H2
+          # UNRELEASED is for code going into the next release, distinct from TODO.
+          # Release behavior:
+          # - If an UNRELEASED H2 exists, convert it into this release version heading (preserving its bullets).
+          # - Then ensure a fresh UNRELEASED section exists immediately after TODO.
+
+          unreleased_re = re.compile(r'^\s*##\s*(?:\[\s*UNRELEASED\s*\]|UNRELEASED)\s*$', re.IGNORECASE)
+
+          stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+          version_heading = "## [" + new_version + "] " + stamp + "\n"
+
+          # 1) If UNRELEASED exists, replace it with the version heading
+          unreleased_idx = None
+          for i, line in enumerate(text):
+            if unreleased_re.match(line.strip()):
+              unreleased_idx = i
+              break
+
+          if unreleased_idx is not None:
+            # Avoid duplicate: if this version already exists anywhere, do nothing
+            target_prefix = "## [" + new_version + "] "
+            if any(l.strip().startswith(target_prefix) for l in text):
+              print('[INFO] Version H2 already present. No action taken.')
+              raise SystemExit(0)
+
+            text[unreleased_idx] = version_heading
+            print('[INFO] Replaced UNRELEASED H2 with version heading')
+
+            # After converting UNRELEASED to a release, insert a new UNRELEASED section right after TODO block
+            insert_unreleased = chr(10) + "## [UNRELEASED]" + chr(10) + "- Placeholder for next release" + chr(10)
+            text.insert(j, insert_unreleased)
+            p.write_text(''.join(text), encoding='utf-8')
+            raise SystemExit(0)
+
+          # 2) No UNRELEASED section present: insert a new version section after TODO block
+          # Avoid duplicate
           target_prefix = "## [" + new_version + "] "
           if any(line.strip().startswith(target_prefix) for line in text):
             print('[INFO] Version H2 already present. No action taken.')
             raise SystemExit(0)
 
-          # Always insert the new version between TODO section and existing version entries
-          stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-          insert = chr(10) + "## [" + new_version + "] " + stamp + chr(10) + " - Version bump" + chr(10) + chr(10)
-          print('[INFO] Inserting version Version after TODO block')
+          insert = chr(10) + "## [" + new_version + "] " + stamp + chr(10) + "- Version bump" + chr(10)
+          print('[INFO] Inserting version H2 after TODO block')
 
           text.insert(j, insert)
           p.write_text(''.join(text), encoding='utf-8')
           PY
 
-      - name: Preflight discovery (src and docs only)
+      - name: Preflight discovery (repo-wide excluding .github)
         shell: bash
         run: |
           set -Eeuo pipefail
           trap 'echo "[FATAL] Preflight failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
-
-          TARGET_DIRS=(".")
 
           echo "[INFO] Scanning all directories except .github"
           HIT_VERSION=0
@@ -195,7 +232,12 @@ jobs:
           HIT_XML=${COUNT}
           echo "[INFO] <version> hits (repo-wide): ${HIT_XML}"
 
-      - name: Bump versions in headers and XML (src and docs only)
+          if [[ "${HIT_VERSION}" -eq 0 && "${HIT_XML}" -eq 0 ]]; then
+            echo "[ERROR] No VERSION: (NN.NN.NN) or <version> tags found outside .github" >&2
+            exit 2
+          fi
+
+      - name: Bump versions in headers and XML (repo-wide excluding .github)
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -298,6 +340,7 @@ jobs:
           git status --porcelain=v1
 
       - name: Commit changes
+        id: commit
         if: ${{ env.COMMIT_CHANGES == 'true' }}
         shell: bash
         run: |
@@ -308,6 +351,7 @@ jobs:
 
           if [[ -z "$(git status --porcelain=v1)" ]]; then
             echo "[INFO] No changes detected. Skipping commit and push."
+            echo "committed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -315,14 +359,16 @@ jobs:
           git add -A -- . ":(exclude).github"
 
           git commit -m "chore(release): bump version to ${NEW_VERSION}"
+          echo "committed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Push branch
+      - name: Push commits
+        if: ${{ env.COMMIT_CHANGES == 'true' && steps.commit.outputs.committed == 'true' }}
         shell: bash
         run: |
           set -Eeuo pipefail
           trap 'echo "[FATAL] Push failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
-          git push --set-upstream origin "${BRANCH_NAME}"
+          git push
 
       - name: Output branch name
         shell: bash
