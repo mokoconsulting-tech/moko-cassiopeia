@@ -8,11 +8,11 @@ on:
       base_branch:
         description: "Base branch to branch from"
         required: false
-        default: "main"
+        default: "dev"
       branch_prefix:
         description: "Prefix for the new version branch"
         required: false
-        default: "version/"
+        default: "dev/"
       commit_changes:
         description: "Commit and push changes"
         required: false
