@@ -24,6 +24,9 @@
 ## [TODO]
 - `./docs/*`
 
+## [UNRELEASED]
+- Created `.github/workflows/`
+
 ## [03.00] 2025-12-09
 ### Removed
  - `./CODE_OF_CONDUCT.md`
