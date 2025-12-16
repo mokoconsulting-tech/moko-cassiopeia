@@ -159,7 +159,8 @@ jobs:
           root = Path(".").resolve()
           targets = [root / "src", root / "docs"]
 
-                    xml_re = re.compile(r"(?is)(<version\s*>)([^<]*?)(</version\s*>)")
+          header_re = re.compile(r"(?i)(VERSION\s*:\s*)([^\s\n]+)")
+          xml_re = re.compile(r"(?is)(<version\s*>)([^<]*?)(</version\s*>)")
 
           skip_ext = {".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".pdf", ".zip", ".7z", ".tar", ".gz", ".woff", ".woff2", ".ttf", ".otf", ".mp3", ".mp4"}
           skip_dirs = {".git", "node_modules", "vendor", ".venv", "dist", "build"}
@@ -204,8 +205,9 @@ jobs:
 
               original = text
 
-              text, n1 = header_re.subn(r"\" + new_version, text)
-       += n1
+              text, n1 = header_re.subn(r"\1" + new_version, text)
+              if n1:
+                counters["header_replacements"] += n1
 
               if p.suffix.lower() == ".xml":
                 text2, n2 = xml_re.subn(r"\\1" + new_version + r"\\3", text)
