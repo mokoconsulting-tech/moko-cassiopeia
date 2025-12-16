@@ -1,7 +1,24 @@
-name: Init Repo Context
+name: Init UpdateServer Environment
 
 on:
   workflow_dispatch:
+    inputs:
+      environment_name:
+        description: "GitHub Environment name to create or update"
+        required: true
+        default: "UpdateServer"
+      update_xml_repo:
+        description: "Repo that hosts updates.xml (owner/repo). Defaults to current repo."
+        required: false
+        default: ""
+      update_xml_branch:
+        description: "Branch that contains updates.xml"
+        required: true
+        default: "main"
+      update_xml_path:
+        description: "Path to updates.xml in that repo"
+        required: true
+        default: "updates.xml"
 
 permissions:
   contents: read
@@ -10,18 +27,53 @@ jobs:
   init:
     runs-on: ubuntu-latest
     steps:
-      - name: Initialize update server repository context
-        id: init
+      - name: Create environment and set variables
+        env:
+          GH_TOKEN: ${{ secrets.MOKO_ADMIN_TOKEN }}
+          ENV_NAME: ${{ github.event.inputs.environment_name }}
+          UPDATE_XML_REPO_INPUT: ${{ github.event.inputs.update_xml_repo }}
+          UPDATE_XML_BRANCH: ${{ github.event.inputs.update_xml_branch }}
+          UPDATE_XML_PATH: ${{ github.event.inputs.update_xml_path }}
+          API_URL: ${{ github.api_url }}
+          SERVER_URL: ${{ github.server_url }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
         shell: bash
         run: |
           set -euo pipefail
 
-          REPO_SLUG="${GITHUB_REPOSITORY}"
-          SERVER_URL="${GITHUB_SERVER_URL:-https://github.com}"
-          UPDATE_XML_REPO_URL="${SERVER_URL}/${REPO_SLUG}"
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "Missing secret: MOKO_ADMIN_TOKEN"
+            exit 1
+          fi
 
-          echo "update_xml_repo_url=${UPDATE_XML_REPO_URL}" >> "$GITHUB_OUTPUT"
+          # Decide which repo hosts the updates.xml file
+          if [ -n "${UPDATE_XML_REPO_INPUT}" ]; then
+            UPDATE_XML_REPO="${UPDATE_XML_REPO_INPUT}"
+          else
+            UPDATE_XML_REPO="${OWNER}/${REPO}"
+          fi
 
-      - name: Print resolved value
-        run: |
-          echo "UPDATE_XML_REPO_URL=${{ steps.init.outputs.update_xml_repo_url }}"
+          # Store a human friendly URL to the updates.xml file (for reuse in your publish workflow)
+          UPDATESERVER_FILE_URL="${SERVER_URL}/${UPDATE_XML_REPO}/blob/${UPDATE_XML_BRANCH}/${UPDATE_XML_PATH}"
+
+          echo "Environment: ${ENV_NAME}"
+          echo "Update feed file URL: ${UPDATESERVER_FILE_URL}"
+
+          # 1) Create or update the Environment
+          curl -sS -X PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "${API_URL}/repos/${OWNER}/${REPO}/environments/${ENV_NAME}" \
+            -d '{}' > /dev/null
+
+          # 2) Create or update an Environment Variable
+          curl -sS -X PUT \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "${API_URL}/repos/${OWNER}/${REPO}/environments/${ENV_NAME}/variables/UPDATESERVER_FILE_URL" \
+            -d "{\"name\":\"UPDATESERVER_FILE_URL\",\"value\":\"${UPDATESERVER_FILE_URL}\"}" > /dev/null
+
+          echo "Applied: ${ENV_NAME}.UPDATESERVER_FILE_URL"
