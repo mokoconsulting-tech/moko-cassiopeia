@@ -126,14 +126,15 @@ jobs:
           p = Path('CHANGELOG.md')
           text = p.read_text(encoding='utf-8', errors='replace').splitlines(True)
 
-          todo_re = re.compile(r'^##\\s*\\[?TODO\\]?\\s*$', re.IGNORECASE)
-          h2_re = re.compile(r'^##\\s+')
-          bullet_re = re.compile(r'^\\s*[-*+]\\s+')
-          blank_re = re.compile(r'^\\s*$')
+          todo_re = re.compile(r'^\s*##\s*(?:\[\s*TODO\s*\]|TODO)\s*$', re.IGNORECASE)
+          h2_re = re.compile(r'^##\s+')
+          bullet_re = re.compile(r'^\s*[-*+]\s+')
+          blank_re = re.compile(r'^\s*$')
 
           idx = None
           for i, line in enumerate(text):
-            if todo_re.match(line.rstrip('\\n').rstrip('\\r')):
+            clean = line.lstrip('\ufeff').rstrip('\n').rstrip('\r')
+            if todo_re.match(clean):
               idx = i
               break
 
@@ -144,7 +145,7 @@ jobs:
           j = idx + 1
           saw_bullet = False
           while j < len(text):
-            line = text[j].rstrip('\\n').rstrip('\\r')
+            line = text[j].rstrip('\n').rstrip('\r')
             if bullet_re.match(line):
               saw_bullet = True
               j += 1
@@ -156,7 +157,7 @@ jobs:
 
           if not saw_bullet:
             print('[INFO] TODO section missing bullet list, inserting placeholder bullet')
-            text.insert(idx + 1, '- Placeholder TODO item\\n')
+            text.insert(idx + 1, '- Placeholder TODO item\n')
             j = idx + 2
 
           if j < len(text) and h2_re.match(text[j]):
@@ -164,7 +165,7 @@ jobs:
             raise SystemExit(0)
 
           stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-          insert = "\\n## [{}] {}\\n".format(new_version, stamp)
+          insert = "\n## [{}] {}\n".format(new_version, stamp)
           print('[INFO] Inserting initial H2 after TODO block')
 
           text.insert(j, insert)
