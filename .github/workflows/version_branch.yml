@@ -180,7 +180,7 @@ jobs:
                 counters["header_replacements"] += n1
 
               if p.suffix.lower() == ".xml":
-                text2, n2 = xml_re.subn(r"\1" + new_version + r"\3", text)
+                text2, n2 = xml_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
                 text = text2
                 if n2:
                   counters["xml_replacements"] += n2
