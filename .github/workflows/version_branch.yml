@@ -116,62 +116,60 @@ jobs:
           fi
 
           python3 - <<'PY'
-import os
-import re
-from datetime import datetime, timezone
-from pathlib import Path
+          import os
+          import re
+          from datetime import datetime, timezone
+          from pathlib import Path
 
-new_version = os.environ.get('NEW_VERSION', '').strip() or '00.00.00'
+          new_version = os.environ.get('NEW_VERSION', '').strip() or '00.00.00'
 
-p = Path('CHANGELOG.md')
-text = p.read_text(encoding='utf-8', errors='replace').splitlines(True)
+          p = Path('CHANGELOG.md')
+          text = p.read_text(encoding='utf-8', errors='replace').splitlines(True)
 
-todo_re = re.compile(r'^##\s*\[?TODO\]?\s*$', re.IGNORECASE)
-h2_re = re.compile(r'^##\s+')
-bullet_re = re.compile(r'^\s*[-*+]\s+')
-blank_re = re.compile(r'^\s*$')
+          todo_re = re.compile(r'^##\\s*\\[?TODO\\]?\\s*$', re.IGNORECASE)
+          h2_re = re.compile(r'^##\\s+')
+          bullet_re = re.compile(r'^\\s*[-*+]\\s+')
+          blank_re = re.compile(r'^\\s*$')
 
-idx = None
-for i, line in enumerate(text):
-  if todo_re.match(line.rstrip('\n').rstrip('\r')):
-    idx = i
-    break
+          idx = None
+          for i, line in enumerate(text):
+            if todo_re.match(line.rstrip('\\n').rstrip('\\r')):
+              idx = i
+              break
 
-if idx is None:
-  print('[INFO] No TODO section found. No action taken.')
-  raise SystemExit(0)
+          if idx is None:
+            print('[INFO] No TODO section found. No action taken.')
+            raise SystemExit(0)
 
-j = idx + 1
-saw_bullet = False
-while j < len(text):
-  line = text[j].rstrip('\n').rstrip('\r')
-  if bullet_re.match(line):
-    saw_bullet = True
-    j += 1
-    continue
-  if blank_re.match(line):
-    j += 1
-    continue
-  break
+          j = idx + 1
+          saw_bullet = False
+          while j < len(text):
+            line = text[j].rstrip('\\n').rstrip('\\r')
+            if bullet_re.match(line):
+              saw_bullet = True
+              j += 1
+              continue
+            if blank_re.match(line):
+              j += 1
+              continue
+            break
 
-if not saw_bullet:
-  print('[INFO] TODO section missing bullet list, inserting placeholder bullet')
-  text.insert(idx + 1, '- Placeholder TODO item\n')
-  j = idx + 2
+          if not saw_bullet:
+            print('[INFO] TODO section missing bullet list, inserting placeholder bullet')
+            text.insert(idx + 1, '- Placeholder TODO item\\n')
+            j = idx + 2
 
-if j < len(text) and h2_re.match(text[j]):
-  print('[INFO] TODO block already followed by an H2. No action taken.')
-  raise SystemExit(0)
+          if j < len(text) and h2_re.match(text[j]):
+            print('[INFO] TODO block already followed by an H2. No action taken.')
+            raise SystemExit(0)
 
-stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-insert = "
-## [{}] {}
-".format(new_version, stamp)
-print('[INFO] Inserting initial H2 after TODO block')
+          stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+          insert = "\\n## [{}] {}\\n".format(new_version, stamp)
+          print('[INFO] Inserting initial H2 after TODO block')
 
-text.insert(j, insert)
-p.write_text(''.join(text), encoding='utf-8')
-PY
+          text.insert(j, insert)
+          p.write_text(''.join(text), encoding='utf-8')
+          PY
 
       - name: Preflight discovery (src and docs only)
         shell: bash
