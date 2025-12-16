@@ -1,242 +1,278 @@
-name: Create version branch and bump versions
+name: Release from Version branch
 
 on:
   workflow_dispatch:
-    inputs:
-      new_version:
-        description: "New version in format NN.NN.NN (example 01.03.00)"
-        required: true
-      base_branch:
-        description: "Base branch to branch from"
-        required: false
-        default: "main"
-      branch_prefix:
-        description: "Prefix for the new version branch"
-        required: false
-        default: "version/"
-      commit_changes:
-        description: "Commit and push changes"
-        required: false
-        default: "true"
-        type: choice
-        options:
-          - "true"
-          - "false"
 
 permissions:
   contents: write
+  pull-requests: write
+  issues: write
 
 jobs:
-  version-bump:
+  meta:
+    name: Derive version metadata from branch
     runs-on: ubuntu-latest
 
-    env:
-      NEW_VERSION: ${{ github.event.inputs.new_version }}
-      BASE_BRANCH: ${{ github.event.inputs.base_branch }}
-      BRANCH_PREFIX: ${{ github.event.inputs.branch_prefix }}
-      COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
+    outputs:
+      branch: ${{ steps.meta.outputs.branch }}
+      version: ${{ steps.meta.outputs.version }}
+      is_prerelease: ${{ steps.meta.outputs.is_prerelease }}
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: ${{ env.BASE_BRANCH }}
-
-      - name: Validate inputs
-        shell: bash
+      - name: Determine branch and version
+        id: meta
         run: |
-          set -Eeuo pipefail
-          trap 'echo "[FATAL] Validation error at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          BRANCH="${GITHUB_REF_NAME}"
 
-          echo "[INFO] Inputs received:"
-          echo "  NEW_VERSION=${NEW_VERSION}"
-          echo "  BASE_BRANCH=${BASE_BRANCH}"
-          echo "  BRANCH_PREFIX=${BRANCH_PREFIX}"
-          echo "  COMMIT_CHANGES=${COMMIT_CHANGES}"
+          echo "Running on branch: ${BRANCH}"
 
-          [[ -n "${NEW_VERSION}" ]] || { echo "[ERROR] new_version missing" >&2; exit 2; }
-          [[ "${NEW_VERSION}" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{2}$ ]] || { echo "[ERROR] Invalid version format: ${NEW_VERSION}" >&2; exit 2; }
-
-          git show-ref --verify --quiet "refs/remotes/origin/${BASE_BRANCH}" || {
-            echo "[ERROR] Base branch does not exist on origin: ${BASE_BRANCH}" >&2
-            echo "[INFO] Remote branches:"
-            git branch -a
-            exit 2
-          }
-
-          echo "[INFO] Input validation passed"
-
-      - name: Configure git identity
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          trap 'echo "[FATAL] Git identity step failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
-
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          echo "[INFO] Git identity configured"
-
-      - name: Create version branch
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          trap 'echo "[FATAL] Branch creation failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
-
-          BRANCH_NAME="${BRANCH_PREFIX}${NEW_VERSION}"
-          echo "[INFO] Creating branch: ${BRANCH_NAME} from origin/${BASE_BRANCH}"
-
-          git fetch --all --tags --prune
-
-          if git ls-remote --exit-code --heads origin "${BRANCH_NAME}" >/dev/null 2>&1; then
-            echo "[ERROR] Branch already exists on origin: ${BRANCH_NAME}" >&2
-            exit 2
+          if [[ ! "${BRANCH}" =~ ^version\/[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9._]+)?$ ]]; then
+            echo "This workflow must be run on a branch named version/X.Y.Z or version/X.Y.Z-suffix"
+            exit 1
           fi
 
-          git checkout -B "${BRANCH_NAME}" "origin/${BASE_BRANCH}"
+          VERSION="${BRANCH#version/}"
 
-      - name: Version bump diagnostics
-        shell: bash
+          echo "Detected version: ${VERSION}"
+
+          if [[ "${VERSION}" =~ -(alpha|beta|rc|pre|preview|dev|test) ]]; then
+            echo "Version is prerelease: ${VERSION}"
+            IS_PRERELEASE="true"
+          else
+            echo "Version is stable: ${VERSION}"
+            IS_PRERELEASE="false"
+          fi
+
+          echo "branch=${BRANCH}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=${IS_PRERELEASE}" >> "$GITHUB_OUTPUT"
+
+  build-and-test:
+    name: Build and test (sanity check)
+    runs-on: ubuntu-latest
+    needs: meta
+
+    steps:
+      - name: Check out version branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.meta.outputs.branch }}
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.2"
+          coverage: none
+
+      - name: PHP lint under src (if present)
         run: |
-          set -Eeuo pipefail
-          echo "[INFO] Runner diagnostics"
-          echo "[INFO] pwd: $(pwd)"
-          echo "[INFO] git rev-parse HEAD: $(git rev-parse HEAD)"
-          echo "[INFO] python3: $(command -v python3 || true)"
-          python3 --version || true
-          echo "[INFO] Top-level files:"
-          ls -la
+          if [ -d "src" ]; then
+            echo "Running php -l against PHP files in src/"
+            find src -type f -name "*.php" -print0 | xargs -0 -n 1 -P 4 php -l
+          else
+            echo "No src directory found. Skipping PHP lint."
+          fi
 
-      - name: Bump versions in headers and XML (very verbose)
-        shell: bash
+      - name: Install dependencies if composer.json exists
         run: |
-          set -Eeuo pipefail
-          trap 'echo "[FATAL] Version bump failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          if [ -f "composer.json" ]; then
+            composer install --no-interaction --no-progress --prefer-dist
+          else
+            echo "No composer.json found. Skipping composer install."
+          fi
 
-          python3 - <<'PY'
-          import os
-          import re
-          from pathlib import Path
-          from collections import defaultdict
-
-          new_version = os.environ.get("NEW_VERSION", "").strip()
-          if not new_version:
-            raise SystemExit("[FATAL] NEW_VERSION env var missing")
-
-          root = Path(".").resolve()
-          print(f"[INFO] Repo root: {root}")
-
-          # Match any VERSION line, regardless of what is currently there.
-          header_re = re.compile(r"(?m)^(\s*VERSION\s*:\s*)(\S+)(\s*)$")
-
-          # Match any <version>value</version> tag, value can be any non-tag text.
-          xml_re = re.compile(r"(?is)(<version\s*>)([^<]*?)(</version\s*>)")
-
-          skip_ext = {".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".pdf", ".zip", ".7z", ".tar", ".gz", ".woff", ".woff2", ".ttf", ".otf", ".mp3", ".mp4"}
-          skip_dirs = {".git", "node_modules", "vendor", ".venv", "dist", "build"}
-
-          counters = defaultdict(int)
-          updated = []
-
-          def should_skip(p: Path) -> bool:
-            if p.suffix.lower() in skip_ext:
-              counters["skipped_by_ext"] += 1
-              return True
-            parts = {x.lower() for x in p.parts}
-            if any(d in parts for d in skip_dirs):
-              counters["skipped_by_dir"] += 1
-              return True
-            return False
-
-          for p in root.rglob("*"):
-            if not p.is_file():
-              continue
-            if should_skip(p):
-              continue
-
-            try:
-              text = p.read_text(encoding="utf-8")
-            except UnicodeDecodeError:
-              counters["skipped_non_utf8"] += 1
-              continue
-            except Exception as e:
-              counters["skipped_read_error"] += 1
-              print(f"[WARN] Read error: {p} :: {e}")
-              continue
-
-            original = text
-
-            # Replace any VERSION: token lines
-            text, n1 = header_re.subn(r"\\1" + new_version + r"\\3", text)
-            if n1:
-              counters["header_replacements"] += n1
-
-            # Replace XML <version> values only in .xml files
-            if p.suffix.lower() == ".xml":
-              text2, n2 = xml_re.subn(r"\\1" + new_version + r"\\3", text)
-              text = text2
-              if n2:
-                counters["xml_replacements"] += n2
-
-            if text != original:
-              try:
-                p.write_text(text, encoding="utf-8")
-                updated.append(str(p))
-              except Exception as e:
-                raise SystemExit(f"[FATAL] Write failed: {p} :: {e}")
-
-          print("[INFO] Scan summary")
-          for k in sorted(counters.keys()):
-            print(f"  {k}: {counters[k]}")
-
-          print(f"[INFO] Updated files: {len(updated)}")
-          for f in updated[:200]:
-            print(f"  [UPDATED] {f}")
-          if len(updated) > 200:
-            print(f"  [INFO] (truncated) +{len(updated) - 200} more")
-
-          if not updated:
-            print("[DIAG] No files changed. Common causes:")
-            print("  - Files do not contain 'VERSION:' lines")
-            print("  - XML manifests do not contain <version> tags")
-            print("  - Files are outside the checked-out workspace")
-            raise SystemExit(1)
-          PY
-
-      - name: Show git status
-        shell: bash
+      - name: Run Composer tests when defined
         run: |
-          set -Eeuo pipefail
-          trap 'echo "[FATAL] git status failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
-          git status --porcelain=v1
-
-      - name: Commit changes
-        if: ${{ env.COMMIT_CHANGES == 'true' }}
-        shell: bash
-        run: |
-          set -Eeuo pipefail
-          trap 'echo "[FATAL] Commit failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
-
-          if [[ -z "$(git status --porcelain=v1)" ]]; then
-            echo "[INFO] No changes detected. Skipping commit and push."
+          if [ ! -f "composer.json" ]; then
+            echo "No composer.json. Nothing to test."
             exit 0
           fi
 
-          git add -A
-          git commit -m "chore(release): bump version to ${NEW_VERSION}"
+          if composer run -q | grep -q "^  test"; then
+            echo "Detected composer script 'test'. Running composer test."
+            composer test
+          else
+            echo "No 'test' script defined in composer.json. Skipping tests."
+          fi
 
-      - name: Push branch
-        if: ${{ env.COMMIT_CHANGES == 'true' }}
-        shell: bash
+  changelog:
+    name: Update CHANGELOG.md on version branch
+    runs-on: ubuntu-latest
+    needs: [meta, build-and-test]
+
+    steps:
+      - name: Check out version branch with history
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.meta.outputs.branch }}
+          fetch-depth: 0
+
+      - name: Fetch main for comparison
         run: |
-          set -Eeuo pipefail
-          trap 'echo "[FATAL] Push failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          git fetch origin main
 
-          BRANCH_NAME="${BRANCH_PREFIX}${NEW_VERSION}"
-          git push --set-upstream origin "${BRANCH_NAME}"
-
-      - name: Output branch name
-        shell: bash
+      - name: Update CHANGELOG using script
+        env:
+          VERSION: ${{ needs.meta.outputs.version }}
         run: |
-          set -Eeuo pipefail
-          echo "[INFO] Created branch: ${BRANCH_PREFIX}${NEW_VERSION}"
+          if [ ! -f "scripts/update_changelog.sh" ]; then
+            echo "ERROR: scripts/update_changelog.sh not found"
+            exit 1
+          fi
+
+          chmod +x scripts/update_changelog.sh
+          ./scripts/update_changelog.sh "${VERSION}"
+
+      - name: Commit CHANGELOG.md if changed
+        env:
+          VERSION: ${{ needs.meta.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet; then
+            echo "No changelog changes to commit."
+            exit 0
+          fi
+
+          git add CHANGELOG.md
+          git commit -m "chore: update changelog for ${VERSION}"
+          git push origin HEAD
+
+  pr-merge-release:
+    name: PR, conditional squash, and GitHub release
+    runs-on: ubuntu-latest
+    needs: [meta, changelog]
+
+    steps:
+      - name: Check out version branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.meta.outputs.branch }}
+          fetch-depth: 0
+
+      - name: Verify branch has commits ahead of main
+        run: |
+          git fetch origin main
+
+          AHEAD_COUNT=$(git rev-list --count origin/main..HEAD)
+          echo "Commits ahead of main: ${AHEAD_COUNT}"
+
+          if [ "${AHEAD_COUNT}" -eq 0 ]; then
+            echo "ERROR: No commits between main and ${GITHUB_REF_NAME}."
+            echo "Action required: commit changes to the version branch before running this workflow."
+            exit 1
+          fi
+
+      - name: Ensure standard PR labels exist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Ensuring standard labels exist"
+          gh label create "release" --color "0E8A16" --description "Release related PR" || echo "Label 'release' already exists"
+          gh label create "version-update" --color "5319E7" --description "Version bump and release PR" || echo "Label 'version-update' already exists"
+
+      - name: Create or reuse PR from version branch to main
+        id: pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: ${{ needs.meta.outputs.branch }}
+          VERSION: ${{ needs.meta.outputs.version }}
+        run: |
+          echo "Ensuring PR exists for ${BRANCH} -> main"
+
+          PR_NUMBER=$(gh pr list --head "${BRANCH}" --base "main" --state open --json number -q '.[0].number' || true)
+
+          if [ -z "${PR_NUMBER}" ]; then
+            echo "No existing open PR found. Creating PR."
+            PR_URL=$(gh pr create --base "main" --head "${BRANCH}" --title "Merge version ${VERSION} into main" --body "Automated PR to merge version ${VERSION} into main.")
+            PR_NUMBER=$(gh pr view "${PR_URL}" --json number -q '.number')
+
+            echo "Applying standard labels (non-blocking)"
+            gh pr edit "${PR_NUMBER}" --add-label "release" || echo "Label 'release' not found or cannot be applied"
+            gh pr edit "${PR_NUMBER}" --add-label "version-update" || echo "Label 'version-update' not found or cannot be applied"
+          else
+            echo "Found existing PR #${PR_NUMBER}"
+          fi
+
+          echo "pr_number=${PR_NUMBER}" >> "$GITHUB_OUTPUT"
+
+      - name: Squash merge PR into main (stable only)
+        if: needs.meta.outputs.is_prerelease == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          VERSION: ${{ needs.meta.outputs.version }}
+          PR_NUMBER: ${{ steps.pr.outputs.pr_number }}
+        run: |
+          if [ -z "${PR_NUMBER}" ]; then
+            echo "No pull request number returned. Cannot squash merge."
+            exit 1
+          fi
+
+          echo "Performing squash merge PR #${PR_NUMBER} into main"
+
+          MERGE_PAYLOAD=$(jq -n --arg method "squash" --arg title "Squash merge version ${VERSION} into main" '{"merge_method": $method, "commit_title": $title}')
+
+          curl -sS -X PUT -H "Authorization: Bearer ${GITHUB_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${REPO}/pulls/${PR_NUMBER}/merge" -d "${MERGE_PAYLOAD}"
+
+      - name: Skip squash (prerelease detected)
+        if: needs.meta.outputs.is_prerelease == 'true'
+        run: |
+          echo "Prerelease version detected. PR created but squash merge intentionally skipped."
+
+      - name: Create GitHub Release (stable and prerelease) and attach ZIP from src
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.meta.outputs.version }}
+          IS_PRERELEASE: ${{ needs.meta.outputs.is_prerelease }}
+        run: |
+          PRERELEASE_FLAG="false"
+          if [ "${IS_PRERELEASE}" = "true" ]; then
+            PRERELEASE_FLAG="true"
+          fi
+
+          echo "Building ZIP from src for version ${VERSION}"
+
+          REPO_NAME="${GITHUB_REPOSITORY##*/}"
+          ASSET_NAME="${REPO_NAME}-${VERSION}.zip"
+
+          if [ ! -d "src" ]; then
+            echo "ERROR: src directory does not exist. Cannot build release ZIP."
+            exit 1
+          fi
+
+          mkdir -p dist
+          cd src
+          zip -r "../dist/${ASSET_NAME}" .
+          cd ..
+
+          echo "Preparing GitHub release for ${VERSION} (prerelease=${PRERELEASE_FLAG}) with asset dist/${ASSET_NAME}"
+
+          if gh release view "${VERSION}" >/dev/null 2>&1; then
+            echo "Release ${VERSION} already exists. Uploading asset."
+            gh release upload "${VERSION}" "dist/${ASSET_NAME}" --clobber
+          else
+            ARGS=(
+              "${VERSION}"
+              "dist/${ASSET_NAME}"
+              --title
+              "Version ${VERSION}"
+              --notes
+              "Release generated from branch version/${VERSION}."
+            )
+
+            if [ "${PRERELEASE_FLAG}" = "true" ]; then
+              ARGS+=(--prerelease)
+            fi
+
+            gh release create "${ARGS[@]}"
+          fi
+
+      - name: Optional delete version branch after merge (stable only)
+        if: needs.meta.outputs.is_prerelease == 'false'
+        env:
+          BRANCH: ${{ needs.meta.outputs.branch }}
+        run: |
+          echo "Deleting branch ${BRANCH} after squash merge and release"
+          git push origin --delete "${BRANCH}" || echo "Branch already deleted or cannot delete"
