@@ -1,4 +1,4 @@
-name: Version branch release pipeline
+name: Release from Version branch
 
 on:
   workflow_dispatch:
