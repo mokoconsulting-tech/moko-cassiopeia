@@ -20,7 +20,7 @@
  PATH: .//templates/moko-cassiopeia/
  -->
 
-# Moko-Cassiopeia (v03.00)
+# Moko-Cassiopeia (VERSION: 03.00)
 
 A modern, lightweight enhancement layer for Joomla's Cassiopeia
 template.
