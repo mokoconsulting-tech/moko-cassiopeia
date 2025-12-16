@@ -14,13 +14,12 @@
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: Template
- FILE: README.md
+ FILE: ./README.md
  VERSION: 03.00.00
  BRIEF: Documentation for Moko-Cassiopeia template
- PATH: .//templates/moko-cassiopeia/
  -->
 
-# Moko-Cassiopeia (VERSION: 03.00)
+# Moko-Cassiopeia (VERSION: 03.00.00)
 
 A modern, lightweight enhancement layer for Joomla's Cassiopeia
 template.
