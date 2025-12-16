@@ -164,7 +164,9 @@ if j < len(text) and h2_re.match(text[j]):
   raise SystemExit(0)
 
 stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-insert = f"\n## [{new_version}] {stamp}\n"
+insert = "
+## [{}] {}
+".format(new_version, stamp)
 print('[INFO] Inserting initial H2 after TODO block')
 
 text.insert(j, insert)
