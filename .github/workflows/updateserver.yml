@@ -1,0 +1,61 @@
+      - name: Update updates.xml (version, date, download URL only)
+        if: steps.meta.outputs.skip != 'true'
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          DOWNLOAD_URL: ${{ steps.meta.outputs.download_url }}
+          UPDATE_FILE: ${{ steps.parse.outputs.update_file }}
+        run: |
+          python << 'PY'
+          import os
+          from datetime import datetime
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          xml_path = Path(os.environ["UPDATE_FILE"])
+          if not xml_path.exists():
+              raise SystemExit(f"{xml_path} not found in update server repository")
+
+          tree = ET.parse(xml_path)
+          root = tree.getroot()
+
+          version = os.environ["VERSION"].strip()
+          download_url = os.environ["DOWNLOAD_URL"].strip()
+          today = datetime.utcnow().strftime("%Y-%m-%d")
+
+          # Find an existing update node for this version; if none exists, create one.
+          target = None
+          for upd in root.findall("update"):
+              v_node = upd.find("version")
+              if v_node is not None and (v_node.text or "").strip() == version:
+                  target = upd
+                  break
+
+          if target is None:
+              target = ET.SubElement(root, "update")
+              ET.SubElement(target, "version").text = version
+
+          # Ensure version is set (only set the version field)
+          v_node = target.find("version")
+          if v_node is None:
+              v_node = ET.SubElement(target, "version")
+          v_node.text = version
+
+          # Ensure creationDate is set
+          cd_node = target.find("creationDate")
+          if cd_node is None:
+              cd_node = ET.SubElement(target, "creationDate")
+          cd_node.text = today
+
+          # Ensure downloads/downloadurl exists; update text only, keep attributes as-is if present
+          downloads = target.find("downloads")
+          if downloads is None:
+              downloads = ET.SubElement(target, "downloads")
+
+          dl = downloads.find("downloadurl")
+          if dl is None:
+              dl = ET.SubElement(downloads, "downloadurl")
+
+          dl.text = download_url
+
+          tree.write(xml_path, encoding="utf-8", xml_declaration=True)
+          PY
