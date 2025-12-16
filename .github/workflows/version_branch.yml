@@ -101,44 +101,19 @@ jobs:
           set -Eeuo pipefail
           trap 'echo "[FATAL] Preflight failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
-          TARGET_DIRS=("src" "docs")
+          TARGET_DIRS=(".")
 
-          echo "[INFO] Confirming target directories exist"
-          FOUND_ANY=0
-          for d in "${TARGET_DIRS[@]}"; do
-            if [[ -d "${d}" ]]; then
-              echo "[INFO] Found directory: ${d}"
-              FOUND_ANY=1
-            else
-              echo "[WARN] Missing directory: ${d}"
-            fi
-          done
-
-          if [[ "${FOUND_ANY}" -ne 1 ]]; then
-            echo "[ERROR] Neither ./src nor ./docs exists in this checkout" >&2
-            exit 2
-          fi
-
-          echo "[INFO] Searching for VERSION: lines under src and docs"
+          echo "[INFO] Scanning all directories except .github"
           HIT_VERSION=0
-          for d in "${TARGET_DIRS[@]}"; do
-            [[ -d "${d}" ]] || continue
-            COUNT=$(grep -RIn --exclude-dir=.git -E "VERSION[[:space:]]*:" "${d}" | wc -l || true)
-            echo "[INFO] VERSION: hits in ${d}: ${COUNT}"
-            HIT_VERSION=$((HIT_VERSION + COUNT))
-          done
-
-          echo "[INFO] Searching for XML <version> tags under src and docs"
           HIT_XML=0
-          for d in "${TARGET_DIRS[@]}"; do
-            [[ -d "${d}" ]] || continue
-            COUNT=$(grep -RIn --exclude-dir=.git "<version" "${d}" | wc -l || true)
-            echo "[INFO] <version> hits in ${d}: ${COUNT}"
-            HIT_XML=$((HIT_XML + COUNT))
-          done
 
-          echo "[INFO] Total VERSION: hits: ${HIT_VERSION}"
-          echo "[INFO] Total <version> hits: ${HIT_XML}"
+          COUNT=$(grep -RIn --exclude-dir=.git --exclude-dir=.github -i -E "VERSION[[:space:]]*:[[:space:]]*[0-9]{2}\.[0-9]{2}\.[0-9]{2}" . | wc -l || true)
+          HIT_VERSION=${COUNT}
+          echo "[INFO] VERSION: hits (repo-wide): ${HIT_VERSION}"
+
+          COUNT=$(grep -RIn --exclude-dir=.git --exclude-dir=.github "<version" . | wc -l || true)
+          HIT_XML=${COUNT}
+          echo "[INFO] <version> hits (repo-wide): ${HIT_XML}"
 
       - name: Bump versions in headers and XML (src and docs only)
         shell: bash
@@ -157,13 +132,13 @@ jobs:
             raise SystemExit("[FATAL] NEW_VERSION env var missing")
 
           root = Path(".").resolve()
-          targets = [root / "src", root / "docs"]
+          targets = [root]
 
-          header_re = re.compile(r"(?i)(VERSION\s*:\s*)([^\s\n]+)")
+          header_re = re.compile(r"(?im)(VERSION\s*:\s*)(\d{2}\.\d{2}\.\d{2})")
           xml_re = re.compile(r"(?is)(<version\s*>)([^<]*?)(</version\s*>)")
 
           skip_ext = {".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".pdf", ".zip", ".7z", ".tar", ".gz", ".woff", ".woff2", ".ttf", ".otf", ".mp3", ".mp4"}
-          skip_dirs = {".git", "node_modules", "vendor", ".venv", "dist", "build"}
+          skip_dirs = {".git", ".github", "node_modules", "vendor", ".venv", "dist", "build"}
 
           counters = defaultdict(int)
           updated = []
@@ -180,11 +155,9 @@ jobs:
 
           existing_targets = [t for t in targets if t.exists() and t.is_dir()]
           if not existing_targets:
-            raise SystemExit("[ERROR] Neither ./src nor ./docs exists in this checkout")
+            raise SystemExit("[ERROR] Repository root not found")
 
-          print("[INFO] Scanning directories:")
-          for t in existing_targets:
-            print(f"  - {t}")
+          print(f"[INFO] Scanning repository (excluding: {', '.join(sorted(skip_dirs))})")
 
           for base in existing_targets:
             for p in base.rglob("*"):
@@ -194,10 +167,7 @@ jobs:
                 continue
 
               try:
-                text = p.read_text(encoding="utf-8")
-              except UnicodeDecodeError:
-                counters["skipped_non_utf8"] += 1
-                continue
+                text = p.read_text(encoding="utf-8", errors="replace")
               except Exception as e:
                 counters["skipped_read_error"] += 1
                 print(f"[WARN] Read error: {p} :: {e}")
@@ -205,12 +175,12 @@ jobs:
 
               original = text
 
-              text, n1 = header_re.subn(r"\1" + new_version, text)
+              text, n1 = header_re.subn(lambda m: m.group(1) + new_version, text)
               if n1:
                 counters["header_replacements"] += n1
 
               if p.suffix.lower() == ".xml":
-                text2, n2 = xml_re.subn(r"\\1" + new_version + r"\\3", text)
+                text2, n2 = xml_re.subn(r"\1" + new_version + r"\3", text)
                 text = text2
                 if n2:
                   counters["xml_replacements"] += n2
@@ -233,8 +203,8 @@ jobs:
             print(f"  [INFO] (truncated) +{len(updated) - 200} more")
 
           if not updated:
-            print("[ERROR] No files updated within src and docs")
-            print("[DIAG] Confirm these exist in src or docs:")
+            print("[ERROR] No files updated in repository (excluding .github)")
+            print("[DIAG] Confirm these exist outside .github:")
             print("  - A line containing: VERSION: <value>")
             print("  - An XML tag: <version>...</version>")
             raise SystemExit(1)
@@ -261,17 +231,8 @@ jobs:
             exit 0
           fi
 
-          ADD_PATHS=()
-          [[ -d "src" ]] && ADD_PATHS+=("src")
-          [[ -d "docs" ]] && ADD_PATHS+=("docs")
-
-          if [[ "${#ADD_PATHS[@]}" -eq 0 ]]; then
-            echo "[ERROR] Neither ./src nor ./docs exists at commit time" >&2
-            exit 2
-          fi
-
-          echo "[INFO] Staging paths: ${ADD_PATHS[*]}"
-          git add -- "${ADD_PATHS[@]}"
+          echo "[INFO] Staging all changes except .github"
+          git add -A -- . ":(exclude).github"
 
           git commit -m "chore(release): bump version to ${NEW_VERSION}"
 
