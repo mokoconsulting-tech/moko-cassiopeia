@@ -15,7 +15,7 @@
  DEFGROUP: Joomla.Template.Site
  INGROUP: Template
  FILE: README.md
- VERSION: 03.00
+ VERSION: 03.00.00
  BRIEF: Documentation for Moko-Cassiopeia template
  PATH: .//templates/moko-cassiopeia/
  -->
