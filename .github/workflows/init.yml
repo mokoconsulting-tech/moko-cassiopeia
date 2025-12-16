@@ -27,6 +27,15 @@ jobs:
   init:
     runs-on: ubuntu-latest
     steps:
+      - name: Validate admin token is present
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${{ secrets.MOKO_ADMIN_TOKEN }}" ]; then
+            echo "ERROR: Missing secret MOKO_ADMIN_TOKEN."
+            exit 1
+          fi
+
       - name: Create environment and set variables
         env:
           GH_TOKEN: ${{ secrets.MOKO_ADMIN_TOKEN }}
@@ -42,38 +51,41 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [ -z "${GH_TOKEN}" ]; then
-            echo "Missing secret: MOKO_ADMIN_TOKEN"
-            exit 1
-          fi
-
-          # Decide which repo hosts the updates.xml file
           if [ -n "${UPDATE_XML_REPO_INPUT}" ]; then
             UPDATE_XML_REPO="${UPDATE_XML_REPO_INPUT}"
           else
             UPDATE_XML_REPO="${OWNER}/${REPO}"
           fi
 
-          # Store a human friendly URL to the updates.xml file (for reuse in your publish workflow)
           UPDATESERVER_FILE_URL="${SERVER_URL}/${UPDATE_XML_REPO}/blob/${UPDATE_XML_BRANCH}/${UPDATE_XML_PATH}"
 
-          echo "Environment: ${ENV_NAME}"
-          echo "Update feed file URL: ${UPDATESERVER_FILE_URL}"
+          echo "Target environment: ${ENV_NAME}"
+          echo "Variable UPDATESERVER_FILE_URL: ${UPDATESERVER_FILE_URL}"
 
-          # 1) Create or update the Environment
-          curl -sS -X PUT \
+          echo "Creating or updating environment..."
+          curl -sS -f -X PUT \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${GH_TOKEN}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "${API_URL}/repos/${OWNER}/${REPO}/environments/${ENV_NAME}" \
-            -d '{}' > /dev/null
+            -d '{}' \
+            -o /tmp/env_response.json
 
-          # 2) Create or update an Environment Variable
-          curl -sS -X PUT \
+          echo "Environment API response:"
+          cat /tmp/env_response.json || true
+          echo ""
+
+          echo "Creating or updating environment variable..."
+          curl -sS -f -X PUT \
             -H "Accept: application/vnd.github+json" \
             -H "Authorization: Bearer ${GH_TOKEN}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "${API_URL}/repos/${OWNER}/${REPO}/environments/${ENV_NAME}/variables/UPDATESERVER_FILE_URL" \
-            -d "{\"name\":\"UPDATESERVER_FILE_URL\",\"value\":\"${UPDATESERVER_FILE_URL}\"}" > /dev/null
+            -d "{\"name\":\"UPDATESERVER_FILE_URL\",\"value\":\"${UPDATESERVER_FILE_URL}\"}" \
+            -o /tmp/var_response.json
+
+          echo "Variable API response:"
+          cat /tmp/var_response.json || true
+          echo ""
 
           echo "Applied: ${ENV_NAME}.UPDATESERVER_FILE_URL"
