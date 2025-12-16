@@ -17,7 +17,7 @@
  INGROUP: Moko-Cassiopeia
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./templates/moko-cassiopeia/templateDetails.xml
- VERSION: 03.00.00
+ VERSION: 03.01.00
  BRIEF: Template manifest XML file for Moko-Cassiopeia
  -->
 <extension type="template" client="site" method="upgrade">
@@ -25,7 +25,7 @@
 		<server type="extension" name="Moko Consulting">https://raw.githubusercontent.com/mokoconsulting-tech/MokoUpdates/refs/heads/main/joomla/moko-cassiopeia/updates.xml</server>
 	</updateservers>
 	<name>moko-cassiopeia</name>
-	<version>03.00.00</version>
+	<version>03.01.00</version>
 	<creationDate>2025-12-09</creationDate>
 	<author>Jonathan Miller || Moko Consulting</author>
 	<authorEmail>hello@mokoconsulting.tech</authorEmail>
