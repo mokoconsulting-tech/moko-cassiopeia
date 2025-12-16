@@ -1,5 +1,4 @@
-name: Create version branch and bump versions (src and docs only)
-
+name: Create version branch and bump versions
 on:
   workflow_dispatch:
     inputs:
@@ -255,12 +254,25 @@ jobs:
           set -Eeuo pipefail
           trap 'echo "[FATAL] Commit failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
+          git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "[ERROR] Not inside a git work tree" >&2; exit 2; }
+
           if [[ -z "$(git status --porcelain=v1)" ]]; then
             echo "[INFO] No changes detected. Skipping commit and push."
             exit 0
           fi
 
-          git add src docs
+          ADD_PATHS=()
+          [[ -d "src" ]] && ADD_PATHS+=("src")
+          [[ -d "docs" ]] && ADD_PATHS+=("docs")
+
+          if [[ "${#ADD_PATHS[@]}" -eq 0 ]]; then
+            echo "[ERROR] Neither ./src nor ./docs exists at commit time" >&2
+            exit 2
+          fi
+
+          echo "[INFO] Staging paths: ${ADD_PATHS[*]}"
+          git add -- "${ADD_PATHS[@]}"
+
           git commit -m "chore(release): bump version to ${NEW_VERSION}"
 
       - name: Push branch
