@@ -30,7 +30,7 @@ on:
       prerelease:
         description: "If true, mark the release as prerelease"
         required: false
-        default: "false"
+        default: "true"
         type: choice
         options:
           - "false"
