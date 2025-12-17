@@ -1,25 +1,71 @@
-#!/bin/bash
-set -e
+<?php
+/**
+ * verify_changelog.php
+ *
+ * Verifies that CHANGELOG.md is compliant with basic release governance rules.
+ *
+ * Enforced rules
+ * - CHANGELOG.md must exist at repository root.
+ * - File must not contain unresolved placeholders such as "UNRELEASED" or "TBD".
+ * - Headings must follow semantic version format: ## [NN.NN.NN]
+ * - The highest version must appear first.
+ *
+ * Intended usage
+ * - CI validation step (read-only).
+ * - Does not modify files.
+ *
+ * Exit codes
+ * - 0: Changelog is valid
+ * - 1: Validation failure
+ */
 
-echo "Running changelog verifier"
+$changelog = 'CHANGELOG.md';
 
-BRANCH="${GITHUB_REF_NAME}"
+if (!file_exists($changelog)) {
+    fwrite(STDERR, "ERROR: CHANGELOG.md not found at repository root\n");
+    exit(1);
+}
 
-if [[ ! "$BRANCH" =~ ^version/ ]]; then
-	echo "Not on a version branch. Skipping changelog verification."
-	exit 0
-fi
+$content = file_get_contents($changelog);
+if ($content === false) {
+    fwrite(STDERR, "ERROR: Unable to read CHANGELOG.md\n");
+    exit(1);
+}
 
-VERSION="${BRANCH#version/}"
+$errors = [];
 
-if [ ! -f "CHANGELOG.md" ]; then
-	echo "ERROR: CHANGELOG.md does not exist."
-	exit 1
-fi
+// Rule: no unresolved placeholders
+$placeholders = ['UNRELEASED', 'TBD', 'TO DO', 'TODO'];
+foreach ($placeholders as $token) {
+    if (stripos($content, $token) !== false) {
+        $errors[] = "Unresolved placeholder detected: {$token}";
+    }
+}
 
-if ! grep -q "$VERSION" CHANGELOG.md; then
-	echo "ERROR: CHANGELOG.md missing entry for version $VERSION"
-	exit 1
-fi
+// Rule: extract version headings
+preg_match_all('/^## \[([0-9]+\.[0-9]+\.[0-9]+)\]/m', $content, $matches);
+$versions = $matches[1] ?? [];
 
-echo "Changelog contains correct version section."
+if (empty($versions)) {
+    $errors[] = 'No version headings found (expected format: ## [NN.NN.NN])';
+} else {
+    // Rule: highest version first
+    $sorted = $versions;
+    usort($sorted, 'version_compare');
+    $sorted = array_reverse($sorted);
+
+    if ($versions !== $sorted) {
+        $errors[] = 'Versions are not ordered from newest to oldest';
+    }
+}
+
+if (!empty($errors)) {
+    fwrite(STDERR, "CHANGELOG.md validation failed:\n");
+    foreach ($errors as $err) {
+        fwrite(STDERR, " - {$err}\n");
+    }
+    exit(1);
+}
+
+echo "CHANGELOG.md validation passed\n";
+exit(0);
