@@ -195,7 +195,7 @@ jobs:
             print('[INFO] Replaced UNRELEASED H2 with version heading')
 
             # After converting UNRELEASED to a release, insert a new UNRELEASED section right after TODO block
-            insert_unreleased = chr(10) + "## [UNRELEASED]" + chr(10) + "- Placeholder for next release" + chr(10)
+            insert_unreleased = chr(10) + "## [UNRELEASED]" + chr(10) + "- Placeholder for next release" + chr(10) + chr(10)
             text.insert(j, insert_unreleased)
             p.write_text(''.join(text), encoding='utf-8')
             raise SystemExit(0)
