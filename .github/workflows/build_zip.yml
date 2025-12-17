@@ -251,7 +251,7 @@ jobs:
       - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ZIP_NAME }}
+          name: ${{ env.ZIP_NAME | replace('.zip', '') }}
           path: ${{ env.ZIP_PATH }}
 
       - name: Upload SHA256 artifact
