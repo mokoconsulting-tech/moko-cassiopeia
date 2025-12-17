@@ -15,6 +15,26 @@ on:
         description: "Optional version suffix for filename (example 01.02.03)"
         required: false
         default: ""
+      publish_release:
+        description: "If true, upload ZIP and SHA256 as GitHub Release assets"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      release_tag:
+        description: "Release tag to publish to (required if publish_release=true)"
+        required: false
+        default: ""
+      prerelease:
+        description: "If true, mark the release as prerelease"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
 
   workflow_call:
     inputs:
@@ -48,51 +68,14 @@ on:
         required: false
         type: boolean
         default: false
-    outputs:
-      zip_artifact_name:
-        description: "Artifact name for the ZIP"
-        value: ${{ jobs.zip.outputs.zip_artifact_name }}
-      sha_artifact_name:
-        description: "Artifact name for the SHA256 file"
-        value: ${{ jobs.zip.outputs.sha_artifact_name }}
-      zip_file_name:
-        description: "ZIP filename inside the artifact"
-        value: ${{ jobs.zip.outputs.zip_file_name }}
-      sha_file_name:
-        description: "SHA256 filename inside the artifact"
-        value: ${{ jobs.zip.outputs.sha_file_name }}
-      release_uploaded:
-        description: "true if assets were uploaded to a release"
-        value: ${{ jobs.zip.outputs.release_uploaded }}
-    outputs:
-      zip_artifact_name:
-        description: "Artifact name for the ZIP"
-        value: ${{ jobs.zip.outputs.zip_artifact_name }}
-      sha_artifact_name:
-        description: "Artifact name for the SHA256 file"
-        value: ${{ jobs.zip.outputs.sha_artifact_name }}
-      zip_file_name:
-        description: "ZIP filename inside the artifact"
-        value: ${{ jobs.zip.outputs.zip_file_name }}
-      sha_file_name:
-        description: "SHA256 filename inside the artifact"
-        value: ${{ jobs.zip.outputs.sha_file_name }}
 
 permissions:
-  contents: read
   contents: write
 
 jobs:
   zip:
     name: Package folder as ZIP
     runs-on: ubuntu-latest
-
-    outputs:
-      zip_artifact_name: ${{ steps.meta.outputs.zip_artifact_name }}
-      sha_artifact_name: ${{ steps.meta.outputs.sha_artifact_name }}
-      zip_file_name: ${{ steps.meta.outputs.zip_file_name }}
-      sha_file_name: ${{ steps.meta.outputs.sha_file_name }}
-      release_uploaded: ${{ steps.release_upload.outputs.release_uploaded }}
 
     steps:
       - name: Checkout repository
@@ -113,33 +96,45 @@ jobs:
             exit 1
           fi
 
-      - name: Validate inputs
+      - name: Resolve and validate inputs
         shell: bash
         run: |
           set -euo pipefail
 
+          # Prefer workflow_call inputs when present, otherwise use workflow_dispatch inputs.
           TARGET_FOLDER="${{ inputs.target_folder }}"
           ZIP_NAME_INPUT="${{ inputs.zip_name }}"
           VERSION_SUFFIX="${{ inputs.version_suffix }}"
           PUBLISH_RELEASE="${{ inputs.publish_release }}"
           RELEASE_TAG="${{ inputs.release_tag }}"
+          PRERELEASE="${{ inputs.prerelease }}"
 
-          if [[ -z "$TARGET_FOLDER" ]]; then
-            TARGET_FOLDER="${{ github.event.inputs.target_folder }}"
-          fi
-          if [[ -z "$ZIP_NAME_INPUT" ]]; then
-            ZIP_NAME_INPUT="${{ github.event.inputs.zip_name }}"
-          fi
-          if [[ -z "$VERSION_SUFFIX" ]]; then
-            VERSION_SUFFIX="${{ github.event.inputs.version_suffix }}"
-          fi
+          if [[ -z "$TARGET_FOLDER" ]]; then TARGET_FOLDER="${{ github.event.inputs.target_folder }}"; fi
+          if [[ -z "$ZIP_NAME_INPUT" ]]; then ZIP_NAME_INPUT="${{ github.event.inputs.zip_name }}"; fi
+          if [[ -z "$VERSION_SUFFIX" ]]; then VERSION_SUFFIX="${{ github.event.inputs.version_suffix }}"; fi
+          if [[ -z "$PUBLISH_RELEASE" ]]; then PUBLISH_RELEASE="${{ github.event.inputs.publish_release }}"; fi
+          if [[ -z "$RELEASE_TAG" ]]; then RELEASE_TAG="${{ github.event.inputs.release_tag }}"; fi
+          if [[ -z "$PRERELEASE" ]]; then PRERELEASE="${{ github.event.inputs.prerelease }}"; fi
 
           TARGET_FOLDER="${TARGET_FOLDER//[[:space:]]/}"
           ZIP_NAME_INPUT="${ZIP_NAME_INPUT//[[:space:]]/}"
           VERSION_SUFFIX="${VERSION_SUFFIX//[[:space:]]/}"
+          RELEASE_TAG="${RELEASE_TAG//[[:space:]]/}"
 
           if [[ -z "$TARGET_FOLDER" ]]; then
             TARGET_FOLDER="src"
+          fi
+
+          if [[ "$PUBLISH_RELEASE" == "true" || "$PUBLISH_RELEASE" == "True" ]]; then
+            PUBLISH_RELEASE="true"
+          else
+            PUBLISH_RELEASE="false"
+          fi
+
+          if [[ "$PRERELEASE" == "true" || "$PRERELEASE" == "True" ]]; then
+            PRERELEASE="true"
+          else
+            PRERELEASE="false"
           fi
 
           if [[ ! -d "$TARGET_FOLDER" ]]; then
@@ -166,42 +161,7 @@ jobs:
           echo "INPUT_VERSION_SUFFIX=$VERSION_SUFFIX" >> "$GITHUB_ENV"
           echo "PUBLISH_RELEASE=$PUBLISH_RELEASE" >> "$GITHUB_ENV"
           echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
-
-          if [[ -z "$TARGET_FOLDER" ]]; then
-            TARGET_FOLDER="${{ github.event.inputs.target_folder }}"
-          fi
-          if [[ -z "$ZIP_NAME_INPUT" ]]; then
-            ZIP_NAME_INPUT="${{ github.event.inputs.zip_name }}"
-          fi
-          if [[ -z "$VERSION_SUFFIX" ]]; then
-            VERSION_SUFFIX="${{ github.event.inputs.version_suffix }}"
-          fi
-
-          TARGET_FOLDER="${TARGET_FOLDER//[[:space:]]/}"
-          ZIP_NAME_INPUT="${ZIP_NAME_INPUT//[[:space:]]/}"
-          VERSION_SUFFIX="${VERSION_SUFFIX//[[:space:]]/}"
-
-          if [[ -z "$TARGET_FOLDER" ]]; then
-            TARGET_FOLDER="src"
-          fi
-
-          if [[ ! -d "$TARGET_FOLDER" ]]; then
-            echo "ERROR: Folder does not exist: $TARGET_FOLDER" >&2
-            exit 1
-          fi
-
-          if [[ -n "$VERSION_SUFFIX" ]] && [[ ! "$VERSION_SUFFIX" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{2}$ ]]; then
-            echo "ERROR: version_suffix must match NN.NN.NN (example 01.02.03)" >&2
-            exit 1
-          fi
-
-          if [[ -n "$ZIP_NAME_INPUT" ]]; then
-            ZIP_NAME_INPUT="$(echo "$ZIP_NAME_INPUT" | tr '[:upper:]' '[:lower:]')"
-          fi
-
-          echo "TARGET_FOLDER=$TARGET_FOLDER" >> "$GITHUB_ENV"
-          echo "INPUT_ZIP_NAME=$ZIP_NAME_INPUT" >> "$GITHUB_ENV"
-          echo "INPUT_VERSION_SUFFIX=$VERSION_SUFFIX" >> "$GITHUB_ENV"
+          echo "PRERELEASE=$PRERELEASE" >> "$GITHUB_ENV"
 
       - name: Prepare dist folder
         shell: bash
@@ -242,7 +202,7 @@ jobs:
 
           echo "VERSION_SUFFIX=$VERSION_SUFFIX" >> "$GITHUB_ENV"
 
-      - name: Create ZIP archive
+      - name: Create ZIP archive and SHA256
         shell: bash
         run: |
           set -euo pipefail
@@ -283,7 +243,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
           echo "zip_artifact_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
           echo "sha_artifact_name=${ZIP_NAME}.sha256" >> "$GITHUB_OUTPUT"
           echo "zip_file_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
@@ -307,13 +266,13 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_TAG }}
-          prerelease: ${{ inputs.prerelease }}
+          prerelease: ${{ env.PRERELEASE == 'true' }}
           files: |
             ${{ env.ZIP_PATH }}
             ${{ env.SHA_PATH }}
 
       - name: Export release upload status
-        id: release_upload_status
+        id: release_status
         shell: bash
         run: |
           set -euo pipefail
