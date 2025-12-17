@@ -7,6 +7,10 @@ on:
         description: "Folder to zip (relative to repo root)"
         required: false
         default: "src"
+      zip_name:
+        description: "Base ZIP name (default: repository name, lowercase)"
+        required: false
+        default: ""
       version_suffix:
         description: "Optional version suffix for filename (example 01.02.03)"
         required: false
@@ -61,6 +65,9 @@ jobs:
             TARGET_FOLDER="src"
           fi
 
+          ZIP_NAME_INPUT="${{ github.event.inputs.zip_name }}"
+          ZIP_NAME_INPUT="${ZIP_NAME_INPUT//[[:space:]]/}"
+
           VERSION_SUFFIX="${{ github.event.inputs.version_suffix }}"
           VERSION_SUFFIX="${VERSION_SUFFIX//[[:space:]]/}"
 
@@ -74,7 +81,12 @@ jobs:
             exit 1
           fi
 
+          if [[ -n "$ZIP_NAME_INPUT" ]]; then
+            ZIP_NAME_INPUT="$(echo "$ZIP_NAME_INPUT" | tr '[:upper:]' '[:lower:]')"
+          fi
+
           echo "TARGET_FOLDER=$TARGET_FOLDER" >> "$GITHUB_ENV"
+          echo "INPUT_ZIP_NAME=$ZIP_NAME_INPUT" >> "$GITHUB_ENV"
           echo "INPUT_VERSION_SUFFIX=$VERSION_SUFFIX" >> "$GITHUB_ENV"
 
       - name: Prepare dist folder
@@ -110,7 +122,7 @@ jobs:
           fi
 
           if [[ -z "$VERSION_SUFFIX" ]]; then
-            VERSION_SUFFIX="${GITHUB_REPOSITORY##*/}"
+            VERSION_SUFFIX="$(echo "${GITHUB_REPOSITORY##*/}" | tr '[:upper:]' '[:lower:]')"
           fi
 
           echo "VERSION_SUFFIX=$VERSION_SUFFIX" >> "$GITHUB_ENV"
@@ -120,15 +132,16 @@ jobs:
         run: |
           set -euo pipefail
 
-          REPO_NAME="${GITHUB_REPOSITORY##*/}"
-          SAFE_FOLDER_NAME="$(echo "$TARGET_FOLDER" | tr '/' '-')"
+          DEFAULT_REPO_NAME="$(echo "${GITHUB_REPOSITORY##*/}" | tr '[:upper:]' '[:lower:]')"
+          BASE_ZIP_NAME="$INPUT_ZIP_NAME"
 
-          if [[ -n "$VERSION_SUFFIX" ]]; then
-            ZIP_NAME="${REPO_NAME}-${SAFE_FOLDER_NAME}-${VERSION_SUFFIX}.zip"
-          else
-            ZIP_NAME="${REPO_NAME}-${SAFE_FOLDER_NAME}.zip"
+          if [[ -z "$BASE_ZIP_NAME" ]]; then
+            BASE_ZIP_NAME="$DEFAULT_REPO_NAME"
           fi
 
+          SAFE_FOLDER_NAME="$(echo "$TARGET_FOLDER" | tr '/' '-')"
+
+          ZIP_NAME="${BASE_ZIP_NAME}-${SAFE_FOLDER_NAME}-${VERSION_SUFFIX}.zip"
           ZIP_PATH="dist/$ZIP_NAME"
 
           cd "$TARGET_FOLDER"
@@ -136,12 +149,15 @@ jobs:
           zip -r "../$ZIP_PATH" . \
             -x "*.DS_Store" \
             -x "__MACOSX/*" \
-            -x "**/.git/**" \
-            -x "**/.github/**" \
-            -x "**/node_modules/**" \
-            -x "**/coverage/**" \
-            -x "**/*.log" \
-            -x "**/*.tmp"
+            -x ".git/*" \
+            -x ".github/*" \
+            -x "node_modules/*" \
+            -x "coverage/*" \
+            -x "*.log" \
+            -x "*.tmp"
+
+          echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
+          echo "ZIP_PATH=$ZIP_PATH" >> "$GITHUB_ENV"
 
           echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
           echo "ZIP_PATH=$ZIP_PATH" >> "$GITHUB_ENV"
