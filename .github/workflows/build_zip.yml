@@ -1,20 +1,36 @@
 name: Build ZIP from folder
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       target_folder:
         description: "Folder to zip (relative to repo root)"
         required: false
+        type: string
         default: "src"
       zip_name:
         description: "Base ZIP name (default: repository name, lowercase)"
         required: false
+        type: string
         default: ""
       version_suffix:
         description: "Optional version suffix for filename (example 01.02.03)"
         required: false
+        type: string
         default: ""
+    outputs:
+      zip_artifact_name:
+        description: "Artifact name for the ZIP"
+        value: ${{ jobs.zip.outputs.zip_artifact_name }}
+      sha_artifact_name:
+        description: "Artifact name for the SHA256 file"
+        value: ${{ jobs.zip.outputs.sha_artifact_name }}
+      zip_file_name:
+        description: "ZIP filename inside the artifact"
+        value: ${{ jobs.zip.outputs.zip_file_name }}
+      sha_file_name:
+        description: "SHA256 filename inside the artifact"
+        value: ${{ jobs.zip.outputs.sha_file_name }}
 
 permissions:
   contents: read
@@ -23,6 +39,12 @@ jobs:
   zip:
     name: Package folder as ZIP
     runs-on: ubuntu-latest
+
+    outputs:
+      zip_artifact_name: ${{ steps.meta.outputs.zip_artifact_name }}
+      sha_artifact_name: ${{ steps.meta.outputs.sha_artifact_name }}
+      zip_file_name: ${{ steps.meta.outputs.zip_file_name }}
+      sha_file_name: ${{ steps.meta.outputs.sha_file_name }}
 
     steps:
       - name: Checkout repository
@@ -43,32 +65,20 @@ jobs:
             exit 1
           fi
 
-          if command -v zipinfo >/dev/null 2>&1; then
-            echo "ZIPINFO_AVAILABLE=true" >> "$GITHUB_ENV"
-          else
-            echo "ZIPINFO_AVAILABLE=false" >> "$GITHUB_ENV"
-          fi
-
-          if command -v unzip >/dev/null 2>&1; then
-            echo "UNZIP_AVAILABLE=true" >> "$GITHUB_ENV"
-          else
-            echo "UNZIP_AVAILABLE=false" >> "$GITHUB_ENV"
-          fi
-
       - name: Validate inputs
         shell: bash
         run: |
           set -euo pipefail
 
-          TARGET_FOLDER="${{ github.event.inputs.target_folder }}"
+          TARGET_FOLDER="${{ inputs.target_folder }}"
           if [[ -z "$TARGET_FOLDER" ]]; then
             TARGET_FOLDER="src"
           fi
 
-          ZIP_NAME_INPUT="${{ github.event.inputs.zip_name }}"
+          ZIP_NAME_INPUT="${{ inputs.zip_name }}"
           ZIP_NAME_INPUT="${ZIP_NAME_INPUT//[[:space:]]/}"
 
-          VERSION_SUFFIX="${{ github.event.inputs.version_suffix }}"
+          VERSION_SUFFIX="${{ inputs.version_suffix }}"
           VERSION_SUFFIX="${VERSION_SUFFIX//[[:space:]]/}"
 
           if [[ ! -d "$TARGET_FOLDER" ]]; then
@@ -149,52 +159,40 @@ jobs:
           zip -r "../$ZIP_PATH" . \
             -x "*.DS_Store" \
             -x "__MACOSX/*" \
-            -x ".git/*" \
-            -x ".github/*" \
             -x "node_modules/*" \
             -x "coverage/*" \
             -x "*.log" \
             -x "*.tmp"
 
-          echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
-          echo "ZIP_PATH=$ZIP_PATH" >> "$GITHUB_ENV"
+          cd - >/dev/null 2>&1
+
+          SHA_PATH="${ZIP_PATH}.sha256"
+          sha256sum "$ZIP_PATH" | awk '{print $1}' > "$SHA_PATH"
 
           echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
           echo "ZIP_PATH=$ZIP_PATH" >> "$GITHUB_ENV"
-
-      - name: Generate manifest
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          MANIFEST_PATH="dist/${ZIP_NAME}.manifest.txt"
-
-          if [[ "$ZIPINFO_AVAILABLE" == "true" ]]; then
-            zipinfo -1 "$ZIP_PATH" > "$MANIFEST_PATH"
-          elif [[ "$UNZIP_AVAILABLE" == "true" ]]; then
-            unzip -Z1 "$ZIP_PATH" > "$MANIFEST_PATH"
-          else
-            echo "ERROR: Neither zipinfo nor unzip is available to generate a manifest" >&2
-            exit 1
-          fi
-
-          echo "MANIFEST_PATH=$MANIFEST_PATH" >> "$GITHUB_ENV"
-
-      - name: Generate SHA256
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          SHA_PATH="dist/${ZIP_NAME}.sha256"
-          sha256sum "$ZIP_PATH" > "$SHA_PATH"
-
           echo "SHA_PATH=$SHA_PATH" >> "$GITHUB_ENV"
 
-      - name: Upload build artifacts
+      - name: Export artifact metadata
+        id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "zip_artifact_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+          echo "sha_artifact_name=${ZIP_NAME}.sha256" >> "$GITHUB_OUTPUT"
+
+          echo "zip_file_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
+          echo "sha_file_name=$(basename "$SHA_PATH")" >> "$GITHUB_OUTPUT"
+
+      - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
         with:
-          name: packaged-folder
-          path: |
-            ${{ env.ZIP_PATH }}
-            ${{ env.MANIFEST_PATH }}
-            ${{ env.SHA_PATH }}
+          name: ${{ env.ZIP_NAME }}
+          path: ${{ env.ZIP_PATH }}
+
+      - name: Upload SHA256 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ZIP_NAME }}.sha256
+          path: ${{ env.SHA_PATH }}
