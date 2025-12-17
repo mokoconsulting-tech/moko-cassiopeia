@@ -45,6 +45,12 @@ jobs:
             echo "ZIPINFO_AVAILABLE=false" >> "$GITHUB_ENV"
           fi
 
+          if command -v unzip >/dev/null 2>&1; then
+            echo "UNZIP_AVAILABLE=true" >> "$GITHUB_ENV"
+          else
+            echo "UNZIP_AVAILABLE=false" >> "$GITHUB_ENV"
+          fi
+
       - name: Validate inputs
         shell: bash
         run: |
@@ -149,8 +155,11 @@ jobs:
 
           if [[ "$ZIPINFO_AVAILABLE" == "true" ]]; then
             zipinfo -1 "$ZIP_PATH" > "$MANIFEST_PATH"
-          else
+          elif [[ "$UNZIP_AVAILABLE" == "true" ]]; then
             unzip -Z1 "$ZIP_PATH" > "$MANIFEST_PATH"
+          else
+            echo "ERROR: Neither zipinfo nor unzip is available to generate a manifest" >&2
+            exit 1
           fi
 
           echo "MANIFEST_PATH=$MANIFEST_PATH" >> "$GITHUB_ENV"
