@@ -115,36 +115,34 @@ from pathlib import Path
 
 template_path = Path(os.environ["TEMPLATE_PATH"])
 out_path = Path(os.environ["OUTPUT_PATH"])
-download_url = os.environ["DOWNLOAD_URL"].strip()
-sha256 = os.environ["SHA256"].strip()
+download_url = os.environ.get("DOWNLOAD_URL", "").strip()
+sha256 = os.environ.get("SHA256", "").strip()
 
+if not template_path.is_file():
+    raise SystemExit(f"Template not found: {template_path}")
 if not download_url:
     raise SystemExit("Missing DOWNLOAD_URL")
 if not sha256:
     raise SystemExit("Missing SHA256")
 
-# Parse as XML and set the fields directly to avoid brittle string matching.
-xml_text = template_path.read_text(encoding="utf-8")
-root = ET.fromstring(xml_text)
+# Parse from file (handles XML declaration and avoids brittle string matching).
+tree = ET.parse(template_path)
+root = tree.getroot()
 
-# Support templates that either use <downloads> or are nested differently.
-# Expected paths from your template:
-#   /updates/update/downloads/downloadurl
-#   /updates/update/downloads/sha256
-
-downloadurl_el = root.find("./update/downloads/downloadurl")
-sha256_el = root.find("./update/downloads/sha256")
+# Locate elements by tag name, regardless of exact nesting.
+downloadurl_el = root.find(".//downloadurl")
+sha256_el = root.find(".//sha256")
 
 if downloadurl_el is None:
-    raise SystemExit("Template missing ./update/downloads/downloadurl")
+    raise SystemExit("Template missing <downloadurl> element")
 if sha256_el is None:
-    raise SystemExit("Template missing ./update/downloads/sha256")
+    raise SystemExit("Template missing <sha256> element")
 
 downloadurl_el.text = download_url
 sha256_el.text = sha256
 
 out_path.parent.mkdir(parents=True, exist_ok=True)
-ET.ElementTree(root).write(out_path, encoding="utf-8", xml_declaration=True)
+tree.write(out_path, encoding="utf-8", xml_declaration=True)
 
 print(f"Wrote: {out_path}")
 PY
