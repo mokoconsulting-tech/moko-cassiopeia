@@ -234,7 +234,9 @@ jobs:
           SHA_PATH="${ZIP_PATH}.sha256"
           sha256sum "$ZIP_PATH" | awk '{print $1}' > "$SHA_PATH"
 
+          ZIP_ARTIFACT_NAME="${ZIP_NAME%.zip}"
           echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
+          echo "ZIP_ARTIFACT_NAME=$ZIP_ARTIFACT_NAME" >> "$GITHUB_ENV"
           echo "ZIP_PATH=$ZIP_PATH" >> "$GITHUB_ENV"
           echo "SHA_PATH=$SHA_PATH" >> "$GITHUB_ENV"
 
@@ -251,7 +253,7 @@ jobs:
       - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.ZIP_NAME | replace('.zip', '') }}
+          name: ${{ env.ZIP_ARTIFACT_NAME }}
           path: ${{ env.ZIP_PATH }}
 
       - name: Upload SHA256 artifact
