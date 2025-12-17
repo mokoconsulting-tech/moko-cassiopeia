@@ -11,36 +11,44 @@
  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
 
  You should have received a copy of the GNU General Public License along with this program. If not, see https://www.gnu.org/licenses/ .
--->
+
+ # FILE INFORMATION
+ DEFGROUP: Joomla.Template.Update
+ INGROUP: Moko-Cassiopeia
+ REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
+ PATH: ./updates.xml
+ VERSION: 03.01.00
+ BRIEF: Update manifest XML file for Moko-Cassiopeia
+ -->
 
 <updates>
-  <update>
-    <name>Moko-Cassiopeia</name>
-    <description>Moko Consulting’s site template based on Cassiopeia.</description>
-    <element>moko-cassiopeia</element>
-    <type>template</type>
-    <client>site</client>
+	<update>
+		<name>Moko Cassiopeia</name>
+		<description>Moko Consulting’s site template based on Cassiopeia.</description>
+		<element>moko-cassiopeia</element>
+		<type>template</type>
+		<client>site</client>
 
-    <version>03.01.00</version>
-    <creationDate>2025-12-16</creationDate>
-    <author>Jonathan Miller || Moko Consulting</author>
-    <authorEmail>hello@mokoconsulting.tech</authorEmail>
-    <copyright>(C)GNU General Public License Version 3 - 2025 Moko Consulting</copyright>
+		<version>03.01.00</version>
+		<creationDate>2025-12-16</creationDate>
+		<author>Jonathan Miller || Moko Consulting</author>
+		<authorEmail>hello@mokoconsulting.tech</authorEmail>
+		<copyright>(C)GNU General Public License Version 3 - 2025 Moko Consulting</copyright>
 
-    <infourl title='Moko-Cassiopeia'>https://mokoconsulting.tech/support/waas/moko-cassiopeia-roadmap</infourl>
+		<infourl title='Moko Cassiopeia'>https://github.com/mokoconsulting-tech/moko-cassiopeia</infourl>
 
-    <downloads>
-      <downloadurl type='full' format='zip'>PLACEHOLDER</downloadurl>
-      <sha256>PLACEHOLDER</sha256>
-    </downloads>
+		<downloads>
+			<downloadurl type='full' format='zip'>https://github.com/mokoconsulting-tech/moko-cassiopeia/releases/download/03.01.00/moko-cassiopeia-src-03.01.00.zip</downloadurl>
+			<sha256>sha256:858dd1a9a0aceecfe844a22d2a3557aea68687ae02363e04ff4c80bae0f29480</sha256>
+		</downloads>
 
-    <tags>
-      <tag>stable</tag>
-    </tags>
+		<tags>
+			<tag>stable</tag>
+		</tags>
 
-    <maintainer>Moko Consulting</maintainer>
-    <maintainerurl>https://www.mokoconsulting.tech</maintainerurl>
+		<maintainer>Moko Consulting</maintainer>
+		<maintainerurl>https://www.mokoconsulting.tech</maintainerurl>
 
-    <targetplatform name='joomla' version='5.*'/>
-  </update>
+		<targetplatform name='joomla' version='5.*'/>
+	</update>
 </updates>
