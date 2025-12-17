@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   build-updates-xml:
-    name: Generate updates.xml artifact
+    name: Generate and attach updates.xml
     runs-on: ubuntu-latest
 
     steps:
@@ -35,7 +35,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TPL="templates/update_template.xml"
+          TPL="update.xml"
           if [ ! -f "$TPL" ]; then
             echo "Template not found: $TPL" >&2
             exit 1
@@ -50,11 +50,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          EVENT_NAME="${{ github.event_name }}"
-
-          if [ "$EVENT_NAME" = "release" ]; then
-            ASSET_URL=$(jq -r '.release.assets[] | select(.name | test("\\.zip$"; "i")) | .browser_download_url' "$GITHUB_EVENT_PATH" | head -n 1)
-            ASSET_NAME=$(jq -r '.release.assets[] | select(.name | test("\\.zip$"; "i")) | .name' "$GITHUB_EVENT_PATH" | head -n 1)
+          if [ "${{ github.event_name }}" = "release" ]; then
+            ASSET_URL=$(jq -r '.release.assets[] | select(.name | test("\.zip$"; "i")) | .browser_download_url' "$GITHUB_EVENT_PATH" | head -n 1)
+            ASSET_NAME=$(jq -r '.release.assets[] | select(.name | test("\.zip$"; "i")) | .name' "$GITHUB_EVENT_PATH" | head -n 1)
 
             if [ -z "$ASSET_URL" ] || [ "$ASSET_URL" = "null" ] || [ -z "$ASSET_NAME" ] || [ "$ASSET_NAME" = "null" ]; then
               echo "No .zip release asset found on the published release" >&2
@@ -105,7 +103,7 @@ jobs:
       - name: Generate updates.xml from template
         shell: bash
         env:
-          TEMPLATE_PATH: templates/update_template.xml
+          TEMPLATE_PATH: update.xml
           OUTPUT_PATH: dist/updates.xml
           DOWNLOAD_URL: ${{ steps.resolve.outputs.download_url }}
           SHA256: ${{ steps.sha.outputs.sha256 }}
@@ -147,7 +145,8 @@ tree.write(out_path, encoding="utf-8", xml_declaration=True)
 
 print(f"Wrote: {out_path}")
 '
-            - name: Attach updates.xml to GitHub Release
+
+      - name: Attach updates.xml to GitHub Release
         if: ${{ github.event_name == 'release' || github.event.inputs.release_tag != '' }}
         shell: bash
         env:
