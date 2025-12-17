@@ -1,92 +1,65 @@
-name: Build ZIP from src
+name: Build ZIP from folder
 
 on:
-  release:
-    types: [prereleased, released]
   workflow_dispatch:
     inputs:
-      source_dir:
+      target_folder:
         description: "Folder to zip (relative to repo root)"
         required: false
         default: "src"
-      zip_prefix:
-        description: "ZIP filename prefix (default repo name)"
-        required: false
-        default: ""
-      zip_name:
-        description: "Override full ZIP filename (without .zip)"
-        required: false
-        default: ""
+
+permissions:
+  contents: read
+
+actions:
+  contents: read
 
 jobs:
-
-  build-zip:
-    name: Build ZIP from src
+  zip:
+    name: Package folder as ZIP
     runs-on: ubuntu-latest
 
-    env:
-      DEFAULT_SOURCE_DIR: src
-
     steps:
-      - name: Check out repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Resolve build parameters
-        id: cfg
+      - name: Validate target folder
+        shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.source_dir }}" ]; then
-            SRC_DIR="${{ github.event.inputs.source_dir }}"
-          else
-            SRC_DIR="${DEFAULT_SOURCE_DIR}"
+          set -euo pipefail
+
+          TARGET_FOLDER="${{ github.event.inputs.target_folder }}"
+          if [[ -z "$TARGET_FOLDER" ]]; then
+            TARGET_FOLDER="src"
           fi
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.zip_prefix }}" ]; then
-            PREFIX="${{ github.event.inputs.zip_prefix }}"
-          else
-            PREFIX="${GITHUB_REPOSITORY##*/}"
-          fi
-
-          if [ "${{ github.event_name }}" = "release" ]; then
-            REF_NAME="${GITHUB_REF_NAME}"
-          else
-            REF_NAME="${GITHUB_SHA::7}"
-          fi
-
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.zip_name }}" ]; then
-            ZIP_NAME="${{ github.event.inputs.zip_name }}"
-          else
-            ZIP_NAME="${PREFIX}-${REF_NAME}"
-          fi
-
-          echo "src_dir=${SRC_DIR}" >> "$GITHUB_OUTPUT"
-          echo "zip_name=${ZIP_NAME}" >> "$GITHUB_OUTPUT"
-
-      - name: Validate source directory
-        run: |
-          if [ ! -d "${{ steps.cfg.outputs.src_dir }}" ]; then
-            echo "Source directory '${{ steps.cfg.outputs.src_dir }}' does not exist."
+          if [[ ! -d "$TARGET_FOLDER" ]]; then
+            echo "ERROR: Folder does not exist: $TARGET_FOLDER" >&2
             exit 1
           fi
 
-      - name: Prepare dist folder
-        run: |
-          mkdir -p dist
+          echo "TARGET_FOLDER=$TARGET_FOLDER" >> "$GITHUB_ENV"
 
-      - name: Build ZIP from folder contents
+      - name: Create ZIP archive
+        shell: bash
         run: |
-          cd "${{ steps.cfg.outputs.src_dir }}"
-          zip -r "../dist/${{ steps.cfg.outputs.zip_name }}.zip" .
+          set -euo pipefail
 
-      - name: Upload artifact to workflow run
+          REPO_NAME="${GITHUB_REPOSITORY##*/}"
+          SAFE_FOLDER_NAME="$(echo "$TARGET_FOLDER" | tr '/' '-')"
+          ZIP_NAME="${REPO_NAME}-${SAFE_FOLDER_NAME}.zip"
+
+          rm -f "$ZIP_NAME"
+
+          cd "$TARGET_FOLDER"
+          zip -r "../$ZIP_NAME" . \
+            -x "*.DS_Store" \
+            -x "__MACOSX/*"
+
+          echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
+
+      - name: Upload ZIP artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.cfg.outputs.zip_name }}
-          path: dist/${{ steps.cfg.outputs.zip_name }}.zip
-
-      - name: Attach ZIP to GitHub Release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/${{ steps.cfg.outputs.zip_name }}.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: packaged-folder
+          path: ${{ env.ZIP_NAME }}
