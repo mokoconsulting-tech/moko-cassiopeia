@@ -109,42 +109,40 @@ jobs:
           set -euo pipefail
 
           python3 - <<'PY'
-import os
-import xml.etree.ElementTree as ET
-from pathlib import Path
+          import os
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
 
-template_path = Path(os.environ["TEMPLATE_PATH"])
-out_path = Path(os.environ["OUTPUT_PATH"])
-download_url = os.environ.get("DOWNLOAD_URL", "").strip()
-sha256 = os.environ.get("SHA256", "").strip()
+          template_path = Path(os.environ["TEMPLATE_PATH"])
+          out_path = Path(os.environ["OUTPUT_PATH"])
+          download_url = os.environ.get("DOWNLOAD_URL", "").strip()
+          sha256 = os.environ.get("SHA256", "").strip()
 
-if not template_path.is_file():
-    raise SystemExit(f"Template not found: {template_path}")
-if not download_url:
-    raise SystemExit("Missing DOWNLOAD_URL")
-if not sha256:
-    raise SystemExit("Missing SHA256")
+          if not template_path.is_file():
+              raise SystemExit(f"Template not found: {template_path}")
+          if not download_url:
+              raise SystemExit("Missing DOWNLOAD_URL")
+          if not sha256:
+              raise SystemExit("Missing SHA256")
 
-# Parse from file (handles XML declaration and avoids brittle string matching).
-tree = ET.parse(template_path)
-root = tree.getroot()
+          tree = ET.parse(template_path)
+          root = tree.getroot()
 
-# Locate elements by tag name, regardless of exact nesting.
-downloadurl_el = root.find(".//downloadurl")
-sha256_el = root.find(".//sha256")
+          downloadurl_el = root.find(".//downloadurl")
+          sha256_el = root.find(".//sha256")
 
-if downloadurl_el is None:
-    raise SystemExit("Template missing <downloadurl> element")
-if sha256_el is None:
-    raise SystemExit("Template missing <sha256> element")
+          if downloadurl_el is None:
+              raise SystemExit("Template missing <downloadurl> element")
+          if sha256_el is None:
+              raise SystemExit("Template missing <sha256> element")
 
-downloadurl_el.text = download_url
-sha256_el.text = sha256
+          downloadurl_el.text = download_url
+          sha256_el.text = sha256
 
-out_path.parent.mkdir(parents=True, exist_ok=True)
-tree.write(out_path, encoding="utf-8", xml_declaration=True)
+          out_path.parent.mkdir(parents=True, exist_ok=True)
+          tree.write(out_path, encoding="utf-8", xml_declaration=True)
 
-print(f"Wrote: {out_path}")
+          print(f"Wrote: {out_path}")
 PY
 
       - name: Upload updates.xml artifact
