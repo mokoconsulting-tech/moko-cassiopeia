@@ -27,6 +27,7 @@
 
 ## [UNRELEASED]
 - Placeholder for next release
+- 
 ## [03.01.00] 2025-12-16
 - Created `.github/workflows/`
 
