@@ -143,7 +143,7 @@ jobs:
           tree.write(out_path, encoding="utf-8", xml_declaration=True)
 
           print(f"Wrote: {out_path}")
-PY
+					PY
 
       - name: Upload updates.xml artifact
         uses: actions/upload-artifact@v4
