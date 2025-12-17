@@ -216,7 +216,7 @@ jobs:
 
           SAFE_FOLDER_NAME="$(echo "$TARGET_FOLDER" | tr '/' '-')"
 
-          ZIP_NAME="${BASE_ZIP_NAME}-${SAFE_FOLDER_NAME}-${VERSION_SUFFIX}.zip"
+          ZIP_NAME="${BASE_ZIP_NAME}-${SAFE_FOLDER_NAME}-${VERSION_SUFFIX}"
           ZIP_PATH="dist/$ZIP_NAME"
 
           cd "$TARGET_FOLDER"
