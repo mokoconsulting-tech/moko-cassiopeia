@@ -1,6 +1,21 @@
 name: Build ZIP from folder
 
 on:
+  workflow_dispatch:
+    inputs:
+      target_folder:
+        description: "Folder to zip (relative to repo root)"
+        required: false
+        default: "src"
+      zip_name:
+        description: "Base ZIP name (default: repository name, lowercase)"
+        required: false
+        default: ""
+      version_suffix:
+        description: "Optional version suffix for filename (example 01.02.03)"
+        required: false
+        default: ""
+
   workflow_call:
     inputs:
       target_folder:
@@ -71,15 +86,26 @@ jobs:
           set -euo pipefail
 
           TARGET_FOLDER="${{ inputs.target_folder }}"
+          ZIP_NAME_INPUT="${{ inputs.zip_name }}"
+          VERSION_SUFFIX="${{ inputs.version_suffix }}"
+
+          if [[ -z "$TARGET_FOLDER" ]]; then
+            TARGET_FOLDER="${{ github.event.inputs.target_folder }}"
+          fi
+          if [[ -z "$ZIP_NAME_INPUT" ]]; then
+            ZIP_NAME_INPUT="${{ github.event.inputs.zip_name }}"
+          fi
+          if [[ -z "$VERSION_SUFFIX" ]]; then
+            VERSION_SUFFIX="${{ github.event.inputs.version_suffix }}"
+          fi
+
+          TARGET_FOLDER="${TARGET_FOLDER//[[:space:]]/}"
+          ZIP_NAME_INPUT="${ZIP_NAME_INPUT//[[:space:]]/}"
+          VERSION_SUFFIX="${VERSION_SUFFIX//[[:space:]]/}"
+
           if [[ -z "$TARGET_FOLDER" ]]; then
             TARGET_FOLDER="src"
           fi
-
-          ZIP_NAME_INPUT="${{ inputs.zip_name }}"
-          ZIP_NAME_INPUT="${ZIP_NAME_INPUT//[[:space:]]/}"
-
-          VERSION_SUFFIX="${{ inputs.version_suffix }}"
-          VERSION_SUFFIX="${VERSION_SUFFIX//[[:space:]]/}"
 
           if [[ ! -d "$TARGET_FOLDER" ]]; then
             echo "ERROR: Folder does not exist: $TARGET_FOLDER" >&2
@@ -123,6 +149,7 @@ jobs:
 
             if [[ -n "$XML_FILE" ]]; then
               VERSION_SUFFIX=$(grep -oPm1 '(?<=<version>)[^<]+' "$XML_FILE" || true)
+              VERSION_SUFFIX="${VERSION_SUFFIX//[[:space:]]/}"
             fi
           fi
 
@@ -181,7 +208,6 @@ jobs:
 
           echo "zip_artifact_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
           echo "sha_artifact_name=${ZIP_NAME}.sha256" >> "$GITHUB_OUTPUT"
-
           echo "zip_file_name=$ZIP_NAME" >> "$GITHUB_OUTPUT"
           echo "sha_file_name=$(basename "$SHA_PATH")" >> "$GITHUB_OUTPUT"
 
