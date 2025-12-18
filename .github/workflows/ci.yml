@@ -172,7 +172,6 @@ jobs:
                set -euo pipefail
                echo "Checking for changelog update or verification scripts"
 
-               if [ -f "scripts/update_changelog.sh" ]; then
                   echo "Running scripts/update_changelog.sh --ci"
                   bash scripts/update_changelog.sh --ci
                elif [ -f "scripts/verify_changelog.sh" ]; then
