@@ -25,6 +25,9 @@
 # PATH: /.github/workflows/build_joomla_zip.yml
 # VERSION: 01.00.00
 # BRIEF: Build a Joomla ZIP from /src and optionally attach it to a GitHub Release.
+# NOTE: Zips the contents of /src (not the folder) to avoid nested ZIP structures.
+# ============================================================================
+#
 # Script details
 # - Builds a ZIP artifact from the repository /src folder.
 # - Runs automatically when a GitHub Release is created.
@@ -35,113 +38,193 @@
 name: Build Joomla ZIP from src
 
 on:
-  release:
-    types: [created]
-  workflow_dispatch:
-    inputs:
-      attach_to_release:
-        description: "Attach the generated ZIP to a GitHub Release"
-        required: false
-        default: "false"
-        type: choice
-        options:
-          - "false"
-          - "true"
-      release_tag:
-        description: "Release tag to upload to. If blank, defaults to dev/<version> using templateDetails.xml (example dev/03.02.00)"
-        required: false
-        default: ""
-      zip_name:
-        description: "ZIP base name without extension (defaults to repository name)"
-        required: false
-        default: ""
-      zip_suffix:
-        description: "Optional suffix appended after version (example rc1, beta, build.5)"
-        required: false
-        default: ""
-      prerelease:
-        description: "Mark the uploaded asset as prerelease when attaching to a Release"
-        required: false
-        default: "false"
-        type: choice
-        options:
-          - "false"
-          - "true"
+   release:
+      types: [created]
+   workflow_dispatch:
+      inputs:
+         attach_to_release:
+            description: "Attach the generated ZIP to a GitHub Release"
+            required: false
+            default: "false"
+            type: choice
+            options:
+               - "false"
+               - "true"
+         release_tag:
+            description: "Release tag to upload to. If blank, defaults to dev/<version> using templateDetails.xml (example dev/03.02.00)"
+            required: false
+            default: ""
+         zip_name:
+            description: "ZIP base name without extension (defaults to repository name)"
+            required: false
+            default: ""
+         zip_suffix:
+            description: "Optional suffix appended after version (example rc1, beta, build.5)"
+            required: false
+            default: ""
+         prerelease:
+            description: "Mark the uploaded asset as prerelease when attaching to a Release"
+            required: false
+            default: "false"
+            type: choice
+            options:
+               - "false"
+               - "true"
 
 permissions:
-  contents: write
+   contents: write
 
 jobs:
-  build-zip:
-    name: Build ZIP
-    runs-on: ubuntu-latest
+   build-zip:
+      name: Build ZIP
+      runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      steps:
+         - name: Checkout
+            uses: actions/checkout@v4
 
-      - name: Validate src folder exists
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ ! -d "src" ]; then
-            echo "ERROR: Required folder 'src' not found at repository root." >&2
-            echo "Expected: ./src" >&2
-            exit 1
-          fi
+         - name: Validate src folder exists
+            shell: bash
+            run: |
+               set -euo pipefail
+               if [ ! -d "src" ]; then
+                  echo "ERROR: Required folder 'src' not found at repository root." >&2
+                  echo "Expected: ./src" >&2
+                  exit 1
+               fi
 
-      - name: Resolve build parameters
-        id: params
-        shell: bash
-        run: |
-          set -euo pipefail
+         - name: Resolve build parameters
+            id: params
+            shell: bash
+            run: |
+               set -euo pipefail
 
-          REPO_NAME="${GITHUB_REPOSITORY#*/}"
+               REPO_NAME="${GITHUB_REPOSITORY#*/}"
 
-          ZIP_BASE_INPUT="${{ github.event.inputs.zip_name }}"
-          if [ -n "${ZIP_BASE_INPUT}" ]; then
-            ZIP_BASE="${ZIP_BASE_INPUT}"
-          else
-            ZIP_BASE="${REPO_NAME}"
+               ZIP_BASE_INPUT="${{ github.event.inputs.zip_name }}"
+               if [ -n "${ZIP_BASE_INPUT}" ]; then
+                  ZIP_BASE="${ZIP_BASE_INPUT}"
+               else
+                  ZIP_BASE="${REPO_NAME}"
+               fi
 
-          VERSION=""
-          SUFFIX_INPUT="${{ github.event.inputs.zip_suffix }}"
+               VERSION=""
+               SUFFIX_INPUT="${{ github.event.inputs.zip_suffix }}"
+               PRERELEASE_INPUT="${{ github.event.inputs.prerelease }}"
+               ATTACH_INPUT="${{ github.event.inputs.attach_to_release }}"
 
-          ATTACH_INPUT="${{ github.event.inputs.attach_to_release }}"
+               if [ "${GITHUB_EVENT_NAME}" = "release" ]; then
+                  ATTACH="true"
+                  TAG_NAME="${{ github.event.release.tag_name }}"
+                  VERSION="${TAG_NAME##*/}"
+                  PRERELEASE="${{ github.event.release.prerelease }}"
+               else
+                  if [ "${ATTACH_INPUT}" = "true" ]; then
+                     ATTACH="true"
+                  else
+                     ATTACH="false"
+                  fi
 
-          if [ "${GITHUB_EVENT_NAME}" = "release" ]; then
-            ATTACH="true"
-            TAG_NAME="${{ github.event.release.tag_name }}"
-            VERSION="${TAG_NAME##*/}"
-          else
-            if [ "${ATTACH_INPUT}" = "true" ]; then
-              ATTACH="true"
-            else
-              ATTACH="false"
-            fi
+                  TAG_INPUT="${{ github.event.inputs.release_tag }}"
+                  if [ -n "${TAG_INPUT}" ]; then
+                     TAG_NAME="${TAG_INPUT}"
+                     VERSION="${TAG_NAME##*/}"
+                  else
+                     if [ ! -f "src/templateDetails.xml" ]; then
+                        echo "ERROR: src/templateDetails.xml not found and release_tag not provided." >&2
+                        exit 1
+                     fi
 
-            TAG_INPUT="${{ github.event.inputs.release_tag }}"
-            if [ -n "${TAG_INPUT}" ]; then
-              TAG_NAME="${TAG_INPUT}"
-              VERSION="${TAG_NAME##*/}"
-            else
-              if [ ! -f "src/templateDetails.xml" ]; then
-                echo "ERROR: src/templateDetails.xml not found and release_tag not provided." >&2
-                exit 1
-              fi
+                     VERSION=$(grep -Eo '<version>[0-9]+(\.[0-9]+)*</version>' src/templateDetails.xml | head -n1 | sed -E 's#</?version>##g')
+                     if [ -z "${VERSION}" ]; then
+                        echo "ERROR: Unable to extract <version> from src/templateDetails.xml." >&2
+                        exit 1
+                     fi
 
-              VERSION=$(grep -Eo '<version>[0-9]+(\.[0-9]+)*</version>' src/templateDetails.xml | head -n1 | sed -E 's#</?version>##g')
-              if [ -z "${VERSION}" ]; then
-                echo "ERROR: Unable to extract <version> from src/templateDetails.xml." >&2
-                exit 1
-              fi
+                     TAG_NAME="dev/${VERSION}"
+                  fi
 
-              TAG_NAME="dev/${VERSION}"
-            fi
-          fi
+                  if [ "${PRERELEASE_INPUT}" = "true" ]; then
+                     PRERELEASE="true"
+                  else
+                     PRERELEASE="false"
+                  fi
+               fi
 
-          if [ -n "${SUFFIX_INPUT}" ]; then
-            ZIP_NAME="${ZIP_BASE}-${VERSION}-${SUFFIX_INPUT}.zip"
-          else
-            ZIP_NAME="${ZIP_BASE}-${VERSION}.zip"
-          fi
+               if [ -n "${VERSION}" ]; then
+                  :
+               else
+                  echo "ERROR: VERSION could not be resolved." >&2
+                  exit 1
+               fi
+
+               if [ -n "${SUFFIX_INPUT}" ]; then
+                  ZIP_NAME="${ZIP_BASE}-${VERSION}-${SUFFIX_INPUT}.zip"
+               else
+                  ZIP_NAME="${ZIP_BASE}-${VERSION}.zip"
+               fi
+
+               echo "zip_name=${ZIP_NAME}" >> "$GITHUB_OUTPUT"
+               echo "attach=${ATTACH}" >> "$GITHUB_OUTPUT"
+               echo "tag_name=${TAG_NAME}" >> "$GITHUB_OUTPUT"
+               echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+               echo "prerelease=${PRERELEASE}" >> "$GITHUB_OUTPUT"
+
+               echo "Resolved parameters:" >&2
+               echo "- ZIP_NAME: ${ZIP_NAME}" >&2
+               echo "- ATTACH_TO_RELEASE: ${ATTACH}" >&2
+               echo "- TAG_NAME: ${TAG_NAME}" >&2
+               echo "- VERSION: ${VERSION}" >&2
+               echo "- PRERELEASE: ${PRERELEASE}" >&2
+
+         - name: Preflight checks
+            shell: bash
+            run: |
+               set -euo pipefail
+
+               if [ "${{ steps.params.outputs.attach }}" = "true" ] && [ -z "${{ steps.params.outputs.tag_name }}" ]; then
+                  echo "ERROR: tag_name is required when attach_to_release=true on workflow_dispatch." >&2
+                  echo "Provide 'release_tag' input, or run on a Release created event." >&2
+                  exit 1
+               fi
+
+               echo "src directory listing:" >&2
+               ls -la src >&2
+
+         - name: Build ZIP from src contents
+            shell: bash
+            run: |
+               set -euo pipefail
+
+               ZIP_NAME="${{ steps.params.outputs.zip_name }}"
+
+               rm -f "${ZIP_NAME}"
+
+               # Zip the contents of src, not the folder itself.
+               # This avoids producing a ZIP with a top-level src/ directory.
+               ( cd src && zip -r -q "../${ZIP_NAME}" . )
+
+               if [ ! -f "${ZIP_NAME}" ]; then
+                  echo "ERROR: ZIP build failed. Output file not found: ${ZIP_NAME}" >&2
+                  exit 1
+               fi
+
+               echo "Built ZIP:" >&2
+               ls -la "${ZIP_NAME}" >&2
+
+         - name: Upload build artifact to workflow run
+            if: steps.params.outputs.attach != 'true'
+            uses: actions/upload-artifact@v4
+            with:
+               name: joomla-zip
+               path: ${{ steps.params.outputs.zip_name }}
+               if-no-files-found: error
+
+         - name: Attach ZIP to GitHub Release
+            if: steps.params.outputs.attach == 'true'
+            uses: softprops/action-gh-release@v2
+            with:
+               tag_name: ${{ steps.params.outputs.tag_name }}
+               prerelease: ${{ steps.params.outputs.prerelease == 'true' }}
+               files: ${{ steps.params.outputs.zip_name }}
+               fail_on_unmatched_files: true
