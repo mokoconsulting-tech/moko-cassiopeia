@@ -1,0 +1,172 @@
+name: Generate updates.xml from template
+
+on:
+  release:
+    types: [published]
+
+  workflow_dispatch:
+    inputs:
+      asset_download_url:
+        description: "Direct download URL to the release ZIP asset. Required for manual runs."
+        required: false
+        default: ""
+      asset_name:
+        description: "Filename to save the downloaded ZIP as. Required when asset_download_url is provided."
+        required: false
+        default: ""
+      release_tag:
+        description: "Release tag to attach dist/updates.xml to (manual runs only). Leave blank to skip attachment."
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  build-updates-xml:
+    name: Generate and attach updates.xml
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate template exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          TPL="update.xml"
+          if [ ! -f "$TPL" ]; then
+            echo "Template not found: $TPL" >&2
+            exit 1
+          fi
+
+      - name: Resolve ZIP download URL and name
+        id: resolve
+        shell: bash
+        env:
+          MANUAL_URL: ${{ github.event.inputs.asset_download_url }}
+          MANUAL_NAME: ${{ github.event.inputs.asset_name }}
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "release" ]; then
+            ASSET_URL=$(jq -r '.release.assets[] | select(.name | test("\.zip$"; "i")) | .browser_download_url' "$GITHUB_EVENT_PATH" | head -n 1)
+            ASSET_NAME=$(jq -r '.release.assets[] | select(.name | test("\.zip$"; "i")) | .name' "$GITHUB_EVENT_PATH" | head -n 1)
+
+            if [ -z "$ASSET_URL" ] || [ "$ASSET_URL" = "null" ] || [ -z "$ASSET_NAME" ] || [ "$ASSET_NAME" = "null" ]; then
+              echo "No .zip release asset found on the published release" >&2
+              exit 1
+            fi
+
+            echo "download_url=$ASSET_URL" >> "$GITHUB_OUTPUT"
+            echo "asset_name=$ASSET_NAME" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # workflow_dispatch path
+          if [ -n "$MANUAL_URL" ]; then
+            if [ -z "$MANUAL_NAME" ]; then
+              echo "asset_name is required when asset_download_url is provided" >&2
+              exit 1
+            fi
+            echo "download_url=$MANUAL_URL" >> "$GITHUB_OUTPUT"
+            echo "asset_name=$MANUAL_NAME" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Manual run requires asset_download_url + asset_name." >&2
+          exit 1
+
+      - name: Download ZIP asset
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -L \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/octet-stream" \
+            "${{ steps.resolve.outputs.download_url }}" \
+            -o "${{ steps.resolve.outputs.asset_name }}"
+
+      - name: Calculate SHA256
+        id: sha
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHA256=$(sha256sum "${{ steps.resolve.outputs.asset_name }}" | awk '{print $1}')
+          if [ -z "$SHA256" ]; then
+            echo "Failed to compute SHA256" >&2
+            exit 1
+          fi
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Generate updates.xml
+        shell: bash
+        env:
+          TEMPLATE_PATH: update.xml
+          OUTPUT_PATH: dist/updates.xml
+          DOWNLOAD_URL: ${{ steps.resolve.outputs.download_url }}
+          SHA256: ${{ steps.sha.outputs.sha256 }}
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          template_path = Path(os.environ["TEMPLATE_PATH"])
+          out_path = Path(os.environ["OUTPUT_PATH"])
+          download_url = os.environ.get("DOWNLOAD_URL", "").strip()
+          sha256 = os.environ.get("SHA256", "").strip()
+
+          if not template_path.is_file():
+              raise SystemExit(f"Template not found: {template_path}")
+          if not download_url:
+              raise SystemExit("Missing DOWNLOAD_URL")
+          if not sha256:
+              raise SystemExit("Missing SHA256")
+
+          tree = ET.parse(template_path)
+          root = tree.getroot()
+
+          downloadurl_el = root.find(".//downloadurl")
+          sha256_el = root.find(".//sha256")
+
+          if downloadurl_el is None:
+              raise SystemExit("Template missing <downloadurl> element")
+          if sha256_el is None:
+              raise SystemExit("Template missing <sha256> element")
+
+          downloadurl_el.text = download_url
+          sha256_el.text = sha256
+
+          out_path.parent.mkdir(parents=True, exist_ok=True)
+          tree.write(out_path, encoding="utf-8", xml_declaration=True)
+
+          print(f"Wrote: {out_path}")
+          PY
+
+      - name: Attach updates.xml to GitHub Release
+        if: ${{ github.event_name == 'release' || github.event.inputs.release_tag != '' }}
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || github.event.inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          if [ -z "$RELEASE_TAG" ]; then
+            echo "Missing release tag" >&2
+            exit 1
+          fi
+          gh release upload "$RELEASE_TAG" "dist/updates.xml" --clobber
+
+      - name: Upload updates.xml artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: updates-xml
+          path: dist/updates.xml
+          if-no-files-found: error
+          # GitHub does not support indefinite artifact retention.
+          # This is set to the maximum allowed retention period.
+          retention-days: 90
