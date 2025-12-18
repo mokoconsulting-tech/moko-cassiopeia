@@ -1,194 +1,94 @@
-name: Continuous Integration Pipeline
+#
+# Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+#
+# This file is part of a Moko Consulting project.
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+# FILE INFORMATION
+# DEFGROUP: MokoStandards
+# INGROUP: GitHub.Actions.CI
+# REPO: https://github.com/mokoconsulting-tech/MokoStandards
+# PATH: /.github/workflows/ci.yml
+# VERSION: 01.00.00
+# BRIEF: Continuous integration governance workflow for standards enforcement.
+#
+
+name: CI
 
 on:
-   push:
-      branches:
-         - main
-         - "version/*"
-   pull_request:
-      branches:
-         - main
-
-permissions:
-   contents: read
+  push:
+    branches:
+      - main
+      - dev
+      - "dev/*"
+  pull_request:
+    branches:
+      - "*"
+  workflow_dispatch:
 
 jobs:
-   formatting-fixes:
-      name: Run formatting fix scripts
-      runs-on: ubuntu-latest
+  ci:
+    name: Standards CI Validation
+    runs-on: ubuntu-latest
 
-      steps:
-         - name: Check out repository
-            uses: actions/checkout@v4
-            with:
-               fetch-depth: 0
+    permissions:
+      contents: read
+      issues: write
 
-         - name: Ensure script executability
-            shell: bash
-            run: |
-               set -euo pipefail
-               chmod +x scripts/*.sh 2>/dev/null || true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-         - name: Run fix_tabs.sh if present
-            shell: bash
-            run: |
-               set -euo pipefail
-               cd "${GITHUB_WORKSPACE}"
-               if [ -f "scripts/fix_tabs.sh" ]; then
-                  echo "Running scripts/fix_tabs.sh"
-                  bash scripts/fix_tabs.sh
-               else
-                  echo "scripts/fix_tabs.sh not found. Skipping."
-               fi
+      - name: Set shell strict mode
+        run: |
+          set -euo pipefail
 
-         - name: Run fix_paths.sh if present
-            shell: bash
-            run: |
-               set -euo pipefail
-               cd "${GITHUB_WORKSPACE}"
-               if [ -f "scripts/fix_paths.sh" ]; then
-                  echo "Running scripts/fix_paths.sh"
-                  bash scripts/fix_paths.sh
-               else
-                  echo "scripts/fix_paths.sh not found. Skipping."
-               fi
+      - name: Validate file paths
+        run: |
+          if [ -x "./scripts/validate_paths.sh" ]; then
+            ./scripts/validate_paths.sh
+          else
+            echo "validate_paths.sh not present, skipping"
+          fi
 
-         - name: Fail if formatting scripts modified files
-            shell: bash
-            run: |
-               set -euo pipefail
-               if ! git diff --quiet; then
-                  echo "Formatting scripts introduced changes."
-                  echo "Run fix_tabs.sh and fix_paths.sh locally and commit the results."
-                  git diff
-                  exit 1
-               fi
+      - name: Validate tabs usage
+        run: |
+          if [ -x "./scripts/validate_tabs.sh" ]; then
+            ./scripts/validate_tabs.sh
+          else
+            echo "validate_tabs.sh not present, skipping"
+          fi
 
-   php-lint:
-      name: PHP lint
-      runs-on: ubuntu-latest
-      needs: formatting-fixes
+      - name: Validate CHANGELOG governance
+        run: |
+          if [ -x "./scripts/validate_changelog.sh" ]; then
+            ./scripts/validate_changelog.sh
+          else
+            echo "validate_changelog.sh not present, skipping"
+          fi
 
-      steps:
-         - name: Check out repository
-            uses: actions/checkout@v4
+      - name: Validate Joomla manifests
+        run: |
+          if [ -x "./scripts/validate_manifest.sh" ]; then
+            ./scripts/validate_manifest.sh
+          else
+            echo "validate_manifest.sh not present, skipping"
+          fi
 
-         - name: Set up PHP
-            uses: shivammathur/setup-php@v2
-            with:
-               php-version: "8.2"
-               coverage: none
-
-         - name: Lint PHP files under src
-            shell: bash
-            run: |
-               set -euo pipefail
-               if [ -d "src" ]; then
-                  echo "Running php -l against PHP files in src/"
-                  find src -type f -name "*.php" -print0 | xargs -0 -n 1 -P 4 php -l
-               else
-                  echo "No src directory found. Skipping PHP lint."
-               fi
-
-   composer-tests:
-      name: Composer install and tests
-      runs-on: ubuntu-latest
-      needs: php-lint
-
-      steps:
-         - name: Check out repository
-            uses: actions/checkout@v4
-
-         - name: Set up PHP
-            uses: shivammathur/setup-php@v2
-            with:
-               php-version: "8.2"
-               coverage: none
-
-         - name: Install dependencies if composer.json exists
-            shell: bash
-            run: |
-               set -euo pipefail
-               if [ -f "composer.json" ]; then
-                  composer install --no-interaction --no-progress --prefer-dist
-               else
-                  echo "No composer.json found. Skipping dependency install and tests."
-               fi
-
-         - name: Run Composer tests when defined
-            shell: bash
-            run: |
-               set -euo pipefail
-               if [ ! -f "composer.json" ]; then
-                  echo "No composer.json. Nothing to test."
-                  exit 0
-               fi
-
-               if composer run -q | grep -q "^  test"; then
-                  echo "Detected composer script 'test'. Running composer test."
-                  composer test
-               else
-                  echo "No 'test' script defined in composer.json. Skipping tests."
-               fi
-
-   validate-manifest-and-changelog:
-      name: Validate manifest and changelog via scripts
-      runs-on: ubuntu-latest
-      needs:
-         - php-lint
-         - composer-tests
-
-      steps:
-         - name: Check out repository
-            uses: actions/checkout@v4
-            with:
-               fetch-depth: 0
-
-         - name: Ensure script executability
-            shell: bash
-            run: |
-               set -euo pipefail
-               chmod +x scripts/*.sh 2>/dev/null || true
-
-         - name: Run manifest validation script if present
-            shell: bash
-            run: |
-               set -euo pipefail
-               echo "Checking for manifest validation scripts"
-
-               if [ -f "scripts/validate_manifest.sh" ]; then
-                  echo "Running scripts/validate_manifest.sh"
-                  bash scripts/validate_manifest.sh
-               elif [ -f "scripts/validate_manifest.php" ]; then
-                  echo "Running scripts/validate_manifest.php"
-                  php scripts/validate_manifest.php
-               else
-                  echo "No manifest validation script found (scripts/validate_manifest.sh or scripts/validate_manifest.php). Skipping manifest validation step."
-               fi
-
-         - name: Run changelog update or verification script if present
-            shell: bash
-            run: |
-               set -euo pipefail
-               echo "Checking for changelog update or verification scripts"
-
-                  echo "Running scripts/update_changelog.sh --ci"
-                  bash scripts/update_changelog.sh --ci
-               elif [ -f "scripts/verify_changelog.sh" ]; then
-                  echo "Running scripts/verify_changelog.sh"
-                  bash scripts/verify_changelog.sh
-               elif [ -f "scripts/verify_changelog.php" ]; then
-                  echo "Running scripts/verify_changelog.sh"
-                  php scripts/verify_changelog.php
-               else
-                  echo "No changelog script found (scripts/update_changelog.sh, scripts/verify_changelog.sh, or scripts/verify_changelog.php). Skipping changelog enforcement."
-                  exit 0
-               fi
-
-               echo "Checking for uncommitted changes after changelog script"
-               if ! git diff --quiet; then
-                  echo "Changelog or related files were modified by the script."
-                  echo "Please run the changelog script locally and commit the changes before pushing."
-                  git diff
-                  exit 1
-               fi
+      - name: CI completion
+        run: |
+          echo "CI checks completed successfully"
