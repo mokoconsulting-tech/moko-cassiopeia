@@ -19,21 +19,11 @@
  BRIEF: Changelog file documenting version history of Moko-Cassiopeia
  -->
 
-# Changelog — Moko-Cassiopeia
-
-## [TODO]
-- `./docs/*`
-- Repair `/.github/workflows/build_template.zip.yml`
-- `/.github/workflows/build_updatexml.yml`
-- Repair `\.github\workflows\ci.yml`
-- Repair `\scripts\..`
-
+# Changelog — Moko-Cassiopeia (VERSION: 03.05.00)
 
 ## [UNRELEASED]
-- Placeholder for next release
-
-## [03.05.00] 2025-12-18
 - 
+
 ## [03.01.00] 2025-12-16
 - Created `.github/workflows/`
 
