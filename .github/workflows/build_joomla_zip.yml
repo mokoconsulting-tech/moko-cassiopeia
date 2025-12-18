@@ -27,7 +27,6 @@
 # BRIEF: Build a Joomla ZIP from /src and optionally attach it to a GitHub Release.
 # NOTE: Zips the contents of /src (not the folder) to avoid nested ZIP structures.
 # ============================================================================
-#
 # Script details
 # - Builds a ZIP artifact from the repository /src folder.
 # - Runs automatically when a GitHub Release is created.
