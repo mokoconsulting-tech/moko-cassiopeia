@@ -17,7 +17,7 @@
  INGROUP: Moko-Cassiopeia
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./templates/moko-cassiopeia/html/com_content/article/toc-right.php
- VERSION: 03.01.00
+ VERSION: 03.05.00
  BRIEF: Template override for Joomla articles with Table of Contents aligned right
  */
 

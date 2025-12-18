@@ -15,7 +15,7 @@
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia
  PATH: ./CHANGELOG.md
- VERSION: 03.01.00
+ VERSION: 03.05.00
  BRIEF: Changelog file documenting version history of Moko-Cassiopeia
  -->
 
@@ -28,7 +28,11 @@
 - Repair `\.github\workflows\ci.yml`
 - Repair `\scripts\..`
 
+
 ## [UNRELEASED]
+- Placeholder for next release
+
+## [03.05.00] 2025-12-18
 - 
 ## [03.01.00] 2025-12-16
 - Created `.github/workflows/`
