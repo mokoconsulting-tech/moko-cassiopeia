@@ -200,9 +200,33 @@ jobs:
 
           rm -f "${ZIP_NAME}"
 
-          # Zip the contents of src, not the folder itself.
-          # This avoids producing a ZIP with a top-level src/ directory.
-          ( cd src && zip -r -q "../${ZIP_NAME}" . )
+          # Packaging rules
+          # - Always keep Joomla top level folders such as media/, language/, administrator/, etc.
+          # - If src contains a template folder (templateDetails.xml present in a subfolder),
+          #   collapse ONLY that template folder contents into the ZIP root.
+          # - All other top level folders remain unchanged.
+
+          TMP_DIR=$(mktemp -d)
+
+          # Copy all top level items except template folders first
+          shopt -s dotglob
+          for ITEM in src/*; do
+            if [ -d "${ITEM}" ] && [ -f "${ITEM}/templateDetails.xml" ]; then
+              TEMPLATE_DIR="${ITEM}"
+            else
+              cp -R "${ITEM}" "${TMP_DIR}/"
+            fi
+          done
+
+          # Collapse template folder if detected
+          if [ -n "${TEMPLATE_DIR:-}" ]; then
+            echo "Collapsing Joomla template folder into ZIP root: ${TEMPLATE_DIR}" >&2
+            cp -R "${TEMPLATE_DIR}/"* "${TMP_DIR}/"
+          fi
+
+          ( cd "${TMP_DIR}" && zip -r -q "${GITHUB_WORKSPACE}/${ZIP_NAME}" . )
+
+          rm -rf "${TMP_DIR}"
 
           if [ ! -f "${ZIP_NAME}" ]; then
             echo "ERROR: ZIP build failed. Output file not found: ${ZIP_NAME}" >&2
