@@ -21,17 +21,18 @@
 # DEFGROUP: MokoStandards
 # INGROUP: Generic.Script
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
-# PATH: /scripts/fix_paths.sh
+# PATH: /scripts/fix_tabs.sh
 # VERSION: 01.00.00
-# BRIEF: Replace Windows-style path separators with POSIX separators in text files.#
+# BRIEF: Replace tab characters with two spaces in text files.
 # Purpose:
-# - Normalize path separators in text files to forward slashes (/).
-# - Intended for CI validation and optional remediation workflows.
+# - Replace tab characters with two spaces in text files.
+# - Designed for optional remediation workflows.
 # - Skips binary files and version control metadata.
-# - Preserves file contents aside from path separator normalization.
+# - Preserves file contents aside from tab replacement.
 #
 # Usage:
-#   ./scripts/fix_paths.sh
+#   ./scripts/fix_tabs.sh
+#   ./scripts/fix_tabs.sh ./src
 # =============================================================================
 
 set -euo pipefail
@@ -54,15 +55,24 @@ die() {
 command -v find >/dev/null 2>&1 || die "find not available"
 command -v sed >/dev/null 2>&1 || die "sed not available"
 command -v file >/dev/null 2>&1 || die "file not available"
+command -v grep >/dev/null 2>&1 || die "grep not available"
 
-info "Scanning for text files under: $ROOT_DIR"
+info "Scanning for tab characters under: $ROOT_DIR"
 
-while IFS= read -r -d '' file; do
-	if file "$file" | grep -qi "text"; then
-		if grep -q '\\\\' "$file"; then
-			sed -i.bak 's#\\\\#/#g' "$file" && rm -f "$file.bak"
-			info "Normalized paths in $file"
-		fi
+changed=0
+scanned=0
+
+while IFS= read -r -d '' f; do
+	scanned=$((scanned + 1))
+
+	if ! file "$f" | grep -qi "text"; then
+		continue
+	fi
+
+	if grep -q $'\t' "$f"; then
+		sed -i.bak $'s/\t/  /g' "$f" && rm -f "$f.bak"
+		info "Replaced tabs in $f"
+		changed=$((changed + 1))
 	fi
 done < <(
 	find "$ROOT_DIR" \
@@ -72,4 +82,4 @@ done < <(
 		-print0
 )
 
-info "Path normalization complete."
+info "Scan complete. Files scanned: $scanned. Files changed: $changed."
