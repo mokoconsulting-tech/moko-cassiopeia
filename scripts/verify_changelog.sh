@@ -1,71 +1,66 @@
-<?php
-/**
- * verify_changelog.php
- *
- * Verifies that CHANGELOG.md is compliant with basic release governance rules.
- *
- * Enforced rules
- * - CHANGELOG.md must exist at repository root.
- * - File must not contain unresolved placeholders such as "UNRELEASED" or "TBD".
- * - Headings must follow semantic version format: ## [NN.NN.NN]
- * - The highest version must appear first.
- *
- * Intended usage
- * - CI validation step (read-only).
- * - Does not modify files.
- *
- * Exit codes
- * - 0: Changelog is valid
- * - 1: Validation failure
- */
+#!/usr/bin/env bash
+#
+# Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+#
+# This file is part of a Moko Consulting project.
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# FILE INFORMATION
+# DEFGROUP: MokoStandards
+# INGROUP: Tooling.Changelog
+# FILE: verify_changelog.sh
+# BRIEF: Validate CHANGELOG.md governance rules for CI enforcement
+#
+# PURPOSE:
+# Validate that CHANGELOG.md contains only released, properly ordered entries and complies with MokoStandards governance rules.
 
-$changelog = 'CHANGELOG.md';
+set -euo pipefail
 
-if (!file_exists($changelog)) {
-    fwrite(STDERR, "ERROR: CHANGELOG.md not found at repository root\n");
-    exit(1);
-}
+CHANGELOG="CHANGELOG.md"
 
-$content = file_get_contents($changelog);
-if ($content === false) {
-    fwrite(STDERR, "ERROR: Unable to read CHANGELOG.md\n");
-    exit(1);
-}
+if [ ! -f "$CHANGELOG" ]; then
+  echo "ERROR: CHANGELOG.md not found at repository root" >&2
+  exit 1
+fi
 
-$errors = [];
+CONTENT="$(cat "$CHANGELOG")"
 
-// Rule: no unresolved placeholders
-$placeholders = ['UNRELEASED', 'TBD', 'TO DO', 'TODO'];
-foreach ($placeholders as $token) {
-    if (stripos($content, $token) !== false) {
-        $errors[] = "Unresolved placeholder detected: {$token}";
-    }
-}
+if echo "$CONTENT" | grep -Eiq '^##[[:space:]]*\[?TODO\]?'; then
+  echo "ERROR: TODO section detected in CHANGELOG.md." >&2
+  echo "CHANGELOG.md must contain released versions only." >&2
+  echo "Move all TODO items to TODO.md and remove the section from CHANGELOG.md." >&2
+  exit 1
+fi
 
-// Rule: extract version headings
-preg_match_all('/^## \[([0-9]+\.[0-9]+\.[0-9]+)\]/m', $content, $matches);
-$versions = $matches[1] ?? [];
+if echo "$CONTENT" | grep -Eiq 'UNRELEASED'; then
+  echo "ERROR: UNRELEASED placeholder detected in CHANGELOG.md." >&2
+  exit 1
+fi
 
-if (empty($versions)) {
-    $errors[] = 'No version headings found (expected format: ## [NN.NN.NN])';
-} else {
-    // Rule: highest version first
-    $sorted = $versions;
-    usort($sorted, 'version_compare');
-    $sorted = array_reverse($sorted);
+for token in "TBD" "TO BE DETERMINED" "PLACEHOLDER"; do
+  if echo "$CONTENT" | grep -Eiq "$token"; then
+    echo "ERROR: Unresolved placeholder detected: $token" >&2
+    exit 1
+  fi
+done
 
-    if ($versions !== $sorted) {
-        $errors[] = 'Versions are not ordered from newest to oldest';
-    }
-}
+mapfile -t versions < <(
+  grep -E '^## \[[0-9]+\.[0-9]+\.[0-9]+\] [0-9]{4}-[0-9]{2}-[0-9]{2}$' "$CHANGELOG" \
+  | sed -E 's/^## \[([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/'
+)
 
-if (!empty($errors)) {
-    fwrite(STDERR, "CHANGELOG.md validation failed:\n");
-    foreach ($errors as $err) {
-        fwrite(STDERR, " - {$err}\n");
-    }
-    exit(1);
-}
+if [ "${#versions[@]}" -eq 0 ]; then
+  echo "ERROR: No valid version headings found in CHANGELOG.md" >&2
+  exit 1
+fi
 
-echo "CHANGELOG.md validation passed\n";
-exit(0);
+sorted_versions="$(printf '%s\n' "${versions[@]}" | sort -Vr)"
+
+if [ "$(printf '%s\n' "${versions[@]}")" != "$sorted_versions" ]; then
+  echo "ERROR: Versions are not ordered from newest to oldest" >&2
+  exit 1
+fi
+
+echo "CHANGELOG.md validation passed"
+exit 0
