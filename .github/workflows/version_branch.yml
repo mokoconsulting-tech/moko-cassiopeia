@@ -23,7 +23,7 @@
 # PATH: /.github/workflows/version_branch.yml
 # VERSION: 01.00.00
 # BRIEF: Create a version branch and align versions across governed files
-# NOTE: Enterprise gates: policy checks, collision defense, manifest targeting, audit summary
+# NOTE: Enterprise gates: policy checks, collision defense, manifest targeting, audit summary, error summary
 
 name: Create version branch and bump versions
 
@@ -33,7 +33,6 @@ on:
       new_version:
         description: "New version in format NN.NN.NN (example 03.01.00)"
         required: true
-
       commit_changes:
         description: "Commit and push changes"
         required: false
@@ -50,6 +49,10 @@ concurrency:
 permissions:
   contents: write
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   version-bump:
     runs-on: ubuntu-latest
@@ -59,6 +62,8 @@ jobs:
       BASE_BRANCH: ${{ github.ref_name }}
       BRANCH_PREFIX: version/dev/
       COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
+      ERROR_LOG: /tmp/version_branch_errors.log
+      CI_HELPERS: /tmp/moko_ci_helpers.sh
 
     steps:
       - name: Checkout repository
@@ -67,41 +72,67 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.ref_name }}
 
-      - name: Validate inputs
-        shell: bash
+      - name: Init CI helpers
         run: |
           set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] Validation error at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+
+          : > "$ERROR_LOG"
+
+          cat > "$CI_HELPERS" <<'SH'
+          set -Eeuo pipefail
+
+          moko_init() {
+            local step_name="${1:-step}"
+
+            export PS4='+ ['"${step_name}"':${BASH_SOURCE##*/}:${LINENO}] '
+            set -x
+
+            trap 'moko_on_err "$step_name" "$LINENO" "$BASH_COMMAND"' ERR
+          }
+
+          moko_on_err() {
+            local step_name="$1"
+            local line_no="$2"
+            local last_cmd="$3"
+
+            echo "[FATAL] ${step_name} failed at line ${line_no}" >&2
+            echo "[FATAL] Last command: ${last_cmd}" >&2
+
+            if [[ -n "${ERROR_LOG:-}" ]]; then
+              echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) | ${step_name} | line ${line_no} | ${last_cmd}" >> "$ERROR_LOG" || true
+            fi
+          }
+          SH
+
+          chmod 0755 "$CI_HELPERS"
+
+      - name: Validate inputs
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Validate inputs"
 
           echo "[INFO] Inputs received:"
           echo "  NEW_VERSION=${NEW_VERSION}"
-          echo "  BASE_BRANCH=${GITHUB_REF_NAME}"
+          echo "  BASE_BRANCH=${BASE_BRANCH}"
           echo "  BRANCH_PREFIX=${BRANCH_PREFIX}"
           echo "  COMMIT_CHANGES=${COMMIT_CHANGES}"
 
           [[ -n "${NEW_VERSION}" ]] || { echo "[ERROR] new_version missing" >&2; exit 2; }
           [[ "${NEW_VERSION}" =~ ^[0-9]{2}[.][0-9]{2}[.][0-9]{2}$ ]] || { echo "[ERROR] Invalid version format: ${NEW_VERSION}" >&2; exit 2; }
 
-
-
           git ls-remote --exit-code --heads origin "${BASE_BRANCH}" >/dev/null 2>&1 || {
             echo "[ERROR] Base branch does not exist on origin: ${BASE_BRANCH}" >&2
-            echo "[INFO] Remote branches:"
-            git ls-remote --heads origin | awk '{sub("refs/heads/","",$2); print $2}'
+            echo "[INFO] Remote branches:" >&2
+            git ls-remote --heads origin | awk '{sub("refs/heads/","",$2); print $2}' >&2
             exit 2
           }
 
           echo "[INFO] Input validation passed"
 
       - name: Enterprise policy gate (required files)
-        shell: bash
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] Policy gate failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          source "$CI_HELPERS"
+          moko_init "Enterprise policy gate"
 
           required=(
             "LICENSE.md"
@@ -139,27 +170,19 @@ jobs:
           echo "[INFO] Policy gate passed"
 
       - name: Configure git identity
-        shell: bash
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] Git identity step failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          source "$CI_HELPERS"
+          moko_init "Configure git identity"
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           echo "[INFO] Git identity configured"
 
       - name: Branch namespace collision defense
-        shell: bash
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] Collision defense failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          source "$CI_HELPERS"
+          moko_init "Branch namespace collision defense"
 
-          # Git cannot create refs like version/dev/03.02.00 if a ref named version already exists.
-          # This is a known enterprise failure mode. We fail fast with a deterministic diagnostic.
           PREFIX_TOP="${BRANCH_PREFIX%%/*}"
           if git ls-remote --exit-code --heads origin "${PREFIX_TOP}" >/dev/null 2>&1; then
             echo "[ERROR] Branch namespace collision detected" >&2
@@ -173,12 +196,9 @@ jobs:
           echo "[INFO] No namespace collision detected for BRANCH_PREFIX=${BRANCH_PREFIX}"
 
       - name: Create and push version branch
-        shell: bash
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] Branch creation failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          source "$CI_HELPERS"
+          moko_init "Create and push version branch"
 
           BRANCH_NAME="${BRANCH_PREFIX}${NEW_VERSION}"
           echo "[INFO] Creating branch: ${BRANCH_NAME} from origin/${BASE_BRANCH}"
@@ -197,12 +217,9 @@ jobs:
           git push --set-upstream origin "${BRANCH_NAME}"
 
       - name: Ensure CHANGELOG.md has a release entry and a VERSION line
-        shell: bash
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] CHANGELOG enforcement failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          source "$CI_HELPERS"
+          moko_init "CHANGELOG governance"
 
           python3 - <<'PY'
           import os
@@ -221,10 +238,10 @@ jobs:
 
           text = p.read_text(encoding='utf-8', errors='replace').splitlines(True)
 
-          todo_re = re.compile(r'^[ 	]*##[ 	]*(?:\[[ 	]*TODO[ 	]*\]|TODO)[ 	]*$', re.IGNORECASE)
-          bullet_re = re.compile(r'^[ 	]*[-*+][ 	]+')
-          blank_re = re.compile(r'^[ 	]*$')
-          unreleased_re = re.compile(r'^[ 	]*##[ 	]*(?:\[[ 	]*UNRELEASED[ 	]*\]|UNRELEASED)[ 	]*$', re.IGNORECASE)
+          todo_re = re.compile(r'^[ \t]*##[ \t]*(?:\[[ \t]*TODO[ \t]*\]|TODO)[ \t]*$', re.IGNORECASE)
+          bullet_re = re.compile(r'^[ \t]*[-*+][ \t]+')
+          blank_re = re.compile(r'^[ \t]*$')
+          unreleased_re = re.compile(r'^[ \t]*##[ \t]*(?:\[[ \t]*UNRELEASED[ \t]*\]|UNRELEASED)[ \t]*$', re.IGNORECASE)
 
           idx = None
           for i, line in enumerate(text):
@@ -295,12 +312,9 @@ jobs:
           PY
 
       - name: Preflight discovery (governed version markers outside .github)
-        shell: bash
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] Preflight failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          source "$CI_HELPERS"
+          moko_init "Preflight discovery"
 
           echo "[INFO] Scanning all directories except .github"
 
@@ -316,13 +330,9 @@ jobs:
           fi
 
       - name: Bump versions and update manifest dates (targeted, excluding .github)
-        id: bump
-        shell: bash
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] Version bump failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          source "$CI_HELPERS"
+          moko_init "Version bump"
 
           python3 - <<'PY'
           import json
@@ -339,15 +349,14 @@ jobs:
           stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
           root = Path('.').resolve()
 
-          header_re = re.compile(r'(?im)(VERSION[ 	]*:[ 	]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
+          header_re = re.compile(r'(?im)(VERSION[ \t]*:[ \t]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
 
-          # Joomla manifest targeting: only update XML files that look like extension manifests.
           manifest_marker_re = re.compile(r'(?is)<extension\b')
-          xml_version_re = re.compile(r'(?is)(<version[ 	]*>)([^<]*?)(</version[ 	]*>)')
+          xml_version_re = re.compile(r'(?is)(<version[ \t]*>)([^<]*?)(</version[ \t]*>)')
           xml_date_res = [
-            re.compile(r'(?is)(<creationDate[ 	]*>)([^<]*?)(</creationDate[ 	]*>)'),
-            re.compile(r'(?is)(<date[ 	]*>)([^<]*?)(</date[ 	]*>)'),
-            re.compile(r'(?is)(<releaseDate[ 	]*>)([^<]*?)(</releaseDate[ 	]*>)'),
+            re.compile(r'(?is)(<creationDate[ \t]*>)([^<]*?)(</creationDate[ \t]*>)'),
+            re.compile(r'(?is)(<date[ \t]*>)([^<]*?)(</date[ \t]*>)'),
+            re.compile(r'(?is)(<releaseDate[ \t]*>)([^<]*?)(</releaseDate[ \t]*>)'),
           ]
 
           skip_ext = {
@@ -379,18 +388,16 @@ jobs:
 
             try:
               text = p.read_text(encoding='utf-8', errors='replace')
-            except Exception as e:
+            except Exception:
               counters['skipped_read_error'] += 1
               continue
 
             original = text
 
-            # Header VERSION: bumps across governed files
             text, n1 = header_re.subn(lambda m: m.group(1) + new_version, text)
             if n1:
               counters['header_replacements'] += n1
 
-            # Targeted manifest updates only (avoid rewriting random XML)
             if p.suffix.lower() == '.xml':
               if manifest_marker_re.search(text):
                 text2, n2 = xml_version_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
@@ -431,21 +438,15 @@ jobs:
           print('[INFO] Updated files: ' + str(len(updated)))
           print('[INFO] Updated manifests: ' + str(len(updated_manifests)))
 
-          # If no manifests or headers were updated, skip gracefully
           if not updated:
             print('[INFO] No eligible files updated. Skipping version bump without failure.')
             raise SystemExit(0)
           PY
 
-          echo "report_path=.github/version-bump-report.json" >> "$GITHUB_OUTPUT"
-
       - name: Post bump audit (version consistency)
-        shell: bash
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] Audit failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          source "$CI_HELPERS"
+          moko_init "Post bump audit"
 
           python3 - <<'PY'
           import os
@@ -459,8 +460,8 @@ jobs:
           root = Path('.').resolve()
           skip_dirs = {'.git', '.github', 'node_modules', 'vendor', '.venv', 'dist', 'build'}
 
-          header_re = re.compile(r'(?im)VERSION[ 	]*:[ 	]*([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
-          xml_version_re = re.compile(r'(?is)<version[ 	]*>([^<]*?)</version[ 	]*>')
+          header_re = re.compile(r'(?im)VERSION[ \t]*:[ \t]*([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
+          xml_version_re = re.compile(r'(?is)<version[ \t]*>([^<]*?)</version[ \t]*>')
 
           mismatches = []
 
@@ -497,12 +498,9 @@ jobs:
           PY
 
       - name: Change scope allowlist (block unexpected edits)
-        shell: bash
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] Change scope gate failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          source "$CI_HELPERS"
+          moko_init "Change scope allowlist"
 
           if [[ -z "$(git status --porcelain=v1)" ]]; then
             echo "[INFO] No changes detected. Scope gate skipped."
@@ -512,9 +510,7 @@ jobs:
           echo "[INFO] Evaluating changed paths"
           git diff --name-only > /tmp/changed_paths.txt
 
-          # Allowlist patterns for this workflow.
-          # Note: .github is excluded from staging later, but we still allow the bump report file.
-          allow_re='^(CHANGELOG\.md|src/.*\.xml|.*templateDetails\.xml|.*manifest.*\.xml|.*\.md|\.github/version-bump-report\.json)$'
+          allow_re='^(CHANGELOG[.]md|src/.*[.]xml|.*templateDetails[.]xml|.*manifest.*[.]xml|.*[.]md|[.]github/version-bump-report[.]json)$'
 
           bad=0
           while IFS= read -r p; do
@@ -532,18 +528,16 @@ jobs:
           echo "[INFO] Scope gate passed"
 
       - name: Publish audit trail to job summary
-        shell: bash
+        if: always()
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] Summary publish failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          source "$CI_HELPERS"
+          moko_init "Publish audit trail"
 
           echo "# Version branch run" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "- Repository: $GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"
           echo "- Base branch: ${BASE_BRANCH}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- New branch: ${BRANCH_NAME}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- New branch: ${BRANCH_NAME:-}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Version: ${NEW_VERSION}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Commit changes: ${COMMIT_CHANGES}" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
@@ -557,24 +551,30 @@ jobs:
             echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
           fi
 
+          echo "## Error summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ -f "$ERROR_LOG" && -s "$ERROR_LOG" ]]; then
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+            tail -n 200 "$ERROR_LOG" >> "$GITHUB_STEP_SUMMARY" || true
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No errors recorded." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Show git status
-        shell: bash
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] git status failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          source "$CI_HELPERS"
+          moko_init "Show git status"
+
           git status --porcelain=v1
 
       - name: Commit changes
         id: commit
         if: ${{ env.COMMIT_CHANGES == 'true' }}
-        shell: bash
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] Commit failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          source "$CI_HELPERS"
+          moko_init "Commit changes"
 
           git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "[ERROR] Not inside a git work tree" >&2; exit 2; }
 
@@ -592,19 +592,16 @@ jobs:
 
       - name: Push commits
         if: ${{ env.COMMIT_CHANGES == 'true' && steps.commit.outputs.committed == 'true' }}
-        shell: bash
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          trap 'echo "[FATAL] Push failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+          source "$CI_HELPERS"
+          moko_init "Push commits"
 
           git push
 
       - name: Output branch name
-        shell: bash
+        if: always()
         run: |
-          set -Eeuo pipefail
-          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
-          set -x
-          echo "[INFO] Created branch: ${BRANCH_NAME}"
+          source "$CI_HELPERS"
+          moko_init "Output branch name"
+
+          echo "[INFO] Created branch: ${BRANCH_NAME:-}"
