@@ -63,7 +63,7 @@ jobs:
     env:
       NEW_VERSION: ${{ github.event.inputs.new_version }}
       BASE_BRANCH: ${{ github.event.inputs.base_branch }}
-      BRANCH_PREFIX: dev/
+      BRANCH_PREFIX: version/dev/
       COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
 
     steps:
@@ -159,14 +159,14 @@ jobs:
           set -Eeuo pipefail
           trap 'echo "[FATAL] Collision defense failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
-          # Git cannot create refs like dev/03.02.00 if a ref named dev already exists.
+          # Git cannot create refs like version/dev/03.02.00 if a ref named version already exists.
           # This is a known enterprise failure mode. We fail fast with a deterministic diagnostic.
           PREFIX_TOP="${BRANCH_PREFIX%%/*}"
           if git ls-remote --exit-code --heads origin "${PREFIX_TOP}" >/dev/null 2>&1; then
             echo "[ERROR] Branch namespace collision detected" >&2
             echo "[ERROR] A branch named '${PREFIX_TOP}' exists on origin, so '${BRANCH_PREFIX}<version>' cannot be created." >&2
             echo "[ERROR] Remediation options:" >&2
-            echo "  - Change BRANCH_PREFIX to a non colliding namespace (example: version/dev/)" >&2
+            echo "  - Change BRANCH_PREFIX to a non colliding namespace (example: release/dev/)" >&2
             echo "  - Rename the existing '${PREFIX_TOP}' branch (organizational policy permitting)" >&2
             exit 2
           fi
@@ -218,10 +218,10 @@ jobs:
 
           text = p.read_text(encoding='utf-8', errors='replace').splitlines(True)
 
-          todo_re = re.compile(r'^[   ]*##[   ]*(?:\[[  ]*TODO[   ]*\]|TODO)[   ]*$', re.IGNORECASE)
-          bullet_re = re.compile(r'^[   ]*[-*+][  ]+')
-          blank_re = re.compile(r'^[  ]*$')
-          unreleased_re = re.compile(r'^[   ]*##[   ]*(?:\[[  ]*UNRELEASED[   ]*\]|UNRELEASED)[   ]*$', re.IGNORECASE)
+          todo_re = re.compile(r'^[ 	]*##[ 	]*(?:\[[ 	]*TODO[ 	]*\]|TODO)[ 	]*$', re.IGNORECASE)
+          bullet_re = re.compile(r'^[ 	]*[-*+][ 	]+')
+          blank_re = re.compile(r'^[ 	]*$')
+          unreleased_re = re.compile(r'^[ 	]*##[ 	]*(?:\[[ 	]*UNRELEASED[ 	]*\]|UNRELEASED)[ 	]*$', re.IGNORECASE)
 
           idx = None
           for i, line in enumerate(text):
@@ -332,15 +332,15 @@ jobs:
           stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
           root = Path('.').resolve()
 
-          header_re = re.compile(r'(?im)(VERSION[   ]*:[  ]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
+          header_re = re.compile(r'(?im)(VERSION[ 	]*:[ 	]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
 
           # Joomla manifest targeting: only update XML files that look like extension manifests.
-          manifest_marker_re = re.compile(r'(?is)<extension')
-          xml_version_re = re.compile(r'(?is)(<version[   ]*>)([^<]*?)(</version[   ]*>)')
+          manifest_marker_re = re.compile(r'(?is)<extension\b')
+          xml_version_re = re.compile(r'(?is)(<version[ 	]*>)([^<]*?)(</version[ 	]*>)')
           xml_date_res = [
-            re.compile(r'(?is)(<creationDate[   ]*>)([^<]*?)(</creationDate[  ]*>)'),
-            re.compile(r'(?is)(<date[   ]*>)([^<]*?)(</date[  ]*>)'),
-            re.compile(r'(?is)(<releaseDate[  ]*>)([^<]*?)(</releaseDate[   ]*>)'),
+            re.compile(r'(?is)(<creationDate[ 	]*>)([^<]*?)(</creationDate[ 	]*>)'),
+            re.compile(r'(?is)(<date[ 	]*>)([^<]*?)(</date[ 	]*>)'),
+            re.compile(r'(?is)(<releaseDate[ 	]*>)([^<]*?)(</releaseDate[ 	]*>)'),
           ]
 
           skip_ext = {
@@ -448,8 +448,8 @@ jobs:
           root = Path('.').resolve()
           skip_dirs = {'.git', '.github', 'node_modules', 'vendor', '.venv', 'dist', 'build'}
 
-          header_re = re.compile(r'(?im)VERSION[  ]*:[  ]*([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
-          xml_version_re = re.compile(r'(?is)<version[  ]*>([^<]*?)</version[   ]*>')
+          header_re = re.compile(r'(?im)VERSION[ 	]*:[ 	]*([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
+          xml_version_re = re.compile(r'(?is)<version[ 	]*>([^<]*?)</version[ 	]*>')
 
           mismatches = []
 
