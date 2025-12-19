@@ -13,7 +13,7 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia
+ INGROUP: Moko-Cassiopeia.Documentation
  PATH: ./CHANGELOG.md
  VERSION: 03.05.00
  BRIEF: Changelog file documenting version history of Moko-Cassiopeia
@@ -23,9 +23,6 @@
 
 ## [UNRELEASED]
 - 
-
-## [03.01.00] 2025-12-16
-- Fixed language structure
 
 ## [03.01.00] 2025-12-16
 - TODO split off own file
