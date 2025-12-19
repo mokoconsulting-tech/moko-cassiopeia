@@ -1,87 +1,110 @@
-<!--	Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+<!--
+ Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
 
-	This file is part of a Moko Consulting project.
+ This file is part of a Moko Consulting project.
 
-	SPDX-LICENSE-IDENTIFIER: GPL-3.0-or-later
+ SPDX-License-Identifier: GPL-3.0-or-later
 
-	This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3 of the License, or
+ (at your option) any later version.
 
-	This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the IMPLIED WARRANTY of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
 
-	You should have received a copy of the GNU General Public License (./LICENSE.md).
+ You should have received a copy of the GNU General Public License (./LICENSE.md).
 
-	# FILE INFORMATION
-	DEFGROUP: 
-	INGROUP: Project.Documentation
-	REPO: 
-	VERSION: 00.00.01
-	PATH: ./CODE_OF_CONDUCT.md
-	BRIEF: Reference + packaging repo for Moko Consulting Developer GPT Other Default
+ # FILE INFORMATION
+ DEFGROUP: Joomla.Template
+ INGROUP: Moko-Cassiopeia.Governance
+ REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
+ FILE: CODE_OF_CONDUCT.md
+ VERSION: 03.05.00
+ BRIEF: Contributor code of conduct for the Moko-Cassiopeia project.
+ PATH: /CODE_OF_CONDUCT.md
+ NOTE: This document defines behavioral expectations and enforcement processes.
 -->
-# Code of Conduct
 
-## 1. Purpose
+## Code of Conduct
 
-The purpose of this Code of Conduct is to ensure a safe, inclusive, and respectful environment for all contributors and participants in Moko Consulting projects. This applies to all interactions, whether in repositories, issue trackers, documentation, meetings, or community spaces.
+This Code of Conduct establishes expectations for behavior within the Moko-Cassiopeia project community. The objective is to maintain a professional, inclusive, and respectful environment aligned with open source governance best practices.
 
-## 2. Our Standards
+## Scope
 
-Participants are expected to uphold behaviors that strengthen our community, including:
+This Code of Conduct applies to all project spaces, including:
 
- Demonstrating empathy and respect toward others.
- Being inclusive of diverse viewpoints and backgrounds.
- Gracefully accepting constructive feedback.
- Prioritizing collaboration over conflict.
- Showing professionalism in all interactions.
+* GitHub repositories, issues, pull requests, discussions, and security advisories.
+* Project documentation, workflows, and release processes.
+* Any communication channels officially associated with the project.
 
-### Unacceptable behavior includes:
+## Our Standards
 
- Harassment, discrimination, or derogatory comments.
- Threatening or violent language or actions.
- Disruptive, aggressive, or intentionally harmful behavior.
- Publishing others’ private information without permission.
- Any behavior that violates applicable laws.
+Participants are expected to:
 
-## 3. Responsibilities of Maintainers
+* Communicate professionally and respectfully.
+* Provide constructive feedback focused on technical merit and project objectives.
+* Respect differing viewpoints, experience levels, and backgrounds.
+* Follow documented contribution, security, and governance policies.
 
-Maintainers are responsible for:
+Unacceptable behavior includes:
 
- Clarifying acceptable behavior.
- Taking appropriate corrective action when unacceptable behavior occurs.
- Removing, editing, or rejecting contributions that violate this Code.
- Temporarily or permanently banning contributors who engage in repeated or severe violations.
+* Harassment, discrimination, or exclusionary conduct.
+* Personal attacks, insults, or inflammatory comments.
+* Publishing private information without consent.
+* Disruptive behavior that materially interferes with project operations.
 
-## 4. Scope
+## Enforcement Responsibilities
 
-This Code applies to:
+Project maintainers are responsible for:
 
- All Moko Consulting repositories.
- All documentation and collaboration platforms.
- Public and private communication related to project activities.
- Any representation of Moko Consulting in online or offline spaces.
+* Clarifying standards when questions arise.
+* Taking appropriate and proportionate corrective action when violations occur.
+* Maintaining confidentiality to the extent practical during investigations.
 
-## 5. Enforcement
+## Reporting
 
-Instances of misconduct may be reported to:
-**[hello@mokoconsulting.tech](mailto:hello@mokoconsulting.tech)**
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported through:
 
-All reports will be reviewed and investigated promptly and fairly. Maintainers are obligated to maintain confidentiality where possible.
+* Email: `hello@mokoconsulting.tech` with subject `CODE OF CONDUCT: Moko-Cassiopeia`.
 
-Consequences may include:
+Reports should include relevant context, links, screenshots, or other supporting information.
 
- A warning.
- Required training or mediation.
- Temporary or permanent bans.
- Escalation to legal authorities when required.
+## Enforcement Guidelines
 
-## 6. Acknowledgements
+Corrective actions may include, but are not limited to:
 
-This Code of Conduct is inspired by widely adopted community guidelines, including the Contributor Covenant and major open-source collaboration standards.
+* Private warning or request for corrective action.
+* Temporary or permanent restriction from project participation.
+* Removal of content that violates this Code of Conduct.
 
-## 7. Related Documents
+Decisions are made based on impact, severity, and pattern of behavior.
 
- [Governance Guide](./docs-governance.md)
- [Contributor Guide](./docs-contributing.md)
- [Documentation Index](./docs-index.md)
+## No Retaliation
 
-This Code of Conduct is a living document and may be updated following the established Change Management process.
+Retaliation against individuals who report concerns in good faith is not tolerated. Any retaliatory behavior will be treated as a separate violation.
+
+## Jurisdiction
+
+This project is managed from Tennessee, USA. This statement is informational and does not constitute legal advice.
+
+---
+
+## Metadata
+
+* **Document:** CODE_OF_CONDUCT.md
+* **Repository:** [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
+* **Path:** /CODE_OF_CONDUCT.md
+* **Owner:** Moko Consulting
+* **Version:** 03.05.00
+* **Status:** Active
+* **Effective Date:** 2025-12-18
+* **Last Reviewed:** 2025-12-18
+
+## Revision History
+
+| Date       | Change Summary                                                                | Author          |
+| ---------- | ----------------------------------------------------------------------------- | --------------- |
+| 2025-12-18 | Initial publication of contributor conduct standards and enforcement process. | Moko Consulting |

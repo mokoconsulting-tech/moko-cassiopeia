@@ -15,236 +15,113 @@
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  GNU General Public License for more details.
 
- You should have received a copy of the GNU General Public License
- along with this program. If not, see <https://www.gnu.org/licenses/>.
+ You should have received a copy of the GNU General Public License (./LICENSE.md).
 
  # FILE INFORMATION
- DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia.Documentation
+ DEFGROUP: Joomla.Template
+ INGROUP: Moko-Cassiopeia.Governance
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
- FILE: ./GOVERNANCE.md
+ FILE: GOVERNANCE.md
  VERSION: 03.05.00
- BRIEF: Governance for Moko-Cassiopeia template
+ BRIEF: Project governance model, roles, and decision processes for Moko-Cassiopeia.
+ PATH: /GOVERNANCE.md
+ NOTE: This document defines authority, decision making, and escalation paths.
 -->
 
+## Governance Overview
 
-# Governance Document Set
+This document defines the governance framework for the Moko-Cassiopeia project. The objective is to ensure clear ownership, predictable decision making, and accountable stewardship across development, releases, and community interaction.
 
-This document contains the canonical governance markdown files required for enterprise-grade open source project management within the Moko ecosystem. Each section represents an individual file.
+## Project Ownership
 
----
+Moko-Cassiopeia is owned and maintained by **Moko Consulting**. Final authority for project direction, releases, and policy enforcement resides with the project owner.
 
-## FILE: GOVERNANCE.md
+## Roles and Responsibilities
 
-# Governance
+### Maintainers
 
-This document defines the governance framework for this repository. It establishes authority, decision-making processes, escalation paths, and accountability mechanisms.
+Maintainers are responsible for:
 
-### Governance Model
+* Setting technical direction and release priorities.
+* Reviewing and approving pull requests.
+* Managing releases and distribution artifacts.
+* Enforcing repository policies, including security and conduct requirements.
 
-This repository operates under a maintainer-led governance model.
+### Contributors
 
-Final authority resides with the designated Maintainers, who are responsible for technical direction, compliance, and release approval.
+Contributors may:
 
-### Roles and Responsibilities
+* Submit pull requests and issues.
+* Propose enhancements and report defects.
+* Participate in technical discussions.
 
-**Maintainers**
-- Approve releases and version tags
-- Enforce coding, documentation, and licensing standards
-- Resolve disputes and merge conflicts
-- Ensure audit and compliance readiness
+Contributors do not have merge authority unless explicitly granted.
 
-**Contributors**
-- Submit changes via pull requests
-- Adhere to all defined standards and workflows
-- Respond to review feedback in a timely manner
+## Decision Making
 
-### Decision Making
+Decisions are made using a maintainers led model:
 
-Decisions are made through documented pull requests and issues.
-All material decisions must be traceable via Git history.
+* Routine changes are approved through pull request review.
+* Material changes affecting architecture, branding, licensing, or release processes require maintainer consensus.
+* The project owner retains final decision authority if consensus cannot be reached.
 
-### Amendments
+## Change Management
 
-Changes to governance require Maintainer approval and must be recorded in the CHANGELOG.
+Significant changes should:
 
----
+* Be documented through issues or pull requests with clear rationale.
+* Consider backward compatibility and upgrade impact.
+* Include documentation updates when behavior or usage changes.
 
-## FILE: CODE_OF_CONDUCT.md
+## Release Authority
 
-# Code of Conduct
+Only maintainers may:
 
-This project adheres to a professional, inclusive, and respectful code of conduct.
+* Cut releases and publish artifacts.
+* Update version numbers and manifests.
+* Publish update metadata or advisories.
 
-### Expected Behavior
+Release processes follow documented workflows and automation standards.
 
-- Professional and respectful communication
-- Constructive feedback
-- Focus on technical merit and documented standards
+## Security Governance
 
-### Unacceptable Behavior
+Security issues are governed by the SECURITY.md policy. Maintainers are responsible for confidential handling, coordinated disclosure, and publication of advisories when appropriate.
 
-- Harassment or discrimination
-- Hostile or abusive language
-- Disruptive behavior in issues or pull requests
+## Conduct Enforcement
 
-### Enforcement
+Behavior within the project is governed by CODE_OF_CONDUCT.md. Maintainers are responsible for enforcement actions and escalation handling.
 
-Maintainers are responsible for enforcement.
-Violations may result in warnings, suspension, or removal.
+## Conflict Resolution
 
----
+Conflicts are handled through:
 
-## FILE: CONTRIBUTING.md
+* Direct discussion between involved parties when appropriate.
+* Maintainer mediation when necessary.
+* Final determination by the project owner if required.
 
-# Contributing
+## External Dependencies
 
-This document defines the contribution workflow and compliance requirements.
+The project depends on Joomla core and other third party components. Governance of upstream projects remains outside the scope of this repository, but upstream changes may influence project decisions.
 
-### Contribution Requirements
+## Jurisdiction
 
-- All changes must be submitted via pull request
-- All CI checks must pass
-- SPDX headers and FILE INFORMATION blocks are mandatory where applicable
-- Documentation changes must include Metadata and Revision History sections
-
-### Commit Standards
-
-Commits must be atomic, descriptive, and traceable to an issue or change request.
-
-### Review Process
-
-- Maintainer review is required
-- CI validation is mandatory
-- Approval is required before merge
-
----
-
-## FILE: SECURITY.md
-
-# Security Policy
-
-This document defines the security posture and reporting process.
-
-### Supported Versions
-
-Only the latest released version and active development branches are supported.
-
-### Reporting Vulnerabilities
-
-Security issues must be reported privately to the Maintainers.
-Public disclosure prior to resolution is prohibited.
-
-### Response Process
-
-- Acknowledge receipt within a reasonable timeframe
-- Assess severity and impact
-- Issue patches or mitigations as required
-
----
-
-## FILE: COMPLIANCE.md
-
-# Compliance
-
-This repository is designed to support audit and compliance requirements.
-
-### Licensing
-
-All code must comply with GPL-3.0-or-later licensing requirements.
-SPDX identifiers are mandatory.
-
-### Documentation Compliance
-
-- Mandatory Metadata sections
-- Mandatory Revision History sections
-- Version traceability across manifests, changelogs, and releases
-
-### CI Enforcement
-
-Automated workflows enforce:
-- Path consistency
-- Formatting rules
-- Manifest validation
-- Changelog governance
-
----
-
-## FILE: RISK_REGISTER.md
-
-# Risk Register
-
-This document tracks identified risks and mitigation strategies.
-
-### Risk Categories
-
-- Technical debt
-- Security vulnerabilities
-- Compliance drift
-- Dependency instability
-
-### Management
-
-Risks are reviewed during release cycles.
-Mitigations must be documented and traceable.
-
----
-
-## FILE: CHANGE_MANAGEMENT.md
-
-# Change Management
-
-This document defines how changes are introduced, reviewed, and released.
-
-### Change Types
-
-- Patch
-- Minor
-- Major
-
-### Process
-
-- Documented pull request
-- CI validation
-- Version bump and changelog update
-- Maintainer approval
-
-### Traceability
-
-All changes must be traceable through Git history and release artifacts.
-
----
-
-## FILE: GOVERNANCE_INDEX.md
-
-# Governance Index
-
-This file serves as the authoritative index of governance artifacts.
-
-### Governance Documents
-
-- GOVERNANCE.md
-- CODE_OF_CONDUCT.md
-- CONTRIBUTING.md
-- SECURITY.md
-- COMPLIANCE.md
-- RISK_REGISTER.md
-- CHANGE_MANAGEMENT.md
+This project is managed from Tennessee, USA. This statement is informational and does not constitute legal advice.
 
 ---
 
 ## Metadata
 
-- DEFGROUP: MokoStandards
-- INGROUP: Governance
-- REPO: https://github.com/mokoconsulting-tech
-- JURISDICTION: Tennessee, United States
-- LICENSE: GPL-3.0-or-later
-
----
+* **Document:** GOVERNANCE.md
+* **Repository:** [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
+* **Path:** /GOVERNANCE.md
+* **Owner:** Moko Consulting
+* **Version:** 03.05.00
+* **Status:** Active
+* **Effective Date:** 2025-12-18
+* **Last Reviewed:** 2025-12-18
 
 ## Revision History
 
-| Version | Date       | Description                     |
-|--------:|------------|---------------------------------|
-| 01.00.00 | 2025-12-18 | Initial governance document set |
+| Date       | Change Summary                                                          | Author          |
+| ---------- | ----------------------------------------------------------------------- | --------------- |
+| 2025-12-18 | Initial publication of governance model, roles, and decision processes. | Moko Consulting |
