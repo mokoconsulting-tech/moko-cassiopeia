@@ -250,8 +250,28 @@ jobs:
               break
 
           if idx is None:
-            print('[INFO] No TODO section found. No action taken.')
-            raise SystemExit(0)
+            # Enterprise safe fallback: insert after first H1 '# Changelog' when TODO section is absent.
+            h1_re = re.compile(r'^#\s+Changelog\s*$', re.IGNORECASE)
+            h1_idx = None
+            for i, line in enumerate(text):
+              if h1_re.match(line.strip()):
+                h1_idx = i
+                break
+
+            if h1_idx is None:
+              print('[ERROR] CHANGELOG.md missing required H1: # Changelog')
+              raise SystemExit(2)
+
+            # Insert after H1 and any following blank lines
+            j = h1_idx + 1
+            while j < len(text) and blank_re.match(text[j].rstrip(nl).rstrip(cr)):
+              j += 1
+
+            # Mark idx as H1 position so later logic can compute insert point.
+            idx = h1_idx
+            # Skip TODO bullet enforcement when TODO does not exist.
+            saw_bullet = True
+
 
           j = idx + 1
           saw_bullet = False
@@ -293,10 +313,29 @@ jobs:
               text.insert(at_index + 2, '- Version bump' + nl)
 
           if unreleased_idx is not None:
+            # Move all content under UNRELEASED into this release
             text[unreleased_idx] = version_heading
-            ensure_version_line(unreleased_idx)
+
+            k = unreleased_idx + 1
+            moved = []
+            while k < len(text):
+              line = text[k]
+              if line.lstrip().startswith('## '):
+                break
+              moved.append(line)
+              k += 1
+
+            # Ensure VERSION line exists at top of moved block
+            if not any(l.lstrip().startswith('- VERSION:') for l in moved):
+              moved.insert(0, '- VERSION: ' + new_version + nl)
+
+            # Replace content with moved lines
+            text[unreleased_idx + 1:k] = moved
+
+            # Insert a fresh UNRELEASED section immediately after TODO block
             insert_unreleased = nl + '## [UNRELEASED]' + nl + '- Placeholder for next release' + nl + nl
             text.insert(j, insert_unreleased)
+
             p.write_text(''.join(text), encoding='utf-8')
             raise SystemExit(0)
 
@@ -493,7 +532,7 @@ jobs:
           mismatches = []
 
           for t in tags:
-            rx = re.compile(r'(?is)<' + re.escape(t) + r'\\s*>([^<]*?)</' + re.escape(t) + r'\\s*>')
+            rx = re.compile(r'(?is)<' + re.escape(t) + r'\s*>([^<]*?)</' + re.escape(t) + r'\s*>')
             m = rx.search(text)
             if not m:
               continue
