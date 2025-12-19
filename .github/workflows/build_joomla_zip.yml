@@ -191,6 +191,43 @@ jobs:
           echo "src directory listing:" >&2
           ls -la src >&2
 
+      - name: Validate Joomla manifest prior to build
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          MANIFEST_FILE=""
+
+          # Detect common Joomla manifest locations
+          if [ -f "src/templateDetails.xml" ]; then
+            MANIFEST_FILE="src/templateDetails.xml"
+          else
+            MANIFEST_FILE=$(find src -maxdepth 2 -name "*.xml" -print | head -n 1 || true)
+          fi
+
+          if [ -z "${MANIFEST_FILE}" ]; then
+            echo "ERROR: No Joomla manifest XML file found in src." >&2
+            exit 1
+          fi
+
+          echo "Validating manifest: ${MANIFEST_FILE}" >&2
+
+          # Basic XML well-formedness check
+          if ! xmllint --noout "${MANIFEST_FILE}"; then
+            echo "ERROR: Manifest XML is not well-formed." >&2
+            exit 1
+          fi
+
+          # Required Joomla fields
+          for TAG in name version type; do
+            if ! grep -q "<${TAG}>" "${MANIFEST_FILE}"; then
+              echo "ERROR: Required <${TAG}> tag missing in manifest." >&2
+              exit 1
+            fi
+          done
+
+          echo "Manifest validation passed." >&2
+
       - name: Build ZIP from src contents
         shell: bash
         run: |
@@ -244,11 +281,52 @@ jobs:
           path: ${{ steps.params.outputs.zip_name }}
           if-no-files-found: error
 
-      - name: Attach ZIP to GitHub Release
+      - name: Generate Release Notes from CHANGELOG
+        if: steps.params.outputs.attach == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ steps.params.outputs.version }}"
+          NOTES_FILE="release-notes-${VERSION}.md"
+
+          if [ -f "CHANGELOG.md" ]; then
+            # Extract ONLY the section for the resolved version from CHANGELOG.md
+            # Required format:
+            # ## [NN.NN.NN]
+            # Content continues until the next ## header
+            awk -v ver="${VERSION}" '
+              BEGIN { in_section=0 }
+              /^##[[:space:]]*\[/ {
+                if ($0 ~ "^##[[:space:]]*\[" ver "\]") {
+                  in_section=1
+                  print
+                  next
+                }
+                if (in_section==1) { exit }
+              }
+              { if (in_section==1) print }
+            ' CHANGELOG.md > "${NOTES_FILE}" || true
+
+            if [ ! -s "${NOTES_FILE}" ]; then
+              {
+                echo "## [${VERSION}]"
+                echo
+                echo "No matching version section found in CHANGELOG.md."
+              } > "${NOTES_FILE}"
+            fi
+
+          echo "Generated release notes: ${NOTES_FILE}" >&2
+          wc -l "${NOTES_FILE}" >&2 || true
+
+      - name: Attach ZIP and Release Notes to GitHub Release
         if: steps.params.outputs.attach == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.params.outputs.tag_name }}
           prerelease: ${{ steps.params.outputs.prerelease == 'true' }}
-          files: ${{ steps.params.outputs.zip_name }}
+          body_path: release-notes-${{ steps.params.outputs.version }}.md
+          files: |
+            ${{ steps.params.outputs.zip_name }}
+            release-notes-${{ steps.params.outputs.version }}.md
           fail_on_unmatched_files: true
