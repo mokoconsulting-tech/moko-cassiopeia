@@ -29,14 +29,14 @@
 -->
 <extension type="template" client="site" method="upgrade">
 	<updateservers>
-		<server type="extension" name="Moko Consulting">https://raw.githubusercontent.com/mokoconsulting-tech/moko-cassiopeia/refs/heads/main/updates.xml</server>
+		<server type="extension" name="Moko-Cassiopeia">https://raw.githubusercontent.com/mokoconsulting-tech/moko-cassiopeia/refs/heads/main/updates.xml</server>
 	</updateservers>
 	<name>moko-cassiopeia</name>
 	<version>03.05.00</version>
 	<creationDate>2025-12-18</creationDate>
 	<author>Jonathan Miller || Moko Consulting</author>
 	<authorEmail>hello@mokoconsulting.tech</authorEmail>
-	<copyright>(C)GNU General Public License Version 2 - 2025 Moko Consulting</copyright>
+	<copyright>(C)GNU General Public License Version 3 - 2025 Moko Consulting</copyright>
 	<description>TPL_MOKO-CASSIOPEIA_XML_DESCRIPTION</description>
 	<inheritable>1</inheritable>
 	<files>
