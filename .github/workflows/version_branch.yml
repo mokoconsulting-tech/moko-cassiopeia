@@ -1,4 +1,31 @@
+#
+# Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+#
+# This file is part of a Moko Consulting project.
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# FILE INFORMATION
+# DEFGROUP: GitHub.Workflow
+# INGROUP: Versioning.Branching
+# REPO: https://github.com/mokoconsulting-tech/MokoStandards
+# PATH: /.github/workflows/version_branch.yml
+# VERSION: 01.00.00
+# BRIEF: Create a version branch and align versions across governed files
+# NOTE: Enterprise gates: policy checks, collision defense, manifest targeting, audit summary
+
 name: Create version branch and bump versions
+
 on:
   workflow_dispatch:
     inputs:
@@ -9,10 +36,10 @@ on:
         description: "Base branch to branch from"
         required: false
         default: "dev"
-      branch_prefix:
-        description: "Prefix for the new version branch"
-        required: false
-        default: "dev/"
+        type: choice
+        options:
+          - "dev"
+          - "main"
       commit_changes:
         description: "Commit and push changes"
         required: false
@@ -36,7 +63,7 @@ jobs:
     env:
       NEW_VERSION: ${{ github.event.inputs.new_version }}
       BASE_BRANCH: ${{ github.event.inputs.base_branch }}
-      BRANCH_PREFIX: ${{ github.event.inputs.branch_prefix }}
+      BRANCH_PREFIX: dev/
       COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
 
     steps:
@@ -59,7 +86,12 @@ jobs:
           echo "  COMMIT_CHANGES=${COMMIT_CHANGES}"
 
           [[ -n "${NEW_VERSION}" ]] || { echo "[ERROR] new_version missing" >&2; exit 2; }
-          [[ "${NEW_VERSION}" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{2}$ ]] || { echo "[ERROR] Invalid version format: ${NEW_VERSION}" >&2; exit 2; }
+          [[ "${NEW_VERSION}" =~ ^[0-9]{2}[.][0-9]{2}[.][0-9]{2}$ ]] || { echo "[ERROR] Invalid version format: ${NEW_VERSION}" >&2; exit 2; }
+
+          if [[ "${BASE_BRANCH}" != "dev" && "${BASE_BRANCH}" != "main" ]]; then
+            echo "[ERROR] base_branch must be dev or main" >&2
+            exit 2
+          fi
 
           git ls-remote --exit-code --heads origin "${BASE_BRANCH}" >/dev/null 2>&1 || {
             echo "[ERROR] Base branch does not exist on origin: ${BASE_BRANCH}" >&2
@@ -70,6 +102,47 @@ jobs:
 
           echo "[INFO] Input validation passed"
 
+      - name: Enterprise policy gate (required files)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Policy gate failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+
+          required=(
+            "LICENSE.md"
+            "CONTRIBUTING.md"
+            "CODE_OF_CONDUCT.md"
+            "SECURITY.md"
+            "GOVERNANCE.md"
+            "CHANGELOG.md"
+          )
+
+          missing=0
+          for f in "${required[@]}"; do
+            if [[ ! -f "${f}" ]]; then
+              echo "[ERROR] Missing required file: ${f}" >&2
+              missing=1
+              continue
+            fi
+            if [[ ! -s "${f}" ]]; then
+              echo "[ERROR] Required file is empty: ${f}" >&2
+              missing=1
+              continue
+            fi
+          done
+
+          if [[ "${missing}" -ne 0 ]]; then
+            echo "[FATAL] Policy gate failed. Add missing governance artifacts before versioning." >&2
+            exit 2
+          fi
+
+          if [[ -f ".github/CODEOWNERS" ]] && [[ ! -s ".github/CODEOWNERS" ]]; then
+            echo "[ERROR] .github/CODEOWNERS exists but is empty" >&2
+            exit 2
+          fi
+
+          echo "[INFO] Policy gate passed"
+
       - name: Configure git identity
         shell: bash
         run: |
@@ -79,6 +152,26 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           echo "[INFO] Git identity configured"
+
+      - name: Branch namespace collision defense
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Collision defense failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+
+          # Git cannot create refs like dev/03.02.00 if a ref named dev already exists.
+          # This is a known enterprise failure mode. We fail fast with a deterministic diagnostic.
+          PREFIX_TOP="${BRANCH_PREFIX%%/*}"
+          if git ls-remote --exit-code --heads origin "${PREFIX_TOP}" >/dev/null 2>&1; then
+            echo "[ERROR] Branch namespace collision detected" >&2
+            echo "[ERROR] A branch named '${PREFIX_TOP}' exists on origin, so '${BRANCH_PREFIX}<version>' cannot be created." >&2
+            echo "[ERROR] Remediation options:" >&2
+            echo "  - Change BRANCH_PREFIX to a non colliding namespace (example: version/dev/)" >&2
+            echo "  - Rename the existing '${PREFIX_TOP}' branch (organizational policy permitting)" >&2
+            exit 2
+          fi
+
+          echo "[INFO] No namespace collision detected for BRANCH_PREFIX=${BRANCH_PREFIX}"
 
       - name: Create and push version branch
         shell: bash
@@ -102,25 +195,11 @@ jobs:
           echo "[INFO] Pushing new branch to origin"
           git push --set-upstream origin "${BRANCH_NAME}"
 
-      - name: Ensure CHANGELOG.md has an H2 immediately after TODO block (repo creation)
+      - name: Ensure CHANGELOG.md has a release entry and a VERSION line
         shell: bash
         run: |
           set -Eeuo pipefail
-          trap 'echo "[FATAL] CHANGELOG initialization failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
-
-          if [[ ! -f "CHANGELOG.md" ]]; then
-            echo "[INFO] CHANGELOG.md missing. Pulling baseline from MokoDefaults/generic-git (main)."
-
-            BASE_URL="https://raw.githubusercontent.com/mokoconsulting-tech/MokoDefaults/main/generic-git/CHANGELOG.md"
-
-            if ! curl -fsSL "${BASE_URL}" -o CHANGELOG.md; then
-              echo "[FATAL] Unable to fetch baseline CHANGELOG.md from: ${BASE_URL}" >&2
-              echo "[FATAL] Validate repository visibility and path: MokoDefaults/main/generic-git/CHANGELOG.md" >&2
-              exit 2
-            fi
-
-            echo "[INFO] Baseline CHANGELOG.md retrieved"
-          fi
+          trap 'echo "[FATAL] CHANGELOG enforcement failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           python3 - <<'PY'
           import os
@@ -128,19 +207,25 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
 
-          new_version = os.environ.get('NEW_VERSION', '').strip() or '00.00.00'
+          nl = chr(10)
+          cr = chr(13)
+
+          new_version = (os.environ.get('NEW_VERSION') or '').strip() or '00.00.00'
 
           p = Path('CHANGELOG.md')
+          if not p.exists():
+            raise SystemExit('[FATAL] CHANGELOG.md missing')
+
           text = p.read_text(encoding='utf-8', errors='replace').splitlines(True)
 
-          todo_re = re.compile(r'^\s*##\s*(?:\[\s*TODO\s*\]|TODO)\s*$', re.IGNORECASE)
-          h2_re = re.compile(r'^##\s+')
-          bullet_re = re.compile(r'^\s*[-*+]\s+')
-          blank_re = re.compile(r'^\s*$')
+          todo_re = re.compile(r'^[   ]*##[   ]*(?:\[[  ]*TODO[   ]*\]|TODO)[   ]*$', re.IGNORECASE)
+          bullet_re = re.compile(r'^[   ]*[-*+][  ]+')
+          blank_re = re.compile(r'^[  ]*$')
+          unreleased_re = re.compile(r'^[   ]*##[   ]*(?:\[[  ]*UNRELEASED[   ]*\]|UNRELEASED)[   ]*$', re.IGNORECASE)
 
           idx = None
           for i, line in enumerate(text):
-            clean = line.lstrip('\ufeff').rstrip('\n').rstrip('\r')
+            clean = line.lstrip(chr(65279)).rstrip(nl).rstrip(cr)
             if todo_re.match(clean):
               idx = i
               break
@@ -152,7 +237,7 @@ jobs:
           j = idx + 1
           saw_bullet = False
           while j < len(text):
-            line = text[j].rstrip('\n').rstrip('\r')
+            line = text[j].rstrip(nl).rstrip(cr)
             if bullet_re.match(line):
               saw_bullet = True
               j += 1
@@ -163,174 +248,299 @@ jobs:
             break
 
           if not saw_bullet:
-            print('[INFO] TODO section missing bullet list, inserting placeholder bullet')
-            text.insert(idx + 1, '- Placeholder TODO item\n')
+            text.insert(idx + 1, '- Placeholder TODO item' + nl)
             j = idx + 2
 
-          # UNRELEASED is for code going into the next release, distinct from TODO.
-          # Release behavior:
-          # - If an UNRELEASED H2 exists, convert it into this release version heading (preserving its bullets).
-          # - Then ensure a fresh UNRELEASED section exists immediately after TODO.
-
-          unreleased_re = re.compile(r'^\s*##\s*(?:\[\s*UNRELEASED\s*\]|UNRELEASED)\s*$', re.IGNORECASE)
-
           stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-          version_heading = "## [" + new_version + "] " + stamp + "\n"
+          version_heading = '## [' + new_version + '] ' + stamp + nl
 
-          # 1) If UNRELEASED exists, replace it with the version heading
+          target_prefix = '## [' + new_version + '] '
+          if any(l.strip().startswith(target_prefix) for l in text):
+            print('[INFO] Version H2 already present. No action taken.')
+            raise SystemExit(0)
+
           unreleased_idx = None
           for i, line in enumerate(text):
             if unreleased_re.match(line.strip()):
               unreleased_idx = i
               break
 
+          def ensure_version_line(at_index: int) -> None:
+            k = at_index + 1
+            while k < len(text) and blank_re.match(text[k].rstrip(nl).rstrip(cr)):
+              k += 1
+            if k >= len(text) or not text[k].lstrip().startswith('- VERSION:'):
+              text.insert(at_index + 1, '- VERSION: ' + new_version + nl)
+              text.insert(at_index + 2, '- Version bump' + nl)
+
           if unreleased_idx is not None:
-            # Avoid duplicate: if this version already exists anywhere, do nothing
-            target_prefix = "## [" + new_version + "] "
-            if any(l.strip().startswith(target_prefix) for l in text):
-              print('[INFO] Version H2 already present. No action taken.')
-              raise SystemExit(0)
-
             text[unreleased_idx] = version_heading
-            print('[INFO] Replaced UNRELEASED H2 with version heading')
-
-            # After converting UNRELEASED to a release, insert a new UNRELEASED section right after TODO block
-            insert_unreleased = chr(10) + "## [UNRELEASED]" + chr(10) + "- Placeholder for next release" + chr(10) + chr(10)
+            ensure_version_line(unreleased_idx)
+            insert_unreleased = nl + '## [UNRELEASED]' + nl + '- Placeholder for next release' + nl + nl
             text.insert(j, insert_unreleased)
             p.write_text(''.join(text), encoding='utf-8')
             raise SystemExit(0)
 
-          # 2) No UNRELEASED section present: insert a new version section after TODO block
-          # Avoid duplicate
-          target_prefix = "## [" + new_version + "] "
-          if any(line.strip().startswith(target_prefix) for line in text):
-            print('[INFO] Version H2 already present. No action taken.')
-            raise SystemExit(0)
-
-          insert = chr(10) + "## [" + new_version + "] " + stamp + chr(10) + "- Version bump" + chr(10)
-          print('[INFO] Inserting version H2 after TODO block')
-
+          insert = (
+            nl +
+            '## [' + new_version + '] ' + stamp + nl +
+            '- VERSION: ' + new_version + nl +
+            '- Version bump' + nl
+          )
           text.insert(j, insert)
           p.write_text(''.join(text), encoding='utf-8')
           PY
 
-      - name: Preflight discovery (repo-wide excluding .github)
+      - name: Preflight discovery (governed version markers outside .github)
         shell: bash
         run: |
           set -Eeuo pipefail
           trap 'echo "[FATAL] Preflight failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           echo "[INFO] Scanning all directories except .github"
-          HIT_VERSION=0
-          HIT_XML=0
 
-          COUNT=$(grep -RIn --exclude-dir=.git --exclude-dir=.github -i -E "VERSION[[:space:]]*:[[:space:]]*[0-9]{2}\.[0-9]{2}\.[0-9]{2}" . | wc -l || true)
-          HIT_VERSION=${COUNT}
-          echo "[INFO] VERSION: hits (repo-wide): ${HIT_VERSION}"
+          COUNT=$(grep -RIn --exclude-dir=.git --exclude-dir=.github -i -E "VERSION[[:space:]]*:[[:space:]]*[0-9]{2}[.][0-9]{2}[.][0-9]{2}" . | wc -l || true)
+          echo "[INFO] VERSION: hits (repo-wide): ${COUNT}"
 
-          COUNT=$(grep -RIn --exclude-dir=.git --exclude-dir=.github "<version" . | wc -l || true)
-          HIT_XML=${COUNT}
-          echo "[INFO] <version> hits (repo-wide): ${HIT_XML}"
+          COUNT2=$(grep -RIn --exclude-dir=.git --exclude-dir=.github "<version" . | wc -l || true)
+          echo "[INFO] <version> hits (repo-wide): ${COUNT2}"
 
-          if [[ "${HIT_VERSION}" -eq 0 && "${HIT_XML}" -eq 0 ]]; then
+          if [[ "${COUNT}" -eq 0 && "${COUNT2}" -eq 0 ]]; then
             echo "[ERROR] No VERSION: (NN.NN.NN) or <version> tags found outside .github" >&2
             exit 2
           fi
 
-      - name: Bump versions in headers and XML (repo-wide excluding .github)
+      - name: Bump versions and update manifest dates (targeted, excluding .github)
+        id: bump
         shell: bash
         run: |
           set -Eeuo pipefail
           trap 'echo "[FATAL] Version bump failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           python3 - <<'PY'
+          import json
           import os
           import re
           from pathlib import Path
           from collections import defaultdict
+          from datetime import datetime, timezone
 
-          new_version = os.environ.get("NEW_VERSION", "").strip()
+          new_version = (os.environ.get('NEW_VERSION') or '').strip()
           if not new_version:
-            raise SystemExit("[FATAL] NEW_VERSION env var missing")
+            raise SystemExit('[FATAL] NEW_VERSION env var missing')
 
-          root = Path(".").resolve()
-          targets = [root]
+          stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+          root = Path('.').resolve()
 
-          header_re = re.compile(r"(?im)(VERSION\s*:\s*)(\d{2}\.\d{2}\.\d{2})")
-          xml_re = re.compile(r"(?is)(<version\s*>)([^<]*?)(</version\s*>)")
+          header_re = re.compile(r'(?im)(VERSION[   ]*:[  ]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
 
-          skip_ext = {".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".pdf", ".zip", ".7z", ".tar", ".gz", ".woff", ".woff2", ".ttf", ".otf", ".mp3", ".mp4"}
-          skip_dirs = {".git", ".github", "node_modules", "vendor", ".venv", "dist", "build"}
+          # Joomla manifest targeting: only update XML files that look like extension manifests.
+          manifest_marker_re = re.compile(r'(?is)<extension')
+          xml_version_re = re.compile(r'(?is)(<version[   ]*>)([^<]*?)(</version[   ]*>)')
+          xml_date_res = [
+            re.compile(r'(?is)(<creationDate[   ]*>)([^<]*?)(</creationDate[  ]*>)'),
+            re.compile(r'(?is)(<date[   ]*>)([^<]*?)(</date[  ]*>)'),
+            re.compile(r'(?is)(<releaseDate[  ]*>)([^<]*?)(</releaseDate[   ]*>)'),
+          ]
+
+          skip_ext = {
+            '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.pdf',
+            '.zip', '.7z', '.tar', '.gz', '.woff', '.woff2', '.ttf', '.otf',
+            '.mp3', '.mp4'
+          }
+          skip_dirs = {'.git', '.github', 'node_modules', 'vendor', '.venv', 'dist', 'build'}
 
           counters = defaultdict(int)
           updated = []
+          updated_manifests = []
 
           def should_skip(p: Path) -> bool:
             if p.suffix.lower() in skip_ext:
-              counters["skipped_by_ext"] += 1
+              counters['skipped_by_ext'] += 1
               return True
             parts = {x.lower() for x in p.parts}
             if any(d in parts for d in skip_dirs):
-              counters["skipped_by_dir"] += 1
+              counters['skipped_by_dir'] += 1
               return True
             return False
 
-          existing_targets = [t for t in targets if t.exists() and t.is_dir()]
-          if not existing_targets:
-            raise SystemExit("[ERROR] Repository root not found")
+          for p in root.rglob('*'):
+            if not p.is_file():
+              continue
+            if should_skip(p):
+              continue
 
-          print(f"[INFO] Scanning repository (excluding: {', '.join(sorted(skip_dirs))})")
+            try:
+              text = p.read_text(encoding='utf-8', errors='replace')
+            except Exception as e:
+              counters['skipped_read_error'] += 1
+              continue
 
-          for base in existing_targets:
-            for p in base.rglob("*"):
-              if not p.is_file():
-                continue
-              if should_skip(p):
-                continue
+            original = text
 
-              try:
-                text = p.read_text(encoding="utf-8", errors="replace")
-              except Exception as e:
-                counters["skipped_read_error"] += 1
-                print(f"[WARN] Read error: {p} :: {e}")
-                continue
+            # Header VERSION: bumps across governed files
+            text, n1 = header_re.subn(lambda m: m.group(1) + new_version, text)
+            if n1:
+              counters['header_replacements'] += n1
 
-              original = text
-
-              text, n1 = header_re.subn(lambda m: m.group(1) + new_version, text)
-              if n1:
-                counters["header_replacements"] += n1
-
-              if p.suffix.lower() == ".xml":
-                text2, n2 = xml_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
+            # Targeted manifest updates only (avoid rewriting random XML)
+            if p.suffix.lower() == '.xml':
+              if manifest_marker_re.search(text):
+                text2, n2 = xml_version_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
                 text = text2
                 if n2:
-                  counters["xml_replacements"] += n2
+                  counters['xml_version_replacements'] += n2
 
-              if text != original:
-                try:
-                  p.write_text(text, encoding="utf-8")
-                  updated.append(str(p))
-                except Exception as e:
-                  raise SystemExit(f"[FATAL] Write failed: {p} :: {e}")
+                for rx in xml_date_res:
+                  text3, n3 = rx.subn(lambda m: m.group(1) + stamp + m.group(3), text)
+                  text = text3
+                  if n3:
+                    counters['xml_date_replacements'] += n3
 
-          print("[INFO] Scan summary")
+                if text != original:
+                  updated_manifests.append(str(p))
+              else:
+                counters['xml_skipped_non_manifest'] += 1
+
+            if text != original:
+              p.write_text(text, encoding='utf-8')
+              updated.append(str(p))
+
+          report = {
+            'new_version': new_version,
+            'stamp_utc': stamp,
+            'counters': dict(counters),
+            'updated_files': updated,
+            'updated_manifests': updated_manifests,
+          }
+
+          Path('.github').mkdir(parents=True, exist_ok=True)
+          Path('.github/version-bump-report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+
+          print('[INFO] Scan summary')
           for k in sorted(counters.keys()):
-            print(f"  {k}: {counters[k]}")
+            print('  ' + k + ': ' + str(counters[k]))
 
-          print(f"[INFO] Updated files: {len(updated)}")
-          for f in updated[:200]:
-            print(f"  [UPDATED] {f}")
-          if len(updated) > 200:
-            print(f"  [INFO] (truncated) +{len(updated) - 200} more")
+          print('[INFO] Updated files: ' + str(len(updated)))
+          print('[INFO] Updated manifests: ' + str(len(updated_manifests)))
 
           if not updated:
-            print("[ERROR] No files updated in repository (excluding .github)")
-            print("[DIAG] Confirm these exist outside .github:")
-            print("  - A line containing: VERSION: <value>")
-            print("  - An XML tag: <version>...</version>")
-            raise SystemExit(1)
+            raise SystemExit('[FATAL] No files updated (excluding .github)')
           PY
+
+          echo "report_path=.github/version-bump-report.json" >> "$GITHUB_OUTPUT"
+
+      - name: Post bump audit (version consistency)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Audit failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+
+          python3 - <<'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          new_version = (os.environ.get('NEW_VERSION') or '').strip()
+          if not new_version:
+            raise SystemExit('[FATAL] NEW_VERSION env var missing')
+
+          root = Path('.').resolve()
+          skip_dirs = {'.git', '.github', 'node_modules', 'vendor', '.venv', 'dist', 'build'}
+
+          header_re = re.compile(r'(?im)VERSION[  ]*:[  ]*([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
+          xml_version_re = re.compile(r'(?is)<version[  ]*>([^<]*?)</version[   ]*>')
+
+          mismatches = []
+
+          for p in root.rglob('*'):
+            if not p.is_file():
+              continue
+            parts = {x.lower() for x in p.parts}
+            if any(d in parts for d in skip_dirs):
+              continue
+            if p.suffix.lower() in {'.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.pdf', '.zip', '.7z', '.tar', '.gz', '.woff', '.woff2', '.ttf', '.otf', '.mp3', '.mp4', '.json'}:
+              continue
+
+            try:
+              text = p.read_text(encoding='utf-8', errors='replace')
+            except Exception:
+              continue
+
+            for m in header_re.finditer(text):
+              if m.group(1).strip() != new_version:
+                mismatches.append(str(p) + ' :: VERSION: ' + m.group(1).strip())
+
+            if p.suffix.lower() == '.xml' and '<extension' in text.lower():
+              for m in xml_version_re.finditer(text):
+                if m.group(1).strip() != new_version:
+                  mismatches.append(str(p) + ' :: <version> ' + m.group(1).strip())
+
+          if mismatches:
+            print('[ERROR] Version consistency audit failed. Mismatches found:')
+            for x in mismatches[:200]:
+              print('  ' + x)
+            raise SystemExit(2)
+
+          print('[INFO] Version consistency audit passed')
+          PY
+
+      - name: Change scope allowlist (block unexpected edits)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Change scope gate failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+
+          if [[ -z "$(git status --porcelain=v1)" ]]; then
+            echo "[INFO] No changes detected. Scope gate skipped."
+            exit 0
+          fi
+
+          echo "[INFO] Evaluating changed paths"
+          git diff --name-only > /tmp/changed_paths.txt
+
+          # Allowlist patterns for this workflow.
+          # Note: .github is excluded from staging later, but we still allow the bump report file.
+          allow_re='^(CHANGELOG\.md|src/.*\.xml|.*templateDetails\.xml|.*manifest.*\.xml|.*\.md|\.github/version-bump-report\.json)$'
+
+          bad=0
+          while IFS= read -r p; do
+            if [[ ! "${p}" =~ ${allow_re} ]]; then
+              echo "[ERROR] Unexpected file modified by version workflow: ${p}" >&2
+              bad=1
+            fi
+          done < /tmp/changed_paths.txt
+
+          if [[ "${bad}" -ne 0 ]]; then
+            echo "[FATAL] Scope gate failed. Update allowlist or adjust bump targeting." >&2
+            exit 2
+          fi
+
+          echo "[INFO] Scope gate passed"
+
+      - name: Publish audit trail to job summary
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "[FATAL] Summary publish failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
+
+          echo "# Version branch run" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Repository: $GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Base branch: ${BASE_BRANCH}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- New branch: ${BRANCH_NAME}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Version: ${NEW_VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit changes: ${COMMIT_CHANGES}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ -f ".github/version-bump-report.json" ]]; then
+            echo "## Bump report" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`json" >> "$GITHUB_STEP_SUMMARY"
+            head -c 12000 ".github/version-bump-report.json" >> "$GITHUB_STEP_SUMMARY" || true
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Show git status
         shell: bash
