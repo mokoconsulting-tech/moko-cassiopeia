@@ -3,17 +3,23 @@ name: Release from Version Branch Pipeline
 on:
   workflow_dispatch:
 
+concurrency:
+  group: release-from-dev-${{ github.ref_name }}
+  cancel-in-progress: false
+
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   guard:
-    name: 00 Guard – enforce dev version branch
+    name: 00 Guard and derive release metadata
     runs-on: ubuntu-latest
 
     outputs:
       version: ${{ steps.extract.outputs.version }}
+      dev_branch: ${{ steps.extract.outputs.dev_branch }}
       version_branch: ${{ steps.extract.outputs.version_branch }}
+      today_utc: ${{ steps.extract.outputs.today_utc }}
 
     steps:
       - name: Validate calling branch and extract version
@@ -23,54 +29,82 @@ jobs:
 
           BRANCH="${GITHUB_REF_NAME}"
           echo "Invoked from branch: $BRANCH"
-
           echo "$BRANCH" | grep -E '^dev/[0-9]+\.[0-9]+\.[0-9]+$'
 
           VERSION="${BRANCH#dev/}"
+          DEV_BRANCH="dev/$VERSION"
           VERSION_BRANCH="version/$VERSION"
+          TODAY_UTC="$(date -u +%Y-%m-%d)"
 
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "dev_branch=$DEV_BRANCH" >> "$GITHUB_OUTPUT"
           echo "version_branch=$VERSION_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "today_utc=$TODAY_UTC" >> "$GITHUB_OUTPUT"
 
   promote_branch:
-    name: 01 Promote dev to version
+    name: 01 Promote dev to version branch
     runs-on: ubuntu-latest
     needs: guard
+
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout dev branch
         uses: actions/checkout@v4
         with:
-          ref: dev/${{ needs.guard.outputs.version }}
+          ref: ${{ needs.guard.outputs.dev_branch }}
           fetch-depth: 0
 
       - name: Configure Git identity
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: Promote branch
+      - name: Enforce branch promotion preconditions
         run: |
           set -euo pipefail
 
-          SRC="dev/${{ needs.guard.outputs.version }}"
+          SRC="${{ needs.guard.outputs.dev_branch }}"
           DST="${{ needs.guard.outputs.version_branch }}"
 
-          git fetch origin
+          git fetch origin --prune
 
-          if git show-ref --verify --quiet "refs/remotes/origin/$DST"; then
-            echo "ERROR: $DST already exists."
+          if ! git show-ref --verify --quiet "refs/remotes/origin/$SRC"; then
+            echo "ERROR: origin/$SRC not found."
             exit 1
           fi
 
+          if git show-ref --verify --quiet "refs/remotes/origin/$DST"; then
+            echo "ERROR: origin/$DST already exists."
+            exit 1
+          fi
+
+      - name: Promote dev branch to version branch
+        run: |
+          set -euo pipefail
+
+          SRC="${{ needs.guard.outputs.dev_branch }}"
+          DST="${{ needs.guard.outputs.version_branch }}"
+
           git checkout -B "$DST" "origin/$SRC"
           git push origin "$DST"
+
           git push origin --delete "$SRC"
 
-  update_dates:
-    name: 02 Normalize release dates
+          echo "Promotion complete: $SRC -> $DST"
+
+  normalize_dates:
+    name: 02 Normalize dates on version branch
     runs-on: ubuntu-latest
-    needs: promote_branch
+    needs:
+      - guard
+      - promote_branch
+
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout version branch
@@ -81,52 +115,93 @@ jobs:
 
       - name: Configure Git identity
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: Update release dates
+      - name: Validate repository release prerequisites
+        run: |
+          set -euo pipefail
+          test -d src || (echo "ERROR: src directory missing." && exit 1)
+          test -f CHANGELOG.md || (echo "ERROR: CHANGELOG.md missing." && exit 1)
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          if ! grep -qE "^## \\[$VERSION\\] " CHANGELOG.md; then
+            echo "ERROR: CHANGELOG.md does not contain a heading for version [$VERSION]."
+            exit 1
+          fi
+
+      - name: Update dates using repo script when available, otherwise apply baseline updates
         run: |
           set -euo pipefail
 
-          TODAY="$(date -u +%Y-%m-%d)"
+          TODAY="${{ needs.guard.outputs.today_utc }}"
           VERSION="${{ needs.guard.outputs.version }}"
+
+          echo "Release version: $VERSION"
+          echo "Release date (UTC): $TODAY"
 
           if [ -f scripts/update_dates.sh ]; then
             chmod +x scripts/update_dates.sh
             scripts/update_dates.sh "$TODAY" "$VERSION"
           else
+            echo "scripts/update_dates.sh not found. Applying baseline date normalization."
+
             find . -type f -name "*.xml" \
               -not -path "./.git/*" \
-              -exec sed -i "s#<date>[^<]*</date>#<date>${TODAY}</date>#g" {} \;
+              -print0 | while IFS= read -r -d '' f; do
+                sed -i "s#<creationDate>[^<]*</creationDate>#<creationDate>${TODAY}</creationDate>#g" "$f" || true
+                sed -i "s#<date>[^<]*</date>#<date>${TODAY}</date>#g" "$f" || true
+                sed -i "s#<buildDate>[^<]*</buildDate>#<buildDate>${TODAY}</buildDate>#g" "$f" || true
+              done
 
-            if [ -f CHANGELOG.md ]; then
-              sed -i -E "s#^(## \\[${VERSION}\\]) [0-9]{4}-[0-9]{2}-[0-9]{2}#\\1 ${TODAY}#g" CHANGELOG.md
-            fi
+            sed -i -E "s#^(## \\[${VERSION}\\]) [0-9]{4}-[0-9]{2}-[0-9]{2}#\\1 ${TODAY}#g" CHANGELOG.md || true
           fi
 
-      - name: Commit date updates
+      - name: Commit and push date updates
         run: |
+          set -euo pipefail
+
           if git diff --quiet; then
-            echo "No date changes detected."
+            echo "No date changes detected. No commit required."
             exit 0
           fi
 
           git add -A
-          git commit -m "chore(release): normalize release dates"
-          git push origin HEAD
+          git commit -m "chore(release): normalize dates for ${{ needs.guard.outputs.version }}"
+          git push origin "HEAD:${{ needs.guard.outputs.version_branch }}"
 
-  build_zip:
-    name: 03 Build ZIP
+  build_update_and_release:
+    name: 03 Build Joomla ZIP, update update.xml, prerelease
     runs-on: ubuntu-latest
-    needs: update_dates
+    needs:
+      - guard
+      - normalize_dates
+
+    permissions:
+      contents: write
+      id-token: write
+
+    environment:
+      name: release
 
     steps:
       - name: Checkout version branch
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.guard.outputs.version_branch }}
+          fetch-depth: 0
 
-      - name: Build ZIP from src
+      - name: Configure Git identity
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Build Joomla compliant ZIP from src
+        id: build
         run: |
           set -euo pipefail
 
@@ -134,59 +209,142 @@ jobs:
           REPO="${{ github.event.repository.name }}"
           ZIP="${REPO}-${VERSION}.zip"
 
-          if [ ! -d src ]; then
-            echo "ERROR: src directory missing."
-            exit 1
-          fi
+          test -d src || (echo "ERROR: src directory missing." && exit 1)
 
           mkdir -p dist
+
+          # Joomla compliant packaging: src contents at ZIP root (no nested src folder)
           cd src
           zip -r "../dist/$ZIP" .
           cd ..
 
-      - name: Upload ZIP artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-zip
-          path: dist/*.zip
-          retention-days: 7
+          echo "zip_name=$ZIP" >> "$GITHUB_OUTPUT"
+          ls -la dist
 
-  prerelease:
-    name: 04 Create prerelease
-    runs-on: ubuntu-latest
-    needs: build_zip
+      - name: Compute SHA256 for ZIP
+        id: sha
+        run: |
+          set -euo pipefail
+          ZIP="${{ steps.build.outputs.zip_name }}"
+          SHA="$(sha256sum "dist/$ZIP" | awk '{print $1}')"
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          printf "%s  %s\n" "$SHA" "$ZIP" > dist/SHA256SUMS.txt
+          cat dist/SHA256SUMS.txt
 
-    steps:
-      - name: Checkout version branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.guard.outputs.version_branch }}
+      - name: Update update.xml with download URL and sha256
+        run: |
+          set -euo pipefail
 
-      - name: Download ZIP artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: release-zip
-          path: dist
+          VERSION="${{ needs.guard.outputs.version }}"
+          TODAY="${{ needs.guard.outputs.today_utc }}"
+          ZIP="${{ steps.build.outputs.zip_name }}"
+          SHA="${{ steps.sha.outputs.sha256 }}"
 
-      - name: Generate release notes
+          OWNER="${{ github.repository_owner }}"
+          REPO="${{ github.event.repository.name }}"
+
+          DOWNLOAD_URL="https://github.com/${OWNER}/${REPO}/releases/download/${VERSION}/${ZIP}"
+
+          echo "Version: $VERSION"
+          echo "Download URL: $DOWNLOAD_URL"
+          echo "SHA256: $SHA"
+
+          # If a template exists, instantiate it
+          if [ -f "templates/update_template.xml" ]; then
+            cp -f "templates/update_template.xml" "update.xml"
+          fi
+
+          if [ ! -f "update.xml" ]; then
+            echo "ERROR: update.xml not found and templates/update_template.xml not found."
+            exit 1
+          fi
+
+          # Replace common placeholders if present
+          sed -i "s#{{VERSION}}#${VERSION}#g" update.xml || true
+          sed -i "s#{{DATE}}#${TODAY}#g" update.xml || true
+          sed -i "s#{{DOWNLOADURL}}#${DOWNLOAD_URL}#g" update.xml || true
+          sed -i "s#{{SHA256}}#${SHA}#g" update.xml || true
+          sed -i "s#{{ZIP}}#${ZIP}#g" update.xml || true
+
+          # Also enforce canonical tag replacement inside common XML elements
+          sed -i "s#<downloadurl>[^<]*</downloadurl>#<downloadurl>${DOWNLOAD_URL}</downloadurl>#g" update.xml || true
+          sed -i "s#<sha256>[^<]*</sha256>#<sha256>${SHA}</sha256>#g" update.xml || true
+          sed -i "s#<sha256sum>[^<]*</sha256sum>#<sha256sum>${SHA}</sha256sum>#g" update.xml || true
+          sed -i "s#<version>[^<]*</version>#<version>${VERSION}</version>#g" update.xml || true
+          sed -i "s#<date>[^<]*</date>#<date>${TODAY}</date>#g" update.xml || true
+
+          echo "update.xml updated."
+
+      - name: Commit update.xml changes (and any related date deltas) to version branch
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet; then
+            echo "No update.xml changes detected. No commit required."
+            exit 0
+          fi
+
+          git add -A
+          git commit -m "chore(release): update update.xml for ${{ needs.guard.outputs.version }}"
+          git push origin "HEAD:${{ needs.guard.outputs.version_branch }}"
+
+      - name: Create and push annotated tag after final release commit
         run: |
           set -euo pipefail
 
           VERSION="${{ needs.guard.outputs.version }}"
 
-          if [ -f CHANGELOG.md ]; then
-            awk "/^## \\[$VERSION\\]/{flag=1;next}/^## \\[/{flag=0}flag" CHANGELOG.md > RELEASE_NOTES.md || true
+          git fetch --tags
+
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            echo "ERROR: Tag $VERSION already exists."
+            exit 1
           fi
+
+          git tag -a "$VERSION" -m "Prerelease $VERSION"
+          git push origin "refs/tags/$VERSION"
+
+      - name: Generate release notes from CHANGELOG.md
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+
+          awk "/^## \\[$VERSION\\]/{flag=1;next}/^## \\[/{flag=0}flag" CHANGELOG.md > RELEASE_NOTES.md || true
 
           if [ ! -s RELEASE_NOTES.md ]; then
-            echo "Prerelease $VERSION" > RELEASE_NOTES.md
+            echo "ERROR: Release notes extraction failed for $VERSION."
+            exit 1
           fi
 
-      - name: Create GitHub prerelease
+          printf "\n\nAssets:\n- %s\n- update.xml\n- SHA256SUMS.txt\n" "${{ steps.build.outputs.zip_name }}" >> RELEASE_NOTES.md
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            update.xml
+            RELEASE_NOTES.md
+          retention-days: 30
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+
+      - name: Create GitHub prerelease and attach assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.guard.outputs.version }}
           name: Prerelease ${{ needs.guard.outputs.version }}
           prerelease: true
           body_path: RELEASE_NOTES.md
-          files: dist/*.zip
+          files: |
+            dist/*.zip
+            update.xml
+            dist/SHA256SUMS.txt
