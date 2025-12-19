@@ -25,6 +25,9 @@
 - 
 
 ## [03.01.00] 2025-12-16
+- Fixed language structure
+
+## [03.01.00] 2025-12-16
 - TODO split off own file
 
 ## [03.01.00] 2025-12-16
