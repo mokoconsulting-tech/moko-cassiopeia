@@ -33,14 +33,7 @@ on:
       new_version:
         description: "New version in format NN.NN.NN (example 03.01.00)"
         required: true
-      base_branch:
-        description: "Base branch to branch from"
-        required: false
-        default: "dev"
-        type: choice
-        options:
-          - "dev"
-          - "main"
+
       commit_changes:
         description: "Commit and push changes"
         required: false
@@ -63,7 +56,7 @@ jobs:
 
     env:
       NEW_VERSION: ${{ github.event.inputs.new_version }}
-      BASE_BRANCH: ${{ github.event.inputs.base_branch }}
+      BASE_BRANCH: ${{ github.ref_name }}
       BRANCH_PREFIX: version/dev/
       COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
 
@@ -72,27 +65,26 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ env.BASE_BRANCH }}
+          ref: ${{ github.ref_name }}
 
       - name: Validate inputs
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] Validation error at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           echo "[INFO] Inputs received:"
           echo "  NEW_VERSION=${NEW_VERSION}"
-          echo "  BASE_BRANCH=${BASE_BRANCH}"
+          echo "  BASE_BRANCH=${GITHUB_REF_NAME}"
           echo "  BRANCH_PREFIX=${BRANCH_PREFIX}"
           echo "  COMMIT_CHANGES=${COMMIT_CHANGES}"
 
           [[ -n "${NEW_VERSION}" ]] || { echo "[ERROR] new_version missing" >&2; exit 2; }
           [[ "${NEW_VERSION}" =~ ^[0-9]{2}[.][0-9]{2}[.][0-9]{2}$ ]] || { echo "[ERROR] Invalid version format: ${NEW_VERSION}" >&2; exit 2; }
 
-          if [[ "${BASE_BRANCH}" != "dev" && "${BASE_BRANCH}" != "main" ]]; then
-            echo "[ERROR] base_branch must be dev or main" >&2
-            exit 2
-          fi
+
 
           git ls-remote --exit-code --heads origin "${BASE_BRANCH}" >/dev/null 2>&1 || {
             echo "[ERROR] Base branch does not exist on origin: ${BASE_BRANCH}" >&2
@@ -107,6 +99,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] Policy gate failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           required=(
@@ -148,6 +142,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] Git identity step failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           git config user.name "github-actions[bot]"
@@ -158,6 +154,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] Collision defense failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           # Git cannot create refs like version/dev/03.02.00 if a ref named version already exists.
@@ -178,6 +176,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] Branch creation failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           BRANCH_NAME="${BRANCH_PREFIX}${NEW_VERSION}"
@@ -200,6 +200,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] CHANGELOG enforcement failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           python3 - <<'PY'
@@ -296,6 +298,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] Preflight failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           echo "[INFO] Scanning all directories except .github"
@@ -316,6 +320,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] Version bump failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           python3 - <<'PY'
@@ -437,6 +443,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] Audit failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           python3 - <<'PY'
@@ -492,6 +500,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] Change scope gate failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           if [[ -z "$(git status --porcelain=v1)" ]]; then
@@ -525,6 +535,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] Summary publish failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           echo "# Version branch run" >> "$GITHUB_STEP_SUMMARY"
@@ -549,6 +561,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] git status failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
           git status --porcelain=v1
 
@@ -558,6 +572,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] Commit failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "[ERROR] Not inside a git work tree" >&2; exit 2; }
@@ -579,6 +595,8 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           trap 'echo "[FATAL] Push failed at line $LINENO" >&2; echo "[FATAL] Last command: $BASH_COMMAND" >&2' ERR
 
           git push
@@ -587,4 +605,6 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          export PS4='+ [${BASH_SOURCE##*/}:${LINENO}] '
+          set -x
           echo "[INFO] Created branch: ${BRANCH_NAME}"
