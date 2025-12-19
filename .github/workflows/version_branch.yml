@@ -1,3 +1,4 @@
+---
 #
 # Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
 #
@@ -424,8 +425,10 @@ jobs:
           print('[INFO] Updated files: ' + str(len(updated)))
           print('[INFO] Updated manifests: ' + str(len(updated_manifests)))
 
+          # If no manifests or headers were updated, skip gracefully
           if not updated:
-            raise SystemExit('[FATAL] No files updated (excluding .github)')
+            print('[INFO] No eligible files updated. Skipping version bump without failure.')
+            raise SystemExit(0)
           PY
 
           echo "report_path=.github/version-bump-report.json" >> "$GITHUB_OUTPUT"
