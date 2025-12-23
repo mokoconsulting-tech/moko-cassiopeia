@@ -22,7 +22,7 @@
 # INGROUP: Generic.Script
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /scripts/fix_tabs.sh
-# VERSION: 01.00.00
+# VERSION: 03.06.00
 # BRIEF: Replace tab characters with two spaces in text files.
 # Purpose:
 # - Replace tab characters with two spaces in text files.

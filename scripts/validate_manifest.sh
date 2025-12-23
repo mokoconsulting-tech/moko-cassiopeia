@@ -22,7 +22,7 @@
 # INGROUP: Joomla.Validation
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /scripts/validate_manifest.sh
-# VERSION: 01.00.00
+# VERSION: 03.06.00
 # BRIEF: Validate a Joomla project manifest XML for structural and governance compliance
 # Purpose:
 # - Validate the XML manifest for a Joomla project.

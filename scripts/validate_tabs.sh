@@ -24,7 +24,7 @@
 # INGROUP: Scripts.Validation
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /scripts/validate_tabs.sh
-# VERSION: 01.00.00
+# VERSION: 03.06.00
 # BRIEF: Detect tab characters in repository files for CI enforcement.
 #
 
