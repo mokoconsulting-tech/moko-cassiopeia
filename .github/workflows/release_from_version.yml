@@ -250,12 +250,12 @@ jobs:
           echo "SHA256: $SHA"
 
           # If a template exists, instantiate it
-          if [ -f "templates/update_template.xml" ]; then
-            cp -f "templates/update_template.xml" "update.xml"
+          if [ -f "docs/templates/template_update.xml" ]; then
+            cp -f "docs/templates/template_update.xml" "update.xml"
           fi
 
           if [ ! -f "update.xml" ]; then
-            echo "ERROR: update.xml not found and templates/update_template.xml not found."
+            echo "ERROR: update.xml not found and docs/templates/template_update.xml not found."
             exit 1
           fi
 
