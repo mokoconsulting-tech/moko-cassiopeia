@@ -15,271 +15,467 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU General Public License for more details.
 #
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
 # FILE INFORMATION
-# DEFGROUP: MokoStandards.Joomla
-# INGROUP: GitHub.Versioning.Branching
-# REPO: https://github.com/mokoconsulting-tech/MokoStandards
-# PATH: /.github/workflows/version_branch.yml
+# DEFGROUP: GitHub.Workflow
+# INGROUP: MokoStandards.Release
+# REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
+# PATH: /.github/workflows/release_from_version.yml
 # VERSION: 01.00.00
-# BRIEF: Create a dev/<version> branch and align versions across governed files
-# NOTE: Enterprise gates: policy checks, namespace defense, scoped edits, audit summary, deterministic report output
-
-name: Create version branch and bump versions
+# BRIEF: Enterprise release pipeline for promoting dev branches, building Joomla artifacts, publishing prereleases, and optionally squashing to main.
+# NOTE: Designed for Joomla and Dolibarr projects following MokoStandards governance.
+#
+#
+name: Release from Version Branch Pipeline
 
 on:
   workflow_dispatch:
     inputs:
-      new_version:
-        description: "New version in format NN.NN.NN (example 03.01.00)"
+      promote_to_version:
+        description: "Promote dev/<version> to version/<version>"
         required: true
-      report_only:
-        description: "Report only mode (no branch creation, no file writes, report output only)"
-        required: false
-        default: "false"
-        type: choice
-        options:
-          - "true"
-          - "false"
-      commit_changes:
-        description: "Commit and push changes (forced to true when report_only=false)"
-        required: false
-        default: "true"
-        type: choice
-        options:
-          - "true"
-          - "false"
+        default: true
+        type: boolean
+      delete_dev_branch:
+        description: "Delete dev/<version> after promotion"
+        required: true
+        default: true
+        type: boolean
+      squash_to_main:
+        description: "Squash merge version/<version> into main"
+        required: true
+        default: false
+        type: boolean
+      delete_version_branch:
+        description: "Delete version/<version> after squash merge to main"
+        required: true
+        default: false
+        type: boolean
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.repository }}-${{ github.event.inputs.new_version }}
+  group: release-from-dev-${{ github.ref_name }}
   cancel-in-progress: false
 
 permissions:
-  contents: write
-
-defaults:
-  run:
-    shell: bash
+  contents: read
 
 jobs:
-  version-bump:
-    name: Version branch and bump
+  guard:
+    name: 00 Guard and derive release metadata
     runs-on: ubuntu-latest
 
-    env:
-      NEW_VERSION: ${{ github.event.inputs.new_version }}
-      REPORT_ONLY: ${{ github.event.inputs.report_only }}
-      COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
-      BASE_BRANCH: ${{ github.ref_name }}
-      BRANCH_PREFIX: dev/
-      ERROR_LOG: /tmp/version_branch_errors.log
-      CI_HELPERS: /tmp/moko_ci_helpers.sh
+    outputs:
+      version: ${{ steps.extract.outputs.version }}
+      dev_branch: ${{ steps.extract.outputs.dev_branch }}
+      version_branch: ${{ steps.extract.outputs.version_branch }}
+      today_utc: ${{ steps.extract.outputs.today_utc }}
 
     steps:
-      - name: Checkout repository
+      - name: Validate calling branch and extract version
+        id: extract
+        run: |
+          set -euo pipefail
+
+          BRANCH="${GITHUB_REF_NAME}"
+          echo "Invoked from branch: $BRANCH"
+          echo "${BRANCH}" | grep -E '^(dev|version)/[0-9]+\.[0-9]+\.[0-9]+$'
+
+          VERSION="${BRANCH#dev/}"
+          VERSION="${VERSION#version/}"
+          DEV_BRANCH="dev/${VERSION}"
+          VERSION_BRANCH="version/${VERSION}"
+
+          # If invoked from an existing version/<version> branch, treat it as already promoted
+          if echo "${BRANCH}" | grep -qE '^version/'; then
+            VERSION_BRANCH="${BRANCH}"
+          fi
+          TODAY_UTC="$(date -u +%Y-%m-%d)"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "dev_branch=$DEV_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "version_branch=$VERSION_BRANCH" >> "$GITHUB_OUTPUT"
+          echo "today_utc=$TODAY_UTC" >> "$GITHUB_OUTPUT"
+
+  promote_branch:
+    if: ${{ github.event.inputs.promote_to_version == 'true' && startsWith(github.ref_name, 'dev/') }}
+    name: 01 Promote dev to version branch
+    runs-on: ubuntu-latest
+    needs: guard
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout dev branch
         uses: actions/checkout@v4
         with:
+          ref: ${{ needs.guard.outputs.dev_branch }}
           fetch-depth: 0
-          ref: ${{ github.ref_name }}
 
-      - name: Init CI helpers
+      - name: Configure Git identity
         run: |
-          set -Eeuo pipefail
-          : > "$ERROR_LOG"
-
-          cat > "$CI_HELPERS" <<'SH'
-          set -Eeuo pipefail
-
-          moko_init() {
-            local step_name="${1:-step}"
-            export PS4='+ ['"${step_name}"':${BASH_SOURCE##*/}:${LINENO}] '
-            set -x
-            trap "moko_on_err '${step_name}' \"\$LINENO\" \"\$BASH_COMMAND\"" ERR
-          }
-
-          moko_on_err() {
-            local step_name="$1"
-            local line_no="$2"
-            local last_cmd="$3"
-
-            echo "[FATAL] ${step_name} failed at line ${line_no}" >&2
-            echo "[FATAL] Last command: ${last_cmd}" >&2
-
-            if [[ -n "${ERROR_LOG:-}" ]]; then
-              echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) | ${step_name} | line ${line_no} | ${last_cmd}" >> "$ERROR_LOG" || true
-            fi
-          }
-
-          moko_bool() {
-            local v="${1:-false}"
-            [[ "${v}" == "true" ]]
-          }
-          SH
-
-          chmod 0755 "$CI_HELPERS"
-
-      - name: Validate inputs and policy locks
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Validate inputs and policy locks"
-
-          echo "[INFO] Inputs received:"
-          echo "  NEW_VERSION=${NEW_VERSION}"
-          echo "  REPORT_ONLY=${REPORT_ONLY}"
-          echo "  COMMIT_CHANGES=${COMMIT_CHANGES}"
-          echo "  BASE_BRANCH=${BASE_BRANCH}"
-          echo "  BRANCH_PREFIX=${BRANCH_PREFIX}"
-
-          [[ -n "${NEW_VERSION}" ]] || { echo "[ERROR] new_version missing" >&2; exit 2; }
-          [[ "${NEW_VERSION}" =~ ^[0-9]{2}[.][0-9]{2}[.][0-9]{2}$ ]] || { echo "[ERROR] Invalid version format: ${NEW_VERSION}" >&2; exit 2; }
-
-          if [[ "${BRANCH_PREFIX}" != "dev/" ]]; then
-            echo "[FATAL] BRANCH_PREFIX is locked by policy. Expected 'dev/' but got '${BRANCH_PREFIX}'." >&2
-            exit 2
-          fi
-
-          if ! moko_bool "${REPORT_ONLY}" && [[ "${COMMIT_CHANGES}" != "true" ]]; then
-            echo "[FATAL] commit_changes must be 'true' when report_only is 'false' to ensure the branch is auditable." >&2
-            exit 2
-          fi
-
-          git ls-remote --exit-code --heads origin "${BASE_BRANCH}" >/dev/null 2>&1 || {
-            echo "[ERROR] Base branch does not exist on origin: ${BASE_BRANCH}" >&2
-            echo "[INFO] Remote branches:" >&2
-            git ls-remote --heads origin | awk '{sub("refs/heads/","",$2); print $2}' >&2
-            exit 2
-          }
-
-      - name: Enterprise policy gate
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Enterprise policy gate"
-
-          required=(
-            "LICENSE.md"
-            "CONTRIBUTING.md"
-            "CODE_OF_CONDUCT.md"
-            "SECURITY.md"
-            "GOVERNANCE.md"
-            "CHANGELOG.md"
-          )
-
-          missing=0
-          for f in "${required[@]}"; do
-            if [[ ! -f "${f}" ]]; then
-              echo "[ERROR] Missing required file: ${f}" >&2
-              missing=1
-              continue
-            fi
-            if [[ ! -s "${f}" ]]; then
-              echo "[ERROR] Required file is empty: ${f}" >&2
-              missing=1
-              continue
-            fi
-          done
-
-          if [[ "${missing}" -ne 0 ]]; then
-            echo "[FATAL] Policy gate failed. Add missing governance artifacts before versioning." >&2
-            exit 2
-          fi
-
-          echo "[INFO] Policy gate passed"
-
-      - name: Configure git identity
-        if: ${{ env.REPORT_ONLY != 'true' }}
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Configure git identity"
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-      - name: Branch namespace collision defense
+      - name: Enforce branch promotion preconditions
         run: |
-          source "$CI_HELPERS"
-          moko_init "Branch namespace collision defense"
+          set -euo pipefail
 
-          PREFIX_TOP="${BRANCH_PREFIX%%/*}"
-          if git ls-remote --exit-code --heads origin "${PREFIX_TOP}" >/dev/null 2>&1; then
-            echo "[FATAL] Branch namespace collision detected: '${PREFIX_TOP}' exists on origin." >&2
-            exit 2
+          SRC="${{ needs.guard.outputs.dev_branch }}"
+          DST="${{ needs.guard.outputs.version_branch }}"
+
+          git fetch origin --prune
+
+          if ! git show-ref --verify --quiet "refs/remotes/origin/$SRC"; then
+            echo "ERROR: origin/$SRC not found."
+            exit 1
           fi
 
-      - name: Create version branch (local)
-        if: ${{ env.REPORT_ONLY != 'true' }}
+          if git show-ref --verify --quiet "refs/remotes/origin/$DST"; then
+            echo "ERROR: origin/$DST already exists."
+            exit 1
+          fi
+
+      - name: Promote dev branch to version branch
         run: |
-          source "$CI_HELPERS"
-          moko_init "Create version branch (local)"
+          set -euo pipefail
 
-          BRANCH_NAME="${BRANCH_PREFIX}${NEW_VERSION}"
-          echo "[INFO] Creating local branch: ${BRANCH_NAME} from origin/${BASE_BRANCH}"
+          SRC="${{ needs.guard.outputs.dev_branch }}"
+          DST="${{ needs.guard.outputs.version_branch }}"
 
-          git fetch --all --tags --prune
+          git checkout -B "$DST" "origin/$SRC"
+          git push origin "$DST"
 
-          if git ls-remote --exit-code --heads origin "${BRANCH_NAME}" >/dev/null 2>&1; then
-            echo "[FATAL] Branch already exists on origin: ${BRANCH_NAME}" >&2
-            exit 2
+          if [ "${{ github.event.inputs.delete_dev_branch }}" = "true" ]; then
+            git push origin --delete "${SRC}"
+          else
+            echo "Dev branch retention enabled. Skipping deletion of ${SRC}."
           fi
 
-          git checkout -B "${BRANCH_NAME}" "origin/${BASE_BRANCH}"
-          echo "BRANCH_NAME=${BRANCH_NAME}" >> "$GITHUB_ENV"
+          echo "Promotion complete: $SRC -> $DST"
 
-      - name: Enforce release generated update feeds are absent (update.xml, updates.xml)
-        if: ${{ env.REPORT_ONLY != 'true' }}
+  normalize_dates:
+    name: 02 Normalize dates on version branch
+    runs-on: ubuntu-latest
+    needs:
+      - guard
+      - promote_branch
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout version branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.guard.outputs.version_branch }}
+          fetch-depth: 0
+
+      - name: Configure Git identity
         run: |
-          source "$CI_HELPERS"
-          moko_init "Enforce update feed deletion"
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
-          git rm -f --ignore-unmatch update.xml updates.xml || true
-          rm -f update.xml updates.xml || true
-
-          if [[ -f update.xml || -f updates.xml ]]; then
-            echo "[FATAL] update feed files still present after deletion attempt." >&2
-            ls -la update.xml updates.xml 2>/dev/null || true
-            exit 2
-          fi
-
-          if git ls-files --error-unmatch update.xml >/dev/null 2>&1; then
-            echo "[FATAL] update.xml is still tracked after deletion." >&2
-            exit 2
-          fi
-
-          if git ls-files --error-unmatch updates.xml >/dev/null 2>&1; then
-            echo "[FATAL] updates.xml is still tracked after deletion." >&2
-            exit 2
-          fi
-
-      - name: Preflight discovery (governed version markers outside .github)
+      - name: Validate repository release prerequisites
         run: |
-          source "$CI_HELPERS"
-          moko_init "Preflight discovery"
+          set -euo pipefail
+          test -d src || (echo "ERROR: src directory missing." && exit 1)
+          test -f CHANGELOG.md || (echo "ERROR: CHANGELOG.md missing." && exit 1)
 
-          COUNT=$(grep -RIn --exclude-dir=.git --exclude-dir=.github -i -E "VERSION[[:space:]]*:[[:space:]]*[0-9]{2}[.][0-9]{2}[.][0-9]{2}" . | wc -l || true)
-          COUNT2=$(grep -RIn --exclude-dir=.git --exclude-dir=.github "<version" . | wc -l || true)
-
-          echo "[INFO] VERSION: hits (repo wide): ${COUNT}"
-          echo "[INFO] <version> hits (repo wide): ${COUNT2}"
-
-          if [[ "${COUNT}" -eq 0 && "${COUNT2}" -eq 0 ]]; then
-            echo "[FATAL] No governed version markers found outside .github" >&2
-            exit 2
+          VERSION="${{ needs.guard.outputs.version }}"
+          if ! grep -qE "^## \\[$VERSION\\] " CHANGELOG.md; then
+            echo "ERROR: CHANGELOG.md does not contain a heading for version [$VERSION]."
+            exit 1
           fi
 
-      - name: Bump versions and update manifest dates (targeted, excluding .github)
+      - name: Update dates using repo script when available, otherwise apply baseline updates
         run: |
-          source "$CI_HELPERS"
-          moko_init "Version bump"
+          set -euo pipefail
 
-          python3 - <<'PY'
-import json
-import os
-import re
-from pathlib import Path
-from collections import defaultdict
-from datetime import datetime, timezone
-new_version = (os.environ.get("NEW_VERSION") or "").strip()
-if not new_version:
-  raise SystemExit("[FATAL] NEW_VERSION env var missing")
-report_only = (os.environ.get("REPORT_ONLY") or "").strip().lower() == "true"
-stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-root = Path(".").resolve()
-                    header_re = re.compile(r"(?im)(VERSION[ \t]*:[ \t]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})")
-          manifest_marker_re = re.compile(r"(?is)<extension\b")
+          TODAY="${{ needs.guard.outputs.today_utc }}"
+          VERSION="${{ needs.guard.outputs.version }}"
+
+          echo "Release version: $VERSION"
+          echo "Release date (UTC): $TODAY"
+
+          if [ -f scripts/update_dates.sh ]; then
+            chmod +x scripts/update_dates.sh
+            scripts/update_dates.sh "$TODAY" "$VERSION"
+          else
+            echo "scripts/update_dates.sh not found. Applying baseline date normalization."
+
+            find . -type f -name "*.xml" \
+              -not -path "./.git/*" \
+              -print0 | while IFS= read -r -d '' f; do
+                sed -i "s#<creationDate>[^<]*</creationDate>#<creationDate>${TODAY}</creationDate>#g" "$f" || true
+                sed -i "s#<date>[^<]*</date>#<date>${TODAY}</date>#g" "$f" || true
+                sed -i "s#<buildDate>[^<]*</buildDate>#<buildDate>${TODAY}</buildDate>#g" "$f" || true
+              done
+
+            sed -i -E "s#^(## \\[${VERSION}\\]) [0-9]{4}-[0-9]{2}-[0-9]{2}#\\1 ${TODAY}#g" CHANGELOG.md || true
+          fi
+
+      - name: Commit and push date updates
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet; then
+            echo "No date changes detected. No commit required."
+            exit 0
+          fi
+
+          git add -A
+          git commit -m "chore(release): normalize dates for ${{ needs.guard.outputs.version }}"
+          git push origin "HEAD:${{ needs.guard.outputs.version_branch }}"
+
+  build_update_and_release:
+    name: 03 Build Joomla ZIP, update update.xml, prerelease
+    runs-on: ubuntu-latest
+    needs:
+      - guard
+      - normalize_dates
+
+    permissions:
+      contents: write
+      id-token: write
+
+    environment:
+      name: release
+
+    steps:
+      - name: Checkout version branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.guard.outputs.version_branch }}
+          fetch-depth: 0
+
+      - name: Configure Git identity
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Build Joomla compliant ZIP from src
+        id: build
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          REPO="${{ github.event.repository.name }}"
+          ZIP="${REPO}-${VERSION}.zip"
+
+          test -d src || (echo "ERROR: src directory missing." && exit 1)
+
+          mkdir -p dist
+
+          # Joomla compliant packaging: src contents at ZIP root (no nested src folder)
+          cd src
+          zip -r "../dist/$ZIP" .
+          cd ..
+
+          echo "zip_name=$ZIP" >> "$GITHUB_OUTPUT"
+          ls -la dist
+
+      - name: Compute SHA256 for ZIP
+        id: sha
+        run: |
+          set -euo pipefail
+          ZIP="${{ steps.build.outputs.zip_name }}"
+          SHA="$(sha256sum "dist/$ZIP" | awk '{print $1}')"
+          echo "sha256=$SHA" >> "$GITHUB_OUTPUT"
+          printf "%s  %s\n" "$SHA" "$ZIP" > dist/SHA256SUMS.txt
+          cat dist/SHA256SUMS.txt
+
+      - name: Update update.xml with download URL and sha256
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          TODAY="${{ needs.guard.outputs.today_utc }}"
+          ZIP="${{ steps.build.outputs.zip_name }}"
+          SHA="${{ steps.sha.outputs.sha256 }}"
+
+          OWNER="${{ github.repository_owner }}"
+          REPO="${{ github.event.repository.name }}"
+
+          DOWNLOAD_URL="https://github.com/${OWNER}/${REPO}/releases/download/${VERSION}/${ZIP}"
+
+          echo "Version: $VERSION"
+          echo "Download URL: $DOWNLOAD_URL"
+          echo "SHA256: $SHA"
+
+          # If a template exists, instantiate it
+          # Preferred canonical template location: docs/templates/
+          if [ -f "docs/templates/template_update.xml" ]; then
+            cp -f "docs/templates/template_update.xml" "updates.xml"
+          elif [ -f "docs/templates/update_template.xml" ]; then
+            cp -f "docs/templates/update_template.xml" "updates.xml"
+          fi
+
+          if [ ! -f "updates.xml" ]; then
+            # Backward compatibility: allow repos that still keep updates.xml
+            if [ -f "update.xml" ]; then
+              mv -f "update.xml" "updates.xml"
+            else
+              echo "ERROR: updates.xml not found and no template present in docs/templates."
+              exit 1
+            fi
+          fi
+
+          # Replace common placeholders if present
+          sed -i "s#{{VERSION}}#${VERSION}#g" updates.xml || true
+          sed -i "s#{{DATE}}#${TODAY}#g" updates.xml || true
+          sed -i "s#{{DOWNLOADURL}}#${DOWNLOAD_URL}#g" updates.xml || true
+          sed -i "s#{{SHA256}}#${SHA}#g" updates.xml || true
+          sed -i "s#{{ZIP}}#${ZIP}#g" updates.xml || true
+
+          # Also enforce canonical tag replacement inside common XML elements
+          sed -i "s#<downloadurl>[^<]*</downloadurl>#<downloadurl>${DOWNLOAD_URL}</downloadurl>#g" updates.xml || true
+          sed -i "s#<sha256>[^<]*</sha256>#<sha256>${SHA}</sha256>#g" updates.xml || true
+          sed -i "s#<sha256sum>[^<]*</sha256sum>#<sha256sum>${SHA}</sha256sum>#g" updates.xml || true
+          sed -i "s#<version>[^<]*</version>#<version>${VERSION}</version>#g" updates.xml || true
+          sed -i "s#<date>[^<]*</date>#<date>${TODAY}</date>#g" updates.xml || true
+
+          echo "updates.xml updated."
+
+      - name: Commit update.xml changes (and any related date deltas) to version branch
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet; then
+            echo "No updates.xml changes detected. No commit required."
+            exit 0
+          fi
+
+          git add -A
+          git commit -m "chore(release): update updates.xml for ${{ needs.guard.outputs.version }}"
+          git push origin "HEAD:${{ needs.guard.outputs.version_branch }}"
+
+      - name: Create and push annotated tag after final release commit
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+
+          git fetch --tags
+
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            echo "ERROR: Tag $VERSION already exists."
+            exit 1
+          fi
+
+          git tag -a "$VERSION" -m "Prerelease $VERSION"
+          git push origin "refs/tags/$VERSION"
+
+      - name: Generate release notes from CHANGELOG.md
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+
+          awk "/^## \\[$VERSION\\]/{flag=1;next}/^## \\[/{flag=0}flag" CHANGELOG.md > RELEASE_NOTES.md || true
+
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "ERROR: Release notes extraction failed for $VERSION."
+            exit 1
+          fi
+
+          printf "\n\nAssets:\n- %s\n- update.xml\n- SHA256SUMS.txt\n" "${{ steps.build.outputs.zip_name }}" >> RELEASE_NOTES.md
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            updates.xml
+            RELEASE_NOTES.md
+          retention-days: 30
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+
+      - name: Create GitHub prerelease and attach assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.guard.outputs.version }}
+          name: Prerelease ${{ needs.guard.outputs.version }}
+          prerelease: true
+          body_path: RELEASE_NOTES.md
+          files: |
+            dist/*.zip
+            updates.xml
+            dist/SHA256SUMS.txt
+
+  squash_to_main:
+    name: 04 Optional squash merge version branch to main
+    runs-on: ubuntu-latest
+    needs:
+      - guard
+      - build_update_and_release
+
+    if: ${{ github.event.inputs.squash_to_main == 'true' }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure Git identity
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      - name: Fetch version branch
+        run: |
+          set -euo pipefail
+          git fetch origin --prune
+
+      - name: Squash merge version branch into main
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          VBRANCH="origin/${{ needs.guard.outputs.version_branch }}"
+
+          # Governance control: if main is protected from direct pushes, this will fail by design.
+          # Enforce PR-based merge in that scenario.
+
+          git checkout main
+          git merge --squash "${VBRANCH}"
+
+          if git diff --cached --quiet; then
+            echo "No changes to merge from ${VBRANCH}."
+            exit 0
+          fi
+
+          git commit -m "chore(release): squash ${VERSION} into main"
+          git push origin "HEAD:main"
+
+      - name: Optional delete version branch after squash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event.inputs.delete_version_branch }}" = "true" ]; then
+            git push origin --delete "${{ needs.guard.outputs.version_branch }}"
+          else
+            echo "Version branch retention enabled. Skipping deletion."
+          fi
