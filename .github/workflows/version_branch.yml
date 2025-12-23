@@ -94,8 +94,7 @@ jobs:
 
             export PS4='+ ['"${step_name}"':${BASH_SOURCE##*/}:${LINENO}] '
             set -x
-
-            trap 'moko_on_err "$step_name" "$LINENO" "$BASH_COMMAND"' ERR
+            trap "moko_on_err '${step_name}' \"\$LINENO\" \"\$BASH_COMMAND\"" ERR
           }
 
           moko_on_err() {
@@ -381,6 +380,7 @@ jobs:
             echo "[ERROR] No VERSION: (NN.NN.NN) or <version> tags found outside .github" >&2
             exit 2
           fi
+
       - name: Bump versions and update manifest dates (targeted, excluding .github)
         run: |
           source "$CI_HELPERS"
@@ -406,6 +406,7 @@ jobs:
           header_re = re.compile(r'(?im)(VERSION[ 	]*:[ 	]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
 
           manifest_marker_re = re.compile(r'(?is)<extension')
+          xml_version_re = re.compile(r'(?is)(<version[ 	]*>)([^<]*?)(</version[ 	]*>)')
           xml_date_res = [
             re.compile(r'(?is)(<creationDate[ 	]*>)([^<]*?)(</creationDate[ 	]*>)'),
             re.compile(r'(?is)(<date[ 	]*>)([^<]*?)(</date[ 	]*>)'),
@@ -461,7 +462,8 @@ jobs:
               counters['header_replacements'] += n1
 
             # Joomla manifest XML only (<extension ...>)
-            if p.suffix.lower() == '.xml' and manifest_marker_re.search(text):
+            is_manifest = (p.suffix.lower() == '.xml' and manifest_marker_re.search(original) is not None)
+            if is_manifest:
               text2, n2 = xml_version_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
               text = text2
               if n2:
@@ -475,13 +477,13 @@ jobs:
 
             if text != original:
               would_update_files.append(str(p))
-              if p.suffix.lower() == '.xml' and manifest_marker_re.search(original):
+              if is_manifest:
                 would_update_manifests.append(str(p))
 
               if not report_only:
                 p.write_text(text, encoding='utf-8')
                 updated_files.append(str(p))
-                if p.suffix.lower() == '.xml' and manifest_marker_re.search(original):
+                if is_manifest:
                   updated_manifests.append(str(p))
 
           report = {
@@ -510,7 +512,6 @@ jobs:
           if not updated_files:
             print('[INFO] No eligible files updated. Skipping version bump without failure.')
             raise SystemExit(0)
-
           PY
 
       - name: Enforce update feed XML is release generated only (delete update.xml and updates.xml)
