@@ -398,13 +398,14 @@ jobs:
           if not new_version:
             raise SystemExit('[FATAL] NEW_VERSION env var missing')
 
+          report_only = (os.environ.get('REPORT_ONLY') or '').strip().lower() == 'true'
+
           stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
           root = Path('.').resolve()
 
           header_re = re.compile(r'(?im)(VERSION[ 	]*:[ 	]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
 
           manifest_marker_re = re.compile(r'(?is)<extension\b')
-          xml_version_re = re.compile(r'(?is)(<version[ 	]*>)([^<]*?)(</version[ 	]*>)')
           xml_date_res = [
             re.compile(r'(?is)(<creationDate[ 	]*>)([^<]*?)(</creationDate[ 	]*>)'),
             re.compile(r'(?is)(<date[ 	]*>)([^<]*?)(</date[ 	]*>)'),
@@ -419,8 +420,11 @@ jobs:
           skip_dirs = {'.git', '.github', 'node_modules', 'vendor', '.venv', 'dist', 'build'}
 
           counters = defaultdict(int)
-          updated = []
+
+          updated_files = []
           updated_manifests = []
+          would_update_files = []
+          would_update_manifests = []
 
           def should_skip(p: Path) -> bool:
             if p.suffix.lower() in skip_ext:
@@ -451,10 +455,12 @@ jobs:
 
             original = text
 
+            # Header style markers: VERSION: NN.NN.NN
             text, n1 = header_re.subn(lambda m: m.group(1) + new_version, text)
             if n1:
               counters['header_replacements'] += n1
 
+            # Joomla manifest XML only (<extension ...>)
             if p.suffix.lower() == '.xml' and manifest_marker_re.search(text):
               text2, n2 = xml_version_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
               text = text2
@@ -467,63 +473,79 @@ jobs:
                 if n3:
                   counters['xml_date_replacements'] += n3
 
-              if text != original:
-                updated_manifests.append(str(p))
-
             if text != original:
-              p.write_text(text, encoding='utf-8')
-              updated.append(str(p))
+              would_update_files.append(str(p))
+              if p.suffix.lower() == '.xml' and manifest_marker_re.search(original):
+                would_update_manifests.append(str(p))
+
+              if not report_only:
+                p.write_text(text, encoding='utf-8')
+                updated_files.append(str(p))
+                if p.suffix.lower() == '.xml' and manifest_marker_re.search(original):
+                  updated_manifests.append(str(p))
 
           report = {
+            'mode': 'report_only' if report_only else 'apply',
             'new_version': new_version,
             'stamp_utc': stamp,
             'counters': dict(counters),
-            'updated_files': updated,
+            'updated_files': updated_files,
             'updated_manifests': updated_manifests,
+            'would_update_files': would_update_files,
+            'would_update_manifests': would_update_manifests,
           }
 
           Path('.github').mkdir(parents=True, exist_ok=True)
           Path('.github/version-bump-report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
 
-          print('[INFO] Scan summary')
-          for k in sorted(counters.keys()):
-            print('  ' + k + ': ' + str(counters[k]))
-
-          print('[INFO] Updated files: ' + str(len(updated)))
+          print('[INFO] Mode: ' + ('report_only' if report_only else 'apply'))
+          print('[INFO] Would update files: ' + str(len(would_update_files)))
+          print('[INFO] Would update manifests: ' + str(len(would_update_manifests)))
+          print('[INFO] Updated files: ' + str(len(updated_files)))
           print('[INFO] Updated manifests: ' + str(len(updated_manifests)))
 
-          if not updated:
+          if report_only:
+            raise SystemExit(0)
+
+          if not updated_files:
             print('[INFO] No eligible files updated. Skipping version bump without failure.')
             raise SystemExit(0)
+
           PY
 
-      - name: Enforce update.xml is release generated only
+      - name:- name: Enforce update feed XML is release generated only (delete update.xml and updates.xml)
         if: ${{ env.REPORT_ONLY != 'true' }}
         run: |
           source "$CI_HELPERS"
-          moko_init "Enforce update.xml is release generated only"
+          moko_init "Enforce update feed XML is release generated only"
 
-          if [[ -f "update.xml" ]]; then
-            echo "[INFO] update.xml present at repo root. Removing file because it is release generated only."
+          echo "[INFO] Removing release-generated update feeds from repo root"
 
-            # Ensure we can delete
-            chmod u+rw "update.xml" || true
+          # Prefer git-aware removal for tracked files
+          git rm -f --ignore-unmatch "update.xml" "updates.xml" || true
 
-            rm -f "update.xml"
+          # Defense in depth for untracked or regenerated files
+          rm -f "update.xml" "updates.xml" || true
 
-            if [[ -f "update.xml" ]]; then
-              echo "[FATAL] update.xml could not be deleted." >&2
-              ls -la "update.xml" || true
-              exit 2
-            fi
-
-            echo "[INFO] update.xml deleted successfully."
-            echo "[INFO] Confirming working tree reflects deletion"
-            git status --porcelain=v1 update.xml || true
-            git diff -- update.xml || true
-          else
-            echo "[INFO] update.xml not present. No action taken."
+          # Hard verification
+          if [[ -f "update.xml" || -f "updates.xml" ]]; then
+            echo "[FATAL] Update feed XML still present after deletion attempt." >&2
+            ls -la "update.xml" "updates.xml" 2>/dev/null || true
+            exit 2
           fi
+
+          if git ls-files --error-unmatch "update.xml" >/dev/null 2>&1; then
+            echo "[FATAL] update.xml is still tracked after git rm." >&2
+            exit 2
+          fi
+
+          if git ls-files --error-unmatch "updates.xml" >/dev/null 2>&1; then
+            echo "[FATAL] updates.xml is still tracked after git rm." >&2
+            exit 2
+          fi
+
+          echo "[INFO] Update feed XML removed and untracked as required."
+          git status --porcelain=v1 || true
 
       - name: Change scope guard (block .github edits)
         run: |
