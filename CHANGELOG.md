@@ -23,6 +23,8 @@
 
 ## [UNRELEASED]
 - Created `.github/workflows`
+- Replaced `./CODE_OF_CONDUCT.md` from `MokoStandards`
+- Replaced `./CONTRIBUTING.md` from `MokoStandards`
 
 ## [03.05.00] 2025-12-16
 - TODO split to own file
