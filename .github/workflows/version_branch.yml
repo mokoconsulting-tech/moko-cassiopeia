@@ -492,7 +492,7 @@ jobs:
             raise SystemExit(0)
           PY
 
-      - name:- name: Enforce update.xml is release generated only
+      - name: Enforce update.xml is release generated only
         if: ${{ env.REPORT_ONLY != 'true' }}
         run: |
           source "$CI_HELPERS"
