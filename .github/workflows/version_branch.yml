@@ -405,7 +405,7 @@ jobs:
 
           header_re = re.compile(r'(?im)(VERSION[ 	]*:[ 	]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
 
-          manifest_marker_re = re.compile(r'(?is)<extension\b')
+          manifest_marker_re = re.compile(r'(?is)<extension')
           xml_date_res = [
             re.compile(r'(?is)(<creationDate[ 	]*>)([^<]*?)(</creationDate[ 	]*>)'),
             re.compile(r'(?is)(<date[ 	]*>)([^<]*?)(</date[ 	]*>)'),
