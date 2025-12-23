@@ -492,54 +492,28 @@ jobs:
             raise SystemExit(0)
           PY
 
-      - name: Enforce update.xml is release generated only
+      - name:- name: Enforce update.xml is release generated only
         if: ${{ env.REPORT_ONLY != 'true' }}
         run: |
           source "$CI_HELPERS"
           moko_init "Enforce update.xml is release generated only"
 
           if [[ -f "update.xml" ]]; then
-            echo "[INFO] update.xml present at repo root. Clearing contents because it is release generated only."
+            echo "[INFO] update.xml present at repo root. Removing file because it is release generated only."
 
-            # Ensure we can write
+            # Ensure we can delete
             chmod u+rw "update.xml" || true
 
-            # Hard clear using Python (bypasses shell redirection oddities)
-            python3 - <<'PY'
-          from pathlib import Path
-          p = Path('update.xml')
-          p.write_bytes(b'')
-          PY
+            rm -f "update.xml"
 
-            # Defense in depth
-            : > "update.xml" || true
-            truncate -s 0 "update.xml" || true
-
-            SIZE_BYTES="$(wc -c < update.xml | tr -d ' ')"
-
-            if [[ "${SIZE_BYTES}" != "0" ]]; then
-              echo "[WARN] update.xml still ${SIZE_BYTES} bytes after clear. Forcing delete and recreate empty file."
-              rm -f "update.xml" || true
-              python3 - <<'PY'
-          from pathlib import Path
-          Path('update.xml').write_bytes(b'')
-          PY
-              truncate -s 0 "update.xml" || true
-              SIZE_BYTES="$(wc -c < update.xml | tr -d ' ')"
-            fi
-
-            echo "[INFO] update.xml size after clear: ${SIZE_BYTES} bytes"
-
-            if [[ "${SIZE_BYTES}" != "0" ]]; then
-              echo "[INFO] Debug: first 32 bytes (hex)"
-              od -An -tx1 -N 32 update.xml || true
-              echo "[INFO] Debug: file view (cat -A, first 5 lines)"
-              cat -A update.xml | head -n 5 || true
-              echo "[FATAL] update.xml could not be cleared to 0 bytes." >&2
+            if [[ -f "update.xml" ]]; then
+              echo "[FATAL] update.xml could not be deleted." >&2
+              ls -la "update.xml" || true
               exit 2
             fi
 
-            echo "[INFO] Confirming working tree reflects empty update.xml"
+            echo "[INFO] update.xml deleted successfully."
+            echo "[INFO] Confirming working tree reflects deletion"
             git status --porcelain=v1 update.xml || true
             git diff -- update.xml || true
           else
