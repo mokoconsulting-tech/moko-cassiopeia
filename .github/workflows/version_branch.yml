@@ -513,7 +513,7 @@ jobs:
 
           PY
 
-      - name:- name: Enforce update feed XML is release generated only (delete update.xml and updates.xml)
+      - name: Enforce update feed XML is release generated only (delete update.xml and updates.xml)
         if: ${{ env.REPORT_ONLY != 'true' }}
         run: |
           source "$CI_HELPERS"
