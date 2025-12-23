@@ -40,6 +40,14 @@ on:
         options:
           - "true"
           - "false"
+      report_only:
+        description: "Report only mode (no branch creation, no file writes, report output only)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "true"
+          - "false"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.repository }}-${{ github.event.inputs.new_version }}
@@ -63,6 +71,7 @@ jobs:
       COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
       ERROR_LOG: /tmp/version_branch_errors.log
       CI_HELPERS: /tmp/moko_ci_helpers.sh
+      REPORT_ONLY: ${{ github.event.inputs.report_only }}
 
     steps:
       - name: Checkout repository
@@ -115,6 +124,7 @@ jobs:
           echo "  BASE_BRANCH=${BASE_BRANCH}"
           echo "  BRANCH_PREFIX=${BRANCH_PREFIX}"
           echo "  COMMIT_CHANGES=${COMMIT_CHANGES}"
+          echo "  REPORT_ONLY=${REPORT_ONLY}"
 
           [[ -n "${NEW_VERSION}" ]] || { echo "[ERROR] new_version missing" >&2; exit 2; }
           [[ "${NEW_VERSION}" =~ ^[0-9]{2}[.][0-9]{2}[.][0-9]{2}$ ]] || { echo "[ERROR] Invalid version format: ${NEW_VERSION}" >&2; exit 2; }
@@ -200,6 +210,7 @@ jobs:
           echo "[INFO] No namespace collision detected for BRANCH_PREFIX=${BRANCH_PREFIX}"
 
       - name: Create and push version branch
+        if: ${{ env.REPORT_ONLY != 'true' }}
         run: |
           source "$CI_HELPERS"
           moko_init "Create and push version branch"
@@ -221,6 +232,7 @@ jobs:
           git push --set-upstream origin "${BRANCH_NAME}"
 
       - name: Ensure CHANGELOG.md rolls UNRELEASED into the release (no TODO)
+        if: ${{ env.REPORT_ONLY != 'true' }}
         run: |
           source "$CI_HELPERS"
           moko_init "CHANGELOG governance"
@@ -475,6 +487,7 @@ jobs:
           PY
 
       - name: Enforce update.xml is release generated only
+        if: ${{ env.REPORT_ONLY != 'true' }}
         run: |
           source "$CI_HELPERS"
           moko_init "Enforce update.xml is release generated only"
@@ -562,7 +575,7 @@ jobs:
 
       - name: Commit changes
         id: commit
-        if: ${{ env.COMMIT_CHANGES == 'true' }}
+        if: ${{ env.REPORT_ONLY != 'true' && env.COMMIT_CHANGES == 'true' }} }}
         run: |
           source "$CI_HELPERS"
           moko_init "Commit changes"
@@ -582,7 +595,7 @@ jobs:
           echo "committed=true" >> "$GITHUB_OUTPUT"
 
       - name: Push commits
-        if: ${{ env.COMMIT_CHANGES == 'true' && steps.commit.outputs.committed == 'true' }}
+        if: ${{ env.REPORT_ONLY != 'true' && env.COMMIT_CHANGES == 'true' && steps.commit.outputs.committed == 'true' }} }}
         run: |
           source "$CI_HELPERS"
           moko_init "Push commits"
