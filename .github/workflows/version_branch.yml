@@ -22,7 +22,7 @@
 # PATH: /.github/workflows/version_branch.yml
 # VERSION: 01.00.00
 # BRIEF: Create a version branch and align versions across governed files
-# NOTE: Enterprise gates: policy checks, collision defense, scoped changes, audit summary, error summary
+# NOTE: Enterprise gates: policy checks, collision defense, manifest targeting, audit summary, error summary
 
 name: Create version branch and bump versions
 
@@ -32,22 +32,10 @@ on:
       new_version:
         description: "New version in format NN.NN.NN (example 03.01.00)"
         required: true
-      branch_prefix:
-        description: "Branch prefix for version branches (example dev/)"
-        required: false
-        default: "dev/"
       commit_changes:
         description: "Commit and push changes"
         required: false
         default: "true"
-        type: choice
-        options:
-          - "true"
-          - "false"
-      dry_run:
-        description: "Run validations and reports without pushing or committing"
-        required: false
-        default: "false"
         type: choice
         options:
           - "true"
@@ -67,14 +55,12 @@ defaults:
 jobs:
   version-bump:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
 
     env:
       NEW_VERSION: ${{ github.event.inputs.new_version }}
       BASE_BRANCH: ${{ github.ref_name }}
-      BRANCH_PREFIX: ${{ github.event.inputs.branch_prefix }}
+      BRANCH_PREFIX: dev/
       COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
-      DRY_RUN: ${{ github.event.inputs.dry_run }}
       ERROR_LOG: /tmp/version_branch_errors.log
       CI_HELPERS: /tmp/moko_ci_helpers.sh
 
@@ -115,19 +101,6 @@ jobs:
               echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) | ${step_name} | line ${line_no} | ${last_cmd}" >> "$ERROR_LOG" || true
             fi
           }
-
-          moko_bool() {
-            local v="${1:-false}"
-            [[ "${v}" == "true" ]]
-          }
-
-          moko_notice() {
-            echo "[INFO] $*"
-          }
-
-          moko_warn() {
-            echo "[WARN] $*" >&2
-          }
           SH
 
           chmod 0755 "$CI_HELPERS"
@@ -137,22 +110,18 @@ jobs:
           source "$CI_HELPERS"
           moko_init "Validate inputs"
 
-          moko_notice "Inputs received:"
-          moko_notice "  NEW_VERSION=${NEW_VERSION}"
-          moko_notice "  BASE_BRANCH=${BASE_BRANCH}"
-          moko_notice "  BRANCH_PREFIX=${BRANCH_PREFIX}"
-          moko_notice "  COMMIT_CHANGES=${COMMIT_CHANGES}"
-          moko_notice "  DRY_RUN=${DRY_RUN}"
+          echo "[INFO] Inputs received:"
+          echo "  NEW_VERSION=${NEW_VERSION}"
+          echo "  BASE_BRANCH=${BASE_BRANCH}"
+          echo "  BRANCH_PREFIX=${BRANCH_PREFIX}"
+          echo "  COMMIT_CHANGES=${COMMIT_CHANGES}"
 
           [[ -n "${NEW_VERSION}" ]] || { echo "[ERROR] new_version missing" >&2; exit 2; }
           [[ "${NEW_VERSION}" =~ ^[0-9]{2}[.][0-9]{2}[.][0-9]{2}$ ]] || { echo "[ERROR] Invalid version format: ${NEW_VERSION}" >&2; exit 2; }
 
-          [[ -n "${BRANCH_PREFIX}" ]] || { echo "[ERROR] branch_prefix missing" >&2; exit 2; }
-          [[ "${BRANCH_PREFIX}" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "[ERROR] Invalid branch_prefix: ${BRANCH_PREFIX}" >&2; exit 2; }
-          [[ "${BRANCH_PREFIX}" == */ ]] || { echo "[ERROR] branch_prefix must end with '/'" >&2; exit 2; }
-
-          if moko_bool "${DRY_RUN}"; then
-            moko_notice "Dry run enabled. No pushes and no commits will be executed."
+          if [[ "${BRANCH_PREFIX}" != "dev/" ]]; then
+            echo "[FATAL] BRANCH_PREFIX is locked by policy. Expected 'dev/' but got '${BRANCH_PREFIX}'." >&2
+            exit 2
           fi
 
           git ls-remote --exit-code --heads origin "${BASE_BRANCH}" >/dev/null 2>&1 || {
@@ -162,7 +131,7 @@ jobs:
             exit 2
           }
 
-          moko_notice "Input validation passed"
+          echo "[INFO] Input validation passed"
 
       - name: Enterprise policy gate (required files)
         run: |
@@ -202,7 +171,7 @@ jobs:
             exit 2
           fi
 
-          moko_notice "Policy gate passed"
+          echo "[INFO] Policy gate passed"
 
       - name: Configure git identity
         run: |
@@ -211,7 +180,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          moko_notice "Git identity configured"
+          echo "[INFO] Git identity configured"
 
       - name: Branch namespace collision defense
         run: |
@@ -223,22 +192,20 @@ jobs:
             echo "[ERROR] Branch namespace collision detected" >&2
             echo "[ERROR] A branch named '${PREFIX_TOP}' exists on origin, so '${BRANCH_PREFIX}<version>' cannot be created." >&2
             echo "[ERROR] Remediation options:" >&2
-            echo "  - Change branch_prefix to a non colliding namespace (example release/dev/)" >&2
+            echo "  - Change BRANCH_PREFIX to a non colliding namespace (example: release/dev/)" >&2
             echo "  - Rename the existing '${PREFIX_TOP}' branch (organizational policy permitting)" >&2
             exit 2
           fi
 
-          moko_notice "No namespace collision detected for BRANCH_PREFIX=${BRANCH_PREFIX}"
+          echo "[INFO] No namespace collision detected for BRANCH_PREFIX=${BRANCH_PREFIX}"
 
-      - name: Create version branch
+      - name: Create and push version branch
         run: |
           source "$CI_HELPERS"
-          moko_init "Create version branch"
+          moko_init "Create and push version branch"
 
           BRANCH_NAME="${BRANCH_PREFIX}${NEW_VERSION}"
-          echo "BRANCH_NAME=${BRANCH_NAME}" >> "$GITHUB_ENV"
-
-          moko_notice "Creating branch: ${BRANCH_NAME} from origin/${BASE_BRANCH}"
+          echo "[INFO] Creating branch: ${BRANCH_NAME} from origin/${BASE_BRANCH}"
 
           git fetch --all --tags --prune
 
@@ -248,14 +215,9 @@ jobs:
           fi
 
           git checkout -B "${BRANCH_NAME}" "origin/${BASE_BRANCH}"
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> "$GITHUB_ENV"
 
-      - name: Push version branch
-        if: ${{ github.event.inputs.dry_run != 'true' }}
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Push version branch"
-
-          moko_notice "Pushing new branch to origin: ${BRANCH_NAME}"
+          echo "[INFO] Pushing new branch to origin"
           git push --set-upstream origin "${BRANCH_NAME}"
 
       - name: Ensure CHANGELOG.md rolls UNRELEASED into the release (no TODO)
@@ -280,19 +242,26 @@ jobs:
 
           lines = p.read_text(encoding='utf-8', errors='replace').splitlines(True)
 
+          # Accept repo H1 variants, including:
+          #   # Changelog
+          #   # Changelog - Project (VERSION: 03.05.00)
+          #   # Changelog — Project (VERSION: 03.05.00)
           h1_re = re.compile(r'^#\s+Changelog\b.*$', re.IGNORECASE)
-          bullet_re = re.compile(r'^[ ]*[-*+][ ]+')
-          blank_re = re.compile(r'^[ ]*$')
-          unreleased_re = re.compile(r'^[ ]*##[ ]*(?:\[[ ]*UNRELEASED[ ]*\]|UNRELEASED)[ ]*$', re.IGNORECASE)
+
+          bullet_re = re.compile(r'^[   ]*[-*+][   ]+')
+          blank_re = re.compile(r'^[   ]*$')
+          unreleased_re = re.compile(r'^[   ]*##[   ]*(?:\[[   ]*UNRELEASED[   ]*\]|UNRELEASED)[   ]*$', re.IGNORECASE)
 
           stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
           version_h2 = '## [' + new_version + '] ' + stamp + nl
           version_prefix = '## [' + new_version + '] '
 
+          # No duplicates
           if any(l.strip().startswith(version_prefix) for l in lines):
             print('[INFO] Version H2 already present. No action taken.')
             raise SystemExit(0)
 
+          # Locate H1
           h1_idx = None
           for i, line in enumerate(lines):
             if h1_re.match(line.strip()):
@@ -303,10 +272,12 @@ jobs:
             print('[ERROR] CHANGELOG.md missing required H1 beginning with: # Changelog')
             raise SystemExit(2)
 
+          # Insertion point is immediately after H1 and any following blank lines
           insert_at = h1_idx + 1
           while insert_at < len(lines) and blank_re.match(lines[insert_at].rstrip(nl).rstrip(cr)):
             insert_at += 1
 
+          # Locate UNRELEASED
           unreleased_idx = None
           for i, line in enumerate(lines):
             if unreleased_re.match(line.strip()):
@@ -314,6 +285,7 @@ jobs:
               break
 
           if unreleased_idx is not None:
+            # Convert UNRELEASED into this version
             lines[unreleased_idx] = version_h2
 
             k = unreleased_idx + 1
@@ -324,15 +296,22 @@ jobs:
               moved.append(lines[k])
               k += 1
 
+            # Normalize empty or placeholder content into a controlled bullet
             if not any(bullet_re.match(x.rstrip(nl).rstrip(cr)) for x in moved):
               moved = ['- Version bump' + nl]
 
+            # Ensure VERSION line exists at top of moved block
+            if not any(x.lstrip().startswith('- VERSION:') for x in moved):
+              moved.insert(0, '- Version bump' + nl)
+
             lines[unreleased_idx + 1:k] = moved
 
+            # Reinsert a fresh UNRELEASED block after H1 insertion point
             insert_unreleased = nl + '## [UNRELEASED]' + nl + '- ' + nl + nl
             lines.insert(insert_at, insert_unreleased)
 
           else:
+            # No UNRELEASED block: insert a new release section after H1
             insert = (
               nl +
               '## [' + new_version + '] ' + stamp + nl +
@@ -340,18 +319,21 @@ jobs:
             )
             lines.insert(insert_at, insert)
 
+          # Update displayed VERSION in:
+          # - FILE INFORMATION block line: VERSION: NN.NN.NN
+          # - H1 title line: (VERSION: NN.NN.NN)
           text = ''.join(lines)
 
           text = re.sub(
             r'(?im)^(\s*VERSION\s*:\s*)\d{2}\.\d{2}\.\d{2}(\s*)$',
-            r'' + new_version + r'',
+            r'\g<1>' + new_version + r'\2',
             text,
             count=1,
           )
 
           text = re.sub(
             r'(?im)^(#\s+Changelog\b.*\(VERSION:\s*)(\d{2}\.\d{2}\.\d{2})(\)\s*)$',
-            r'' + new_version + r'',
+            r'\g<1>' + new_version + r'\g<3>',
             text,
             count=1,
           )
@@ -364,12 +346,253 @@ jobs:
           source "$CI_HELPERS"
           moko_init "Preflight discovery"
 
-          moko_notice "Scanning all directories except .github"
+          echo "[INFO] Scanning all directories except .github"
 
           COUNT=$(grep -RIn --exclude-dir=.git --exclude-dir=.github -i -E "VERSION[[:space:]]*:[[:space:]]*[0-9]{2}[.][0-9]{2}[.][0-9]{2}" . | wc -l || true)
-          moko_notice "VERSION: hits (repo wide): ${COUNT}"
+          echo "[INFO] VERSION: hits (repo-wide): ${COUNT}"
 
           COUNT2=$(grep -RIn --exclude-dir=.git --exclude-dir=.github "<version" . | wc -l || true)
-          moko_notice "<version> hits (repo wide): ${COUNT2}"
+          echo "[INFO] <version> hits (repo-wide): ${COUNT2}"
 
           if [[ "${COUNT}" -eq 0 && "${COUNT2}" -eq 0 ]]; then
+            echo "[ERROR] No VERSION: (NN.NN.NN) or <version> tags found outside .github" >&2
+            exit 2
+          fi
+      - name: Bump versions and update manifest dates (targeted, excluding .github)
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Version bump"
+
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+          from collections import defaultdict
+          from datetime import datetime, timezone
+
+          new_version = (os.environ.get('NEW_VERSION') or '').strip()
+          if not new_version:
+            raise SystemExit('[FATAL] NEW_VERSION env var missing')
+
+          stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+          root = Path('.').resolve()
+
+          header_re = re.compile(r'(?im)(VERSION[ 	]*:[ 	]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
+
+          manifest_marker_re = re.compile(r'(?is)<extension\b')
+          xml_version_re = re.compile(r'(?is)(<version[ 	]*>)([^<]*?)(</version[ 	]*>)')
+          xml_date_res = [
+            re.compile(r'(?is)(<creationDate[ 	]*>)([^<]*?)(</creationDate[ 	]*>)'),
+            re.compile(r'(?is)(<date[ 	]*>)([^<]*?)(</date[ 	]*>)'),
+            re.compile(r'(?is)(<releaseDate[ 	]*>)([^<]*?)(</releaseDate[ 	]*>)'),
+          ]
+
+          skip_ext = {
+            '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.pdf',
+            '.zip', '.7z', '.tar', '.gz', '.woff', '.woff2', '.ttf', '.otf',
+            '.mp3', '.mp4'
+          }
+          skip_dirs = {'.git', '.github', 'node_modules', 'vendor', '.venv', 'dist', 'build'}
+
+          counters = defaultdict(int)
+          updated = []
+          updated_manifests = []
+
+          def should_skip(p: Path) -> bool:
+            if p.suffix.lower() in skip_ext:
+              counters['skipped_by_ext'] += 1
+              return True
+            parts = {x.lower() for x in p.parts}
+            if any(d in parts for d in skip_dirs):
+              counters['skipped_by_dir'] += 1
+              return True
+            return False
+
+          for p in root.rglob('*'):
+            if not p.is_file():
+              continue
+            if should_skip(p):
+              continue
+
+            # Release only artifacts at repo root
+            if p.parent == root and p.name.lower() in {'update.xml', 'updates.xml'}:
+              counters['skipped_release_artifacts'] += 1
+              continue
+
+            try:
+              text = p.read_text(encoding='utf-8', errors='replace')
+            except Exception:
+              counters['skipped_read_error'] += 1
+              continue
+
+            original = text
+
+            text, n1 = header_re.subn(lambda m: m.group(1) + new_version, text)
+            if n1:
+              counters['header_replacements'] += n1
+
+            if p.suffix.lower() == '.xml' and manifest_marker_re.search(text):
+              text2, n2 = xml_version_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
+              text = text2
+              if n2:
+                counters['xml_version_replacements'] += n2
+
+              for rx in xml_date_res:
+                text3, n3 = rx.subn(lambda m: m.group(1) + stamp + m.group(3), text)
+                text = text3
+                if n3:
+                  counters['xml_date_replacements'] += n3
+
+              if text != original:
+                updated_manifests.append(str(p))
+
+            if text != original:
+              p.write_text(text, encoding='utf-8')
+              updated.append(str(p))
+
+          report = {
+            'new_version': new_version,
+            'stamp_utc': stamp,
+            'counters': dict(counters),
+            'updated_files': updated,
+            'updated_manifests': updated_manifests,
+          }
+
+          Path('.github').mkdir(parents=True, exist_ok=True)
+          Path('.github/version-bump-report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+
+          print('[INFO] Scan summary')
+          for k in sorted(counters.keys()):
+            print('  ' + k + ': ' + str(counters[k]))
+
+          print('[INFO] Updated files: ' + str(len(updated)))
+          print('[INFO] Updated manifests: ' + str(len(updated_manifests)))
+
+          if not updated:
+            print('[INFO] No eligible files updated. Skipping version bump without failure.')
+            raise SystemExit(0)
+          PY
+
+      - name: Enforce update.xml is release generated only
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Enforce update.xml is release generated only"
+
+          if [[ -f "update.xml" ]]; then
+            echo "[INFO] update.xml present at repo root. Clearing contents because it is release generated only."
+            chmod u+rw "update.xml" || true
+            : > "update.xml"
+            sync || true
+            echo "[INFO] update.xml size after truncate: $(wc -c < update.xml | tr -d ' ') bytes"
+          else
+            echo "[INFO] update.xml not present. No action taken."
+          fi
+
+      - name: Change scope guard (block .github edits)
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Change scope guard"
+
+          if [[ -z "$(git status --porcelain=v1)" ]]; then
+            echo "[INFO] No changes detected. Scope guard skipped."
+            exit 0
+          fi
+
+          echo "[INFO] Evaluating changed paths"
+          git diff --name-only > /tmp/changed_paths.txt
+
+          bad=0
+          while IFS= read -r p; do
+            if [[ "$p" == .github/* ]] && [[ "$p" != .github/version-bump-report.json ]]; then
+              echo "[ERROR] .github change is not permitted by this workflow: $p" >&2
+              bad=1
+            fi
+          done < /tmp/changed_paths.txt
+
+          if [[ "$bad" -ne 0 ]]; then
+            echo "[FATAL] Change scope guard failed. Workflow attempted to modify .github content." >&2
+            echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) | Change scope guard | attempted .github modifications" >> "$ERROR_LOG" || true
+            exit 2
+          fi
+
+          echo "[INFO] Scope guard passed"
+
+      - name: Publish audit trail to job summary
+        if: always()
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Publish audit trail"
+
+          echo "# Version branch run" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Repository: $GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Base branch: ${BASE_BRANCH}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- New branch: ${BRANCH_NAME:-}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Version: ${NEW_VERSION}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Commit changes: ${COMMIT_CHANGES}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ -f ".github/version-bump-report.json" ]]; then
+            echo "## Bump report" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`json" >> "$GITHUB_STEP_SUMMARY"
+            head -c 12000 ".github/version-bump-report.json" >> "$GITHUB_STEP_SUMMARY" || true
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          echo "## Error summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ -f "$ERROR_LOG" && -s "$ERROR_LOG" ]]; then
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+            tail -n 200 "$ERROR_LOG" >> "$GITHUB_STEP_SUMMARY" || true
+            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No errors recorded." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Show git status
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Show git status"
+
+          git status --porcelain=v1
+
+      - name: Commit changes
+        id: commit
+        if: ${{ env.COMMIT_CHANGES == 'true' }}
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Commit changes"
+
+          git rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "[ERROR] Not inside a git work tree" >&2; exit 2; }
+
+          if [[ -z "$(git status --porcelain=v1)" ]]; then
+            echo "[INFO] No changes detected. Skipping commit and push."
+            echo "committed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "[INFO] Staging all changes except .github"
+          git add -A -- . ":(exclude).github"
+
+          git commit -m "chore(release): bump version to ${NEW_VERSION}"
+          echo "committed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Push commits
+        if: ${{ env.COMMIT_CHANGES == 'true' && steps.commit.outputs.committed == 'true' }}
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Push commits"
+
+          git push
+
+      - name: Output branch name
+        if: always()
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Output branch name"
+
+          echo "[INFO] Created branch: ${BRANCH_NAME:-}"
