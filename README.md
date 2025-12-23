@@ -16,11 +16,11 @@
  INGROUP: Moko-Cassiopeia.Documentation
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: ./README.md
- VERSION: 03.05.00
+ VERSION: 03.06.00
  BRIEF: Documentation for Moko-Cassiopeia template
  -->
 
-# Moko-Cassiopeia (VERSION: 03.05.00)
+# Moko-Cassiopeia (VERSION: 03.06.00)
 
 A modern, lightweight enhancement layer for Joomla's Cassiopeia
 template.

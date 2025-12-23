@@ -15,7 +15,7 @@
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia
  PATH: ./media/templates/site/moko-cassiopeia/js/theme-init.js
- VERSION: 03.05.00
+ VERSION: 03.06.00
  BRIEF: Initialization script for Moko-Cassiopeia theme features and behaviors
  */
 

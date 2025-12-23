@@ -24,7 +24,7 @@
 # INGROUP: Scripts.Validation
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /scripts/validate_paths.sh
-# VERSION: 01.00.00
+# VERSION: 03.06.00
 # BRIEF: Detect Windows-style path separators in repository text files for CI enforcement.
 #
 
