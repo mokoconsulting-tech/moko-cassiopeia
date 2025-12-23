@@ -110,6 +110,12 @@ jobs:
               echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) | ${step_name} | line ${line_no} | ${last_cmd}" >> "$ERROR_LOG" || true
             fi
           }
+
+
+          moko_bool() {
+            local v="${1:-false}"
+            [[ "${v}" == "true" ]]
+          }
           SH
 
           chmod 0755 "$CI_HELPERS"
@@ -495,9 +501,25 @@ jobs:
           if [[ -f "update.xml" ]]; then
             echo "[INFO] update.xml present at repo root. Clearing contents because it is release generated only."
             chmod u+rw "update.xml" || true
-            : > "update.xml"
-            sync || true
-            echo "[INFO] update.xml size after truncate: $(wc -c < update.xml | tr -d ' ') bytes"
+
+            # Robust truncation
+            : > "update.xml" || true
+            truncate -s 0 "update.xml" || true
+
+            SIZE_BYTES="$(wc -c < update.xml | tr -d ' ')"
+            if [[ "${SIZE_BYTES}" != "0" ]]; then
+              echo "[WARN] update.xml truncate returned ${SIZE_BYTES} bytes. Forcing recreate."
+              rm -f "update.xml" || true
+              : > "update.xml"
+              truncate -s 0 "update.xml" || true
+              SIZE_BYTES="$(wc -c < update.xml | tr -d ' ')"
+            fi
+
+            echo "[INFO] update.xml size after truncate: ${SIZE_BYTES} bytes"
+            if [[ "${SIZE_BYTES}" != "0" ]]; then
+              echo "[FATAL] update.xml could not be cleared to 0 bytes." >&2
+              exit 2
+            fi
           else
             echo "[INFO] update.xml not present. No action taken."
           fi
@@ -575,7 +597,7 @@ jobs:
 
       - name: Commit changes
         id: commit
-        if: ${{ env.REPORT_ONLY != 'true' && env.COMMIT_CHANGES == 'true' }} }}
+        if: ${{ env.REPORT_ONLY != 'true' && env.COMMIT_CHANGES == 'true' }}
         run: |
           source "$CI_HELPERS"
           moko_init "Commit changes"
@@ -595,7 +617,7 @@ jobs:
           echo "committed=true" >> "$GITHUB_OUTPUT"
 
       - name: Push commits
-        if: ${{ env.REPORT_ONLY != 'true' && env.COMMIT_CHANGES == 'true' && steps.commit.outputs.committed == 'true' }} }}
+        if: ${{ env.REPORT_ONLY != 'true' && env.COMMIT_CHANGES == 'true' && steps.commit.outputs.committed == 'true' }}
         run: |
           source "$CI_HELPERS"
           moko_init "Push commits"
