@@ -377,88 +377,25 @@ jobs:
           header_re = re.compile(r'(?im)(VERSION[   ]*:[   ]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
 
           manifest_marker_re = re.compile(r'(?is)<extension\b')
-          # Joomla update server feeds commonly use <updates> root
-          updates_marker_re = re.compile(r'(?is)<updates\b|<update\b')
-          xml_version_re = re.compile(r'(?is)(<version[   ]*>)([^<]*?)(</version[   ]*>)')
-          xml_date_res = [
-            re.compile(r'(?is)(<creationDate[   ]*>)([^<]*?)(</creationDate[   ]*>)'),
-            re.compile(r'(?is)(<date[   ]*>)([^<]*?)(</date[   ]*>)'),
-            re.compile(r'(?is)(<releaseDate[   ]*>)([^<]*?)(</releaseDate[   ]*>)'),
-          ]
-
-          skip_ext = {
-            '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.pdf',
-            '.zip', '.7z', '.tar', '.gz', '.woff', '.woff2', '.ttf', '.otf',
-            '.mp3', '.mp4'
-          }
-          skip_dirs = {'.git', '.github', 'node_modules', 'vendor', '.venv', 'dist', 'build'}
-
-          counters = defaultdict(int)
-          updated = []
-          updated_manifests = []
-
-          def should_skip(p: Path) -> bool:
-            if p.suffix.lower() in skip_ext:
-              counters['skipped_by_ext'] += 1
-              return True
-            parts = {x.lower() for x in p.parts}
-            if any(d in parts for d in skip_dirs):
-              counters['skipped_by_dir'] += 1
-              return True
-            return False
-
-          for p in root.rglob('*'):
-            if not p.is_file():
-              continue
-            if should_skip(p):
-              continue
-
-            try:
-              text = p.read_text(encoding='utf-8', errors='replace')
-            except Exception:
-              counters['skipped_read_error'] += 1
-              continue
-
-            original = text
-
-            text, n1 = header_re.subn(lambda m: m.group(1) + new_version, text)
-            if n1:
-              counters['header_replacements'] += n1
-
-            if p.suffix.lower() == '.xml':
-              # Joomla manifest files
+          # Joomla update server feeds are release artifacts and must not exist on version branches
+          # update.xml / updates.xml are intentionally excluded here
+          if p.suffix.lower() == '.xml':
               if manifest_marker_re.search(text):
-                text2, n2 = xml_version_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
-                text = text2
-                if n2:
-                  counters['xml_version_replacements'] += n2
-
-                for rx in xml_date_res:
-                  text3, n3 = rx.subn(lambda m: m.group(1) + stamp + m.group(3), text)
-                  text = text3
-                  if n3:
-                    counters['xml_date_replacements'] += n3
-
-                if text != original:
-                  updated_manifests.append(str(p))
-              else:
-                # Special case: update server feeds (updates.xml, update.xml, or any XML containing <updates>/<update>)
-                if p.name.lower() in {'updates.xml', 'update.xml'} or updates_marker_re.search(text):
                   text2, n2 = xml_version_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
                   text = text2
                   if n2:
-                    counters['xml_version_replacements'] += n2
+                      counters['xml_version_replacements'] += n2
 
                   for rx in xml_date_res:
-                    text3, n3 = rx.subn(lambda m: m.group(1) + stamp + m.group(3), text)
-                    text = text3
-                    if n3:
-                      counters['xml_date_replacements'] += n3
+                      text3, n3 = rx.subn(lambda m: m.group(1) + stamp + m.group(3), text)
+                      text = text3
+                      if n3:
+                          counters['xml_date_replacements'] += n3
 
                   if text != original:
-                    updated_manifests.append(str(p))
-                else:
-                  counters['xml_skipped_non_manifest'] += 1
+                      updated_manifests.append(str(p))
+              else:
+                  counters['xml_skipped_non_manifest'] += 1s['xml_skipped_non_manifest'] += 1
 
             if text != original:
               p.write_text(text, encoding='utf-8')
@@ -493,9 +430,14 @@ jobs:
           moko_init "Enforce update.xml is release generated only"
 
           if [[ -f "update.xml" ]]; then
-            echo "[INFO] update.xml present at repo root. Removing because it is release generated only."
+            echo "[INFO] update.xml present at repo root. Clearing contents because it is release generated only."
 
-            if git ls-files --error-unmatch "update.xml" >/dev/null 2>&1; then
+            # Truncate file but keep it tracked for release workflows
+            : > "update.xml"
+            echo "[INFO] update.xml contents cleared"
+          else
+            echo "[INFO] update.xml not present. No action taken."
+          files --error-unmatch "update.xml" >/dev/null 2>&1; then
               git rm -f "update.xml"
               echo "[INFO] update.xml removed from index"
             else
