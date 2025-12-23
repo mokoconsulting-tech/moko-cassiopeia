@@ -295,6 +295,10 @@ jobs:
             if not any(bullet_re.match(x.rstrip(nl).rstrip(cr)) for x in moved):
               moved = ['- Version bump' + nl]
 
+            # Ensure VERSION line exists at top of moved block
+            if not any(x.lstrip().startswith('- VERSION:') for x in moved):
+              moved.insert(0, '- Version bump' + nl)
+
             lines[unreleased_idx + 1:k] = moved
 
             # Reinsert a fresh UNRELEASED block after H1 insertion point
