@@ -310,7 +310,6 @@ jobs:
             insert = (
               nl +
               '## [' + new_version + '] ' + stamp + nl +
-              '- VERSION: ' + new_version + nl +
               '- Version bump' + nl
             )
             lines.insert(insert_at, insert)
@@ -487,6 +486,25 @@ jobs:
             print('[INFO] No eligible files updated. Skipping version bump without failure.')
             raise SystemExit(0)
           PY
+
+      - name: Enforce update.xml is release generated only
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Enforce update.xml is release generated only"
+
+          if [[ -f "update.xml" ]]; then
+            echo "[INFO] update.xml present at repo root. Removing because it is release generated only."
+
+            if git ls-files --error-unmatch "update.xml" >/dev/null 2>&1; then
+              git rm -f "update.xml"
+              echo "[INFO] update.xml removed from index"
+            else
+              rm -f "update.xml"
+              echo "[INFO] update.xml removed from working tree"
+            fi
+          else
+            echo "[INFO] update.xml not present. No action taken."
+          fi
 
       - name: Post bump audit (updates.xml date only)
         run: |
