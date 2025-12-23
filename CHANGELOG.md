@@ -23,6 +23,7 @@
 
 ## [UNRELEASED]
 - Created `.github/workflows`
+- Created `docs/templates/template_update.xml`
 - Replaced `./CODE_OF_CONDUCT.md` from `MokoStandards`
 - Replaced `./CONTRIBUTING.md` from `MokoStandards`
 
