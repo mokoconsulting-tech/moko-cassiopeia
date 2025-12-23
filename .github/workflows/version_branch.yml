@@ -343,7 +343,7 @@ root = Path(".").resolve()
 
 # Use escape sequences only. Do not introduce literal tab characters.
 header_re = re.compile(r"(?im)(VERSION[ \t]*:[ \t]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})")
-manifest_marker_re = re.compile(r"(?is)<extension\b")
+manifest_marker_re = re.compile(r"(?is)<extension\b\b")  # word boundary guard
 xml_version_re = re.compile(r"(?is)(<version[ \t]*>)([^<]*?)(</version[ \t]*>)")
 xml_date_res = [
   re.compile(r"(?is)(<creationDate[ \t]*>)([^<]*?)(</creationDate[ \t]*>)"),
