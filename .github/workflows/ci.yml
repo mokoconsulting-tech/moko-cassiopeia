@@ -28,72 +28,72 @@
 # NOTE: Avoids wildcard branch filters on pull_request to prevent Actions parser errors.
 # ============================================================================
 
-name: CI
+name: Continuous integration
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-      - "dev/*"
-  pull_request:
-  workflow_dispatch:
+	push:
+		branches:
+			- main
+			- dev
+			- "dev/*"
+	pull_request:
+	workflow_dispatch:
 
 permissions:
-  contents: read
-  issues: write
+	contents: read
+	issues: write
 
 jobs:
-  ci:
-    name: Standards CI Validation
-    runs-on: ubuntu-latest
+	ci:
+		name: Standards CI Validation
+		runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+		steps:
+			- name: Checkout repository
+				uses: actions/checkout@v4
 
-      - name: Validate file paths
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -x "./scripts/validate_paths.sh" ]; then
-            ./scripts/validate_paths.sh
-          else
-            echo "validate_paths.sh not present, skipping"
-          fi
+			- name: Validate file paths
+				shell: bash
+				run: |
+					set -euo pipefail
+					if [ -x "./scripts/validate_paths.sh" ]; then
+						./scripts/validate_paths.sh
+					else
+						echo "validate_paths.sh not present, skipping"
+					fi
 
-      - name: Validate tabs usage
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -x "./scripts/validate_tabs.sh" ]; then
-            ./scripts/validate_tabs.sh
-          else
-            echo "validate_tabs.sh not present, skipping"
-          fi
+			- name: Validate tabs usage
+				shell: bash
+				run: |
+					set -euo pipefail
+					if [ -x "./scripts/validate_tabs.sh" ]; then
+						./scripts/validate_tabs.sh
+					else
+						echo "validate_tabs.sh not present, skipping"
+					fi
 
-      - name: Validate CHANGELOG governance
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -x "./scripts/validate_changelog.sh" ]; then
-            ./scripts/validate_changelog.sh
-          else
-            echo "validate_changelog.sh not present, skipping"
-          fi
+			- name: Validate CHANGELOG governance
+				shell: bash
+				run: |
+					set -euo pipefail
+					if [ -x "./scripts/validate_changelog.sh" ]; then
+						./scripts/validate_changelog.sh
+					else
+						echo "validate_changelog.sh not present, skipping"
+					fi
 
-      - name: Validate Joomla manifests
-        shell: bash
-        run: |
-          set -euo pipefail
-          if [ -x "./scripts/validate_manifest.sh" ]; then
-            ./scripts/validate_manifest.sh
-          else
-            echo "validate_manifest.sh not present, skipping"
-          fi
+			- name: Validate Joomla manifests
+				shell: bash
+				run: |
+					set -euo pipefail
+					if [ -x "./scripts/validate_manifest.sh" ]; then
+						./scripts/validate_manifest.sh
+					else
+						echo "validate_manifest.sh not present, skipping"
+					fi
 
-      - name: CI completion
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "CI checks completed successfully""on":
+			- name: CI completion
+				shell: bash
+				run: |
+					set -euo pipefail
+					echo "CI checks completed successfully""on":
