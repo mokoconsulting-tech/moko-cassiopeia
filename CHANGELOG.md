@@ -22,10 +22,10 @@
 # Changelog — Moko-Cassiopeia (VERSION: 03.05.00)
 
 ## [UNRELEASED]
-- 
+- Created `.github/workflows`
 
 ## [03.05.00] 2025-12-16
-- TODO split off own file
+- TODO split to own file
 
 ## [03.01.00] 2025-12-16
 - Created `.github/workflows/`
