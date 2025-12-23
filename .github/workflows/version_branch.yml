@@ -243,9 +243,9 @@ jobs:
           #   # Changelog — Project (VERSION: 03.05.00)
           h1_re = re.compile(r'^#\s+Changelog\b.*$', re.IGNORECASE)
 
-          bullet_re = re.compile(r'^[ 	]*[-*+][ 	]+')
-          blank_re = re.compile(r'^[ 	]*$')
-          unreleased_re = re.compile(r'^[ 	]*##[ 	]*(?:\[[ 	]*UNRELEASED[ 	]*\]|UNRELEASED)[ 	]*$', re.IGNORECASE)
+          bullet_re = re.compile(r'^[   ]*[-*+][   ]+')
+          blank_re = re.compile(r'^[   ]*$')
+          unreleased_re = re.compile(r'^[   ]*##[   ]*(?:\[[   ]*UNRELEASED[   ]*\]|UNRELEASED)[   ]*$', re.IGNORECASE)
 
           stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
           version_h2 = '## [' + new_version + '] ' + stamp + nl
@@ -295,14 +295,10 @@ jobs:
             if not any(bullet_re.match(x.rstrip(nl).rstrip(cr)) for x in moved):
               moved = ['- Version bump' + nl]
 
-            # Ensure VERSION line exists at top of moved block
-            if not any(x.lstrip().startswith('- VERSION:') for x in moved):
-              moved.insert(0, '- VERSION: ' + new_version + nl)
-
             lines[unreleased_idx + 1:k] = moved
 
             # Reinsert a fresh UNRELEASED block after H1 insertion point
-            insert_unreleased = nl + '## [UNRELEASED]' + nl + '- Placeholder for next release' + nl + nl
+            insert_unreleased = nl + '## [UNRELEASED]' + nl + '- ' + nl + nl
             lines.insert(insert_at, insert_unreleased)
 
           else:
@@ -375,16 +371,16 @@ jobs:
           stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
           root = Path('.').resolve()
 
-          header_re = re.compile(r'(?im)(VERSION[ 	]*:[ 	]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
+          header_re = re.compile(r'(?im)(VERSION[   ]*:[   ]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})')
 
           manifest_marker_re = re.compile(r'(?is)<extension\b')
           # Joomla update server feeds commonly use <updates> root
           updates_marker_re = re.compile(r'(?is)<updates\b|<update\b')
-          xml_version_re = re.compile(r'(?is)(<version[ 	]*>)([^<]*?)(</version[ 	]*>)')
+          xml_version_re = re.compile(r'(?is)(<version[   ]*>)([^<]*?)(</version[   ]*>)')
           xml_date_res = [
-            re.compile(r'(?is)(<creationDate[ 	]*>)([^<]*?)(</creationDate[ 	]*>)'),
-            re.compile(r'(?is)(<date[ 	]*>)([^<]*?)(</date[ 	]*>)'),
-            re.compile(r'(?is)(<releaseDate[ 	]*>)([^<]*?)(</releaseDate[ 	]*>)'),
+            re.compile(r'(?is)(<creationDate[   ]*>)([^<]*?)(</creationDate[   ]*>)'),
+            re.compile(r'(?is)(<date[   ]*>)([^<]*?)(</date[   ]*>)'),
+            re.compile(r'(?is)(<releaseDate[   ]*>)([^<]*?)(</releaseDate[   ]*>)'),
           ]
 
           skip_ext = {
