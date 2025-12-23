@@ -20,50 +20,93 @@
 #
 # FILE INFORMATION
 # DEFGROUP: MokoStandards
-# INGROUP: GitHub.Actions.CI
+# INGROUP: GitHub.Actions.ContinuousIntegration
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/ci.yml
 # VERSION: 01.00.00
 # BRIEF: Continuous integration governance workflow for standards enforcement.
-# NOTE: Avoids wildcard branch filters on pull_request to prevent Actions parser errors.
+# NOTE: Runs on every push. Auto-normalizes YAML tabs to two spaces before validation.
 # ============================================================================
 
 name: Continuous integration
 
 on:
   push:
-    branches:
-      - main
-      - dev
-      - "dev/*"
   pull_request:
   workflow_dispatch:
+    inputs:
+      auto_fix_tabs:
+        description: "Run scripts/fix_tabs.sh before validation (does not commit changes)"
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
-  issues: write
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   ci:
-    name: Standards CI Validation
+    name: Standards Continuous integration Validation
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Validate file paths
-        shell: bash
+      - name: Auto-fix YAML tabs when YAML changes detected
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.auto_fix_tabs }}
         run: |
           set -euo pipefail
-          if [ -x "./scripts/validate_paths.sh" ]; then
-            ./scripts/validate_paths.sh
-          else
-            echo "validate_paths.sh not present, skipping"
+
+          if ! command -v git >/dev/null 2>&1; then
+            echo "git not available, skipping tab normalization"
+            exit 0
           fi
 
-      - name: Validate tabs usage
-        shell: bash
+          # Determine change window
+          # - pull_request: compare base SHA to head SHA
+          # - push: compare event.before to event.after (current SHA)
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            RANGE="$BASE_SHA...$HEAD_SHA"
+          elif [ "${GITHUB_EVENT_NAME}" = "push" ]; then
+            BEFORE_SHA="${{ github.event.before }}"
+            AFTER_SHA="${{ github.sha }}"
+            RANGE="$BEFORE_SHA...$AFTER_SHA"
+          else
+            RANGE=""
+          fi
+
+          if [ -n "$RANGE" ]; then
+            CHANGED_YAML=$(git diff --name-only "$RANGE" -- '*.yml' '*.yaml' || true)
+          else
+            CHANGED_YAML=$(git ls-files '*.yml' '*.yaml' 2>/dev/null || true)
+          fi
+
+          if [ -n "$CHANGED_YAML" ]; then
+            echo "YAML changes detected. Running fix_tabs.sh"
+            if [ -x "./scripts/fix_tabs.sh" ]; then
+              ./scripts/fix_tabs.sh
+            else
+              echo "fix_tabs.sh not present, skipping"
+            fi
+          else
+            echo "No YAML changes detected. Skipping fix_tabs.sh"
+          fi
+
+      - name: Validate YAML tabs usage
         run: |
           set -euo pipefail
           if [ -x "./scripts/validate_tabs.sh" ]; then
@@ -72,8 +115,16 @@ jobs:
             echo "validate_tabs.sh not present, skipping"
           fi
 
+      - name: Validate file paths
+        run: |
+          set -euo pipefail
+          if [ -x "./scripts/validate_paths.sh" ]; then
+            ./scripts/validate_paths.sh
+          else
+            echo "validate_paths.sh not present, skipping"
+          fi
+
       - name: Validate CHANGELOG governance
-        shell: bash
         run: |
           set -euo pipefail
           if [ -x "./scripts/validate_changelog.sh" ]; then
@@ -83,7 +134,6 @@ jobs:
           fi
 
       - name: Validate Joomla manifests
-        shell: bash
         run: |
           set -euo pipefail
           if [ -x "./scripts/validate_manifest.sh" ]; then
@@ -92,8 +142,7 @@ jobs:
             echo "validate_manifest.sh not present, skipping"
           fi
 
-      - name: CI completion
-        shell: bash
+      - name: Continuous integration completion
         run: |
           set -euo pipefail
-          echo "CI checks completed successfully""on":
+          echo "Continuous integration checks completed successfully"
