@@ -215,7 +215,7 @@ jobs:
           echo "[INFO] Pushing new branch to origin"
           git push --set-upstream origin "${BRANCH_NAME}"
 
-      - name: Ensure CHANGELOG.md has a release entry and a VERSION line
+      - name: Ensure CHANGELOG.md rolls UNRELEASED into the release (no TODO)
         run: |
           source "$CI_HELPERS"
           moko_init "CHANGELOG governance"
@@ -235,118 +235,106 @@ jobs:
           if not p.exists():
             raise SystemExit('[FATAL] CHANGELOG.md missing')
 
-          text = p.read_text(encoding='utf-8', errors='replace').splitlines(True)
+          lines = p.read_text(encoding='utf-8', errors='replace').splitlines(True)
 
-          todo_re = re.compile(r'^[ 	]*##[ 	]*(?:\[[ 	]*TODO[ 	]*\]|TODO)[ 	]*$', re.IGNORECASE)
+          # Accept repo H1 variants, including:
+          #   # Changelog
+          #   # Changelog - Project (VERSION: 03.05.00)
+          #   # Changelog — Project (VERSION: 03.05.00)
+          h1_re = re.compile(r'^#\s+Changelog\b.*$', re.IGNORECASE)
+
           bullet_re = re.compile(r'^[ 	]*[-*+][ 	]+')
           blank_re = re.compile(r'^[ 	]*$')
           unreleased_re = re.compile(r'^[ 	]*##[ 	]*(?:\[[ 	]*UNRELEASED[ 	]*\]|UNRELEASED)[ 	]*$', re.IGNORECASE)
 
-          idx = None
-          for i, line in enumerate(text):
-            clean = line.lstrip(chr(65279)).rstrip(nl).rstrip(cr)
-            if todo_re.match(clean):
-              idx = i
-              break
-
-          if idx is None:
-            # Enterprise safe fallback: insert after first H1 '# Changelog' when TODO section is absent.
-            h1_re = re.compile(r'^#\s+Changelog\s*$', re.IGNORECASE)
-            h1_idx = None
-            for i, line in enumerate(text):
-              if h1_re.match(line.strip()):
-                h1_idx = i
-                break
-
-            if h1_idx is None:
-              print('[ERROR] CHANGELOG.md missing required H1: # Changelog')
-              raise SystemExit(2)
-
-            # Insert after H1 and any following blank lines
-            j = h1_idx + 1
-            while j < len(text) and blank_re.match(text[j].rstrip(nl).rstrip(cr)):
-              j += 1
-
-            # Mark idx as H1 position so later logic can compute insert point.
-            idx = h1_idx
-            # Skip TODO bullet enforcement when TODO does not exist.
-            saw_bullet = True
-
-
-          j = idx + 1
-          saw_bullet = False
-          while j < len(text):
-            line = text[j].rstrip(nl).rstrip(cr)
-            if bullet_re.match(line):
-              saw_bullet = True
-              j += 1
-              continue
-            if blank_re.match(line):
-              j += 1
-              continue
-            break
-
-          if not saw_bullet:
-            text.insert(idx + 1, '- Placeholder TODO item' + nl)
-            j = idx + 2
-
           stamp = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-          version_heading = '## [' + new_version + '] ' + stamp + nl
+          version_h2 = '## [' + new_version + '] ' + stamp + nl
+          version_prefix = '## [' + new_version + '] '
 
-          target_prefix = '## [' + new_version + '] '
-          if any(l.strip().startswith(target_prefix) for l in text):
+          # No duplicates
+          if any(l.strip().startswith(version_prefix) for l in lines):
             print('[INFO] Version H2 already present. No action taken.')
             raise SystemExit(0)
 
+          # Locate H1
+          h1_idx = None
+          for i, line in enumerate(lines):
+            if h1_re.match(line.strip()):
+              h1_idx = i
+              break
+
+          if h1_idx is None:
+            print('[ERROR] CHANGELOG.md missing required H1 beginning with: # Changelog')
+            raise SystemExit(2)
+
+          # Insertion point is immediately after H1 and any following blank lines
+          insert_at = h1_idx + 1
+          while insert_at < len(lines) and blank_re.match(lines[insert_at].rstrip(nl).rstrip(cr)):
+            insert_at += 1
+
+          # Locate UNRELEASED
           unreleased_idx = None
-          for i, line in enumerate(text):
+          for i, line in enumerate(lines):
             if unreleased_re.match(line.strip()):
               unreleased_idx = i
               break
 
-          def ensure_version_line(at_index: int) -> None:
-            k = at_index + 1
-            while k < len(text) and blank_re.match(text[k].rstrip(nl).rstrip(cr)):
-              k += 1
-            if k >= len(text) or not text[k].lstrip().startswith('- VERSION:'):
-              text.insert(at_index + 1, '- VERSION: ' + new_version + nl)
-              text.insert(at_index + 2, '- Version bump' + nl)
-
           if unreleased_idx is not None:
-            # Move all content under UNRELEASED into this release
-            text[unreleased_idx] = version_heading
+            # Convert UNRELEASED into this version
+            lines[unreleased_idx] = version_h2
 
             k = unreleased_idx + 1
             moved = []
-            while k < len(text):
-              line = text[k]
-              if line.lstrip().startswith('## '):
+            while k < len(lines):
+              if lines[k].lstrip().startswith('## '):
                 break
-              moved.append(line)
+              moved.append(lines[k])
               k += 1
 
+            # Normalize empty or placeholder content into a controlled bullet
+            if not any(bullet_re.match(x.rstrip(nl).rstrip(cr)) for x in moved):
+              moved = ['- Version bump' + nl]
+
             # Ensure VERSION line exists at top of moved block
-            if not any(l.lstrip().startswith('- VERSION:') for l in moved):
+            if not any(x.lstrip().startswith('- VERSION:') for x in moved):
               moved.insert(0, '- VERSION: ' + new_version + nl)
 
-            # Replace content with moved lines
-            text[unreleased_idx + 1:k] = moved
+            lines[unreleased_idx + 1:k] = moved
 
-            # Insert a fresh UNRELEASED section immediately after TODO block
+            # Reinsert a fresh UNRELEASED block after H1 insertion point
             insert_unreleased = nl + '## [UNRELEASED]' + nl + '- Placeholder for next release' + nl + nl
-            text.insert(j, insert_unreleased)
+            lines.insert(insert_at, insert_unreleased)
 
-            p.write_text(''.join(text), encoding='utf-8')
-            raise SystemExit(0)
+          else:
+            # No UNRELEASED block: insert a new release section after H1
+            insert = (
+              nl +
+              '## [' + new_version + '] ' + stamp + nl +
+              '- VERSION: ' + new_version + nl +
+              '- Version bump' + nl
+            )
+            lines.insert(insert_at, insert)
 
-          insert = (
-            nl +
-            '## [' + new_version + '] ' + stamp + nl +
-            '- VERSION: ' + new_version + nl +
-            '- Version bump' + nl
+          # Update displayed VERSION in:
+          # - FILE INFORMATION block line: VERSION: NN.NN.NN
+          # - H1 title line: (VERSION: NN.NN.NN)
+          text = ''.join(lines)
+
+          text = re.sub(
+            r'(?im)^(\s*VERSION\s*:\s*)\d{2}\.\d{2}\.\d{2}(\s*)$',
+            r'\g<1>' + new_version + r'\2',
+            text,
+            count=1,
           )
-          text.insert(j, insert)
-          p.write_text(''.join(text), encoding='utf-8')
+
+          text = re.sub(
+            r'(?im)^(#\s+Changelog\b.*\(VERSION:\s*)(\d{2}\.\d{2}\.\d{2})(\)\s*)$',
+            r'\g<1>' + new_version + r'\g<3>',
+            text,
+            count=1,
+          )
+
+          p.write_text(text, encoding='utf-8')
           PY
 
       - name: Preflight discovery (governed version markers outside .github)
