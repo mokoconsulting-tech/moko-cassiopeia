@@ -193,8 +193,7 @@ jobs:
           # Disallow literal tab (0x09) and other ASCII control characters except LF (0x0A) and CR (0x0D).
           # Report line numbers without printing the raw characters.
           def byte_to_line(blob: bytes, idx: int) -> int:
-            return blob[:idx].count(b'
-') + 1
+            return blob[:idx].count(b'\n') + 1
 
           bad = []
           for i, b in enumerate(data):
