@@ -182,41 +182,39 @@ jobs:
           moko_init "Sanity check workflow file"
 
           python3 - <<'PY'
-from pathlib import Path
+          from pathlib import Path
 
-target = Path('.github/workflows/version_branch.yml')
-if not target.exists():
-  raise SystemExit('[FATAL] Missing workflow file: .github/workflows/version_branch.yml')
+          target = Path('.github/workflows/version_branch.yml')
+          if not target.exists():
+            raise SystemExit('[FATAL] Missing workflow file: .github/workflows/version_branch.yml')
 
-data = target.read_bytes()
+          data = target.read_bytes()
 
-# Disallow literal tab (0x09) and other ASCII control characters except LF (0x0A) and CR (0x0D).
-# Report line numbers without printing the raw characters.
-
-def byte_to_line(blob: bytes, idx: int) -> int:
-  # Count newlines prior to byte offset.
-  return blob[:idx].count(b'
+          # Disallow literal tab (0x09) and other ASCII control characters except LF (0x0A) and CR (0x0D).
+          # Report line numbers without printing the raw characters.
+          def byte_to_line(blob: bytes, idx: int) -> int:
+            return blob[:idx].count(b'
 ') + 1
 
-bad = []
-for i, b in enumerate(data):
-  if b == 0x09:
-    bad.append(('TAB', i, b))
-  elif b < 0x20 and b not in (0x0A, 0x0D):
-    bad.append(('CTRL', i, b))
+          bad = []
+          for i, b in enumerate(data):
+            if b == 0x09:
+              bad.append(('TAB', i, b))
+            elif b < 0x20 and b not in (0x0A, 0x0D):
+              bad.append(('CTRL', i, b))
 
-if bad:
-  print('[ERROR] Disallowed characters detected in workflow file:')
-  for kind, off, val in bad[:200]:
-    line_no = byte_to_line(data, off)
-    if kind == 'TAB':
-      print(f'  line {line_no}: TAB_PRESENT')
-    else:
-      print(f'  line {line_no}: CTRL_0x{val:02X}_PRESENT')
-  raise SystemExit(2)
+          if bad:
+            print('[ERROR] Disallowed characters detected in workflow file:')
+            for kind, off, val in bad[:200]:
+              line_no = byte_to_line(data, off)
+              if kind == 'TAB':
+                print(f'  line {line_no}: TAB_PRESENT')
+              else:
+                print(f'  line {line_no}: CTRL_0x{val:02X}_PRESENT')
+            raise SystemExit(2)
 
-print('[INFO] Sanity check passed')
-PY
+          print('[INFO] Sanity check passed')
+          PY
 
       - name: Enterprise policy gate
         run: |
