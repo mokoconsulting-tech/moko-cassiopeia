@@ -320,127 +320,120 @@ jobs:
             exit 2
           fi
 
-      - name: Bump versions and update manifest dates (targeted, excluding .github)
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Version bump"
+      $1          import json
+          import os
+          import re
+          from pathlib import Path
+          from collections import defaultdict
+          from datetime import datetime, timezone
 
-          python3 - <<'PY'
-import json
-import os
-import re
-from pathlib import Path
-from collections import defaultdict
-from datetime import datetime, timezone
+          new_version = (os.environ.get("NEW_VERSION") or "").strip()
+          version_text = (os.environ.get("VERSION_TEXT") or "").strip()
+          report_only = (os.environ.get("REPORT_ONLY") or "").strip().lower() == "true"
+          report_path = (os.environ.get("REPORT_PATH") or "").strip()
 
-new_version = (os.environ.get("NEW_VERSION") or "").strip()
-version_text = (os.environ.get("VERSION_TEXT") or "").strip()
-report_only = (os.environ.get("REPORT_ONLY") or "").strip().lower() == "true"
-report_path = (os.environ.get("REPORT_PATH") or "").strip()
+          stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+          root = Path(".").resolve()
 
-stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-root = Path(".").resolve()
+          header_re = re.compile(r"(?im)(VERSION[ \t]*:[ \t]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})")
+          manifest_marker_re = re.compile(r"(?is)<extension\b")
+          xml_version_re = re.compile(r"(?is)(<version[ \t]*>)([^<]*?)(</version[ \t]*>)")
+          xml_date_res = [
+            re.compile(r"(?is)(<creationDate[ \t]*>)([^<]*?)(</creationDate[ \t]*>)"),
+            re.compile(r"(?is)(<date[ \t]*>)([^<]*?)(</date[ \t]*>)"),
+            re.compile(r"(?is)(<releaseDate[ \t]*>)([^<]*?)(</releaseDate[ \t]*>)"),
+          ]
 
-header_re = re.compile(r"(?im)(VERSION[ \t]*:[ \t]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})")
-manifest_marker_re = re.compile(r"(?is)<extension\b")
-xml_version_re = re.compile(r"(?is)(<version[ \t]*>)([^<]*?)(</version[ \t]*>)")
-xml_date_res = [
-  re.compile(r"(?is)(<creationDate[ \t]*>)([^<]*?)(</creationDate[ \t]*>)"),
-  re.compile(r"(?is)(<date[ \t]*>)([^<]*?)(</date[ \t]*>)"),
-  re.compile(r"(?is)(<releaseDate[ \t]*>)([^<]*?)(</releaseDate[ \t]*>)"),
-]
+          skip_ext = {
+            ".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".pdf",
+            ".zip", ".7z", ".tar", ".gz", ".woff", ".woff2", ".ttf", ".otf",
+            ".mp3", ".mp4",
+          }
+          skip_dirs = {".git", ".github", "node_modules", "vendor", ".venv", "dist", "build"}
 
-skip_ext = {
-  ".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".pdf",
-  ".zip", ".7z", ".tar", ".gz", ".woff", ".woff2", ".ttf", ".otf",
-  ".mp3", ".mp4",
-}
-skip_dirs = {".git", ".github", "node_modules", "vendor", ".venv", "dist", "build"}
+          counters = defaultdict(int)
+          updated_files = []
+          updated_manifests = []
+          would_update_files = []
+          would_update_manifests = []
 
-counters = defaultdict(int)
-updated_files = []
-updated_manifests = []
-would_update_files = []
-would_update_manifests = []
+          exclude_root = {"update.xml", "updates.xml"}
 
-# Exclude root update feeds. They are generated at release time.
-exclude_root = {"update.xml", "updates.xml"}
+          def should_skip(p: Path) -> bool:
+            if p.suffix.lower() in skip_ext:
+              counters["skipped_by_ext"] += 1
+              return True
+            parts = {x.lower() for x in p.parts}
+            if any(d in parts for d in skip_dirs):
+              counters["skipped_by_dir"] += 1
+              return True
+            return False
 
-def should_skip(p: Path) -> bool:
-  if p.suffix.lower() in skip_ext:
-    counters["skipped_by_ext"] += 1
-    return True
-  parts = {x.lower() for x in p.parts}
-  if any(d in parts for d in skip_dirs):
-    counters["skipped_by_dir"] += 1
-    return True
-  return False
+          for p in root.rglob("*"):
+            if not p.is_file():
+              continue
+            if should_skip(p):
+              continue
 
-for p in root.rglob("*"):
-  if not p.is_file():
-    continue
-  if should_skip(p):
-    continue
+            if p.parent == root and p.name.lower() in exclude_root:
+              counters["skipped_release_artifacts"] += 1
+              continue
 
-  if p.parent == root and p.name.lower() in exclude_root:
-    counters["skipped_release_artifacts"] += 1
-    continue
+            try:
+              original = p.read_text(encoding="utf-8", errors="replace")
+            except Exception:
+              counters["skipped_read_error"] += 1
+              continue
 
-  try:
-    original = p.read_text(encoding="utf-8", errors="replace")
-  except Exception:
-    counters["skipped_read_error"] += 1
-    continue
+            text = original
 
-  text = original
+            text, n1 = header_re.subn(lambda m: m.group(1) + new_version, text)
+            if n1:
+              counters["header_replacements"] += n1
 
-  text, n1 = header_re.subn(lambda m: m.group(1) + new_version, text)
-  if n1:
-    counters["header_replacements"] += n1
+            is_manifest = (p.suffix.lower() == ".xml" and manifest_marker_re.search(original) is not None)
+            if is_manifest:
+              text, n2 = xml_version_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
+              if n2:
+                counters["xml_version_replacements"] += n2
 
-  is_manifest = (p.suffix.lower() == ".xml" and manifest_marker_re.search(original) is not None)
-  if is_manifest:
-    text, n2 = xml_version_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
-    if n2:
-      counters["xml_version_replacements"] += n2
+              for rx in xml_date_res:
+                text, n3 = rx.subn(lambda m: m.group(1) + stamp + m.group(3), text)
+                if n3:
+                  counters["xml_date_replacements"] += n3
 
-    for rx in xml_date_res:
-      text, n3 = rx.subn(lambda m: m.group(1) + stamp + m.group(3), text)
-      if n3:
-        counters["xml_date_replacements"] += n3
+            if text != original:
+              would_update_files.append(str(p))
+              if is_manifest:
+                would_update_manifests.append(str(p))
 
-  if text != original:
-    would_update_files.append(str(p))
-    if is_manifest:
-      would_update_manifests.append(str(p))
+              if not report_only:
+                p.write_text(text, encoding="utf-8")
+                updated_files.append(str(p))
+                if is_manifest:
+                  updated_manifests.append(str(p))
 
-    if not report_only:
-      p.write_text(text, encoding="utf-8")
-      updated_files.append(str(p))
-      if is_manifest:
-        updated_manifests.append(str(p))
+          report = {
+            "mode": "report_only" if report_only else "apply",
+            "new_version": new_version,
+            "version_text": version_text,
+            "stamp_utc": stamp,
+            "counters": dict(counters),
+            "updated_files": updated_files,
+            "updated_manifests": updated_manifests,
+            "would_update_files": would_update_files,
+            "would_update_manifests": would_update_manifests,
+          }
 
-report = {
-  "mode": "report_only" if report_only else "apply",
-  "new_version": new_version,
-  "version_text": version_text,
-  "stamp_utc": stamp,
-  "counters": dict(counters),
-  "updated_files": updated_files,
-  "updated_manifests": updated_manifests,
-  "would_update_files": would_update_files,
-  "would_update_manifests": would_update_manifests,
-}
+          Path(report_path).write_text(json.dumps(report, indent=2), encoding="utf-8")
 
-Path(report_path).write_text(json.dumps(report, indent=2), encoding="utf-8")
-
-print("[INFO] Report written to:", report_path)
-print("[INFO] Mode:", report["mode"])
-print("[INFO] Would update files:", len(would_update_files))
-print("[INFO] Would update manifests:", len(would_update_manifests))
-print("[INFO] Updated files:", len(updated_files))
-print("[INFO] Updated manifests:", len(updated_manifests))
-PY
+          print("[INFO] Report written to:", report_path)
+          print("[INFO] Mode:", report["mode"])
+          print("[INFO] Would update files:", len(would_update_files))
+          print("[INFO] Would update manifests:", len(would_update_manifests))
+          print("[INFO] Updated files:", len(updated_files))
+          print("[INFO] Updated manifests:", len(updated_manifests))
+          PY
 
       - name: Commit changes
         if: ${{ env.REPORT_ONLY != 'true' }}
