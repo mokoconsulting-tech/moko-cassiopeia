@@ -269,19 +269,17 @@ jobs:
           moko_init "Version bump"
 
           python3 - <<'PY'
-          import json
-          import os
-          import re
-          from pathlib import Path
-          from collections import defaultdict
-          from datetime import datetime, timezone
-
-          new_version = (os.environ.get("NEW_VERSION") or "").strip()
-          if not new_version:
-            raise SystemExit("[FATAL] NEW_VERSION env var missing")
-
-          report_only = (os.environ.get("REPORT_ONLY") or "").strip().lower() == "true"
-          stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-          root = Path(".").resolve()
-                              header_re = re.compile(r"(?im)(VERSION[ \\t]*:[ \\t]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})")
+import json
+import os
+import re
+from pathlib import Path
+from collections import defaultdict
+from datetime import datetime, timezone
+new_version = (os.environ.get("NEW_VERSION") or "").strip()
+if not new_version:
+  raise SystemExit("[FATAL] NEW_VERSION env var missing")
+report_only = (os.environ.get("REPORT_ONLY") or "").strip().lower() == "true"
+stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+root = Path(".").resolve()
+                    header_re = re.compile(r"(?im)(VERSION[ \t]*:[ \t]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})")
           manifest_marker_re = re.compile(r"(?is)<extension\b")
