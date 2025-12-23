@@ -22,7 +22,7 @@
 # PATH: /.github/workflows/version_branch.yml
 # VERSION: 01.00.00
 # BRIEF: Create a dev/<version> branch and align versions across governed files
-# NOTE: Enterprise gates: required artifacts, namespace defense, deterministic reporting, least-change commits
+# NOTE: Enterprise gates: required artifacts, namespace defense, deterministic reporting, control character guard
 
 name: Create version branch and bump versions
 
@@ -132,131 +132,93 @@ jobs:
 
           chmod 0755 "$CI_HELPERS"
 
-      $1
-
-      - name: Sanity check workflow and control characters
+      - name: Validate inputs and policy locks
         run: |
           source "$CI_HELPERS"
-          moko_init "Sanity check"
+          moko_init "Validate inputs and policy locks"
+
+          VERSION_TEXT="$(moko_trim "${VERSION_TEXT}")"
+
+          echo "[INFO] Inputs received:"
+          echo "  NEW_VERSION=${NEW_VERSION}"
+          echo "  VERSION_TEXT=${VERSION_TEXT}"
+          echo "  REPORT_ONLY=${REPORT_ONLY}"
+          echo "  COMMIT_CHANGES=${COMMIT_CHANGES}"
+          echo "  BASE_BRANCH=${BASE_BRANCH}"
+          echo "  BRANCH_PREFIX=${BRANCH_PREFIX}"
+
+          [[ -n "${NEW_VERSION}" ]] || { echo "[ERROR] new_version missing" >&2; exit 2; }
+          [[ "${NEW_VERSION}" =~ ^[0-9]{2}[.][0-9]{2}[.][0-9]{2}$ ]] || { echo "[ERROR] Invalid version format: ${NEW_VERSION}" >&2; exit 2; }
+
+          if [[ "${BRANCH_PREFIX}" != "dev/" ]]; then
+            echo "[FATAL] BRANCH_PREFIX is locked by policy. Expected 'dev/' but got '${BRANCH_PREFIX}'." >&2
+            exit 2
+          fi
+
+          if ! moko_bool "${REPORT_ONLY}" && [[ "${COMMIT_CHANGES}" != "true" ]]; then
+            echo "[FATAL] commit_changes must be 'true' when report_only is 'false' to ensure the branch is auditable." >&2
+            exit 2
+          fi
+
+          if [[ -n "${VERSION_TEXT}" ]]; then
+            if [[ ! "${VERSION_TEXT}" =~ ^[A-Za-z0-9._-]{1,32}$ ]]; then
+              echo "[FATAL] version_text must match ^[A-Za-z0-9._-]{1,32}$ when set." >&2
+              exit 2
+            fi
+          fi
+
+          git ls-remote --exit-code --heads origin "${BASE_BRANCH}" >/dev/null 2>&1 || {
+            echo "[ERROR] Base branch does not exist on origin: ${BASE_BRANCH}" >&2
+            echo "[INFO] Remote branches:" >&2
+            git ls-remote --heads origin | awk '{sub("refs/heads/","",$2); print $2}' >&2
+            exit 2
+          }
+
+          echo "VERSION_TEXT=${VERSION_TEXT}" >> "$GITHUB_ENV"
+
+      - name: Sanity check workflow file (no literal tabs or control chars)
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Sanity check workflow file"
+
           python3 - <<'PY'
-import json
-import os
-import re
 from pathlib import Path
-from collections import defaultdict
-from datetime import datetime, timezone
 
-new_version = (os.environ.get("NEW_VERSION") or "").strip()
-version_text = (os.environ.get("VERSION_TEXT") or "").strip()
-report_only = (os.environ.get("REPORT_ONLY") or "").strip().lower() == "true"
-report_path = (os.environ.get("REPORT_PATH") or "").strip() or None
+target = Path('.github/workflows/version_branch.yml')
+if not target.exists():
+  raise SystemExit('[FATAL] Missing workflow file: .github/workflows/version_branch.yml')
 
-stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-root = Path(".").resolve()
+data = target.read_bytes()
 
-# No literal tab characters. Use explicit escape sequences.
-header_re = re.compile(r"(?im)(VERSION[ \t]*:[ \t]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})")
-manifest_marker_re = re.compile(r"(?is)<extension\b")
-xml_version_re = re.compile(r"(?is)(<version[ \t]*>)([^<]*?)(</version[ \t]*>)")
-xml_date_res = [
-  re.compile(r"(?is)(<creationDate[ \t]*>)([^<]*?)(</creationDate[ \t]*>)"),
-  re.compile(r"(?is)(<date[ \t]*>)([^<]*?)(</date[ \t]*>)"),
-  re.compile(r"(?is)(<releaseDate[ \t]*>)([^<]*?)(</releaseDate[ \t]*>)"),
-]
+# Disallow literal tab (0x09) and other ASCII control characters except LF (0x0A) and CR (0x0D).
+# Report line numbers without printing the raw characters.
 
-skip_ext = {
-  ".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".pdf",
-  ".zip", ".7z", ".tar", ".gz", ".woff", ".woff2", ".ttf", ".otf",
-  ".mp3", ".mp4",
-}
-skip_dirs = {".git", ".github", "node_modules", "vendor", ".venv", "dist", "build"}
+def byte_to_line(blob: bytes, idx: int) -> int:
+  # Count newlines prior to byte offset.
+  return blob[:idx].count(b'
+') + 1
 
-counters = defaultdict(int)
-updated_files = []
-updated_manifests = []
-would_update_files = []
-would_update_manifests = []
+bad = []
+for i, b in enumerate(data):
+  if b == 0x09:
+    bad.append(('TAB', i, b))
+  elif b < 0x20 and b not in (0x0A, 0x0D):
+    bad.append(('CTRL', i, b))
 
-def should_skip(p: Path) -> bool:
-  if p.suffix.lower() in skip_ext:
-    counters["skipped_by_ext"] += 1
-    return True
-  parts = {x.lower() for x in p.parts}
-  if any(d in parts for d in skip_dirs):
-    counters["skipped_by_dir"] += 1
-    return True
-  return False
+if bad:
+  print('[ERROR] Disallowed characters detected in workflow file:')
+  for kind, off, val in bad[:200]:
+    line_no = byte_to_line(data, off)
+    if kind == 'TAB':
+      print(f'  line {line_no}: TAB_PRESENT')
+    else:
+      print(f'  line {line_no}: CTRL_0x{val:02X}_PRESENT')
+  raise SystemExit(2)
 
-for p in root.rglob("*"):
-  if not p.is_file():
-    continue
-  if should_skip(p):
-    continue
-
-  if p.parent == root and p.name.lower() in {"update.xml", "updates.xml"}:
-    counters["skipped_release_artifacts"] += 1
-    continue
-
-  try:
-    original = p.read_text(encoding="utf-8", errors="replace")
-  except Exception:
-    counters["skipped_read_error"] += 1
-    continue
-
-  text = original
-
-  text, n1 = header_re.subn(lambda m: m.group(1) + new_version, text)
-  if n1:
-    counters["header_replacements"] += n1
-
-  is_manifest = (p.suffix.lower() == ".xml" and manifest_marker_re.search(original) is not None)
-  if is_manifest:
-    text, n2 = xml_version_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
-    if n2:
-      counters["xml_version_replacements"] += n2
-
-    for rx in xml_date_res:
-      text, n3 = rx.subn(lambda m: m.group(1) + stamp + m.group(3), text)
-      if n3:
-        counters["xml_date_replacements"] += n3
-
-  if text != original:
-    would_update_files.append(str(p))
-    if is_manifest:
-      would_update_manifests.append(str(p))
-
-    if not report_only:
-      p.write_text(text, encoding="utf-8")
-      updated_files.append(str(p))
-      if is_manifest:
-        updated_manifests.append(str(p))
-
-report = {
-  "mode": "report_only" if report_only else "apply",
-  "new_version": new_version,
-  "version_text": version_text,
-  "stamp_utc": stamp,
-  "counters": dict(counters),
-  "updated_files": updated_files,
-  "updated_manifests": updated_manifests,
-  "would_update_files": would_update_files,
-  "would_update_manifests": would_update_manifests,
-}
-
-payload = json.dumps(report, indent=2)
-
-if report_path:
-  Path(report_path).write_text(payload, encoding="utf-8")
-else:
-  print(payload)
-
-print("[INFO] Mode:", report["mode"])
-print("[INFO] Would update files:", len(would_update_files))
-print("[INFO] Would update manifests:", len(would_update_manifests))
-print("[INFO] Updated files:", len(updated_files))
-print("[INFO] Updated manifests:", len(updated_manifests))
+print('[INFO] Sanity check passed')
 PY
-$2
+
+      - name: Enterprise policy gate
         run: |
           source "$CI_HELPERS"
           moko_init "Enterprise policy gate"
@@ -330,7 +292,7 @@ $2
           git checkout -B "${BRANCH_NAME}" "origin/${BASE_BRANCH}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> "$GITHUB_ENV"
 
-      - name: Enforce release generated update feeds are absent (update.xml, updates.xml)
+      - name: Enforce update feed files absent (update.xml, updates.xml)
         if: ${{ env.REPORT_ONLY != 'true' }}
         run: |
           source "$CI_HELPERS"
@@ -367,123 +329,121 @@ $2
           moko_init "Version bump"
 
           python3 - <<'PY'
-          import json
-          import os
-          import re
-          from pathlib import Path
-          from collections import defaultdict
-          from datetime import datetime, timezone
+import json
+import os
+import re
+from pathlib import Path
+from collections import defaultdict
+from datetime import datetime, timezone
 
-          new_version = (os.environ.get("NEW_VERSION") or "").strip()
-          version_text = (os.environ.get("VERSION_TEXT") or "").strip()
-          report_only = (os.environ.get("REPORT_ONLY") or "").strip().lower() == "true"
-          report_path = (os.environ.get("REPORT_PATH") or "").strip() or None
+new_version = (os.environ.get("NEW_VERSION") or "").strip()
+version_text = (os.environ.get("VERSION_TEXT") or "").strip()
+report_only = (os.environ.get("REPORT_ONLY") or "").strip().lower() == "true"
+report_path = (os.environ.get("REPORT_PATH") or "").strip()
 
-          stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-          root = Path(".").resolve()
+stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+root = Path(".").resolve()
 
-          # No literal tab characters. Use 	 escape sequences.
-          header_re = re.compile(r"(?im)(VERSION[ 	]*:[ 	]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})")
-          manifest_marker_re = re.compile(r"(?is)<extension")
-          xml_version_re = re.compile(r"(?is)(<version[ 	]*>)([^<]*?)(</version[ 	]*>)")
-          xml_date_res = [
-            re.compile(r"(?is)(<creationDate[ 	]*>)([^<]*?)(</creationDate[ 	]*>)"),
-            re.compile(r"(?is)(<date[ 	]*>)([^<]*?)(</date[ 	]*>)"),
-            re.compile(r"(?is)(<releaseDate[ 	]*>)([^<]*?)(</releaseDate[ 	]*>)"),
-          ]
+header_re = re.compile(r"(?im)(VERSION[ \t]*:[ \t]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})")
+manifest_marker_re = re.compile(r"(?is)<extension\b")
+xml_version_re = re.compile(r"(?is)(<version[ \t]*>)([^<]*?)(</version[ \t]*>)")
+xml_date_res = [
+  re.compile(r"(?is)(<creationDate[ \t]*>)([^<]*?)(</creationDate[ \t]*>)"),
+  re.compile(r"(?is)(<date[ \t]*>)([^<]*?)(</date[ \t]*>)"),
+  re.compile(r"(?is)(<releaseDate[ \t]*>)([^<]*?)(</releaseDate[ \t]*>)"),
+]
 
-          skip_ext = {
-            ".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".pdf",
-            ".zip", ".7z", ".tar", ".gz", ".woff", ".woff2", ".ttf", ".otf",
-            ".mp3", ".mp4",
-          }
-          skip_dirs = {".git", ".github", "node_modules", "vendor", ".venv", "dist", "build"}
+skip_ext = {
+  ".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".pdf",
+  ".zip", ".7z", ".tar", ".gz", ".woff", ".woff2", ".ttf", ".otf",
+  ".mp3", ".mp4",
+}
+skip_dirs = {".git", ".github", "node_modules", "vendor", ".venv", "dist", "build"}
 
-          counters = defaultdict(int)
-          updated_files = []
-          updated_manifests = []
-          would_update_files = []
-          would_update_manifests = []
+counters = defaultdict(int)
+updated_files = []
+updated_manifests = []
+would_update_files = []
+would_update_manifests = []
 
-          def should_skip(p: Path) -> bool:
-            if p.suffix.lower() in skip_ext:
-              counters["skipped_by_ext"] += 1
-              return True
-            parts = {x.lower() for x in p.parts}
-            if any(d in parts for d in skip_dirs):
-              counters["skipped_by_dir"] += 1
-              return True
-            return False
+# Exclude root update feeds. They are generated at release time.
+exclude_root = {"update.xml", "updates.xml"}
 
-          for p in root.rglob("*"):
-            if not p.is_file():
-              continue
-            if should_skip(p):
-              continue
+def should_skip(p: Path) -> bool:
+  if p.suffix.lower() in skip_ext:
+    counters["skipped_by_ext"] += 1
+    return True
+  parts = {x.lower() for x in p.parts}
+  if any(d in parts for d in skip_dirs):
+    counters["skipped_by_dir"] += 1
+    return True
+  return False
 
-            if p.parent == root and p.name.lower() in {"update.xml", "updates.xml"}:
-              counters["skipped_release_artifacts"] += 1
-              continue
+for p in root.rglob("*"):
+  if not p.is_file():
+    continue
+  if should_skip(p):
+    continue
 
-            try:
-              original = p.read_text(encoding="utf-8", errors="replace")
-            except Exception:
-              counters["skipped_read_error"] += 1
-              continue
+  if p.parent == root and p.name.lower() in exclude_root:
+    counters["skipped_release_artifacts"] += 1
+    continue
 
-            text = original
+  try:
+    original = p.read_text(encoding="utf-8", errors="replace")
+  except Exception:
+    counters["skipped_read_error"] += 1
+    continue
 
-            text, n1 = header_re.subn(lambda m: m.group(1) + new_version, text)
-            if n1:
-              counters["header_replacements"] += n1
+  text = original
 
-            is_manifest = (p.suffix.lower() == ".xml" and manifest_marker_re.search(original) is not None)
-            if is_manifest:
-              text, n2 = xml_version_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
-              if n2:
-                counters["xml_version_replacements"] += n2
+  text, n1 = header_re.subn(lambda m: m.group(1) + new_version, text)
+  if n1:
+    counters["header_replacements"] += n1
 
-              for rx in xml_date_res:
-                text, n3 = rx.subn(lambda m: m.group(1) + stamp + m.group(3), text)
-                if n3:
-                  counters["xml_date_replacements"] += n3
+  is_manifest = (p.suffix.lower() == ".xml" and manifest_marker_re.search(original) is not None)
+  if is_manifest:
+    text, n2 = xml_version_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
+    if n2:
+      counters["xml_version_replacements"] += n2
 
-            if text != original:
-              would_update_files.append(str(p))
-              if is_manifest:
-                would_update_manifests.append(str(p))
+    for rx in xml_date_res:
+      text, n3 = rx.subn(lambda m: m.group(1) + stamp + m.group(3), text)
+      if n3:
+        counters["xml_date_replacements"] += n3
 
-              if not report_only:
-                p.write_text(text, encoding="utf-8")
-                updated_files.append(str(p))
-                if is_manifest:
-                  updated_manifests.append(str(p))
+  if text != original:
+    would_update_files.append(str(p))
+    if is_manifest:
+      would_update_manifests.append(str(p))
 
-          report = {
-            "mode": "report_only" if report_only else "apply",
-            "new_version": new_version,
-            "version_text": version_text,
-            "stamp_utc": stamp,
-            "counters": dict(counters),
-            "updated_files": updated_files,
-            "updated_manifests": updated_manifests,
-            "would_update_files": would_update_files,
-            "would_update_manifests": would_update_manifests,
-          }
+    if not report_only:
+      p.write_text(text, encoding="utf-8")
+      updated_files.append(str(p))
+      if is_manifest:
+        updated_manifests.append(str(p))
 
-          payload = json.dumps(report, indent=2)
+report = {
+  "mode": "report_only" if report_only else "apply",
+  "new_version": new_version,
+  "version_text": version_text,
+  "stamp_utc": stamp,
+  "counters": dict(counters),
+  "updated_files": updated_files,
+  "updated_manifests": updated_manifests,
+  "would_update_files": would_update_files,
+  "would_update_manifests": would_update_manifests,
+}
 
-          if report_path:
-            Path(report_path).write_text(payload, encoding="utf-8")
-          else:
-            print(payload)
+Path(report_path).write_text(json.dumps(report, indent=2), encoding="utf-8")
 
-          print("[INFO] Mode:", report["mode"])
-          print("[INFO] Would update files:", len(would_update_files))
-          print("[INFO] Would update manifests:", len(would_update_manifests))
-          print("[INFO] Updated files:", len(updated_files))
-          print("[INFO] Updated manifests:", len(updated_manifests))
-          PY
+print("[INFO] Report written to:", report_path)
+print("[INFO] Mode:", report["mode"])
+print("[INFO] Would update files:", len(would_update_files))
+print("[INFO] Would update manifests:", len(would_update_manifests))
+print("[INFO] Updated files:", len(updated_files))
+print("[INFO] Updated manifests:", len(updated_manifests))
+PY
 
       - name: Commit changes
         if: ${{ env.REPORT_ONLY != 'true' }}
@@ -536,16 +496,15 @@ $2
           echo "- New branch: ${BRANCH_NAME:-}" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
 
+          echo "## Version bump report" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
           if [[ -f "${REPORT_PATH}" ]]; then
-            echo "## Version bump report" >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
             echo "\`\`\`json" >> "$GITHUB_STEP_SUMMARY"
             head -c 12000 "${REPORT_PATH}" >> "$GITHUB_STEP_SUMMARY" || true
             echo "" >> "$GITHUB_STEP_SUMMARY"
             echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "## Version bump report" >> "$GITHUB_STEP_SUMMARY"
-            echo "" >> "$GITHUB_STEP_SUMMARY"
             echo "Report file not found at: ${REPORT_PATH}" >> "$GITHUB_STEP_SUMMARY"
           fi
 
