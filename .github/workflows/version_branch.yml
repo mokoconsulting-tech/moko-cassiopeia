@@ -500,26 +500,48 @@ jobs:
 
           if [[ -f "update.xml" ]]; then
             echo "[INFO] update.xml present at repo root. Clearing contents because it is release generated only."
+
+            # Ensure we can write
             chmod u+rw "update.xml" || true
 
-            # Robust truncation
+            # Hard clear using Python (bypasses shell redirection oddities)
+            python3 - <<'PY'
+          from pathlib import Path
+          p = Path('update.xml')
+          p.write_bytes(b'')
+          PY
+
+            # Defense in depth
             : > "update.xml" || true
             truncate -s 0 "update.xml" || true
 
             SIZE_BYTES="$(wc -c < update.xml | tr -d ' ')"
+
             if [[ "${SIZE_BYTES}" != "0" ]]; then
-              echo "[WARN] update.xml truncate returned ${SIZE_BYTES} bytes. Forcing recreate."
+              echo "[WARN] update.xml still ${SIZE_BYTES} bytes after clear. Forcing delete and recreate empty file."
               rm -f "update.xml" || true
-              : > "update.xml"
+              python3 - <<'PY'
+          from pathlib import Path
+          Path('update.xml').write_bytes(b'')
+          PY
               truncate -s 0 "update.xml" || true
               SIZE_BYTES="$(wc -c < update.xml | tr -d ' ')"
             fi
 
-            echo "[INFO] update.xml size after truncate: ${SIZE_BYTES} bytes"
+            echo "[INFO] update.xml size after clear: ${SIZE_BYTES} bytes"
+
             if [[ "${SIZE_BYTES}" != "0" ]]; then
+              echo "[INFO] Debug: first 32 bytes (hex)"
+              od -An -tx1 -N 32 update.xml || true
+              echo "[INFO] Debug: file view (cat -A, first 5 lines)"
+              cat -A update.xml | head -n 5 || true
               echo "[FATAL] update.xml could not be cleared to 0 bytes." >&2
               exit 2
             fi
+
+            echo "[INFO] Confirming working tree reflects empty update.xml"
+            git status --porcelain=v1 update.xml || true
+            git diff -- update.xml || true
           else
             echo "[INFO] update.xml not present. No action taken."
           fi
