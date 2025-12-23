@@ -140,6 +140,12 @@ jobs:
             exit 2
           fi
 
+
+          if ! moko_bool "${REPORT_ONLY}" && [[ "${COMMIT_CHANGES}" != "true" ]]; then
+            echo "[FATAL] commit_changes must be 'true' when report_only is 'false' to ensure version branch is auditable and consistent." >&2
+            exit 2
+          fi
+
           git ls-remote --exit-code --heads origin "${BASE_BRANCH}" >/dev/null 2>&1 || {
             echo "[ERROR] Base branch does not exist on origin: ${BASE_BRANCH}" >&2
             echo "[INFO] Remote branches:" >&2
@@ -215,14 +221,14 @@ jobs:
 
           echo "[INFO] No namespace collision detected for BRANCH_PREFIX=${BRANCH_PREFIX}"
 
-      - name: Create and push version branch
+      - name: Create version branch (local)
         if: ${{ env.REPORT_ONLY != 'true' }}
         run: |
           source "$CI_HELPERS"
-          moko_init "Create and push version branch"
+          moko_init "Create version branch (local)"
 
           BRANCH_NAME="${BRANCH_PREFIX}${NEW_VERSION}"
-          echo "[INFO] Creating branch: ${BRANCH_NAME} from origin/${BASE_BRANCH}"
+          echo "[INFO] Creating local branch: ${BRANCH_NAME} from origin/${BASE_BRANCH}"
 
           git fetch --all --tags --prune
 
@@ -234,8 +240,7 @@ jobs:
           git checkout -B "${BRANCH_NAME}" "origin/${BASE_BRANCH}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> "$GITHUB_ENV"
 
-          echo "[INFO] Pushing new branch to origin"
-          git push --set-upstream origin "${BRANCH_NAME}"
+          echo "[INFO] Local branch created. Push will occur after governed changes are committed."
 
       - name: Ensure CHANGELOG.md rolls UNRELEASED into the release (no TODO)
         if: ${{ env.REPORT_ONLY != 'true' }}
@@ -593,7 +598,7 @@ jobs:
 
       - name: Commit changes
         id: commit
-        if: ${{ env.REPORT_ONLY != 'true' && env.COMMIT_CHANGES == 'true' }}
+        if: ${{ env.REPORT_ONLY != 'true' }}
         run: |
           source "$CI_HELPERS"
           moko_init "Commit changes"
@@ -612,13 +617,19 @@ jobs:
           git commit -m "chore(release): bump version to ${NEW_VERSION}"
           echo "committed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Push commits
-        if: ${{ env.REPORT_ONLY != 'true' && env.COMMIT_CHANGES == 'true' && steps.commit.outputs.committed == 'true' }}
+      - name: Push branch
+        if: ${{ env.REPORT_ONLY != 'true' }}
         run: |
           source "$CI_HELPERS"
-          moko_init "Push commits"
+          moko_init "Push branch"
 
-          git push
+          if [[ -z "${BRANCH_NAME:-}" ]]; then
+            echo "[FATAL] BRANCH_NAME is not set. Branch creation step may have failed." >&2
+            exit 2
+          fi
+
+          echo "[INFO] Pushing branch and commits to origin/${BRANCH_NAME}"
+          git push --set-upstream origin "${BRANCH_NAME}"
 
       - name: Output branch name
         if: always()
