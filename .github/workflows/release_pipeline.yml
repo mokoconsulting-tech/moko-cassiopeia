@@ -336,6 +336,14 @@ jobs:
           chmod +x "${SCRIPT}"
           "${SCRIPT}" "${TODAY}" "${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
 
+          # Diffstat for audit visibility
+          {
+            echo "### Date normalization diffstat"
+            echo "```"
+            git diff --stat || true
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
   build_and_release:
     name: 03 Build ZIP, upload to SFTP, create GitHub release
     runs-on: ubuntu-latest
@@ -375,7 +383,9 @@ jobs:
 
           test -d src || (echo "ERROR: src directory missing" && exit 1)
 
-          mkdir -p dist
+          DIST_DIR="${GITHUB_WORKSPACE}/dist"
+
+          mkdir -p "${DIST_DIR}"
 
           ROOT="src"
           TOP_DIRS="$(find src -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
@@ -414,16 +424,37 @@ jobs:
 
           ZIP="${REPO}-${VERSION}-${CHANNEL}.zip"
 
-          (cd "${ROOT}" && zip -r -X "../dist/${ZIP}" . \
+          (cd "${ROOT}" && zip -r -X "${DIST_DIR}/${ZIP}" . \
             -x "**/.git/**" \
             -x "**/.github/**" \
             -x "**/.DS_Store" \
             -x "**/__MACOSX/**")
 
           echo "zip_name=${ZIP}" >> "${GITHUB_OUTPUT}"
+          echo "dist_dir=${DIST_DIR}" >> "${GITHUB_OUTPUT}"
           echo "root=${ROOT}" >> "${GITHUB_OUTPUT}"
           echo "manifest=${MANIFEST}" >> "${GITHUB_OUTPUT}"
           echo "ext_type=${EXT_TYPE}" >> "${GITHUB_OUTPUT}"
+
+          ZIP_BYTES="$(stat -c%s "${DIST_DIR}/${ZIP}")"
+          ZIP_SHA=""
+          if command -v sha256sum >/dev/null 2>&1; then
+            ZIP_SHA="$(sha256sum "${DIST_DIR}/${ZIP}" | awk '{print $1}')"
+          fi
+
+          {
+            echo "### Build report"
+            echo "```json"
+            echo "{"
+            echo "  \"root\": \"${ROOT}\","
+            echo "  \"manifest\": \"${MANIFEST}\","
+            echo "  \"extension_type\": \"${EXT_TYPE}\","
+            echo "  \"zip\": \"${DIST_DIR}/${ZIP}\","
+            echo "  \"zip_bytes\": ${ZIP_BYTES},"
+            echo "  \"zip_sha256\": \"${ZIP_SHA}\""
+            echo "}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload ZIP to SFTP (key-only, overwrite, verbose)
         env:
@@ -477,6 +508,23 @@ jobs:
           ssh-keyscan -H "${FTP_HOST}" >> ~/.ssh/known_hosts
 
           lftp -d -e "set sftp:auto-confirm yes; set cmd:trace yes; set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; open -u '${FTP_USER}', sftp://${HOSTPORT}; pwd; ls; mkdir -p '${REMOTE_PATH}'; cd '${REMOTE_PATH}'; pwd; put -E 'dist/${ZIP}'; ls; bye"
+
+          ZIP_BYTES="$(stat -c%s "dist/${ZIP}")"
+          {
+            echo "### SFTP upload report"
+            echo "```json"
+            echo "{"
+            echo "  \"protocol\": \"sftp\","
+            echo "  \"host\": \"${FTP_HOST}\","
+            echo "  \"port\": \"${PORT:-default}\","
+            echo "  \"remote_path\": \"${REMOTE_PATH}\","
+            echo "  \"zip\": \"${ZIP}\","
+            echo "  \"zip_bytes\": ${ZIP_BYTES},"
+            echo "  \"overwrite\": true,"
+            echo "  \"key_only\": true"
+            echo "}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Create Git tag for release
         id: tag
