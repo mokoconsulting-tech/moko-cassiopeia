@@ -80,7 +80,7 @@ jobs:
       BRANCH_PREFIX: dev/
       ERROR_LOG: /tmp/version_branch_errors.log
       CI_HELPERS: /tmp/moko_ci_helpers.sh
-      REPORT_PATH: ${{ runner.temp }}/version-bump-report.json
+      REPORT_PATH: /tmp/version-bump-report.json
 
     steps:
       - name: Checkout repository
