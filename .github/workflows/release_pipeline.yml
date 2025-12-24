@@ -23,14 +23,24 @@
 # INGROUP: MokoStandards.Release
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/release_pipeline.yml
-# VERSION: 01.01.00
-# BRIEF: Enterprise release pipeline enforcing dev to rc to version to main. Creates prerelease when rc is created. Creates full release when version is created, and pushes version to main while retaining the version branch.
-# NOTE: Key controls: strict branch gating, mandatory source branch deletion after promotion, least privilege permissions, key-only SFTP, ZIP-only distribution, overwrite enabled, no checksum generation.
+# VERSION: 01.02.00
+# BRIEF: Enterprise release pipeline enforcing dev to rc to version to main. Creates prerelease when rc is created. Creates full release when version is created and promotes to main while retaining the version branch.
+# NOTE: Controls: strict branch gating, mandatory source branch deletion after promotion, key-only SFTP with verbose logs, ZIP-only distribution with overwrite, no checksum generation.
 #
 name: Release Pipeline (dev to rc to version to main)
 
 on:
   workflow_dispatch:
+    inputs:
+      release_classification:
+        description: "Manual override for classification. auto follows branch policy; rc forces prerelease behavior; stable forces full release behavior."
+        required: true
+        default: auto
+        type: choice
+        options:
+          - auto
+          - rc
+          - stable
   release:
     types:
       - created
@@ -62,10 +72,14 @@ jobs:
       today_utc: ${{ steps.meta.outputs.today_utc }}
       channel: ${{ steps.meta.outputs.channel }}
       release_mode: ${{ steps.meta.outputs.release_mode }}
+      override: ${{ steps.meta.outputs.override }}
 
     steps:
       - name: Validate trigger and extract metadata
         id: meta
+        env:
+          RELEASE_CLASSIFICATION: ${{ github.event.inputs.release_classification }}
+          RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
         run: |
           set -euo pipefail
 
@@ -80,6 +94,11 @@ jobs:
           CHANNEL=""
           RELEASE_MODE="none"
 
+          OVERRIDE="${RELEASE_CLASSIFICATION:-auto}"
+          if [ -z "${OVERRIDE}" ]; then
+            OVERRIDE="auto"
+          fi
+
           if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
             echo "${REF_NAME}" | grep -E '^(dev|rc)/[0-9]+[.][0-9]+[.][0-9]+$'
 
@@ -88,17 +107,28 @@ jobs:
             VERSION="${REF_NAME#*/}"
 
             if [ "${SOURCE_PREFIX}" = "dev" ]; then
-              # dev -> rc, then prerelease
+              # dev -> rc
               TARGET_BRANCH="rc/${VERSION}"
               PROMOTED_BRANCH="rc/${VERSION}"
               CHANNEL="rc"
               RELEASE_MODE="prerelease"
             else
-              # rc -> version, then full release + push to main
+              # rc -> version
               TARGET_BRANCH="version/${VERSION}"
               PROMOTED_BRANCH="version/${VERSION}"
               CHANNEL="stable"
               RELEASE_MODE="stable"
+            fi
+
+            # Manual override: classification only. Promotion path does not change.
+            if [ "${OVERRIDE}" = "rc" ]; then
+              CHANNEL="rc"
+              RELEASE_MODE="prerelease"
+            elif [ "${OVERRIDE}" = "stable" ]; then
+              CHANNEL="stable"
+              RELEASE_MODE="stable"
+            else
+              OVERRIDE="auto"
             fi
 
           elif [ "${EVENT_NAME}" = "release" ]; then
@@ -106,13 +136,15 @@ jobs:
             VERSION="${TAG_NAME#v}"
             echo "${VERSION}" | grep -E '^[0-9]+[.][0-9]+[.][0-9]+$'
 
-            if [ "${{ github.event.release.prerelease }}" = "true" ]; then
+            if [ "${RELEASE_PRERELEASE:-false}" = "true" ]; then
               CHANNEL="rc"
               RELEASE_MODE="prerelease"
             else
               CHANNEL="stable"
               RELEASE_MODE="stable"
             fi
+
+            OVERRIDE="auto"
 
           else
             echo "ERROR: Unsupported trigger ${EVENT_NAME}" >> "${GITHUB_STEP_SUMMARY}"
@@ -129,6 +161,7 @@ jobs:
           echo "today_utc=${TODAY_UTC}" >> "${GITHUB_OUTPUT}"
           echo "channel=${CHANNEL}" >> "${GITHUB_OUTPUT}"
           echo "release_mode=${RELEASE_MODE}" >> "${GITHUB_OUTPUT}"
+          echo "override=${OVERRIDE}" >> "${GITHUB_OUTPUT}"
 
           {
             echo "### Guard report"
@@ -142,6 +175,7 @@ jobs:
             echo "  \"promoted_branch\": \"${PROMOTED_BRANCH}\","
             echo "  \"channel\": \"${CHANNEL}\","
             echo "  \"release_mode\": \"${RELEASE_MODE}\","
+            echo "  \"override\": \"${OVERRIDE}\","
             echo "  \"today_utc\": \"${TODAY_UTC}\""
             echo "}"
             echo "```"
@@ -269,24 +303,11 @@ jobs:
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-          echo "Working directory: $(pwd)" >> "${GITHUB_STEP_SUMMARY}"
-          echo "Repo root listing:" >> "${GITHUB_STEP_SUMMARY}"
-          ls -la >> "${GITHUB_STEP_SUMMARY}"
-
-          echo "Scripts folder listing:" >> "${GITHUB_STEP_SUMMARY}"
-          if [ -d scripts ]; then
-            ls -la scripts >> "${GITHUB_STEP_SUMMARY}"
-          else
-            echo "scripts/ directory not found." >> "${GITHUB_STEP_SUMMARY}"
-          fi
-
           # Enterprise control: repo-provided date normalization is mandatory.
-          # Allow standard locations inside the repo, but never a generated fallback.
           CANDIDATES=(
             "scripts/update_dates.sh"
             "scripts/release/update_dates.sh"
             "scripts/release/update_dates"
-            "./scripts/update_dates.sh"
           )
 
           SCRIPT=""
@@ -298,7 +319,6 @@ jobs:
           done
 
           if [ -z "${SCRIPT}" ]; then
-            # Best-effort discovery for audit visibility.
             FOUND="$(find . -maxdepth 3 -type f \( -name 'update_dates.sh' -o -name 'update-dates.sh' \) 2>/dev/null | head -n 5 || true)"
             {
               echo "ERROR: Date normalization script not found in approved locations."
@@ -315,20 +335,7 @@ jobs:
           echo "Using date script: ${SCRIPT}" >> "${GITHUB_STEP_SUMMARY}"
 
           chmod +x "${SCRIPT}"
-          "${SCRIPT}" "${TODAY}" "${VERSION}"
-
-      - name: Commit and push date updates
-        run: |
-          set -euo pipefail
-
-          if git diff --quiet; then
-            echo "No date changes detected" >> "${GITHUB_STEP_SUMMARY}"
-            exit 0
-          fi
-
-          git add -A
-          git commit -m "chore(release): normalize dates for ${{ needs.guard.outputs.version }}"
-          git push origin "HEAD:${{ needs.guard.outputs.promoted_branch }}"
+          "${SCRIPT}" "${TODAY}" "${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
 
   build_and_release:
     name: 03 Build ZIP, upload to SFTP, create GitHub release
@@ -396,7 +403,7 @@ jobs:
             exit 1
           fi
 
-          EXT_TYPE="$(grep -o 'type=\"[^\"]*\"' "${MANIFEST}" | head -n 1 | cut -d '\"' -f2)"
+          EXT_TYPE="$(grep -o 'type=\"[^\"]*\"' "${MANIFEST}" | head -n 1 | cut -d '"' -f2)"
           if [ -z "${EXT_TYPE}" ]; then
             EXT_TYPE="unknown"
           fi
@@ -470,7 +477,6 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "${FTP_HOST}" >> ~/.ssh/known_hosts
 
-          # Verbose SFTP session
           lftp -d -e "set sftp:auto-confirm yes; set cmd:trace yes; set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; open -u '${FTP_USER}', sftp://${HOSTPORT}; pwd; ls; mkdir -p '${REMOTE_PATH}'; cd '${REMOTE_PATH}'; pwd; put -E 'dist/${ZIP}'; ls; bye"
 
       - name: Create Git tag for release
@@ -498,14 +504,13 @@ jobs:
           echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
 
       - name: Generate release notes from CHANGELOG.md
-        id: notes
         run: |
           set -euo pipefail
 
           VERSION="${{ needs.guard.outputs.version }}"
           ZIP_ASSET="${{ steps.build.outputs.zip_name }}"
 
-          awk "/^## \[${VERSION}\]/{flag=1;next}/^## \[/ {flag=0}flag" CHANGELOG.md > RELEASE_NOTES.md || true
+          awk "/^## \[${VERSION}\]/{flag=1;next}/^## \[/{flag=0}flag" CHANGELOG.md > RELEASE_NOTES.md || true
 
           if [ ! -s RELEASE_NOTES.md ]; then
             echo "ERROR: Release notes extraction failed for ${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
@@ -545,14 +550,15 @@ jobs:
           ZIP_NAME="${{ steps.build.outputs.zip_name }}"
           CHANNEL="${{ needs.guard.outputs.channel }}"
           MODE="${{ needs.guard.outputs.release_mode }}"
+          OVERRIDE="${{ needs.guard.outputs.override }}"
 
           echo "### Release report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
           echo "```json" >> "${GITHUB_STEP_SUMMARY}"
-          echo "{\"repository\":\"${REPO_FULL}\",\"version\":\"${VERSION}\",\"branch\":\"${BRANCH}\",\"tag\":\"${TAG}\",\"mode\":\"${MODE}\",\"channel\":\"${CHANNEL}\",\"zip\":\"${ZIP_NAME}\",\"sha\":null}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "{\"repository\":\"${REPO_FULL}\",\"version\":\"${VERSION}\",\"branch\":\"${BRANCH}\",\"tag\":\"${TAG}\",\"mode\":\"${MODE}\",\"channel\":\"${CHANNEL}\",\"override\":\"${OVERRIDE}\",\"zip\":\"${ZIP_NAME}\"}" >> "${GITHUB_STEP_SUMMARY}"
           echo "```" >> "${GITHUB_STEP_SUMMARY}"
 
   push_version_to_main:
-    name: 04 Push version to main (stable only, keep version branch)
+    name: 04 Promote version branch to main (stable only, keep version branch)
     runs-on: ubuntu-latest
     needs:
       - guard
@@ -586,12 +592,11 @@ jobs:
 
           VERSION="${{ needs.guard.outputs.version }}"
           HEAD="${{ needs.guard.outputs.promoted_branch }}"
-          TITLE="Release ${VERSION} to main"
 
           gh pr create \
             --base main \
             --head "${HEAD}" \
-            --title "${TITLE}" \
+            --title "Release ${VERSION} to main" \
             --body "Automated PR created by release pipeline. Version branch is retained by policy." \
             || true
 
@@ -601,9 +606,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          VERSION="${{ needs.guard.outputs.version }}"
           HEAD="${{ needs.guard.outputs.promoted_branch }}"
-
           PR_NUMBER="$(gh pr list --head "${HEAD}" --base main --json number --jq '.[0].number' || true)"
 
           if [ -z "${PR_NUMBER}" ] || [ "${PR_NUMBER}" = "null" ]; then
@@ -611,14 +614,13 @@ jobs:
             exit 1
           fi
 
-          # Enterprise-safe default: merge commit, no branch deletion.
           gh pr merge "${PR_NUMBER}" --merge --delete-branch=false \
             || echo "PR merge blocked by branch protection or policy" >> "${GITHUB_STEP_SUMMARY}"
 
           {
             echo "### Main branch promotion"
             echo "```json"
-            echo "{\"version\":\"${VERSION}\",\"head\":\"${HEAD}\",\"pr\":${PR_NUMBER}}"
+            echo "{\"head\":\"${HEAD}\",\"pr\":${PR_NUMBER}}"
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
