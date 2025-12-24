@@ -27,7 +27,7 @@
 # BRIEF: Enterprise release pipeline enforcing dev to rc to version to main. Creates prerelease when rc is created. Creates full release when version is created and promotes to main while retaining the version branch.
 # NOTE: Controls: strict branch gating, mandatory source branch deletion after promotion, key-only SFTP with verbose logs, ZIP-only distribution with overwrite, no checksum generation.
 #
-name: Release Pipeline (dev to rc to version to main)
+name: Release Pipeline (dev > rc > version > main)
 
 on:
   workflow_dispatch:
@@ -507,7 +507,22 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "${FTP_HOST}" >> ~/.ssh/known_hosts
 
-          lftp -d -e "set sftp:auto-confirm yes; set cmd:trace yes; set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; open -u '${FTP_USER}', sftp://${HOSTPORT}; pwd; ls; mkdir -p '${REMOTE_PATH}'; cd '${REMOTE_PATH}'; pwd; put -E 'dist/${ZIP}'; ls; bye"
+          # Hard‑enforced key‑only authentication. Password auth explicitly disabled.
+          lftp -d -e "\
+            set sftp:auto-confirm yes; \
+            set cmd:trace yes; \
+            set net:timeout 30; \
+            set net:max-retries 3; \
+            set net:reconnect-interval-base 5; \
+            set sftp:connect-program 'ssh -a -x -i ~/.ssh/id_rsa -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o ChallengeResponseAuthentication=no -o PubkeyAuthentication=yes'; \
+            open -u '${FTP_USER}', sftp://${HOSTPORT}; \
+            pwd; ls; \
+            mkdir -p '${REMOTE_PATH}'; \
+            cd '${REMOTE_PATH}'; \
+            pwd; \
+            put -E 'dist/${ZIP}'; \
+            ls; \
+            bye"
 
           ZIP_BYTES="$(stat -c%s "dist/${ZIP}")"
           {
