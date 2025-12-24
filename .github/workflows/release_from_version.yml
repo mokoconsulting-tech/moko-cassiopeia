@@ -339,8 +339,7 @@ jobs:
           ZIP="${{ steps.build.outputs.zip_name }}"
           SHA="$(sha256sum "dist/${ZIP}" | awk '{print $1}')"
           echo "sha256=${SHA}" >> "${GITHUB_OUTPUT}"
-          printf "%s  %s
-" "${SHA}" "${ZIP}" > dist/SHA256SUMS.txt
+          printf "%s  %s\n" "${SHA}" "${ZIP}" > dist/SHA256SUMS.txt
           cat dist/SHA256SUMS.txt
 
       - name: Update updates.xml with download URL and sha256
