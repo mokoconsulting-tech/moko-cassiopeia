@@ -29,7 +29,7 @@
 #
 name: Release from Version Branch Pipeline
 
-on:
+"on":
   workflow_dispatch:
     inputs:
       promote_to_version:
@@ -306,7 +306,7 @@ jobs:
             MANIFEST="${ROOT}/templateDetails.xml"
           else
             while IFS= read -r -d '' f; do
-              if grep -qE '<extension\\b' "${f}"; then
+              if grep -qE '<extension[[:space:]>]' "${f}"; then
                 MANIFEST="${f}"
                 break
               fi
@@ -322,7 +322,7 @@ jobs:
           echo "Manifest: ${MANIFEST}"
 
           # Derive extension type for logging and compliance checks.
-          EXT_TYPE="$(grep -oE '<extension[^>]*type=\"[^\"]+\"' "${MANIFEST}" | head -n 1 | sed -E 's/.*type=\"([^\"]+)\".*/\/')"
+          EXT_TYPE="$(grep -oE '<extension[^>]*type=\"[^\"]+\"' "${MANIFEST}" | head -n 1 | sed -E 's/.*type=\"([^\"]+)\".*/\1/')"
           if [ -z "${EXT_TYPE}" ]; then
             EXT_TYPE="unknown"
           fi
