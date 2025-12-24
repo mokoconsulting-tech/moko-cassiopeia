@@ -15,7 +15,7 @@
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia
  PATH: ./media/templates/site/moko-cassiopeia/js/template.js
- VERSION: 03.06.00
+ VERSION: 03.05.00
  BRIEF: Core JavaScript utilities and behaviors for Moko-Cassiopeia template
  */
 
