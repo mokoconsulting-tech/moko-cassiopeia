@@ -357,60 +357,7 @@ jobs:
           printf "%s  %s\n" "${SHA}" "${ZIP}" > dist/SHA256SUMS.txt
           cat dist/SHA256SUMS.txt
 
-      - name: Update updates.xml with download URL and sha256
-        run: |
-          set -euo pipefail
 
-          VERSION="${{ needs.guard.outputs.version }}"
-          TODAY="${{ needs.guard.outputs.today_utc }}"
-          ZIP="${{ steps.build.outputs.zip_name }}"
-          SHA="${{ steps.sha.outputs.sha256 }}"
-
-          OWNER="${{ github.repository_owner }}"
-          REPO="${{ github.event.repository.name }}"
-
-          DOWNLOAD_URL="https://github.com/${OWNER}/${REPO}/releases/download/${VERSION}/${ZIP}"
-          echo "download_url=${DOWNLOAD_URL}" >> "${GITHUB_OUTPUT}"
-
-          if [ -f "docs/templates/template_update.xml" ]; then
-            cp -f "docs/templates/template_update.xml" "updates.xml"
-          elif [ -f "docs/templates/update_template.xml" ]; then
-            cp -f "docs/templates/update_template.xml" "updates.xml"
-          fi
-
-          if [ ! -f "updates.xml" ]; then
-            if [ -f "update.xml" ]; then
-              mv -f "update.xml" "updates.xml"
-            else
-              echo "ERROR: updates.xml not found and no template present in docs/templates."
-              exit 1
-            fi
-          fi
-
-          sed -i "s#{{VERSION}}#${VERSION}#g" updates.xml || true
-          sed -i "s#{{DATE}}#${TODAY}#g" updates.xml || true
-          sed -i "s#{{DOWNLOADURL}}#${DOWNLOAD_URL}#g" updates.xml || true
-          sed -i "s#{{SHA256}}#${SHA}#g" updates.xml || true
-          sed -i "s#{{ZIP}}#${ZIP}#g" updates.xml || true
-
-          sed -i "s#<downloadurl>[^<]*</downloadurl>#<downloadurl>${DOWNLOAD_URL}</downloadurl>#g" updates.xml || true
-          sed -i "s#<sha256>[^<]*</sha256>#<sha256>${SHA}</sha256>#g" updates.xml || true
-          sed -i "s#<sha256sum>[^<]*</sha256sum>#<sha256sum>${SHA}</sha256sum>#g" updates.xml || true
-          sed -i "s#<version>[^<]*</version>#<version>${VERSION}</version>#g" updates.xml || true
-          sed -i "s#<date>[^<]*</date>#<date>${TODAY}</date>#g" updates.xml || true
-
-      - name: Commit updates.xml changes
-        run: |
-          set -euo pipefail
-
-          if git diff --quiet; then
-            echo "No updates.xml changes detected. No commit required."
-            exit 0
-          fi
-
-          git add -A
-          git commit -m "chore(release): update updates.xml for ${{ needs.guard.outputs.version }}"
-          git push origin "HEAD:${{ needs.guard.outputs.version_branch }}"
 
       - name: Create and push annotated tag after final release commit
         run: |
@@ -446,7 +393,7 @@ jobs:
             echo ""
             echo "Assets:"
             echo "- ${ZIP_ASSET}"
-            echo "- updates.xml"
+
             echo "- SHA256SUMS.txt"
           } >> RELEASE_NOTES.md
       - name: Publish JSON report to job summary (JSON-only, no file)
@@ -502,7 +449,7 @@ jobs:
                   sha256: $zip_sha256,
                   download_url: $download_url
                 },
-                updates_xml: "updates.xml",
+
                 sha256sums: "dist/SHA256SUMS.txt",
                 release_notes: "RELEASE_NOTES.md"
               }
