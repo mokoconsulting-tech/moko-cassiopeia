@@ -504,22 +504,46 @@ jobs:
 
           mkdir -p ~/.ssh
 
-          # Key material can be OpenSSH private key or PuTTY .ppk (unencrypted).
-          # Hard control: key-only auth. No password or interactive prompts.
+          # Key material can be OpenSSH private key or PuTTY .ppk (optionally encrypted).
+          # Hard control: key-only auth. Password auth disabled at SSH layer.
           if printf '%s' "${FTP_KEY}" | head -n 1 | grep -q '^PuTTY-User-Key-File-'; then
             echo "Detected PuTTY PPK key format" >> "${GITHUB_STEP_SUMMARY}"
 
             printf '%s' "${FTP_KEY}" > ~/.ssh/key.ppk
             chmod 600 ~/.ssh/key.ppk
 
-            # Convert to OpenSSH private key. Encrypted PPK will fail (no passphrase support by policy).
-            if ! puttygen ~/.ssh/key.ppk -O private-openssh -o ~/.ssh/id_rsa; then
-              echo "ERROR: PPK conversion failed. Provide an unencrypted PPK (no passphrase)." >> "${GITHUB_STEP_SUMMARY}"
+            # Determine encryption state
+            if grep -Eq '^Encryption: *none[[:space:]]*$' ~/.ssh/key.ppk; then
+              echo "PPK encryption: none" >> "${GITHUB_STEP_SUMMARY}"
+              PPK_PASSPHRASE_ARG=""
+            else
+              if [ -z "${FTP_PASSWORD:-}" ]; then
+                echo "ERROR: Encrypted PPK detected but FTP_PASSWORD not provided" >> "${GITHUB_STEP_SUMMARY}"
+                exit 1
+              fi
+              echo "PPK encryption: enabled (using FTP_PASSWORD)" >> "${GITHUB_STEP_SUMMARY}"
+              PPK_PASSPHRASE_ARG="--passphrase ${FTP_PASSWORD}"
+            fi
+
+            # Log PPK header fields (sanitized, no key material)
+            {
+              echo "PPK header (sanitized):"
+              grep -E '^(PuTTY-User-Key-File-|Encryption:|Comment:|Public-Lines:|Private-Lines:|Private-MAC:)' ~/.ssh/key.ppk || true
+            } >> "${GITHUB_STEP_SUMMARY}"
+
+            # Convert to OpenSSH private key (supports encrypted PPK via FTP_PASSWORD)
+            if ! puttygen ~/.ssh/key.ppk -O private-openssh ${PPK_PASSPHRASE_ARG} -o ~/.ssh/id_rsa; then
+              echo "ERROR: PPK conversion failed" >> "${GITHUB_STEP_SUMMARY}"
               exit 1
             fi
 
             chmod 600 ~/.ssh/id_rsa
             rm -f ~/.ssh/key.ppk
+          else
+            echo "Detected OpenSSH private key format" >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s' "${FTP_KEY}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+          fi
           else
             echo "Detected OpenSSH private key format" >> "${GITHUB_STEP_SUMMARY}"
             printf '%s' "${FTP_KEY}" > ~/.ssh/id_rsa
@@ -541,11 +565,11 @@ jobs:
             mkdir -p '${REMOTE_PATH}'; \
             cd '${REMOTE_PATH}'; \
             pwd; \
-            put -E 'dist/${ZIP}'; \
+            put -E '${{ steps.build.outputs.dist_dir }}/${ZIP}'; \
             ls; \
             bye"
 
-          ZIP_BYTES="$(stat -c%s "dist/${ZIP}")"
+          ZIP_BYTES="$(stat -c%s "${{ steps.build.outputs.dist_dir }}/${ZIP}")"
           {
             echo "### SFTP upload report"
             echo "```json"
