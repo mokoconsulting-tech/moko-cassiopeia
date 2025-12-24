@@ -464,8 +464,7 @@ jobs:
 
           stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
           p = Path("CHANGELOG.md")
-          raw = p.read_text(encoding="utf-8", errors="replace")
-          lines = raw.splitlines(True)
+          lines = p.read_text(encoding="utf-8", errors="replace").splitlines(True)
 
           def is_h2(line: str) -> bool:
             return line.lstrip().startswith("## ")
@@ -480,7 +479,7 @@ jobs:
             return None
 
           unreleased_idx = find_idx(lambda ln: norm(ln) == "## [unreleased]")
-          version_idx = find_idx(lambda ln: ln.lstrip().startswith(f"## [{new_version}]") )
+          version_idx = find_idx(lambda ln: ln.lstrip().startswith(f"## [{new_version}]"))
 
           def version_header() -> list[str]:
             return ["
@@ -516,7 +515,7 @@ jobs:
           if version_idx is None:
             lines[u_end:u_end] = version_header()
 
-          version_idx = find_idx(lambda ln: ln.lstrip().startswith(f"## [{new_version}]") )
+          version_idx = find_idx(lambda ln: ln.lstrip().startswith(f"## [{new_version}]"))
           if version_idx is None:
             raise SystemExit("[FATAL] Failed to locate version header after insertion")
 
@@ -532,7 +531,6 @@ jobs:
 "]
             lines[insert_at:insert_at] = moved
 
-          # Clear Unreleased body.
           unreleased_idx = find_idx(lambda ln: norm(ln) == "## [unreleased]")
           if unreleased_idx is not None:
             u_start = unreleased_idx + 1
