@@ -42,6 +42,11 @@ on:
         required: true
         default: false
         type: boolean
+  release:
+    types:
+      - created
+      - prereleased
+      - published
 
 concurrency:
   group: release-from-dev-${{ github.ref_name }}
@@ -74,12 +79,29 @@ jobs:
           BRANCH="${GITHUB_REF_NAME}"
           echo "Invoked from branch: ${BRANCH}"
 
-          # Gate: only allow manual runs from dev/<major>.<minor>.<patch> or rc/<major>.<minor>.<patch>
-          echo "${BRANCH}" | grep -E '^(dev|rc)/[0-9]+\.[0-9]+\.[0-9]+$'
+          # Derive version metadata for either workflow_dispatch (dev/rc branches) or release events (tag-driven).
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            # Gate: only allow manual runs from dev/<major>.<minor>.<patch> or rc/<major>.<minor>.<patch>
+            echo "${BRANCH}" | grep -E '^(dev|rc)/[0-9]+\.[0-9]+\.[0-9]+$'
 
-          VERSION="${BRANCH#*/}"
-          SOURCE_BRANCH="${BRANCH}"
-          VERSION_BRANCH="version/${VERSION}"
+            VERSION="${BRANCH#*/}"
+            SOURCE_BRANCH="${BRANCH}"
+            VERSION_BRANCH="version/${VERSION}"
+
+          elif [ "${GITHUB_EVENT_NAME}" = "release" ]; then
+            # Release created via GitHub UI/API. Use the tag name as the version.
+            TAG_NAME="${GITHUB_REF_NAME}"
+            VERSION="${TAG_NAME#v}"
+            echo "${VERSION}" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$'
+
+            SOURCE_BRANCH=""
+            VERSION_BRANCH="version/${VERSION}"
+
+          else
+            echo "ERROR: Unsupported trigger: ${GITHUB_EVENT_NAME}"
+            exit 1
+          fi
+
           TODAY_UTC="$(date -u +%Y-%m-%d)"
 
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
@@ -88,18 +110,20 @@ jobs:
           echo "today_utc=${TODAY_UTC}" >> "${GITHUB_OUTPUT}"
 
   promote_branch:
-    name: 01 Promote dev to version branch (mandatory)
+    name: 01 Promote source to version branch (mandatory)
     runs-on: ubuntu-latest
     needs: guard
+
+    if: ${{ github.event_name == 'workflow_dispatch' }}
 
     permissions:
       contents: write
 
     steps:
-      - name: Checkout dev branch
+      - name: Checkout source branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.guard.outputs.dev_branch }}
+          ref: ${{ needs.guard.outputs.source_branch }}
           fetch-depth: 0
 
       - name: Configure Git identity
@@ -113,7 +137,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          SRC="${{ needs.guard.outputs.dev_branch }}"
+          SRC="${{ needs.guard.outputs.source_branch }}"
           DST="${{ needs.guard.outputs.version_branch }}"
 
           git fetch origin --prune
@@ -132,13 +156,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          SRC="${{ needs.guard.outputs.dev_branch }}"
+          SRC="${{ needs.guard.outputs.source_branch }}"
           DST="${{ needs.guard.outputs.version_branch }}"
 
           git checkout -B "${DST}" "origin/${SRC}"
           git push origin "${DST}"
 
-          # Mandatory hygiene: always delete dev/<version> after promotion.
+          # Mandatory hygiene: always delete dev/<version> or rc/<version> after promotion.
           git push origin --delete "${SRC}"
 
           echo "Promotion complete: ${SRC} -> ${DST} (dev branch deleted)"
@@ -150,7 +174,8 @@ jobs:
       - guard
       - promote_branch
 
-    if: ${{ needs.promote_branch.result == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.promote_branch.result == 'success' }}
+
 
     permissions:
       contents: write
@@ -222,11 +247,13 @@ jobs:
           git push origin "HEAD:${{ needs.guard.outputs.version_branch }}"
 
   build_update_and_release:
-    name: 03 Build Joomla ZIP, update updates.xml, prerelease
+    name: 03 Build Joomla ZIP and prerelease
     runs-on: ubuntu-latest
     needs:
       - guard
       - normalize_dates
+
+    if: ${{ github.event_name == 'workflow_dispatch' }}
 
     permissions:
       contents: write
@@ -359,21 +386,33 @@ jobs:
 
 
 
-      - name: Create and push annotated tag after final release commit
+      - name: Ensure tag and update release asset if release exists
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
           VERSION="${{ needs.guard.outputs.version }}"
+          ZIP="${{ steps.build.outputs.zip_name }}"
 
           git fetch --tags
 
-          if git rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null; then
-            echo "ERROR: Tag ${VERSION} already exists."
-            exit 1
+          # Create tag if it does not exist
+          if ! git rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null; then
+            git tag -a "${VERSION}" -m "Prerelease ${VERSION}"
+            git push origin "refs/tags/${VERSION}"
+            echo "Tag ${VERSION} created."
+          else
+            echo "Tag ${VERSION} already exists."
           fi
 
-          git tag -a "${VERSION}" -m "Prerelease ${VERSION}"
-          git push origin "refs/tags/${VERSION}"
+          # If a GitHub release exists, update (clobber) the ZIP asset
+          if gh release view "${VERSION}" >/dev/null 2>&1; then
+            echo "Release ${VERSION} exists. Updating ZIP asset."
+            gh release upload "${VERSION}" "dist/${ZIP}" --clobber
+          else
+            echo "No existing release for ${VERSION}. Asset will be attached during prerelease creation."
+          fi
 
       - name: Generate release notes from CHANGELOG.md
         run: |
@@ -456,6 +495,57 @@ jobs:
             }' >> "${GITHUB_STEP_SUMMARY}"
 
           echo "```" >> "${GITHUB_STEP_SUMMARY}"
+  release_event_report:
+    name: 99 Release event report (GitHub UI created release)
+    runs-on: ubuntu-latest
+    needs: guard
+
+    if: ${{ github.event_name == 'release' }}
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Publish JSON report to job summary (release event)
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          TAG="${{ github.ref_name }}"
+
+          echo "### Release event report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
+          echo "```json" >> "${GITHUB_STEP_SUMMARY}"
+
+          jq -n \
+            --arg repository "${{ github.repository }}" \
+            --arg version "${VERSION}" \
+            --arg tag "${TAG}" \
+            --arg created_at "${{ github.event.release.created_at }}" \
+            --arg published_at "${{ github.event.release.published_at }}" \
+            --arg prerelease "${{ github.event.release.prerelease }}" \
+            --arg draft "${{ github.event.release.draft }}" \
+            --arg html_url "${{ github.event.release.html_url }}" \
+            '{
+              repository: $repository,
+              version: $version,
+              tag: $tag,
+              release: {
+                created_at: $created_at,
+                published_at: $published_at,
+                prerelease: ($prerelease == "true"),
+                draft: ($draft == "true"),
+                html_url: $html_url
+              }
+            }' >> "${GITHUB_STEP_SUMMARY}"
+
+          echo "```" >> "${GITHUB_STEP_SUMMARY}"
+
   squash_to_main:
     name: 04 Optional squash merge version branch to main (PR-based)
     runs-on: ubuntu-latest
