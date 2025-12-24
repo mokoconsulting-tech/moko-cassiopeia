@@ -372,7 +372,7 @@ jobs:
           echo "manifest=${MANIFEST}" >> "${GITHUB_OUTPUT}"
           echo "ext_type=${EXT_TYPE}" >> "${GITHUB_OUTPUT}"
 
-      - name: Upload ZIP to SFTP (key-only, overwrite)
+      - name: Upload ZIP to SFTP (key-only, overwrite, verbose)
         env:
           FTP_HOST: ${{ secrets.FTP_HOST }}
           FTP_USER: ${{ secrets.FTP_USER }}
@@ -384,6 +384,7 @@ jobs:
           CHANNEL: ${{ needs.guard.outputs.channel }}
         run: |
           set -euo pipefail
+          set -x
 
           ZIP="${{ steps.build.outputs.zip_name }}"
 
@@ -412,6 +413,8 @@ jobs:
             REMOTE_PATH="${FTP_PATH%/}/${CHANNEL}"
           fi
 
+          echo "SFTP target: sftp://${HOSTPORT}${REMOTE_PATH}" >> "${GITHUB_STEP_SUMMARY}"
+
           sudo apt-get update -y
           sudo apt-get install -y lftp openssh-client
 
@@ -420,7 +423,8 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H "${FTP_HOST}" >> ~/.ssh/known_hosts
 
-          lftp -e "set sftp:auto-confirm yes; open -u '${FTP_USER}', sftp://${HOSTPORT}; mkdir -p '${REMOTE_PATH}'; cd '${REMOTE_PATH}'; put -E 'dist/${ZIP}'; ls; bye"
+          # Verbose SFTP session
+          lftp -d -e "set sftp:auto-confirm yes; set cmd:trace yes; set net:timeout 30; set net:max-retries 3; set net:reconnect-interval-base 5; open -u '${FTP_USER}', sftp://${HOSTPORT}; pwd; ls; mkdir -p '${REMOTE_PATH}'; cd '${REMOTE_PATH}'; pwd; put -E 'dist/${ZIP}'; ls; bye"
 
       - name: Create Git tag for release
         id: tag
