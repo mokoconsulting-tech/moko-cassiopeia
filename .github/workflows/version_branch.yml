@@ -482,10 +482,7 @@ jobs:
           version_idx = find_idx(lambda ln: ln.lstrip().startswith(f"## [{new_version}]"))
 
           def version_header() -> list[str]:
-            return ["
-", f"## [{new_version}] - {stamp}
-", "
-"]
+            return ["\n", f"## [{new_version}] - {stamp}\n", "\n"]
 
           if unreleased_idx is None:
             if version_idx is None:
@@ -496,9 +493,7 @@ jobs:
                   while insert_at < len(lines) and lines[insert_at].strip() == "":
                     insert_at += 1
                   break
-              entry = version_header() + ["- No changes recorded.
-", "
-"]
+              entry = version_header() + ["- No changes recorded.\n", "\n"]
               lines[insert_at:insert_at] = entry
               p.write_text("".join(lines), encoding="utf-8")
             raise SystemExit(0)
@@ -524,11 +519,7 @@ jobs:
             while insert_at < len(lines) and lines[insert_at].strip() == "":
               insert_at += 1
 
-            moved = ["
-"] + [ln + "
-" for ln in unreleased_body.split("
-") if ln != ""] + ["
-"]
+            moved = ["\n"] + [ln + "\n" for ln in unreleased_body.split("\n") if ln != ""] + ["\n"]
             lines[insert_at:insert_at] = moved
 
           unreleased_idx = find_idx(lambda ln: norm(ln) == "## [unreleased]")
@@ -539,8 +530,7 @@ jobs:
               if is_h2(lines[j]):
                 u_end = j
                 break
-            lines[u_start:u_end] = ["
-"]
+            lines[u_start:u_end] = ["\n"]
 
           p.write_text("".join(lines), encoding="utf-8")
           PY
