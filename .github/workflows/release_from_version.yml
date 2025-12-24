@@ -29,7 +29,7 @@
 #
 name: Release from Version Branch Pipeline
 
-"on":
+on:
   workflow_dispatch:
     inputs:
       promote_to_version:
@@ -468,13 +468,14 @@ jobs:
           fi
 
           ZIP_ASSET="${{ steps.build.outputs.zip_name }}"
-          cat >> RELEASE_NOTES.md <<EOF
 
-Assets:
-- ${ZIP_ASSET}
-- updates.xml
-- SHA256SUMS.txt
-EOF
+          {
+            echo ""
+            echo "Assets:"
+            echo "- ${ZIP_ASSET}"
+            echo "- updates.xml"
+            echo "- SHA256SUMS.txt"
+          } >> RELEASE_NOTES.md
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
