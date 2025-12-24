@@ -22,7 +22,7 @@
 # INGROUP: Generic.Script
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /scripts/fix_paths.sh
-# VERSION: 03.06.00
+# VERSION: 03.05.00
 # BRIEF: Replace Windows-style path separators with POSIX separators in text files.#
 # Purpose:
 # - Normalize path separators in text files to forward slashes (/).

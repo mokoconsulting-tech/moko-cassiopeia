@@ -22,7 +22,7 @@
  INGROUP: Moko-Cassiopeia.Governance
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: CODE_OF_CONDUCT.md
- VERSION: 03.06.00
+ VERSION: 03.05.00
  BRIEF: Contributor code of conduct for the Moko-Cassiopeia project.
  PATH: /CODE_OF_CONDUCT.md
  NOTE: This document defines behavioral expectations and enforcement processes.

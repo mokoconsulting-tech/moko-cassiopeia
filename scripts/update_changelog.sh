@@ -23,7 +23,7 @@
 # INGROUP: Generic.Script
 # REPO: https://github.com/mokoconsulting-tech/MokoDefaults
 # PATH: /scripts/update_changelog.sh
-# VERSION: 03.06.00
+# VERSION: 03.05.00
 # BRIEF: Insert a versioned CHANGELOG.md entry immediately after the main Changelog heading
 # Purpose:
 # - Apply the MokoWaaS-Brand CHANGELOG template entry for a given version.

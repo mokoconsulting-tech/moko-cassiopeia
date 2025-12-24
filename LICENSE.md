@@ -14,7 +14,7 @@
 	DEFGROUP: 
 	INGROUP: Project.Documentation
 	REPO: 
-	VERSION: 03.06.00
+	VERSION: 03.05.00
 	PATH: ./LICENSE.md
 	BRIEF: Project license (GPL-3.0-or-later)
 -->
