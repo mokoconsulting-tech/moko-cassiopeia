@@ -262,13 +262,60 @@ jobs:
           TODAY="${{ needs.guard.outputs.today_utc }}"
           VERSION="${{ needs.guard.outputs.version }}"
 
-          if [ ! -f scripts/update_dates.sh ]; then
-            echo "ERROR: scripts/update_dates.sh is required for enterprise releases" >> "${GITHUB_STEP_SUMMARY}"
+          {
+            echo "### Date normalization (repo script only)"
+            echo "```json"
+            echo "{\"today_utc\":\"${TODAY}\",\"version\":\"${VERSION}\"}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          echo "Working directory: $(pwd)" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Repo root listing:" >> "${GITHUB_STEP_SUMMARY}"
+          ls -la >> "${GITHUB_STEP_SUMMARY}"
+
+          echo "Scripts folder listing:" >> "${GITHUB_STEP_SUMMARY}"
+          if [ -d scripts ]; then
+            ls -la scripts >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "scripts/ directory not found." >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+          # Enterprise control: repo-provided date normalization is mandatory.
+          # Allow standard locations inside the repo, but never a generated fallback.
+          CANDIDATES=(
+            "scripts/update_dates.sh"
+            "scripts/release/update_dates.sh"
+            "scripts/release/update_dates"
+            "./scripts/update_dates.sh"
+          )
+
+          SCRIPT=""
+          for c in "${CANDIDATES[@]}"; do
+            if [ -f "${c}" ]; then
+              SCRIPT="${c}"
+              break
+            fi
+          done
+
+          if [ -z "${SCRIPT}" ]; then
+            # Best-effort discovery for audit visibility.
+            FOUND="$(find . -maxdepth 3 -type f \( -name 'update_dates.sh' -o -name 'update-dates.sh' \) 2>/dev/null | head -n 5 || true)"
+            {
+              echo "ERROR: Date normalization script not found in approved locations."
+              echo "Approved locations:"
+              printf '%s
+' "${CANDIDATES[@]}"
+              echo "Discovered candidates (first 5):"
+              echo "${FOUND:-<none>}"
+              echo "Required action: add scripts/update_dates.sh (or scripts/release/update_dates.sh) to the repo."
+            } >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
-          chmod +x scripts/update_dates.sh
-          scripts/update_dates.sh "${TODAY}" "${VERSION}"
+          echo "Using date script: ${SCRIPT}" >> "${GITHUB_STEP_SUMMARY}"
+
+          chmod +x "${SCRIPT}"
+          "${SCRIPT}" "${TODAY}" "${VERSION}"
 
       - name: Commit and push date updates
         run: |
