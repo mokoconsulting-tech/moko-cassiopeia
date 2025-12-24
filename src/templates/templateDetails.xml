@@ -29,7 +29,9 @@
 -->
 <extension type="template" client="site" method="upgrade">
 	<updateservers>
-		<server type="extension" name="Moko-Cassiopeia">https://raw.githubusercontent.com/mokoconsulting-tech/moko-cassiopeia/refs/heads/main/updates.xml</server>
+	  <server type="extension" name="Moko-Cassiopeia Updates" priority="1">
+	    https://mokoconsulting.tech/index.php?option=com_ars&amp;view=update&amp;task=stream&amp;format=xml&amp;id=1
+	  </server>
 	</updateservers>
 	<name>moko-cassiopeia</name>
 	<version>03.06.00</version>
