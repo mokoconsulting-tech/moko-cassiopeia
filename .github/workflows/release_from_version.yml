@@ -449,11 +449,12 @@ jobs:
             echo "- updates.xml"
             echo "- SHA256SUMS.txt"
           } >> RELEASE_NOTES.md
-
       - name: Publish JSON report to job summary (JSON-only, no file)
         run: |
           set -euo pipefail
 
+          OWNER="${{ github.repository_owner }}"
+          REPO="${{ github.event.repository.name }}"
           VERSION="${{ needs.guard.outputs.version }}"
           BRANCH="${{ needs.guard.outputs.version_branch }}"
           TAG="${{ needs.guard.outputs.version }}"
@@ -463,40 +464,51 @@ jobs:
           EXT_ROOT="${{ steps.build.outputs.root }}"
           MANIFEST_PATH="${{ steps.build.outputs.manifest }}"
           EXT_TYPE="${{ steps.build.outputs.ext_type }}"
-          OWNER="${{ github.repository_owner }}"
-          REPO="${{ github.event.repository.name }}"
+
           DOWNLOAD_URL="https://github.com/${OWNER}/${REPO}/releases/download/${VERSION}/${ZIP_NAME}"
 
           echo "### Release report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
-          echo "\`\`\`json" >> "${GITHUB_STEP_SUMMARY}"
-          cat <<'JSON' >> "${GITHUB_STEP_SUMMARY}"
-{
-  "repository": "${{ github.repository }}",
-  "version": "${VERSION}",
-  "branch": "${BRANCH}",
-  "tag": "${TAG}",
-  "prerelease": true,
-  "today_utc": "${TODAY_UTC}",
-  "commit_sha": "${{ github.sha }}",
-  "joomla": {
-    "extension_type": "${EXT_TYPE}",
-    "extension_root": "${EXT_ROOT}",
-    "manifest_path": "${MANIFEST_PATH}"
-  },
-  "assets": {
-    "zip": {
-      "name": "${ZIP_NAME}",
-      "sha256": "${ZIP_SHA256}",
-      "download_url": "${DOWNLOAD_URL}"
-    },
-    "updates_xml": "updates.xml",
-    "sha256sums": "dist/SHA256SUMS.txt",
-    "release_notes": "RELEASE_NOTES.md"
-  }
-}
-JSON
-          echo "\`\`\`" >> "${GITHUB_STEP_SUMMARY}"
+          echo "```json" >> "${GITHUB_STEP_SUMMARY}"
 
+          jq -n \
+            --arg repository "${{ github.repository }}" \
+            --arg version "${VERSION}" \
+            --arg branch "${BRANCH}" \
+            --arg tag "${TAG}" \
+            --arg today_utc "${TODAY_UTC}" \
+            --arg commit_sha "${{ github.sha }}" \
+            --arg ext_type "${EXT_TYPE}" \
+            --arg ext_root "${EXT_ROOT}" \
+            --arg manifest_path "${MANIFEST_PATH}" \
+            --arg zip_name "${ZIP_NAME}" \
+            --arg zip_sha256 "${ZIP_SHA256}" \
+            --arg download_url "${DOWNLOAD_URL}" \
+            '{
+              repository: $repository,
+              version: $version,
+              branch: $branch,
+              tag: $tag,
+              prerelease: true,
+              today_utc: $today_utc,
+              commit_sha: $commit_sha,
+              joomla: {
+                extension_type: $ext_type,
+                extension_root: $ext_root,
+                manifest_path: $manifest_path
+              },
+              assets: {
+                zip: {
+                  name: $zip_name,
+                  sha256: $zip_sha256,
+                  download_url: $download_url
+                },
+                updates_xml: "updates.xml",
+                sha256sums: "dist/SHA256SUMS.txt",
+                release_notes: "RELEASE_NOTES.md"
+              }
+            }' >> "${GITHUB_STEP_SUMMARY}"
+
+          echo "```" >> "${GITHUB_STEP_SUMMARY}"
   squash_to_main:
     name: 04 Optional squash merge version branch to main (PR-based)
     runs-on: ubuntu-latest
