@@ -23,31 +23,14 @@
 # INGROUP: MokoStandards.Release
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/release_pipeline.yml
-# VERSION: 01.00.02
-# BRIEF: Enterprise release pipeline enforcing dev to rc to version to main. Promotes and deletes source branches, builds Joomla artifacts from version branches, publishes prereleases, and optionally creates a squash PR to main.
-# NOTE: Key controls: strict branch gating, mandatory branch deletion after promotion, least privilege permissions, key-only SFTP, ZIP-only distribution, no checksum generation.
+# VERSION: 01.01.00
+# BRIEF: Enterprise release pipeline enforcing dev to rc to version to main. Creates prerelease when rc is created. Creates full release when version is created, and pushes version to main while retaining the version branch.
+# NOTE: Key controls: strict branch gating, mandatory source branch deletion after promotion, least privilege permissions, key-only SFTP, ZIP-only distribution, overwrite enabled, no checksum generation.
 #
 name: Release Pipeline (dev to rc to version to main)
 
 on:
   workflow_dispatch:
-    inputs:
-      squash_to_main:
-        description: "Create a PR that squashes version/<version> into main"
-        required: true
-        default: false
-        type: boolean
-      delete_version_branch:
-        description: "Delete version/<version> after PR creation"
-        required: true
-        default: false
-        type: boolean
-      # SFTP upload is mandatory for all releases
-      sftp_upload:
-        description: "Upload ZIP to SFTP (key-only, mandatory, overwrite enabled)"
-        required: true
-        default: true
-        type: boolean
   release:
     types:
       - created
@@ -75,10 +58,10 @@ jobs:
       source_branch: ${{ steps.meta.outputs.source_branch }}
       source_prefix: ${{ steps.meta.outputs.source_prefix }}
       target_branch: ${{ steps.meta.outputs.target_branch }}
-      version_branch: ${{ steps.meta.outputs.version_branch }}
+      promoted_branch: ${{ steps.meta.outputs.promoted_branch }}
       today_utc: ${{ steps.meta.outputs.today_utc }}
       channel: ${{ steps.meta.outputs.channel }}
-      release_ready: ${{ steps.meta.outputs.release_ready }}
+      release_mode: ${{ steps.meta.outputs.release_mode }}
 
     steps:
       - name: Validate trigger and extract metadata
@@ -93,9 +76,9 @@ jobs:
           SOURCE_BRANCH=""
           SOURCE_PREFIX=""
           TARGET_BRANCH=""
-          VERSION_BRANCH=""
+          PROMOTED_BRANCH=""
           CHANNEL=""
-          RELEASE_READY="false"
+          RELEASE_MODE="none"
 
           if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
             echo "${REF_NAME}" | grep -E '^(dev|rc)/[0-9]+[.][0-9]+[.][0-9]+$'
@@ -105,14 +88,17 @@ jobs:
             VERSION="${REF_NAME#*/}"
 
             if [ "${SOURCE_PREFIX}" = "dev" ]; then
+              # dev -> rc, then prerelease
               TARGET_BRANCH="rc/${VERSION}"
+              PROMOTED_BRANCH="rc/${VERSION}"
               CHANNEL="rc"
-              RELEASE_READY="false"
+              RELEASE_MODE="prerelease"
             else
+              # rc -> version, then full release + push to main
               TARGET_BRANCH="version/${VERSION}"
-              VERSION_BRANCH="version/${VERSION}"
-              CHANNEL="rc"
-              RELEASE_READY="true"
+              PROMOTED_BRANCH="version/${VERSION}"
+              CHANNEL="stable"
+              RELEASE_MODE="stable"
             fi
 
           elif [ "${EVENT_NAME}" = "release" ]; then
@@ -122,8 +108,10 @@ jobs:
 
             if [ "${{ github.event.release.prerelease }}" = "true" ]; then
               CHANNEL="rc"
+              RELEASE_MODE="prerelease"
             else
               CHANNEL="stable"
+              RELEASE_MODE="stable"
             fi
 
           else
@@ -137,10 +125,10 @@ jobs:
           echo "source_branch=${SOURCE_BRANCH}" >> "${GITHUB_OUTPUT}"
           echo "source_prefix=${SOURCE_PREFIX}" >> "${GITHUB_OUTPUT}"
           echo "target_branch=${TARGET_BRANCH}" >> "${GITHUB_OUTPUT}"
-          echo "version_branch=${VERSION_BRANCH}" >> "${GITHUB_OUTPUT}"
+          echo "promoted_branch=${PROMOTED_BRANCH}" >> "${GITHUB_OUTPUT}"
           echo "today_utc=${TODAY_UTC}" >> "${GITHUB_OUTPUT}"
           echo "channel=${CHANNEL}" >> "${GITHUB_OUTPUT}"
-          echo "release_ready=${RELEASE_READY}" >> "${GITHUB_OUTPUT}"
+          echo "release_mode=${RELEASE_MODE}" >> "${GITHUB_OUTPUT}"
 
           {
             echo "### Guard report"
@@ -151,9 +139,9 @@ jobs:
             echo "  \"version\": \"${VERSION}\","
             echo "  \"source_branch\": \"${SOURCE_BRANCH}\","
             echo "  \"target_branch\": \"${TARGET_BRANCH}\","
-            echo "  \"version_branch\": \"${VERSION_BRANCH}\","
+            echo "  \"promoted_branch\": \"${PROMOTED_BRANCH}\","
             echo "  \"channel\": \"${CHANNEL}\","
-            echo "  \"release_ready\": ${RELEASE_READY},"
+            echo "  \"release_mode\": \"${RELEASE_MODE}\","
             echo "  \"today_utc\": \"${TODAY_UTC}\""
             echo "}"
             echo "```"
@@ -228,32 +216,23 @@ jobs:
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Stop after dev to rc promotion
-        if: ${{ needs.guard.outputs.release_ready != 'true' }}
-        run: |
-          set -euo pipefail
-          {
-            echo "### Next step"
-            echo "Run this workflow from rc/${{ needs.guard.outputs.version }} to promote rc to version and build."
-          } >> "${GITHUB_STEP_SUMMARY}"
-
   normalize_dates:
-    name: 02 Normalize dates on version branch
+    name: 02 Normalize dates on promoted branch
     runs-on: ubuntu-latest
     needs:
       - guard
       - promote_branch
 
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.guard.outputs.release_ready == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
 
     permissions:
       contents: write
 
     steps:
-      - name: Checkout version branch
+      - name: Checkout promoted branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.guard.outputs.version_branch }}
+          ref: ${{ needs.guard.outputs.promoted_branch }}
           fetch-depth: 0
 
       - name: Configure Git identity
@@ -302,16 +281,16 @@ jobs:
 
           git add -A
           git commit -m "chore(release): normalize dates for ${{ needs.guard.outputs.version }}"
-          git push origin "HEAD:${{ needs.guard.outputs.version_branch }}"
+          git push origin "HEAD:${{ needs.guard.outputs.promoted_branch }}"
 
-  build_and_prerelease:
-    name: 03 Build Joomla ZIP and publish prerelease
+  build_and_release:
+    name: 03 Build ZIP, upload to SFTP, create GitHub release
     runs-on: ubuntu-latest
     needs:
       - guard
       - normalize_dates
 
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.guard.outputs.release_ready == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
 
     permissions:
       contents: write
@@ -319,10 +298,10 @@ jobs:
       attestations: write
 
     steps:
-      - name: Checkout version branch
+      - name: Checkout promoted branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.guard.outputs.version_branch }}
+          ref: ${{ needs.guard.outputs.promoted_branch }}
           fetch-depth: 0
 
       - name: Configure Git identity
@@ -339,6 +318,7 @@ jobs:
 
           VERSION="${{ needs.guard.outputs.version }}"
           REPO="${{ github.event.repository.name }}"
+          CHANNEL="${{ needs.guard.outputs.channel }}"
 
           test -d src || (echo "ERROR: src directory missing" && exit 1)
 
@@ -369,7 +349,7 @@ jobs:
             exit 1
           fi
 
-          EXT_TYPE="$(grep -o 'type="[^"]*"' "${MANIFEST}" | head -n 1 | cut -d '"' -f2)"
+          EXT_TYPE="$(grep -o 'type=\"[^\"]*\"' "${MANIFEST}" | head -n 1 | cut -d '\"' -f2)"
           if [ -z "${EXT_TYPE}" ]; then
             EXT_TYPE="unknown"
           fi
@@ -379,7 +359,7 @@ jobs:
             ROOT="${MANIFEST_DIR}"
           fi
 
-          ZIP="${REPO}-${VERSION}-${{ needs.guard.outputs.channel }}.zip"
+          ZIP="${REPO}-${VERSION}-${CHANNEL}.zip"
 
           (cd "${ROOT}" && zip -r -X "../dist/${ZIP}" . \
             -x "**/.git/**" \
@@ -392,9 +372,7 @@ jobs:
           echo "manifest=${MANIFEST}" >> "${GITHUB_OUTPUT}"
           echo "ext_type=${EXT_TYPE}" >> "${GITHUB_OUTPUT}"
 
-      - name: Always upload ZIP to SFTP (key-only, overwrite)
-        # Mandatory enterprise control: always upload
-        if: ${{ always() }}
+      - name: Upload ZIP to SFTP (key-only, overwrite)
         env:
           FTP_HOST: ${{ secrets.FTP_HOST }}
           FTP_USER: ${{ secrets.FTP_USER }}
@@ -444,14 +422,65 @@ jobs:
 
           lftp -e "set sftp:auto-confirm yes; open -u '${FTP_USER}', sftp://${HOSTPORT}; mkdir -p '${REMOTE_PATH}'; cd '${REMOTE_PATH}'; put -E 'dist/${ZIP}'; ls; bye"
 
-      - name: Create or update tag and prerelease
+      - name: Create Git tag for release
+        id: tag
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          MODE="${{ needs.guard.outputs.release_mode }}"
+
+          if [ "${MODE}" = "prerelease" ]; then
+            TAG="v${VERSION}-rc"
+          else
+            TAG="v${VERSION}"
+          fi
+
+          git fetch --tags
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            echo "Tag ${TAG} already exists" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            git tag -a "${TAG}" -m "${MODE} ${VERSION}"
+            git push origin "refs/tags/${TAG}"
+          fi
+
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Generate release notes from CHANGELOG.md
+        id: notes
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          ZIP_ASSET="${{ steps.build.outputs.zip_name }}"
+
+          awk "/^## \[${VERSION}\]/{flag=1;next}/^## \[/ {flag=0}flag" CHANGELOG.md > RELEASE_NOTES.md || true
+
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "ERROR: Release notes extraction failed for ${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          {
+            echo ""
+            echo "Assets:"
+            echo "- ${ZIP_ASSET}"
+          } >> RELEASE_NOTES.md
+
+      - name: Create GitHub release and attach ZIP
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.guard.outputs.version }}
-          name: Prerelease ${{ needs.guard.outputs.version }}
-          prerelease: true
-          body: "Automated prerelease from version branch"
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ needs.guard.outputs.release_mode }} ${{ needs.guard.outputs.version }}
+          prerelease: ${{ needs.guard.outputs.release_mode == 'prerelease' }}
+          body_path: RELEASE_NOTES.md
           files: |
+            dist/*.zip
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
             dist/*.zip
 
       - name: Publish JSON report to job summary
@@ -460,14 +489,87 @@ jobs:
 
           REPO_FULL="${{ github.repository }}"
           VERSION="${{ needs.guard.outputs.version }}"
-          BRANCH="${{ needs.guard.outputs.version_branch }}"
+          BRANCH="${{ needs.guard.outputs.promoted_branch }}"
+          TAG="${{ steps.tag.outputs.tag }}"
           ZIP_NAME="${{ steps.build.outputs.zip_name }}"
           CHANNEL="${{ needs.guard.outputs.channel }}"
+          MODE="${{ needs.guard.outputs.release_mode }}"
 
           echo "### Release report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
           echo "```json" >> "${GITHUB_STEP_SUMMARY}"
-          echo "{\"repository\":\"${REPO_FULL}\",\"version\":\"${VERSION}\",\"branch\":\"${BRANCH}\",\"channel\":\"${CHANNEL}\",\"zip\":\"${ZIP_NAME}\",\"sha\":null}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "{\"repository\":\"${REPO_FULL}\",\"version\":\"${VERSION}\",\"branch\":\"${BRANCH}\",\"tag\":\"${TAG}\",\"mode\":\"${MODE}\",\"channel\":\"${CHANNEL}\",\"zip\":\"${ZIP_NAME}\",\"sha\":null}" >> "${GITHUB_STEP_SUMMARY}"
           echo "```" >> "${GITHUB_STEP_SUMMARY}"
+
+  push_version_to_main:
+    name: 04 Push version to main (stable only, keep version branch)
+    runs-on: ubuntu-latest
+    needs:
+      - guard
+      - build_and_release
+
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.guard.outputs.release_mode == 'stable' }}
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure Git identity
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      - name: Create PR from version branch to main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          HEAD="${{ needs.guard.outputs.promoted_branch }}"
+          TITLE="Release ${VERSION} to main"
+
+          gh pr create \
+            --base main \
+            --head "${HEAD}" \
+            --title "${TITLE}" \
+            --body "Automated PR created by release pipeline. Version branch is retained by policy." \
+            || true
+
+      - name: Attempt to merge PR (best-effort)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          HEAD="${{ needs.guard.outputs.promoted_branch }}"
+
+          PR_NUMBER="$(gh pr list --head "${HEAD}" --base main --json number --jq '.[0].number' || true)"
+
+          if [ -z "${PR_NUMBER}" ] || [ "${PR_NUMBER}" = "null" ]; then
+            echo "ERROR: PR not found for head ${HEAD}" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          # Enterprise-safe default: merge commit, no branch deletion.
+          gh pr merge "${PR_NUMBER}" --merge --delete-branch=false \
+            || echo "PR merge blocked by branch protection or policy" >> "${GITHUB_STEP_SUMMARY}"
+
+          {
+            echo "### Main branch promotion"
+            echo "```json"
+            echo "{\"version\":\"${VERSION}\",\"head\":\"${HEAD}\",\"pr\":${PR_NUMBER}}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
   release_event_report:
     name: 99 Release event report (GitHub UI created release)
@@ -497,63 +599,3 @@ jobs:
           echo "```json" >> "${GITHUB_STEP_SUMMARY}"
           echo "{\"version\":\"${VERSION}\",\"tag\":\"${TAG}\",\"prerelease\":${{ github.event.release.prerelease }}}" >> "${GITHUB_STEP_SUMMARY}"
           echo "```" >> "${GITHUB_STEP_SUMMARY}"
-
-  squash_to_main:
-    name: 04 Optional squash merge version branch to main (PR-based)
-    runs-on: ubuntu-latest
-    needs:
-      - guard
-      - build_and_prerelease
-
-    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.squash_to_main == true && needs.guard.outputs.release_ready == 'true' }}
-
-    permissions:
-      contents: write
-      pull-requests: write
-
-    steps:
-      - name: Checkout main
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Configure Git identity
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
-
-      - name: Create squash PR targeting main
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          VERSION="${{ needs.guard.outputs.version }}"
-          MERGE_BRANCH="merge/${VERSION}"
-          SOURCE_REF="origin/${{ needs.guard.outputs.version_branch }}"
-
-          git fetch origin --prune
-          git checkout main
-          git pull --ff-only origin main
-
-          git checkout -B "${MERGE_BRANCH}" main
-          git merge --squash "${SOURCE_REF}"
-
-          if git diff --cached --quiet; then
-            echo "No changes to merge" >> "${GITHUB_STEP_SUMMARY}"
-            exit 0
-          fi
-
-          git commit -m "chore(release): squash ${VERSION} into main"
-          git push -u origin "${MERGE_BRANCH}"
-
-          gh pr create --base main --head "${MERGE_BRANCH}" --title "Release ${VERSION} (squash)" --body "Squash merge prepared by release pipeline." || true
-
-      - name: Optional delete version branch after PR creation
-        if: ${{ github.event.inputs.delete_version_branch == true }}
-        run: |
-          set -euo pipefail
-          git push origin --delete "${{ needs.guard.outputs.version_branch }}" || true
