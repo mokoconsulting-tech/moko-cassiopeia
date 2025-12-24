@@ -23,7 +23,7 @@
 # INGROUP: GitHub.Actions.ContinuousIntegration
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/ci.yml
-# VERSION: 01.00.00
+# VERSION: 03.05.00
 # BRIEF: Continuous integration governance workflow for standards enforcement.
 # NOTE: Runs on every push. Auto-normalizes YAML tabs to two spaces before validation.
 # ============================================================================

@@ -24,7 +24,7 @@
 # INGROUP: GitHub.Actions.Utilities
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /scripts/fix_tabs.sh
-# VERSION: 01.00.00
+# VERSION: 03.05.00
 # BRIEF: Utility script to replace tab characters with two spaces in YAML files.
 # NOTE: Intended for local developer use. Not executed automatically in CI.
 # ============================================================================

@@ -20,7 +20,7 @@
 # INGROUP: GitHub.Versioning.Branching
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/version_branch.yml
-# VERSION: 01.00.00
+# VERSION: 03.05.00
 # BRIEF: Create a dev/<version> branch and align versions across governed files
 # NOTE: Enterprise gates: required artifacts, namespace defense, deterministic reporting, control character guard
 

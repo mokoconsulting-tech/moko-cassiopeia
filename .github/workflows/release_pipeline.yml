@@ -23,7 +23,7 @@
 # INGROUP: MokoStandards.Release
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/release_pipeline.yml
-# VERSION: 01.02.00
+# VERSION: 03.05.00
 # BRIEF: Enterprise release pipeline enforcing dev to rc to version to main. Creates prerelease when rc is created. Creates full release when version is created and promotes to main while retaining the version branch.
 # NOTE: Controls: strict branch gating, mandatory source branch deletion after promotion, key-only SFTP with verbose logs, ZIP-only distribution with overwrite, no checksum generation.
 #

@@ -24,7 +24,7 @@
 # INGROUP: GitHub.Actions.CI
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /scripts/validate_tabs.sh
-# VERSION: 01.00.00
+# VERSION: 03.05.00
 # BRIEF: CI validator that blocks tab characters in YAML files and enforces two-space indentation policy.
 # NOTE: YAML is indentation sensitive; tabs are noncompliant. This validator fails the job when any tab is detected.
 # ============================================================================
