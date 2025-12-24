@@ -24,10 +24,10 @@
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/release_pipeline.yml
 # VERSION: 01.00.00
-# BRIEF: Enterprise release pipeline that promotes dev/<version> or rc/<version> to version/<version>, deletes dev branch, builds Joomla artifacts, publishes prereleases, and optionally creates a squash PR to main.
-# NOTE: Invocation is restricted to dev/<major>.<minor>.<patch> branches.
+# BRIEF: Enterprise release pipeline that promotes dev/<version> to version/<version>, deletes dev branch, builds Joomla artifacts, publishes prereleases, and optionally creates a squash PR to main.
+# NOTE: Invocation is restricted to dev/<major>.<minor>.<patch> and rc/<major>.<minor>.<patch> branches.
 #
-name: Release Pipeline
+name: Release Pipeline (dev/rc → version → prerelease)
 
 on:
   workflow_dispatch:
