@@ -500,11 +500,32 @@ jobs:
           echo "SFTP target: sftp://${HOSTPORT}${REMOTE_PATH}" >> "${GITHUB_STEP_SUMMARY}"
 
           sudo apt-get update -y
-          sudo apt-get install -y lftp openssh-client
+          sudo apt-get install -y lftp openssh-client putty-tools
 
           mkdir -p ~/.ssh
-          echo "${FTP_KEY}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+
+          # Key material can be OpenSSH private key or PuTTY .ppk (unencrypted).
+          # Hard control: key-only auth. No password or interactive prompts.
+          if printf '%s' "${FTP_KEY}" | head -n 1 | grep -q '^PuTTY-User-Key-File-'; then
+            echo "Detected PuTTY PPK key format" >> "${GITHUB_STEP_SUMMARY}"
+
+            printf '%s' "${FTP_KEY}" > ~/.ssh/key.ppk
+            chmod 600 ~/.ssh/key.ppk
+
+            # Convert to OpenSSH private key. Encrypted PPK will fail (no passphrase support by policy).
+            if ! puttygen ~/.ssh/key.ppk -O private-openssh -o ~/.ssh/id_rsa; then
+              echo "ERROR: PPK conversion failed. Provide an unencrypted PPK (no passphrase)." >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+            fi
+
+            chmod 600 ~/.ssh/id_rsa
+            rm -f ~/.ssh/key.ppk
+          else
+            echo "Detected OpenSSH private key format" >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s' "${FTP_KEY}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+          fi
+
           ssh-keyscan -H "${FTP_HOST}" >> ~/.ssh/known_hosts
 
           # Hard‑enforced key‑only authentication. Password auth explicitly disabled.
