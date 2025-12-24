@@ -464,7 +464,8 @@ jobs:
 
           stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
           p = Path("CHANGELOG.md")
-          lines = p.read_text(encoding="utf-8", errors="replace").splitlines(True)
+          raw = p.read_text(encoding="utf-8", errors="replace")
+          lines = raw.splitlines(True)
 
           def is_h2(line: str) -> bool:
             return line.lstrip().startswith("## ")
@@ -472,40 +473,37 @@ jobs:
           def norm(line: str) -> str:
             return line.strip().lower()
 
-          unreleased_idx = None
-          for i, line in enumerate(lines):
-            if norm(line) == "## [unreleased]":
-              unreleased_idx = i
-              break
+          def find_idx(predicate):
+            for i, ln in enumerate(lines):
+              if predicate(ln):
+                return i
+            return None
 
-          version_idx = None
-          for i, line in enumerate(lines):
-            if line.lstrip().startswith(f"## [{new_version}]"):
-              version_idx = i
-              break
+          unreleased_idx = find_idx(lambda ln: norm(ln) == "## [unreleased]")
+          version_idx = find_idx(lambda ln: ln.lstrip().startswith(f"## [{new_version}]") )
+
+          def version_header() -> list[str]:
+            return ["
+", f"## [{new_version}] - {stamp}
+", "
+"]
 
           if unreleased_idx is None:
             if version_idx is None:
-              # Insert new version entry after top H1 if present, else at start.
               insert_at = 0
-              for i, line in enumerate(lines):
-                if line.lstrip().startswith("# "):
+              for i, ln in enumerate(lines):
+                if ln.lstrip().startswith("# "):
                   insert_at = i + 1
                   while insert_at < len(lines) and lines[insert_at].strip() == "":
                     insert_at += 1
                   break
-
-              entry = ["
-", f"## [{new_version}] - {stamp}
-", "
-", "- No changes recorded.
+              entry = version_header() + ["- No changes recorded.
 ", "
 "]
               lines[insert_at:insert_at] = entry
               p.write_text("".join(lines), encoding="utf-8")
             raise SystemExit(0)
 
-          # Find Unreleased body range.
           u_start = unreleased_idx + 1
           u_end = len(lines)
           for j in range(u_start, len(lines)):
@@ -515,45 +513,27 @@ jobs:
 
           unreleased_body = "".join(lines[u_start:u_end]).strip()
 
-          # Ensure version header exists. If not, create immediately after Unreleased header.
           if version_idx is None:
-            insert_at = u_end
-            header = ["
-", f"## [{new_version}] - {stamp}
-", "
-"]
-            lines[insert_at:insert_at] = header
-            version_idx = insert_at + 1
+            lines[u_end:u_end] = version_header()
 
-          # If we created the header, version_idx points to the header line.
-          # Insert moved body after version header line.
+          version_idx = find_idx(lambda ln: ln.lstrip().startswith(f"## [{new_version}]") )
+          if version_idx is None:
+            raise SystemExit("[FATAL] Failed to locate version header after insertion")
+
           if unreleased_body:
-            # Recompute version header index safely after any insertions.
-            for i, line in enumerate(lines):
-              if line.lstrip().startswith(f"## [{new_version}]"):
-                version_idx = i
-                break
-
             insert_at = version_idx + 1
             while insert_at < len(lines) and lines[insert_at].strip() == "":
               insert_at += 1
 
-            body_lines = ["
-"] + [x + ("
-" if not x.endswith("
-") else "") for x in unreleased_body.split("
-")] + ["
+            moved = ["
+"] + [ln + "
+" for ln in unreleased_body.split("
+") if ln != ""] + ["
 "]
-            lines[insert_at:insert_at] = body_lines
+            lines[insert_at:insert_at] = moved
 
           # Clear Unreleased body.
-          # Recompute Unreleased indices after modifications.
-          unreleased_idx = None
-          for i, line in enumerate(lines):
-            if norm(line) == "## [unreleased]":
-              unreleased_idx = i
-              break
-
+          unreleased_idx = find_idx(lambda ln: norm(ln) == "## [unreleased]")
           if unreleased_idx is not None:
             u_start = unreleased_idx + 1
             u_end = len(lines)
@@ -561,8 +541,6 @@ jobs:
               if is_h2(lines[j]):
                 u_end = j
                 break
-
-            # Replace body with exactly one blank line.
             lines[u_start:u_end] = ["
 "]
 
