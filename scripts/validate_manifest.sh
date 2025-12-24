@@ -49,288 +49,288 @@ warn() { echo "WARN: $*" 1>&2; }
 err()  { echo "ERROR: $*" 1>&2; }
 
 die() {
-  err "$*"
-  exit 1
+	err "$*"
+	exit 1
 }
 
 have() {
-  command -v "$1" >/dev/null 2>&1
+	command -v "$1" >/dev/null 2>&1
 }
 
 usage() {
-  cat <<'USAGE'
+	cat <<'USAGE'
 Usage:
-  ./scripts/validate_manifest.sh [MANIFEST_XML]
-  ./scripts/validate_manifest.sh --auto
+	./scripts/validate_manifest.sh [MANIFEST_XML]
+	./scripts/validate_manifest.sh --auto
 
 Notes:
-  - If MANIFEST_XML is omitted, --auto is recommended.
-  - Exits nonzero on validation failure.
+	- If MANIFEST_XML is omitted, --auto is recommended.
+	- Exits nonzero on validation failure.
 USAGE
 }
 
 parse_args() {
-  if [[ $# -eq 0 ]]; then
+	if [[ $# -eq 0 ]]; then
 	AUTO=true
 	return 0
-  fi
+	fi
 
-  if [[ $# -eq 1 && "$1" == "--auto" ]]; then
+	if [[ $# -eq 1 && "$1" == "--auto" ]]; then
 	AUTO=true
 	return 0
-  fi
+	fi
 
-  if [[ $# -eq 1 && "$1" == "-h" || $# -eq 1 && "$1" == "--help" ]]; then
+	if [[ $# -eq 1 && "$1" == "-h" || $# -eq 1 && "$1" == "--help" ]]; then
 	usage
 	exit 0
-  fi
+	fi
 
-  if [[ $# -eq 1 ]]; then
+	if [[ $# -eq 1 ]]; then
 	MANIFEST="$1"
 	return 0
-  fi
+	fi
 
-  usage
-  die "Invalid arguments."
+	usage
+	die "Invalid arguments."
 }
 
 find_manifest_auto() {
-  local root="./src"
-  [[ -d "$root" ]] || die "Auto detect requires ./src directory."
+	local root="./src"
+	[[ -d "$root" ]] || die "Auto detect requires ./src directory."
 
-  # First pass: known canonical names
-  local candidates
-  candidates=$(find "$root" -type f \( -name 'templateDetails.xml' -o -name '*.xml' \) -not -path '*/.git/*' -print 2>/dev/null || true)
+	# First pass: known canonical names
+	local candidates
+	candidates=$(find "$root" -type f \( -name 'templateDetails.xml' -o -name '*.xml' \) -not -path '*/.git/*' -print 2>/dev/null || true)
 
-  # Filter to those that look like Joomla manifests by checking for a root <extension> element.
-  local matches=()
-  while IFS= read -r f; do
+	# Filter to those that look like Joomla manifests by checking for a root <extension> element.
+	local matches=()
+	while IFS= read -r f; do
 	[[ -f "$f" ]] || continue
 	if grep -qE '<extension(\s|>)' "$f"; then
-	  matches+=("$f")
+		matches+=("$f")
 	fi
-  done <<< "$candidates"
+	done <<< "$candidates"
 
-  if [[ ${#matches[@]} -eq 0 ]]; then
+	if [[ ${#matches[@]} -eq 0 ]]; then
 	die "No manifest XML detected under ./src. Provide a manifest path explicitly."
-  fi
+	fi
 
-  if [[ ${#matches[@]} -gt 1 ]]; then
+	if [[ ${#matches[@]} -gt 1 ]]; then
 	err "Multiple candidate manifest XML files found. Provide the intended file explicitly:"
 	for m in "${matches[@]}"; do
-	  err "- $m"
+		err "- $m"
 	done
 	exit 2
-  fi
+	fi
 
-  MANIFEST="${matches[0]}"
+	MANIFEST="${matches[0]}"
 }
 
 xmllint_check() {
-  local f="$1"
-  if ! have xmllint; then
+	local f="$1"
+	if ! have xmllint; then
 	die "xmllint is required for XML validation. Install libxml2 utils in the runner environment."
-  fi
+	fi
 
-  # Syntax validation
-  xmllint --noout "$f" >/dev/null
+	# Syntax validation
+	xmllint --noout "$f" >/dev/null
 }
 
 xpath() {
-  local f="$1"
-  local expr="$2"
-  xmllint --xpath "$expr" "$f" 2>/dev/null || true
+	local f="$1"
+	local expr="$2"
+	xmllint --xpath "$expr" "$f" 2>/dev/null || true
 }
 
 trim() {
-  local s="$1"
-  # shellcheck disable=SC2001
-  echo "$s" | sed -e 's/^[[:space:]]\+//' -e 's/[[:space:]]\+$//'
+	local s="$1"
+	# shellcheck disable=SC2001
+	echo "$s" | sed -e 's/^[[:space:]]\+//' -e 's/[[:space:]]\+$//'
 }
 
 required_text() {
-  local f="$1"
-  local label="$2"
-  local expr="$3"
+	local f="$1"
+	local label="$2"
+	local expr="$3"
 
-  local out
-  out="$(xpath "$f" "$expr")"
-  out="$(trim "$out")"
-  [[ -n "$out" ]] || die "Missing or empty required element: $label"
-  echo "$out"
+	local out
+	out="$(xpath "$f" "$expr")"
+	out="$(trim "$out")"
+	[[ -n "$out" ]] || die "Missing or empty required element: $label"
+	echo "$out"
 }
 
 required_attr() {
-  local f="$1"
-  local label="$2"
-  local expr="$3"
+	local f="$1"
+	local label="$2"
+	local expr="$3"
 
-  local out
-  out="$(xpath "$f" "$expr")"
-  out="$(trim "$out")"
-  [[ -n "$out" ]] || die "Missing required attribute: $label"
-  echo "$out"
+	local out
+	out="$(xpath "$f" "$expr")"
+	out="$(trim "$out")"
+	[[ -n "$out" ]] || die "Missing required attribute: $label"
+	echo "$out"
 }
 
 validate_root_and_type() {
-  local f="$1"
+	local f="$1"
 
-  local root
-  root="$(xpath "$f" 'name(/*)')"
-  root="$(trim "$root")"
+	local root
+	root="$(xpath "$f" 'name(/*)')"
+	root="$(trim "$root")"
 
-  [[ "$root" == "extension" ]] || die "Invalid root element '$root'. Expected: extension"
+	[[ "$root" == "extension" ]] || die "Invalid root element '$root'. Expected: extension"
 
-  local type
-  type="$(required_attr "$f" 'extension@type' 'string(/extension/@type)')"
+	local type
+	type="$(required_attr "$f" 'extension@type' 'string(/extension/@type)')"
 
-  case "$type" in
+	case "$type" in
 	template|component|module|plugin|package)
-	  info "Detected manifest type: $type"
-	  ;;
+		info "Detected manifest type: $type"
+		;;
 	*)
-	  die "Unsupported or invalid Joomla manifest type '$type'. Expected one of: template, component, module, plugin, package"
-	  ;;
-  esac
+		die "Unsupported or invalid Joomla manifest type '$type'. Expected one of: template, component, module, plugin, package"
+		;;
+	esac
 
-  echo "$type"
+	echo "$type"
 }
 
 validate_required_fields() {
-  local f="$1"
+	local f="$1"
 
-  # Joomla manifests typically include these fields.
-  required_text "$f" 'name' 'string(/extension/name)'
-  required_text "$f" 'version' 'string(/extension/version)'
+	# Joomla manifests typically include these fields.
+	required_text "$f" 'name' 'string(/extension/name)'
+	required_text "$f" 'version' 'string(/extension/version)'
 
-  # Author is not always mandatory, but it is governance relevant.
-  local author
-  author="$(xpath "$f" 'string(/extension/author)')"
-  author="$(trim "$author")"
-  if [[ -z "$author" ]]; then
+	# Author is not always mandatory, but it is governance relevant.
+	local author
+	author="$(xpath "$f" 'string(/extension/author)')"
+	author="$(trim "$author")"
+	if [[ -z "$author" ]]; then
 	warn "author is missing. Governance recommended: include <author>"
-  fi
+	fi
 
-  # Creation date is common and helps auditability.
-  local cdate
-  cdate="$(xpath "$f" 'string(/extension/creationDate)')"
-  cdate="$(trim "$cdate")"
-  if [[ -z "$cdate" ]]; then
+	# Creation date is common and helps auditability.
+	local cdate
+	cdate="$(xpath "$f" 'string(/extension/creationDate)')"
+	cdate="$(trim "$cdate")"
+	if [[ -z "$cdate" ]]; then
 	warn "creationDate is missing. Governance recommended: include <creationDate>"
-  fi
+	fi
 
-  # Basic packaging elements: at least one of files, folders, fileset, or languages.
-  local has_files
-  has_files="$(xpath "$f" 'count(/extension/files)')"
-  local has_folders
-  has_folders="$(xpath "$f" 'count(/extension/folders)')"
-  local has_filesets
-  has_filesets="$(xpath "$f" 'count(/extension/fileset | /extension/filesets | /extension/file)')"
-  local has_lang
-  has_lang="$(xpath "$f" 'count(/extension/languages | /extension/administration/languages)')"
+	# Basic packaging elements: at least one of files, folders, fileset, or languages.
+	local has_files
+	has_files="$(xpath "$f" 'count(/extension/files)')"
+	local has_folders
+	has_folders="$(xpath "$f" 'count(/extension/folders)')"
+	local has_filesets
+	has_filesets="$(xpath "$f" 'count(/extension/fileset | /extension/filesets | /extension/file)')"
+	local has_lang
+	has_lang="$(xpath "$f" 'count(/extension/languages | /extension/administration/languages)')"
 
-  # xmllint returns numbers as strings
-  has_files="$(trim "$has_files")"
-  has_folders="$(trim "$has_folders")"
-  has_filesets="$(trim "$has_filesets")"
-  has_lang="$(trim "$has_lang")"
+	# xmllint returns numbers as strings
+	has_files="$(trim "$has_files")"
+	has_folders="$(trim "$has_folders")"
+	has_filesets="$(trim "$has_filesets")"
+	has_lang="$(trim "$has_lang")"
 
-  if [[ "${has_files:-0}" == "0" && "${has_folders:-0}" == "0" && "${has_filesets:-0}" == "0" && "${has_lang:-0}" == "0" ]]; then
+	if [[ "${has_files:-0}" == "0" && "${has_folders:-0}" == "0" && "${has_filesets:-0}" == "0" && "${has_lang:-0}" == "0" ]]; then
 	die "Manifest appears to lack payload declarations. Expected one of: <files>, <folders>, <fileset>, or <languages>."
-  fi
+	fi
 }
 
 validate_version_format() {
-  local v="$1"
+	local v="$1"
 
-  # Governance check: allow semantic style versions, warn if non standard.
-  if [[ ! "$v" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?([-.][A-Za-z0-9\.]+)?$ ]]; then
+	# Governance check: allow semantic style versions, warn if non standard.
+	if [[ ! "$v" =~ ^[0-9]+\.[0-9]+(\.[0-9]+)?([-.][A-Za-z0-9\.]+)?$ ]]; then
 	warn "Version '$v' does not look like a conventional semantic version."
-  fi
+	fi
 }
 
 validate_type_specific() {
-  local f="$1"
-  local type="$2"
+	local f="$1"
+	local type="$2"
 
-  case "$type" in
+	case "$type" in
 	plugin)
-	  local group
-	  group="$(required_attr "$f" 'extension@group' 'string(/extension/@group)')"
-	  info "Plugin group: $group"
-	  ;;
+		local group
+		group="$(required_attr "$f" 'extension@group' 'string(/extension/@group)')"
+		info "Plugin group: $group"
+		;;
 	module)
-	  # client is optional for some older manifests, but recommended.
-	  local client
-	  client="$(xpath "$f" 'string(/extension/@client)')"
-	  client="$(trim "$client")"
-	  if [[ -z "$client" ]]; then
+		# client is optional for some older manifests, but recommended.
+		local client
+		client="$(xpath "$f" 'string(/extension/@client)')"
+		client="$(trim "$client")"
+		if [[ -z "$client" ]]; then
 		warn "Module client attribute is missing. Governance recommended: set client=site or client=administrator."
-	  else
+		else
 		info "Module client: $client"
-	  fi
-	  ;;
+		fi
+		;;
 	template)
-	  local client
-	  client="$(xpath "$f" 'string(/extension/@client)')"
-	  client="$(trim "$client")"
-	  if [[ -z "$client" ]]; then
+		local client
+		client="$(xpath "$f" 'string(/extension/@client)')"
+		client="$(trim "$client")"
+		if [[ -z "$client" ]]; then
 		warn "Template client attribute is missing. Governance recommended: set client=site."
-	  else
+		else
 		info "Template client: $client"
-	  fi
-	  ;;
+		fi
+		;;
 	component)
-	  # method=upgrade is a common governance default.
-	  local method
-	  method="$(xpath "$f" 'string(/extension/@method)')"
-	  method="$(trim "$method")"
-	  if [[ -z "$method" ]]; then
+		# method=upgrade is a common governance default.
+		local method
+		method="$(xpath "$f" 'string(/extension/@method)')"
+		method="$(trim "$method")"
+		if [[ -z "$method" ]]; then
 		warn "Component method attribute is missing. Governance recommended: set method=upgrade."
-	  else
+		else
 		info "Component method: $method"
-	  fi
-	  ;;
+		fi
+		;;
 	package)
-	  # Packages should declare contained extensions.
-	  local count
-	  count="$(xpath "$f" 'count(/extension/files/file)')"
-	  count="$(trim "$count")"
-	  if [[ "${count:-0}" == "0" ]]; then
+		# Packages should declare contained extensions.
+		local count
+		count="$(xpath "$f" 'count(/extension/files/file)')"
+		count="$(trim "$count")"
+		if [[ "${count:-0}" == "0" ]]; then
 		warn "Package manifest contains no /extension/files/file entries. Validate that it declares packaged extensions."
-	  else
+		else
 		info "Package files entries: $count"
-	  fi
-	  ;;
-  esac
+		fi
+		;;
+	esac
 }
 
 main() {
-  parse_args "$@"
+	parse_args "$@"
 
-  if [[ "$AUTO" == "true" ]]; then
+	if [[ "$AUTO" == "true" ]]; then
 	find_manifest_auto
-  fi
+	fi
 
-  [[ -n "$MANIFEST" ]] || die "Manifest path not resolved."
-  [[ -f "$MANIFEST" ]] || die "Manifest file not found: $MANIFEST"
+	[[ -n "$MANIFEST" ]] || die "Manifest path not resolved."
+	[[ -f "$MANIFEST" ]] || die "Manifest file not found: $MANIFEST"
 
-  info "Validating Joomla manifest: $MANIFEST"
+	info "Validating Joomla manifest: $MANIFEST"
 
-  xmllint_check "$MANIFEST"
+	xmllint_check "$MANIFEST"
 
-  local type
-  type="$(validate_root_and_type "$MANIFEST")"
+	local type
+	type="$(validate_root_and_type "$MANIFEST")"
 
-  validate_required_fields "$MANIFEST"
+	validate_required_fields "$MANIFEST"
 
-  local version
-  version="$(required_text "$MANIFEST" 'version' 'string(/extension/version)')"
-  validate_version_format "$version"
+	local version
+	version="$(required_text "$MANIFEST" 'version' 'string(/extension/version)')"
+	validate_version_format "$version"
 
-  validate_type_specific "$MANIFEST" "$type"
+	validate_type_specific "$MANIFEST" "$type"
 
-  info "Manifest validation PASSED."
+	info "Manifest validation PASSED."
 }
 
 main "$@"
