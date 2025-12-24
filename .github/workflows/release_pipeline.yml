@@ -336,9 +336,22 @@ jobs:
           fi
           echo "Detected extension type: ${EXT_TYPE}"
 
+          # If this is a template and the manifest lives under src/templates/*, treat that folder as the extension root.
+          # This avoids false failures and ensures the ZIP root matches Joomla install expectations.
+          MANIFEST_DIR="$(dirname "${MANIFEST}")"
+          if [ "${EXT_TYPE}" = "template" ] && [ "${MANIFEST_DIR}" != "${ROOT}" ]; then
+            ROOT="${MANIFEST_DIR}"
+            MANIFEST="${ROOT}/templateDetails.xml"
+            echo "Template manifest detected under ${MANIFEST_DIR}. Using extension root: ${ROOT}"
+            echo "Manifest (normalized): ${MANIFEST}"
+          fi
+
           case "${EXT_TYPE}" in
             template)
-              test -f "${ROOT}/templateDetails.xml" || (echo "ERROR: templateDetails.xml missing for template build." && exit 1)
+              if [ ! -f "${MANIFEST}" ] || [ "$(basename "${MANIFEST}")" != "templateDetails.xml" ]; then
+                echo "ERROR: template manifest (templateDetails.xml) not found."
+                exit 1
+              fi
               ;;
             component)
               if ! ls "${ROOT}"/com_*.xml >/dev/null 2>&1; then
