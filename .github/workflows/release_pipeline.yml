@@ -23,24 +23,30 @@
 # INGROUP: MokoStandards.Release
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/release_pipeline.yml
-# VERSION: 01.00.00
-# BRIEF: Enterprise release pipeline that promotes dev/<version> to version/<version>, deletes dev branch, builds Joomla artifacts, publishes prereleases, and optionally creates a squash PR to main.
-# NOTE: Invocation is restricted to dev/<major>.<minor>.<patch> and rc/<major>.<minor>.<patch> branches.
+# VERSION: 01.00.02
+# BRIEF: Enterprise release pipeline enforcing dev to rc to version to main. Promotes and deletes source branches, builds Joomla artifacts from version branches, publishes prereleases, and optionally creates a squash PR to main.
+# NOTE: Key controls: strict branch gating, mandatory branch deletion after promotion, least privilege permissions, key-only SFTP, ZIP-only distribution, no checksum generation.
 #
-name: Release Pipeline (dev/rc → version → prerelease)
+name: Release Pipeline (dev to rc to version to main)
 
 on:
   workflow_dispatch:
     inputs:
       squash_to_main:
-        description: "Create a PR that squashes version/<version> into main (enterprise-safe)"
+        description: "Create a PR that squashes version/<version> into main"
         required: true
         default: false
         type: boolean
       delete_version_branch:
-        description: "Delete version/<version> after PR creation (best-effort)"
+        description: "Delete version/<version> after PR creation"
         required: true
         default: false
+        type: boolean
+      # SFTP upload is mandatory for all releases
+      sftp_upload:
+        description: "Upload ZIP to SFTP (key-only, mandatory, overwrite enabled)"
+        required: true
+        default: true
         type: boolean
   release:
     types:
@@ -49,7 +55,7 @@ on:
       - published
 
 concurrency:
-  group: release-from-dev-${{ github.ref_name }}
+  group: release-pipeline-${{ github.ref_name }}
   cancel-in-progress: false
 
 defaults:
@@ -61,44 +67,67 @@ permissions:
 
 jobs:
   guard:
-    name: 00 Guard and derive release metadata
+    name: 00 Guard and derive promotion metadata
     runs-on: ubuntu-latest
 
     outputs:
-      version: ${{ steps.extract.outputs.version }}
-      source_branch: ${{ steps.extract.outputs.source_branch }}
-      version_branch: ${{ steps.extract.outputs.version_branch }}
-      today_utc: ${{ steps.extract.outputs.today_utc }}
+      version: ${{ steps.meta.outputs.version }}
+      source_branch: ${{ steps.meta.outputs.source_branch }}
+      source_prefix: ${{ steps.meta.outputs.source_prefix }}
+      target_branch: ${{ steps.meta.outputs.target_branch }}
+      version_branch: ${{ steps.meta.outputs.version_branch }}
+      today_utc: ${{ steps.meta.outputs.today_utc }}
+      channel: ${{ steps.meta.outputs.channel }}
+      release_ready: ${{ steps.meta.outputs.release_ready }}
 
     steps:
-      - name: Validate calling branch and extract version
-        id: extract
+      - name: Validate trigger and extract metadata
+        id: meta
         run: |
           set -euo pipefail
 
-          BRANCH="${GITHUB_REF_NAME}"
-          echo "Invoked from branch: ${BRANCH}"
+          EVENT_NAME="${GITHUB_EVENT_NAME}"
+          REF_NAME="${GITHUB_REF_NAME}"
 
-          # Derive version metadata for either workflow_dispatch (dev/rc branches) or release events (tag-driven).
-          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
-            # Gate: only allow manual runs from dev/<major>.<minor>.<patch> or rc/<major>.<minor>.<patch>
-            echo "${BRANCH}" | grep -E '^(dev|rc)/[0-9]+\.[0-9]+\.[0-9]+$'
+          VERSION=""
+          SOURCE_BRANCH=""
+          SOURCE_PREFIX=""
+          TARGET_BRANCH=""
+          VERSION_BRANCH=""
+          CHANNEL=""
+          RELEASE_READY="false"
 
-            VERSION="${BRANCH#*/}"
-            SOURCE_BRANCH="${BRANCH}"
-            VERSION_BRANCH="version/${VERSION}"
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            echo "${REF_NAME}" | grep -E '^(dev|rc)/[0-9]+[.][0-9]+[.][0-9]+$'
 
-          elif [ "${GITHUB_EVENT_NAME}" = "release" ]; then
-            # Release created via GitHub UI/API. Use the tag name as the version.
-            TAG_NAME="${GITHUB_REF_NAME}"
+            SOURCE_BRANCH="${REF_NAME}"
+            SOURCE_PREFIX="${REF_NAME%%/*}"
+            VERSION="${REF_NAME#*/}"
+
+            if [ "${SOURCE_PREFIX}" = "dev" ]; then
+              TARGET_BRANCH="rc/${VERSION}"
+              CHANNEL="rc"
+              RELEASE_READY="false"
+            else
+              TARGET_BRANCH="version/${VERSION}"
+              VERSION_BRANCH="version/${VERSION}"
+              CHANNEL="rc"
+              RELEASE_READY="true"
+            fi
+
+          elif [ "${EVENT_NAME}" = "release" ]; then
+            TAG_NAME="${REF_NAME}"
             VERSION="${TAG_NAME#v}"
-            echo "${VERSION}" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$'
+            echo "${VERSION}" | grep -E '^[0-9]+[.][0-9]+[.][0-9]+$'
 
-            SOURCE_BRANCH=""
-            VERSION_BRANCH="version/${VERSION}"
+            if [ "${{ github.event.release.prerelease }}" = "true" ]; then
+              CHANNEL="rc"
+            else
+              CHANNEL="stable"
+            fi
 
           else
-            echo "ERROR: Unsupported trigger: ${GITHUB_EVENT_NAME}"
+            echo "ERROR: Unsupported trigger ${EVENT_NAME}" >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
@@ -106,11 +135,32 @@ jobs:
 
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
           echo "source_branch=${SOURCE_BRANCH}" >> "${GITHUB_OUTPUT}"
+          echo "source_prefix=${SOURCE_PREFIX}" >> "${GITHUB_OUTPUT}"
+          echo "target_branch=${TARGET_BRANCH}" >> "${GITHUB_OUTPUT}"
           echo "version_branch=${VERSION_BRANCH}" >> "${GITHUB_OUTPUT}"
           echo "today_utc=${TODAY_UTC}" >> "${GITHUB_OUTPUT}"
+          echo "channel=${CHANNEL}" >> "${GITHUB_OUTPUT}"
+          echo "release_ready=${RELEASE_READY}" >> "${GITHUB_OUTPUT}"
+
+          {
+            echo "### Guard report"
+            echo "```json"
+            echo "{"
+            echo "  \"event\": \"${EVENT_NAME}\","
+            echo "  \"ref\": \"${REF_NAME}\","
+            echo "  \"version\": \"${VERSION}\","
+            echo "  \"source_branch\": \"${SOURCE_BRANCH}\","
+            echo "  \"target_branch\": \"${TARGET_BRANCH}\","
+            echo "  \"version_branch\": \"${VERSION_BRANCH}\","
+            echo "  \"channel\": \"${CHANNEL}\","
+            echo "  \"release_ready\": ${RELEASE_READY},"
+            echo "  \"today_utc\": \"${TODAY_UTC}\""
+            echo "}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
   promote_branch:
-    name: 01 Promote source to version branch (mandatory)
+    name: 01 Promote branch and delete source
     runs-on: ubuntu-latest
     needs: guard
 
@@ -138,34 +188,54 @@ jobs:
           set -euo pipefail
 
           SRC="${{ needs.guard.outputs.source_branch }}"
-          DST="${{ needs.guard.outputs.version_branch }}"
+          DST="${{ needs.guard.outputs.target_branch }}"
 
           git fetch origin --prune
 
+          if [ -z "${SRC}" ] || [ -z "${DST}" ]; then
+            echo "ERROR: guard did not emit SRC or DST" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
           if ! git show-ref --verify --quiet "refs/remotes/origin/${SRC}"; then
-            echo "ERROR: origin/${SRC} not found."
+            echo "ERROR: origin/${SRC} not found" >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
           if git show-ref --verify --quiet "refs/remotes/origin/${DST}"; then
-            echo "ERROR: origin/${DST} already exists."
+            echo "ERROR: origin/${DST} already exists" >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
-      - name: Promote dev branch to version branch and delete dev branch
+      - name: Promote and delete source
         run: |
           set -euo pipefail
 
           SRC="${{ needs.guard.outputs.source_branch }}"
-          DST="${{ needs.guard.outputs.version_branch }}"
+          DST="${{ needs.guard.outputs.target_branch }}"
 
           git checkout -B "${DST}" "origin/${SRC}"
           git push origin "${DST}"
-
-          # Mandatory hygiene: always delete dev/<version> or rc/<version> after promotion.
           git push origin --delete "${SRC}"
 
-          echo "Promotion complete: ${SRC} -> ${DST} (dev branch deleted)"
+          {
+            echo "### Promotion report"
+            echo "```json"
+            echo "{"
+            echo "  \"promoted\": \"${SRC} -> ${DST}\","
+            echo "  \"deleted\": \"${SRC}\""
+            echo "}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Stop after dev to rc promotion
+        if: ${{ needs.guard.outputs.release_ready != 'true' }}
+        run: |
+          set -euo pipefail
+          {
+            echo "### Next step"
+            echo "Run this workflow from rc/${{ needs.guard.outputs.version }} to promote rc to version and build."
+          } >> "${GITHUB_STEP_SUMMARY}"
 
   normalize_dates:
     name: 02 Normalize dates on version branch
@@ -174,8 +244,7 @@ jobs:
       - guard
       - promote_branch
 
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.promote_branch.result == 'success' }}
-
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.guard.outputs.release_ready == 'true' }}
 
     permissions:
       contents: write
@@ -194,51 +263,40 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
-      - name: Validate repository release prerequisites
+      - name: Validate repo prerequisites
         run: |
           set -euo pipefail
-          test -d src || (echo "ERROR: src directory missing." && exit 1)
-          test -f CHANGELOG.md || (echo "ERROR: CHANGELOG.md missing." && exit 1)
+          test -d src || (echo "ERROR: src directory missing" && exit 1)
+          test -f CHANGELOG.md || (echo "ERROR: CHANGELOG.md missing" && exit 1)
 
           VERSION="${{ needs.guard.outputs.version }}"
-          if ! grep -qE "^## \[${VERSION}\] " CHANGELOG.md; then
-            echo "ERROR: CHANGELOG.md does not contain a heading for version [${VERSION}]."
+
+          if ! grep -F "## [${VERSION}] " CHANGELOG.md >/dev/null; then
+            echo "ERROR: CHANGELOG.md missing heading for version [${VERSION}]" >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
-      - name: Update dates using repo script when available, otherwise apply baseline updates
+      - name: Normalize dates using repository script only
         run: |
           set -euo pipefail
 
           TODAY="${{ needs.guard.outputs.today_utc }}"
           VERSION="${{ needs.guard.outputs.version }}"
 
-          echo "Release version: ${VERSION}"
-          echo "Release date (UTC): ${TODAY}"
-
-          if [ -f scripts/update_dates.sh ]; then
-            chmod +x scripts/update_dates.sh
-            scripts/update_dates.sh "${TODAY}" "${VERSION}"
-          else
-            echo "scripts/update_dates.sh not found. Applying baseline date normalization."
-
-            find . -type f -name "*.xml" \
-              -not -path "./.git/*" \
-              -print0 | while IFS= read -r -d '' f; do
-                sed -i "s#<creationDate>[^<]*</creationDate>#<creationDate>${TODAY}</creationDate>#g" "${f}" || true
-                sed -i "s#<date>[^<]*</date>#<date>${TODAY}</date>#g" "${f}" || true
-                sed -i "s#<buildDate>[^<]*</buildDate>#<buildDate>${TODAY}</buildDate>#g" "${f}" || true
-              done
-
-            sed -i -E "s#^(## \[${VERSION}\]) [0-9]{4}-[0-9]{2}-[0-9]{2}#\1 ${TODAY}#g" CHANGELOG.md || true
+          if [ ! -f scripts/update_dates.sh ]; then
+            echo "ERROR: scripts/update_dates.sh is required for enterprise releases" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
           fi
+
+          chmod +x scripts/update_dates.sh
+          scripts/update_dates.sh "${TODAY}" "${VERSION}"
 
       - name: Commit and push date updates
         run: |
           set -euo pipefail
 
           if git diff --quiet; then
-            echo "No date changes detected. No commit required."
+            echo "No date changes detected" >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
 
@@ -246,14 +304,14 @@ jobs:
           git commit -m "chore(release): normalize dates for ${{ needs.guard.outputs.version }}"
           git push origin "HEAD:${{ needs.guard.outputs.version_branch }}"
 
-  build_update_and_release:
-    name: 03 Build Joomla ZIP and prerelease
+  build_and_prerelease:
+    name: 03 Build Joomla ZIP and publish prerelease
     runs-on: ubuntu-latest
     needs:
       - guard
       - normalize_dates
 
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.guard.outputs.release_ready == 'true' }}
 
     permissions:
       contents: write
@@ -274,7 +332,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
-      - name: Build Joomla compliant ZIP (template, component, module, plugin)
+      - name: Build Joomla compliant ZIP
         id: build
         run: |
           set -euo pipefail
@@ -282,99 +340,47 @@ jobs:
           VERSION="${{ needs.guard.outputs.version }}"
           REPO="${{ github.event.repository.name }}"
 
-          test -d src || (echo "ERROR: src directory missing." && exit 1)
+          test -d src || (echo "ERROR: src directory missing" && exit 1)
 
           mkdir -p dist
 
-          # Determine extension root inside src.
-          # - If src contains a single top-level directory, that directory is the extension root.
-          # - Otherwise, src itself is the extension root.
           ROOT="src"
           TOP_DIRS="$(find src -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
           if [ "${TOP_DIRS}" = "1" ]; then
             ROOT="$(find src -mindepth 1 -maxdepth 1 -type d -print -quit)"
           fi
 
-          echo "Candidate extension root: ${ROOT}"
-
-          # Require a manifest at the root of ROOT.
           MANIFEST=""
-
-          # Primary: templateDetails.xml at root
           if [ -f "${ROOT}/templateDetails.xml" ]; then
             MANIFEST="${ROOT}/templateDetails.xml"
-
-          # Secondary: standard Joomla template layouts
           elif [ -f "src/templates/templateDetails.xml" ]; then
             MANIFEST="src/templates/templateDetails.xml"
-
-          # Tertiary: namespaced Joomla template layout src/templates/<template-name>/templateDetails.xml
-          elif find "src/templates" -mindepth 2 -maxdepth 2 -name "templateDetails.xml" -type f | grep -q .; then
+          elif find "src/templates" -mindepth 2 -maxdepth 2 -name "templateDetails.xml" -type f | head -n 1 | grep -q .; then
             MANIFEST="$(find "src/templates" -mindepth 2 -maxdepth 2 -name "templateDetails.xml" -type f | head -n 1)"
-
-          # Fallback: any root-level XML with an <extension> element
           else
-            while IFS= read -r -d '' f; do
-              if grep -qE '<extension[[:space:]>]' "${f}"; then
-                MANIFEST="${f}"
-                break
-              fi
-            done < <(find "${ROOT}" -maxdepth 1 -type f -name "*.xml" -print0)
+            CANDIDATE="$(find "${ROOT}" -maxdepth 1 -type f -name "*.xml" | head -n 1 || true)"
+            if [ -n "${CANDIDATE}" ]; then
+              MANIFEST="${CANDIDATE}"
+            fi
           fi
 
           if [ -z "${MANIFEST}" ]; then
-            echo "ERROR: No Joomla manifest XML found at root of ${ROOT}."
-            echo "Expected templateDetails.xml or a root-level *.xml containing an <extension> element."
+            echo "ERROR: No Joomla manifest XML found" >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
-          echo "Manifest: ${MANIFEST}"
-
-          EXT_TYPE="$(grep -oE '<extension[^>]*type=\"[^\"]+\"' "${MANIFEST}" | head -n 1 | sed -E 's/.*type=\"([^\"]+)\".*/\1/')"
+          EXT_TYPE="$(grep -o 'type="[^"]*"' "${MANIFEST}" | head -n 1 | cut -d '"' -f2)"
           if [ -z "${EXT_TYPE}" ]; then
             EXT_TYPE="unknown"
           fi
-          echo "Detected extension type: ${EXT_TYPE}"
 
-          # If this is a template and the manifest lives under src/templates/*, treat that folder as the extension root.
-          # This avoids false failures and ensures the ZIP root matches Joomla install expectations.
           MANIFEST_DIR="$(dirname "${MANIFEST}")"
           if [ "${EXT_TYPE}" = "template" ] && [ "${MANIFEST_DIR}" != "${ROOT}" ]; then
             ROOT="${MANIFEST_DIR}"
-            MANIFEST="${ROOT}/templateDetails.xml"
-            echo "Template manifest detected under ${MANIFEST_DIR}. Using extension root: ${ROOT}"
-            echo "Manifest (normalized): ${MANIFEST}"
           fi
 
-          case "${EXT_TYPE}" in
-            template)
-              if [ ! -f "${MANIFEST}" ] || [ "$(basename "${MANIFEST}")" != "templateDetails.xml" ]; then
-                echo "ERROR: template manifest (templateDetails.xml) not found."
-                exit 1
-              fi
-              ;;
-            component)
-              if ! ls "${ROOT}"/com_*.xml >/dev/null 2>&1; then
-                echo "WARNING: No com_*.xml manifest found at root. Using detected manifest anyway."
-              fi
-              ;;
-            module)
-              if ! ls "${ROOT}"/mod_*.xml >/dev/null 2>&1; then
-                echo "WARNING: No mod_*.xml manifest found at root. Using detected manifest anyway."
-              fi
-              ;;
-            plugin)
-              :
-              ;;
-            *)
-              echo "WARNING: Extension type could not be determined reliably. Proceeding with generic packaging."
-              ;;
-          esac
+          ZIP="${REPO}-${VERSION}-${{ needs.guard.outputs.channel }}.zip"
 
-          ZIP="${REPO}-${VERSION}.zip"
-
-          # Joomla install expectation: the ZIP root is the extension root.
-          # Zip the CONTENTS of ROOT.
           (cd "${ROOT}" && zip -r -X "../dist/${ZIP}" . \
             -x "**/.git/**" \
             -x "**/.github/**" \
@@ -385,129 +391,84 @@ jobs:
           echo "root=${ROOT}" >> "${GITHUB_OUTPUT}"
           echo "manifest=${MANIFEST}" >> "${GITHUB_OUTPUT}"
           echo "ext_type=${EXT_TYPE}" >> "${GITHUB_OUTPUT}"
-          ls -la dist
 
-      - name: Compute SHA256 for ZIP
-        id: sha
-        run: |
-          set -euo pipefail
-          ZIP="${{ steps.build.outputs.zip_name }}"
-          SHA="$(sha256sum "dist/${ZIP}" | awk '{print $1}')"
-          echo "sha256=${SHA}" >> "${GITHUB_OUTPUT}"
-          printf "%s  %s\n" "${SHA}" "${ZIP}" > dist/SHA256SUMS.txt
-          cat dist/SHA256SUMS.txt
-
-
-
-      - name: Ensure tag and update release asset if release exists
+      - name: Always upload ZIP to SFTP (key-only, overwrite)
+        # Mandatory enterprise control: always upload
+        if: ${{ always() }}
         env:
-          GH_TOKEN: ${{ github.token }}
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_KEY: ${{ secrets.FTP_KEY }}
+          FTP_PATH: ${{ secrets.FTP_PATH }}
+          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_PATH_SUFFIX: ${{ vars.FTP_PATH_SUFFIX }}
+          CHANNEL: ${{ needs.guard.outputs.channel }}
         run: |
           set -euo pipefail
 
-          VERSION="${{ needs.guard.outputs.version }}"
           ZIP="${{ steps.build.outputs.zip_name }}"
 
-          git fetch --tags
+          : "${FTP_HOST:?Missing secret FTP_HOST}"
+          : "${FTP_USER:?Missing secret FTP_USER}"
+          : "${FTP_KEY:?Missing secret FTP_KEY}"
+          : "${FTP_PATH:?Missing secret FTP_PATH}"
 
-          # Create tag if it does not exist
-          if ! git rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null; then
-            git tag -a "${VERSION}" -m "Prerelease ${VERSION}"
-            git push origin "refs/tags/${VERSION}"
-            echo "Tag ${VERSION} created."
-          else
-            echo "Tag ${VERSION} already exists."
-          fi
-
-          # If a GitHub release exists, update (clobber) the ZIP asset
-          if gh release view "${VERSION}" >/dev/null 2>&1; then
-            echo "Release ${VERSION} exists. Updating ZIP asset."
-            gh release upload "${VERSION}" "dist/${ZIP}" --clobber
-          else
-            echo "No existing release for ${VERSION}. Asset will be attached during prerelease creation."
-          fi
-
-      - name: Generate release notes from CHANGELOG.md
-        run: |
-          set -euo pipefail
-
-          VERSION="${{ needs.guard.outputs.version }}"
-
-          awk "/^## \[${VERSION}\]/{flag=1;next}/^## \[/ {flag=0}flag" CHANGELOG.md > RELEASE_NOTES.md || true
-
-          if [ ! -s RELEASE_NOTES.md ]; then
-            echo "ERROR: Release notes extraction failed for ${VERSION}."
+          PROTOCOL="${FTP_PROTOCOL:-sftp}"
+          if [ "${PROTOCOL}" != "sftp" ]; then
+            echo "ERROR: Only SFTP permitted" >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
-          ZIP_ASSET="${{ steps.build.outputs.zip_name }}"
-          {
-            echo ""
-            echo "Assets:"
-            echo "- ${ZIP_ASSET}"
+          PORT="${FTP_PORT:-}"
+          if [ -n "${PORT}" ]; then
+            HOSTPORT="${FTP_HOST}:${PORT}"
+          else
+            HOSTPORT="${FTP_HOST}"
+          fi
 
-            echo "- SHA256SUMS.txt"
-          } >> RELEASE_NOTES.md
-      - name: Publish JSON report to job summary (JSON-only, no file)
+          SUFFIX="${FTP_PATH_SUFFIX:-}"
+          if [ -n "${SUFFIX}" ]; then
+            REMOTE_PATH="${FTP_PATH%/}/${SUFFIX%/}/${CHANNEL}"
+          else
+            REMOTE_PATH="${FTP_PATH%/}/${CHANNEL}"
+          fi
+
+          sudo apt-get update -y
+          sudo apt-get install -y lftp openssh-client
+
+          mkdir -p ~/.ssh
+          echo "${FTP_KEY}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "${FTP_HOST}" >> ~/.ssh/known_hosts
+
+          lftp -e "set sftp:auto-confirm yes; open -u '${FTP_USER}', sftp://${HOSTPORT}; mkdir -p '${REMOTE_PATH}'; cd '${REMOTE_PATH}'; put -E 'dist/${ZIP}'; ls; bye"
+
+      - name: Create or update tag and prerelease
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.guard.outputs.version }}
+          name: Prerelease ${{ needs.guard.outputs.version }}
+          prerelease: true
+          body: "Automated prerelease from version branch"
+          files: |
+            dist/*.zip
+
+      - name: Publish JSON report to job summary
         run: |
           set -euo pipefail
 
-          OWNER="${{ github.repository_owner }}"
-          REPO="${{ github.event.repository.name }}"
+          REPO_FULL="${{ github.repository }}"
           VERSION="${{ needs.guard.outputs.version }}"
           BRANCH="${{ needs.guard.outputs.version_branch }}"
-          TAG="${{ needs.guard.outputs.version }}"
-          TODAY_UTC="${{ needs.guard.outputs.today_utc }}"
           ZIP_NAME="${{ steps.build.outputs.zip_name }}"
-          ZIP_SHA256="${{ steps.sha.outputs.sha256 }}"
-          EXT_ROOT="${{ steps.build.outputs.root }}"
-          MANIFEST_PATH="${{ steps.build.outputs.manifest }}"
-          EXT_TYPE="${{ steps.build.outputs.ext_type }}"
-
-          DOWNLOAD_URL="https://github.com/${OWNER}/${REPO}/releases/download/${VERSION}/${ZIP_NAME}"
+          CHANNEL="${{ needs.guard.outputs.channel }}"
 
           echo "### Release report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
           echo "```json" >> "${GITHUB_STEP_SUMMARY}"
-
-          jq -n \
-            --arg repository "${{ github.repository }}" \
-            --arg version "${VERSION}" \
-            --arg branch "${BRANCH}" \
-            --arg tag "${TAG}" \
-            --arg today_utc "${TODAY_UTC}" \
-            --arg commit_sha "${{ github.sha }}" \
-            --arg ext_type "${EXT_TYPE}" \
-            --arg ext_root "${EXT_ROOT}" \
-            --arg manifest_path "${MANIFEST_PATH}" \
-            --arg zip_name "${ZIP_NAME}" \
-            --arg zip_sha256 "${ZIP_SHA256}" \
-            --arg download_url "${DOWNLOAD_URL}" \
-            '{
-              repository: $repository,
-              version: $version,
-              branch: $branch,
-              tag: $tag,
-              prerelease: true,
-              today_utc: $today_utc,
-              commit_sha: $commit_sha,
-              joomla: {
-                extension_type: $ext_type,
-                extension_root: $ext_root,
-                manifest_path: $manifest_path
-              },
-              assets: {
-                zip: {
-                  name: $zip_name,
-                  sha256: $zip_sha256,
-                  download_url: $download_url
-                },
-
-                sha256sums: "dist/SHA256SUMS.txt",
-                release_notes: "RELEASE_NOTES.md"
-              }
-            }' >> "${GITHUB_STEP_SUMMARY}"
-
+          echo "{\"repository\":\"${REPO_FULL}\",\"version\":\"${VERSION}\",\"branch\":\"${BRANCH}\",\"channel\":\"${CHANNEL}\",\"zip\":\"${ZIP_NAME}\",\"sha\":null}" >> "${GITHUB_STEP_SUMMARY}"
           echo "```" >> "${GITHUB_STEP_SUMMARY}"
+
   release_event_report:
     name: 99 Release event report (GitHub UI created release)
     runs-on: ubuntu-latest
@@ -525,7 +486,7 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Publish JSON report to job summary (release event)
+      - name: Publish JSON report to job summary
         run: |
           set -euo pipefail
 
@@ -534,29 +495,7 @@ jobs:
 
           echo "### Release event report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
           echo "```json" >> "${GITHUB_STEP_SUMMARY}"
-
-          jq -n \
-            --arg repository "${{ github.repository }}" \
-            --arg version "${VERSION}" \
-            --arg tag "${TAG}" \
-            --arg created_at "${{ github.event.release.created_at }}" \
-            --arg published_at "${{ github.event.release.published_at }}" \
-            --arg prerelease "${{ github.event.release.prerelease }}" \
-            --arg draft "${{ github.event.release.draft }}" \
-            --arg html_url "${{ github.event.release.html_url }}" \
-            '{
-              repository: $repository,
-              version: $version,
-              tag: $tag,
-              release: {
-                created_at: $created_at,
-                published_at: $published_at,
-                prerelease: ($prerelease == "true"),
-                draft: ($draft == "true"),
-                html_url: $html_url
-              }
-            }' >> "${GITHUB_STEP_SUMMARY}"
-
+          echo "{\"version\":\"${VERSION}\",\"tag\":\"${TAG}\",\"prerelease\":${{ github.event.release.prerelease }}}" >> "${GITHUB_STEP_SUMMARY}"
           echo "```" >> "${GITHUB_STEP_SUMMARY}"
 
   squash_to_main:
@@ -564,9 +503,9 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - guard
-      - build_update_and_release
+      - build_and_prerelease
 
-    if: ${{ github.event.inputs.squash_to_main == true }}
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.squash_to_main == true && needs.guard.outputs.release_ready == 'true' }}
 
     permissions:
       contents: write
@@ -586,11 +525,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
-      - name: Fetch branches
-        run: |
-          set -euo pipefail
-          git fetch origin --prune
-
       - name: Create squash PR targeting main
         env:
           GH_TOKEN: ${{ github.token }}
@@ -601,36 +535,25 @@ jobs:
           MERGE_BRANCH="merge/${VERSION}"
           SOURCE_REF="origin/${{ needs.guard.outputs.version_branch }}"
 
+          git fetch origin --prune
           git checkout main
           git pull --ff-only origin main
 
-          if git show-ref --verify --quiet "refs/heads/${MERGE_BRANCH}"; then
-            git branch -D "${MERGE_BRANCH}"
-          fi
-
-          git checkout -b "${MERGE_BRANCH}" main
+          git checkout -B "${MERGE_BRANCH}" main
           git merge --squash "${SOURCE_REF}"
 
           if git diff --cached --quiet; then
-            echo "No changes to merge from ${SOURCE_REF}."
+            echo "No changes to merge" >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
 
           git commit -m "chore(release): squash ${VERSION} into main"
           git push -u origin "${MERGE_BRANCH}"
 
-          gh pr create \
-            --base main \
-            --head "${MERGE_BRANCH}" \
-            --title "Release ${VERSION} (squash)" \
-            --body "Squash merge prepared by release pipeline." \
-            || echo "PR may already exist for ${MERGE_BRANCH}."
+          gh pr create --base main --head "${MERGE_BRANCH}" --title "Release ${VERSION} (squash)" --body "Squash merge prepared by release pipeline." || true
 
       - name: Optional delete version branch after PR creation
+        if: ${{ github.event.inputs.delete_version_branch == true }}
         run: |
           set -euo pipefail
-          if [ "${{ github.event.inputs.delete_version_branch }}" = "true" ]; then
-            git push origin --delete "${{ needs.guard.outputs.version_branch }}" || true
-          else
-            echo "Version branch retention enabled. Skipping deletion."
-          fi
+          git push origin --delete "${{ needs.guard.outputs.version_branch }}" || true
