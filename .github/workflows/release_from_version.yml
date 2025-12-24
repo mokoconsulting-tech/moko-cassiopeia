@@ -294,8 +294,6 @@ jobs:
               fi
             done < <(find "${ROOT}" -maxdepth 1 -type f -name "*.xml" -print0)
           fi
-            done < <(find "${ROOT}" -maxdepth 1 -type f -name "*.xml" -print0)
-          fi
 
           if [ -z "${MANIFEST}" ]; then
             echo "ERROR: No Joomla manifest XML found at root of ${ROOT}."
@@ -344,6 +342,9 @@ jobs:
             -x "**/__MACOSX/**")
 
           echo "zip_name=${ZIP}" >> "${GITHUB_OUTPUT}"
+          echo "root=${ROOT}" >> "${GITHUB_OUTPUT}"
+          echo "manifest=${MANIFEST}" >> "${GITHUB_OUTPUT}"
+          echo "ext_type=${EXT_TYPE}" >> "${GITHUB_OUTPUT}"
           ls -la dist
 
       - name: Compute SHA256 for ZIP
@@ -369,6 +370,7 @@ jobs:
           REPO="${{ github.event.repository.name }}"
 
           DOWNLOAD_URL="https://github.com/${OWNER}/${REPO}/releases/download/${VERSION}/${ZIP}"
+          echo "download_url=${DOWNLOAD_URL}" >> "${GITHUB_OUTPUT}"
 
           if [ -f "docs/templates/template_update.xml" ]; then
             cp -f "docs/templates/template_update.xml" "updates.xml"
@@ -455,6 +457,7 @@ jobs:
           path: |
             dist/*.zip
             dist/SHA256SUMS.txt
+            dist/release-report.json
             updates.xml
             RELEASE_NOTES.md
           retention-days: 30
@@ -467,6 +470,7 @@ jobs:
             dist/SHA256SUMS.txt
 
       - name: Create GitHub prerelease and attach assets
+        id: gh_release
         uses: softprops/action-gh-release@v2
         with:
           token: ${{ github.token }}
@@ -480,6 +484,108 @@ jobs:
             dist/*.zip
             updates.xml
             dist/SHA256SUMS.txt
+            dist/release-report.json
+
+      - name: Post-release command hook
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          OWNER="${{ github.repository_owner }}"
+          REPO="${{ github.event.repository.name }}"
+          TAG="${{ needs.guard.outputs.version }}"
+
+          # Confirm release exists (enterprise audit trail)
+          RELEASE_JSON="$(gh api "repos/${OWNER}/${REPO}/releases/tags/${TAG}")"
+          RELEASE_URL="$(printf "%s" "${RELEASE_JSON}" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("html_url",""))')"
+
+          echo "Release URL: ${RELEASE_URL}"
+
+          # Optional repo-defined hook
+          if [ -f scripts/post_release.sh ]; then
+            chmod +x scripts/post_release.sh
+            scripts/post_release.sh "${TAG}" "${RELEASE_URL}"
+          else
+            echo "No scripts/post_release.sh found. Skipping post-release hook."
+          fi
+
+      - name: Write JSON release report
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          REPO_FULL="${{ github.repository }}"
+          REPO_NAME="${{ github.event.repository.name }}"
+          BRANCH="${{ needs.guard.outputs.version_branch }}"
+          TAG="${{ needs.guard.outputs.version }}"
+          TODAY_UTC="${{ needs.guard.outputs.today_utc }}"
+
+          ZIP_NAME="${{ steps.build.outputs.zip_name }}"
+          ZIP_SHA256="${{ steps.sha.outputs.sha256 }}"
+          EXT_ROOT="${{ steps.build.outputs.root }}"
+          MANIFEST_PATH="${{ steps.build.outputs.manifest }}"
+          EXT_TYPE="${{ steps.build.outputs.ext_type }}"
+
+          OWNER="${{ github.repository_owner }}"
+          DOWNLOAD_URL="https://github.com/${OWNER}/${REPO_NAME}/releases/download/${VERSION}/${ZIP_NAME}"
+
+          COMMIT_SHA="$(git rev-parse HEAD)"
+
+          mkdir -p dist
+
+          python3 - <<'PY'
+import json, os
+payload = {
+  "repository": os.environ["REPO_FULL"],
+  "version": os.environ["VERSION"],
+  "branch": os.environ["BRANCH"],
+  "tag": os.environ["TAG"],
+  "prerelease": True,
+  "today_utc": os.environ["TODAY_UTC"],
+  "commit_sha": os.environ["COMMIT_SHA"],
+  "joomla": {
+    "extension_type": os.environ.get("EXT_TYPE") or "unknown",
+    "extension_root": os.environ.get("EXT_ROOT") or "",
+    "manifest_path": os.environ.get("MANIFEST_PATH") or "",
+  },
+  "assets": {
+    "zip": {
+      "name": os.environ["ZIP_NAME"],
+      "sha256": os.environ["ZIP_SHA256"],
+      "download_url": os.environ["DOWNLOAD_URL"],
+    },
+    "updates_xml": "updates.xml",
+    "sha256sums": "dist/SHA256SUMS.txt",
+    "release_notes": "RELEASE_NOTES.md",
+  }
+}
+with open("dist/release-report.json", "w", encoding="utf-8") as f:
+  json.dump(payload, f, indent=2, sort_keys=True)
+    f.write("\\n")
+print("Wrote dist/release-report.json")
+PY
+        env:
+          VERSION: ${{ needs.guard.outputs.version }}
+          REPO_FULL: ${{ github.repository }}
+          BRANCH: ${{ needs.guard.outputs.version_branch }}
+          TAG: ${{ needs.guard.outputs.version }}
+          TODAY_UTC: ${{ needs.guard.outputs.today_utc }}
+          ZIP_NAME: ${{ steps.build.outputs.zip_name }}
+          ZIP_SHA256: ${{ steps.sha.outputs.sha256 }}
+          EXT_ROOT: ${{ steps.build.outputs.root }}
+          MANIFEST_PATH: ${{ steps.build.outputs.manifest }}
+          EXT_TYPE: ${{ steps.build.outputs.ext_type }}
+          DOWNLOAD_URL: ${{ format('https://github.com/{0}/{1}/releases/download/{2}/{3}', github.repository_owner, github.event.repository.name, needs.guard.outputs.version, steps.build.outputs.zip_name) }}
+          COMMIT_SHA: ${{ github.sha }}
+
+      - name: Publish JSON report to job summary
+        run: |
+          set -euo pipefail
+          echo "### Release report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
+          echo "\`\`\`json" >> "${GITHUB_STEP_SUMMARY}"
+          cat dist/release-report.json >> "${GITHUB_STEP_SUMMARY}"
+          echo "\`\`\`" >> "${GITHUB_STEP_SUMMARY}"
 
   squash_to_main:
     name: 04 Optional squash merge version branch to main (PR-based)
