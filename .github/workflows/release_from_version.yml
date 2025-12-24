@@ -60,6 +60,10 @@ concurrency:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   guard:
     name: 00 Guard and derive release metadata
@@ -69,6 +73,7 @@ jobs:
       version: ${{ steps.extract.outputs.version }}
       dev_branch: ${{ steps.extract.outputs.dev_branch }}
       version_branch: ${{ steps.extract.outputs.version_branch }}
+      target_branch: ${{ steps.extract.outputs.target_branch }}
       today_utc: ${{ steps.extract.outputs.today_utc }}
 
     steps:
@@ -88,9 +93,17 @@ jobs:
           VERSION_BRANCH="version/${VERSION}"
           TODAY_UTC="$(date -u +%Y-%m-%d)"
 
+          PROMOTE_INPUT="${{ github.event.inputs.promote_to_version }}"
+          if [ "${PROMOTE_INPUT}" = "true" ]; then
+            TARGET_BRANCH="${VERSION_BRANCH}"
+          else
+            TARGET_BRANCH="${DEV_BRANCH}"
+          fi
+
           echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
           echo "dev_branch=${DEV_BRANCH}" >> "${GITHUB_OUTPUT}"
           echo "version_branch=${VERSION_BRANCH}" >> "${GITHUB_OUTPUT}"
+          echo "target_branch=${TARGET_BRANCH}" >> "${GITHUB_OUTPUT}"
           echo "today_utc=${TODAY_UTC}" >> "${GITHUB_OUTPUT}"
 
   promote_branch:
@@ -155,14 +168,14 @@ jobs:
           echo "Promotion complete: ${SRC} -> ${DST}"
 
   normalize_dates:
-    name: 02 Normalize dates on version branch
+    name: 02 Normalize dates on release working branch
     runs-on: ubuntu-latest
     needs:
       - guard
       - promote_branch
 
-    # If promotion is disabled, run normalization directly on dev branch.
-    if: ${{ always() }}
+    # Control: if promotion is requested, require promote_branch success.
+    if: ${{ (github.event.inputs.promote_to_version != 'true') || (needs.promote_branch.result == 'success') }}
 
     permissions:
       contents: write
@@ -171,7 +184,7 @@ jobs:
       - name: Checkout release working branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ (github.event.inputs.promote_to_version == 'true' && startsWith(github.ref_name, 'dev/')) && needs.guard.outputs.version_branch || needs.guard.outputs.dev_branch }}
+          ref: ${{ needs.guard.outputs.target_branch }}
           fetch-depth: 0
 
       - name: Configure Git identity
@@ -188,8 +201,8 @@ jobs:
           test -f CHANGELOG.md || (echo "ERROR: CHANGELOG.md missing." && exit 1)
 
           VERSION="${{ needs.guard.outputs.version }}"
-          if ! grep -qE "^## \\[$VERSION\\] " CHANGELOG.md; then
-            echo "ERROR: CHANGELOG.md does not contain a heading for version [$VERSION]."
+          if ! grep -qE "^## \[${VERSION}\] " CHANGELOG.md; then
+            echo "ERROR: CHANGELOG.md does not contain a heading for version [${VERSION}]."
             exit 1
           fi
 
@@ -217,7 +230,7 @@ jobs:
                 sed -i "s#<buildDate>[^<]*</buildDate>#<buildDate>${TODAY}</buildDate>#g" "${f}" || true
               done
 
-            sed -i -E "s#^(## \\[${VERSION}\\]) [0-9]{4}-[0-9]{2}-[0-9]{2}#\ ${TODAY}#g" CHANGELOG.md || true
+            sed -i -E "s#^(## \[${VERSION}\]) [0-9]{4}-[0-9]{2}-[0-9]{2}#\1 ${TODAY}#g" CHANGELOG.md || true
           fi
 
       - name: Commit and push date updates
@@ -231,9 +244,7 @@ jobs:
 
           git add -A
           git commit -m "chore(release): normalize dates for ${{ needs.guard.outputs.version }}"
-
-          TARGET="${{ (github.event.inputs.promote_to_version == 'true' && startsWith(github.ref_name, 'dev/')) && needs.guard.outputs.version_branch || needs.guard.outputs.dev_branch }}"
-          git push origin "HEAD:${TARGET}"
+          git push origin "HEAD:${{ needs.guard.outputs.target_branch }}"
 
   build_update_and_release:
     name: 03 Build Joomla ZIP, update updates.xml, prerelease
@@ -246,14 +257,11 @@ jobs:
       contents: write
       id-token: write
 
-    environment:
-      name: release
-
     steps:
       - name: Checkout release working branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ (github.event.inputs.promote_to_version == 'true' && startsWith(github.ref_name, 'dev/')) && needs.guard.outputs.version_branch || needs.guard.outputs.dev_branch }}
+          ref: ${{ needs.guard.outputs.target_branch }}
           fetch-depth: 0
 
       - name: Configure Git identity
@@ -261,4 +269,301 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global --add safe.directory "${GITHUB
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      - name: Build Joomla compliant ZIP (template, component, module, plugin)
+        id: build
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          REPO="${{ github.event.repository.name }}"
+
+          test -d src || (echo "ERROR: src directory missing." && exit 1)
+
+          mkdir -p dist
+
+          # Determine the Joomla extension root inside src.
+          # Rules:
+          # - If src contains a single top-level directory, prefer that directory as the extension root.
+          # - Otherwise, use src as the extension root.
+          # - The extension root must contain a manifest XML at its root.
+          ROOT="src"
+          TOP_COUNT="$(find src -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
+          if [ "${TOP_COUNT}" = "1" ]; then
+            ONLY_DIR="$(find src -mindepth 1 -maxdepth 1 -type d -print -quit)"
+            ROOT="${ONLY_DIR}"
+          fi
+
+          echo "Candidate extension root: ${ROOT}"
+
+          # Locate the manifest XML at the root of ROOT.
+          # Priority:
+          # - templateDetails.xml for templates
+          # - otherwise, any *.xml containing a Joomla <extension ...> root element
+          MANIFEST=""
+          if [ -f "${ROOT}/templateDetails.xml" ]; then
+            MANIFEST="${ROOT}/templateDetails.xml"
+          else
+            while IFS= read -r -d '' f; do
+              if grep -qE '<extension\\b' "${f}"; then
+                MANIFEST="${f}"
+                break
+              fi
+            done < <(find "${ROOT}" -maxdepth 1 -type f -name "*.xml" -print0)
+          fi
+
+          if [ -z "${MANIFEST}" ]; then
+            echo "ERROR: No Joomla manifest XML found at the root of ${ROOT}."
+            echo "Expected templateDetails.xml or a *.xml file containing an <extension> element."
+            exit 1
+          fi
+
+          echo "Manifest: ${MANIFEST}"
+
+          # Derive extension type for logging and compliance checks.
+          EXT_TYPE="$(grep -oE '<extension[^>]*type=\"[^\"]+\"' "${MANIFEST}" | head -n 1 | sed -E 's/.*type=\"([^\"]+)\".*/\/')"
+          if [ -z "${EXT_TYPE}" ]; then
+            EXT_TYPE="unknown"
+          fi
+          echo "Detected extension type: ${EXT_TYPE}"
+
+          # Basic Joomla compliance checks by type.
+          case "${EXT_TYPE}" in
+            template)
+              test -f "${ROOT}/templateDetails.xml" || (echo "ERROR: templateDetails.xml missing for template build." && exit 1)
+              ;;
+            component)
+              if ! ls "${ROOT}"/com_*.xml >/dev/null 2>&1; then
+                echo "WARNING: No com_*.xml manifest found at root. Using detected manifest anyway."
+              fi
+              ;;
+            module)
+              if ! ls "${ROOT}"/mod_*.xml >/dev/null 2>&1; then
+                echo "WARNING: No mod_*.xml manifest found at root. Using detected manifest anyway."
+              fi
+              ;;
+            plugin)
+              :
+              ;;
+            *)
+              echo "WARNING: Extension type could not be determined reliably. Proceeding with generic packaging."
+              ;;
+          esac
+
+          ZIP="${REPO}-${VERSION}.zip"
+
+          # Joomla install expectation: ZIP root is the extension root.
+          # Zip the CONTENTS of ROOT, not ROOT itself.
+          (cd "${ROOT}" && zip -r -X "../dist/${ZIP}" . \
+            -x "**/.git/**" \
+            -x "**/.github/**" \
+            -x "**/.DS_Store" \
+            -x "**/__MACOSX/**")
+
+          echo "zip_name=${ZIP}" >> "${GITHUB_OUTPUT}"
+          ls -la dist
+
+      - name: Compute SHA256 for ZIP
+        id: sha
+        run: |
+          set -euo pipefail
+          ZIP="${{ steps.build.outputs.zip_name }}"
+          SHA="$(sha256sum "dist/${ZIP}" | awk '{print $1}')"
+          echo "sha256=${SHA}" >> "${GITHUB_OUTPUT}"
+          printf "%s  %s\n" "${SHA}" "${ZIP}" > dist/SHA256SUMS.txt
+          cat dist/SHA256SUMS.txt
+
+      - name: Update updates.xml with download URL and sha256
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          TODAY="${{ needs.guard.outputs.today_utc }}"
+          ZIP="${{ steps.build.outputs.zip_name }}"
+          SHA="${{ steps.sha.outputs.sha256 }}"
+
+          OWNER="${{ github.repository_owner }}"
+          REPO="${{ github.event.repository.name }}"
+
+          DOWNLOAD_URL="https://github.com/${OWNER}/${REPO}/releases/download/${VERSION}/${ZIP}"
+
+          echo "Version: ${VERSION}"
+          echo "Download URL: ${DOWNLOAD_URL}"
+          echo "SHA256: ${SHA}"
+
+          # If a template exists, instantiate it
+          if [ -f "docs/templates/template_update.xml" ]; then
+            cp -f "docs/templates/template_update.xml" "updates.xml"
+          elif [ -f "docs/templates/update_template.xml" ]; then
+            cp -f "docs/templates/update_template.xml" "updates.xml"
+          fi
+
+          if [ ! -f "updates.xml" ]; then
+            # Backward compatibility: allow repos that still keep update.xml
+            if [ -f "update.xml" ]; then
+              mv -f "update.xml" "updates.xml"
+            else
+              echo "ERROR: updates.xml not found and no template present in docs/templates."
+              exit 1
+            fi
+          fi
+
+          # Replace common placeholders if present
+          sed -i "s#{{VERSION}}#${VERSION}#g" updates.xml || true
+          sed -i "s#{{DATE}}#${TODAY}#g" updates.xml || true
+          sed -i "s#{{DOWNLOADURL}}#${DOWNLOAD_URL}#g" updates.xml || true
+          sed -i "s#{{SHA256}}#${SHA}#g" updates.xml || true
+          sed -i "s#{{ZIP}}#${ZIP}#g" updates.xml || true
+
+          # Also enforce canonical tag replacement inside common XML elements
+          sed -i "s#<downloadurl>[^<]*</downloadurl>#<downloadurl>${DOWNLOAD_URL}</downloadurl>#g" updates.xml || true
+          sed -i "s#<sha256>[^<]*</sha256>#<sha256>${SHA}</sha256>#g" updates.xml || true
+          sed -i "s#<sha256sum>[^<]*</sha256sum>#<sha256sum>${SHA}</sha256sum>#g" updates.xml || true
+          sed -i "s#<version>[^<]*</version>#<version>${VERSION}</version>#g" updates.xml || true
+          sed -i "s#<date>[^<]*</date>#<date>${TODAY}</date>#g" updates.xml || true
+
+          echo "updates.xml updated."
+
+      - name: Commit updates.xml changes (and any related date deltas)
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet; then
+            echo "No updates.xml changes detected. No commit required."
+            exit 0
+          fi
+
+          git add -A
+          git commit -m "chore(release): update updates.xml for ${{ needs.guard.outputs.version }}"
+          git push origin "HEAD:${{ needs.guard.outputs.target_branch }}"
+
+      - name: Create and push annotated tag after final release commit
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+
+          git fetch --tags
+
+          if git rev-parse -q --verify "refs/tags/${VERSION}" >/dev/null; then
+            echo "ERROR: Tag ${VERSION} already exists."
+            exit 1
+          fi
+
+          git tag -a "${VERSION}" -m "Prerelease ${VERSION}"
+          git push origin "refs/tags/${VERSION}"
+
+      - name: Generate release notes from CHANGELOG.md
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+
+          awk "/^## \[${VERSION}\]/{flag=1;next}/^## \[/ {flag=0}flag" CHANGELOG.md > RELEASE_NOTES.md || true
+
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "ERROR: Release notes extraction failed for ${VERSION}."
+            exit 1
+          fi
+
+          ZIP_ASSET="${{ steps.build.outputs.zip_name }}"
+          cat >> RELEASE_NOTES.md <<EOF
+
+Assets:
+- ${ZIP_ASSET}
+- updates.xml
+- SHA256SUMS.txt
+EOF
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            updates.xml
+            RELEASE_NOTES.md
+          retention-days: 30
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/*.zip
+            dist/SHA256SUMS.txt
+
+      - name: Create GitHub prerelease and attach assets
+        uses: softprops/action-gh-release@v2
+        with:
+          token: ${{ github.token }}
+          tag_name: ${{ needs.guard.outputs.version }}
+          name: Prerelease ${{ needs.guard.outputs.version }}
+          prerelease: true
+          body_path: RELEASE_NOTES.md
+          files: |
+            dist/*.zip
+            updates.xml
+            dist/SHA256SUMS.txt
+
+  squash_to_main:
+    name: 04 Optional squash merge version branch to main
+    runs-on: ubuntu-latest
+    needs:
+      - guard
+      - build_update_and_release
+
+    if: ${{ github.event.inputs.squash_to_main == 'true' && startsWith(github.ref_name, 'dev/') }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure Git identity
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      - name: Fetch branches
+        run: |
+          set -euo pipefail
+          git fetch origin --prune
+
+      - name: Squash merge version branch into main
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          VBRANCH="origin/${{ needs.guard.outputs.version_branch }}"
+
+          # Governance control: if main is protected from direct pushes, this will fail by design.
+          # Enforce PR-based merge in that scenario.
+
+          git checkout main
+          git merge --squash "${VBRANCH}"
+
+          if git diff --cached --quiet; then
+            echo "No changes to merge from ${VBRANCH}."
+            exit 0
+          fi
+
+          git commit -m "chore(release): squash ${VERSION} into main"
+          git push origin "HEAD:main"
+
+      - name: Optional delete version branch after squash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event.inputs.delete_version_branch }}" = "true" ]; then
+            git push origin --delete "${{ needs.guard.outputs.version_branch }}"
+          else
+            echo "Version branch retention enabled. Skipping deletion."
+          fi
