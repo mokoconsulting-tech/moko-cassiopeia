@@ -372,8 +372,78 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
-      - name: Build Joomla compliant ZIP
-        id: build
+      - name: Validate required secrets and variables
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_KEY: ${{ secrets.FTP_KEY }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PATH: ${{ secrets.FTP_PATH }}
+          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_PATH_SUFFIX: ${{ vars.FTP_PATH_SUFFIX }}
+          CHANNEL: ${{ needs.guard.outputs.channel }}
+        run: |
+          set -euo pipefail
+
+          missing=()
+
+          [ -n "${FTP_HOST:-}" ] || missing+=("FTP_HOST")
+          [ -n "${FTP_USER:-}" ] || missing+=("FTP_USER")
+          [ -n "${FTP_KEY:-}" ] || missing+=("FTP_KEY")
+          [ -n "${FTP_PATH:-}" ] || missing+=("FTP_PATH")
+
+          proto="${FTP_PROTOCOL:-sftp}"
+          if [ "${proto}" != "sftp" ]; then
+            echo "ERROR: FTP_PROTOCOL must be 'sftp'" >> "${GITHUB_STEP_SUMMARY}"
+            missing+=("FTP_PROTOCOL")
+          fi
+
+          # Key format guardrail (OpenSSH private key or PuTTY PPK)
+          first_line="$(printf '%s' "${FTP_KEY:-}" | head -n 1 || true)"
+          if [ -n "${FTP_KEY:-}" ]; then
+            if printf '%s' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
+              key_format="ppk"
+            elif printf '%s' "${first_line}" | grep -q '^-----BEGIN '; then
+              key_format="openssh"
+            else
+              key_format="unknown"
+              missing+=("FTP_KEY_FORMAT")
+            fi
+          else
+            key_format="missing"
+          fi
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            {
+              echo "### Configuration guardrails"
+              echo "```json"
+              printf '{"status":"fail","missing":['
+              sep=""
+              for m in "${missing[@]}"; do
+                printf '%s"%s"' "${sep}" "${m}"
+                sep=","
+              done
+              printf '],"key_format":"%s","channel":"%s"}
+' "${key_format}" "${CHANNEL}"
+              echo "```"
+              echo "Required action: set missing repository or organization secrets or variables."
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          {
+            echo "### Configuration guardrails"
+            echo "```json"
+            printf '{"status":"ok","key_format":"%s","channel":"%s","ftp_path_suffix":"%s","ftp_port":"%s"}
+' \
+              "${key_format}" "${CHANNEL}" "${FTP_PATH_SUFFIX:-}" "${FTP_PORT:-}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          # Policy note: FTP_PASSWORD is used only to decrypt an encrypted PPK, never for authentication.
+
+$1        id: build
         run: |
           set -euo pipefail
 
@@ -504,8 +574,11 @@ jobs:
 
           mkdir -p ~/.ssh
 
-          # Key material can be OpenSSH private key or PuTTY .ppk (optionally encrypted).
-          # Hard control: key-only auth. Password auth disabled at SSH layer.
+          # Key material is sourced exclusively from FTP_KEY.
+          # Supported formats:
+          # - OpenSSH private key (unencrypted)
+          # - PuTTY .ppk (unencrypted or encrypted; encryption unlocked via FTP_PASSWORD)
+          # Authentication remains key-only; passwords are never used for login.
           if printf '%s' "${FTP_KEY}" | head -n 1 | grep -q '^PuTTY-User-Key-File-'; then
             echo "Detected PuTTY PPK key format" >> "${GITHUB_STEP_SUMMARY}"
 
@@ -531,7 +604,7 @@ jobs:
               grep -E '^(PuTTY-User-Key-File-|Encryption:|Comment:|Public-Lines:|Private-Lines:|Private-MAC:)' ~/.ssh/key.ppk || true
             } >> "${GITHUB_STEP_SUMMARY}"
 
-            # Convert to OpenSSH private key (supports encrypted PPK via FTP_PASSWORD)
+            # Convert to OpenSSH private key
             if ! puttygen ~/.ssh/key.ppk -O private-openssh ${PPK_PASSPHRASE_ARG} -o ~/.ssh/id_rsa; then
               echo "ERROR: PPK conversion failed" >> "${GITHUB_STEP_SUMMARY}"
               exit 1
@@ -539,11 +612,6 @@ jobs:
 
             chmod 600 ~/.ssh/id_rsa
             rm -f ~/.ssh/key.ppk
-          else
-            echo "Detected OpenSSH private key format" >> "${GITHUB_STEP_SUMMARY}"
-            printf '%s' "${FTP_KEY}" > ~/.ssh/id_rsa
-            chmod 600 ~/.ssh/id_rsa
-          fi
           else
             echo "Detected OpenSSH private key format" >> "${GITHUB_STEP_SUMMARY}"
             printf '%s' "${FTP_KEY}" > ~/.ssh/id_rsa
