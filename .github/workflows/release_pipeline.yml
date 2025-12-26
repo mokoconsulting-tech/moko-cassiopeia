@@ -443,7 +443,89 @@ jobs:
 
           # Policy note: FTP_PASSWORD is used only to decrypt an encrypted PPK, never for authentication.
 
-$1        id: build
+      - name: Run repository validation scripts (Joomla)
+        run: |
+          set -euo pipefail
+
+          required_scripts=(
+            "scripts/validate_manifest.sh"
+            "scripts/validate_manifest_location.sh"
+          )
+
+          optional_scripts=(
+            "scripts/validate_changelog.sh"
+            "scripts/validate_tabs.sh"
+            "scripts/validate_paths.sh"
+            "scripts/validate_joomla_package_root.sh"
+            "scripts/validate_version_alignment.sh"
+            "scripts/validate_language_structure.sh"
+            "scripts/validate_media_paths.sh"
+            "scripts/validate_php_syntax.sh"
+            "scripts/validate_xml_wellformed.sh"
+            "scripts/validate_no_secrets.sh"
+            "scripts/validate_licenses_headers.sh"
+          )
+
+          missing=()
+          for s in "${required_scripts[@]}"; do
+            if [ ! -f "${s}" ]; then
+              missing+=("${s}")
+            fi
+          done
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            {
+              echo "### Script guardrails"
+              echo "```json"
+              printf '{"status":"fail","missing_required_scripts":['
+              sep=""
+              for m in "${missing[@]}"; do
+                printf '%s"%s"' "${sep}" "${m}"
+                sep=","
+              done
+              printf ']}
+'
+              echo "```"
+              echo "Required action: add missing scripts under /scripts and ensure they are executable."
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          ran=()
+          skipped=()
+
+          for s in "${required_scripts[@]}" "${optional_scripts[@]}"; do
+            if [ -f "${s}" ]; then
+              chmod +x "${s}"
+              "${s}" >> "${GITHUB_STEP_SUMMARY}"
+              ran+=("${s}")
+            else
+              skipped+=("${s}")
+            fi
+          done
+
+          {
+            echo "### Script guardrails"
+            echo "```json"
+            printf '{"status":"ok","ran":['
+            sep=""
+            for r in "${ran[@]}"; do
+              printf '%s"%s"' "${sep}" "${r}"
+              sep=","
+            done
+            printf '],"skipped_optional":['
+            sep=""
+            for k in "${skipped[@]}"; do
+              printf '%s"%s"' "${sep}" "${k}"
+              sep=","
+            done
+            printf ']}
+'
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Build Joomla compliant ZIP
+        id: build
         run: |
           set -euo pipefail
 
@@ -454,7 +536,6 @@ $1        id: build
           test -d src || (echo "ERROR: src directory missing" && exit 1)
 
           DIST_DIR="${GITHUB_WORKSPACE}/dist"
-
           mkdir -p "${DIST_DIR}"
 
           ROOT="src"
@@ -482,7 +563,7 @@ $1        id: build
             exit 1
           fi
 
-          EXT_TYPE="$(grep -o 'type=\"[^\"]*\"' "${MANIFEST}" | head -n 1 | cut -d '"' -f2)"
+          EXT_TYPE="$(grep -o 'type=\"[^\"]*\"' "${MANIFEST}" | head -n 1 | cut -d '"' -f2 || true)"
           if [ -z "${EXT_TYPE}" ]; then
             EXT_TYPE="unknown"
           fi
@@ -507,10 +588,6 @@ $1        id: build
           echo "ext_type=${EXT_TYPE}" >> "${GITHUB_OUTPUT}"
 
           ZIP_BYTES="$(stat -c%s "${DIST_DIR}/${ZIP}")"
-          ZIP_SHA=""
-          if command -v sha256sum >/dev/null 2>&1; then
-            ZIP_SHA="$(sha256sum "${DIST_DIR}/${ZIP}" | awk '{print $1}')"
-          fi
 
           {
             echo "### Build report"
@@ -520,17 +597,18 @@ $1        id: build
             echo "  \"manifest\": \"${MANIFEST}\","
             echo "  \"extension_type\": \"${EXT_TYPE}\","
             echo "  \"zip\": \"${DIST_DIR}/${ZIP}\","
-            echo "  \"zip_bytes\": ${ZIP_BYTES},"
-            echo "  \"zip_sha256\": \"${ZIP_SHA}\""
+            echo "  \"zip_bytes\": ${ZIP_BYTES}"
             echo "}"
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
+
 
       - name: Upload ZIP to SFTP (key-only, overwrite, verbose)
         env:
           FTP_HOST: ${{ secrets.FTP_HOST }}
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_KEY: ${{ secrets.FTP_KEY }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_PATH: ${{ secrets.FTP_PATH }}
           FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
           FTP_PORT: ${{ secrets.FTP_PORT }}
@@ -538,7 +616,8 @@ $1        id: build
           CHANNEL: ${{ needs.guard.outputs.channel }}
         run: |
           set -euo pipefail
-          set -x
+
+          # Enterprise control: avoid shell xtrace to reduce secret exposure risk.
 
           ZIP="${{ steps.build.outputs.zip_name }}"
 
@@ -595,7 +674,7 @@ $1        id: build
                 exit 1
               fi
               echo "PPK encryption: enabled (using FTP_PASSWORD)" >> "${GITHUB_STEP_SUMMARY}"
-              PPK_PASSPHRASE_ARG="--passphrase ${FTP_PASSWORD}"
+              PPK_PASSPHRASE="${FTP_PASSWORD:-}"
             fi
 
             # Log PPK header fields (sanitized, no key material)
@@ -605,7 +684,13 @@ $1        id: build
             } >> "${GITHUB_STEP_SUMMARY}"
 
             # Convert to OpenSSH private key
-            if ! puttygen ~/.ssh/key.ppk -O private-openssh ${PPK_PASSPHRASE_ARG} -o ~/.ssh/id_rsa; then
+            if [ -n "${PPK_PASSPHRASE}" ]; then
+              puttygen ~/.ssh/key.ppk -O private-openssh --passphrase "${PPK_PASSPHRASE}" -o ~/.ssh/id_rsa
+            else
+              puttygen ~/.ssh/key.ppk -O private-openssh -o ~/.ssh/id_rsa
+            fi
+
+            if [ ! -s ~/.ssh/id_rsa ]; then
               echo "ERROR: PPK conversion failed" >> "${GITHUB_STEP_SUMMARY}"
               exit 1
             fi
