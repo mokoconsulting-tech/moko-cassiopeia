@@ -190,7 +190,7 @@ jobs:
 
           # Emit report.
           {
-            echo "### Config guardrails report (JSON)"
+            echo "### Guardrails report (JSON)"
             echo "```json"
             printf '{"repository":"%s","profile":"%s","checked":{' "${GITHUB_REPOSITORY}" "${profile}"
 
@@ -265,6 +265,6 @@ jobs:
 
           # Fail the workflow if required items are missing.
           if [ "${#missing[@]}" -gt 0 ] || [ "${#missing_files[@]}" -gt 0 ]; then
-            echo "ERROR: Config guardrails failed. Missing required configuration or script files." >> "${GITHUB_STEP_SUMMARY}"
+            echo "ERROR: Guardrails failed. Missing required configuration or script files." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
