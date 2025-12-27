@@ -190,7 +190,7 @@ jobs:
           sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" <<'EOF'
           pwd
           bye
-EOF
+          EOF
 
           echo "SFTP connectivity check passed." >> "${GITHUB_STEP_SUMMARY}"
 
