@@ -361,7 +361,7 @@ jobs:
             {
               echo "ERROR: Date normalization script not found in approved locations."
               echo "Approved locations:"
-              printf '%s\\n' "${CANDIDATES[@]}"
+              printf '%s\n' "${CANDIDATES[@]}"
               echo "Discovered candidates (first 5):"
               echo "${FOUND:-<none>}"
               echo "Required action: add scripts/update_dates.sh (or scripts/release/update_dates.sh) to the repo."
@@ -469,8 +469,7 @@ jobs:
               printf '%s"%s"' "${sep}" "${m}"
               sep=",";
             done
-            printf '],"key_format":"%s","channel":"%s"}
-' "${key_format}" "${CHANNEL}"
+            printf '],"key_format":"%s","channel":"%s"}\n' "${key_format}" "${CHANNEL}"
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -515,8 +514,7 @@ jobs:
                 printf '%s"%s"' "${sep}" "${m}"
                 sep=",";
               done
-              printf ']}
-'
+              printf ']}\n'
               echo "```"
             } >> "${GITHUB_STEP_SUMMARY}"
             exit 1
@@ -791,8 +789,7 @@ jobs:
 
           echo "### Release report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
           echo "```json" >> "${GITHUB_STEP_SUMMARY}"
-          printf '{"repository":"%s","workflow":"%s","job":"%s","run_id":%s,"run_number":%s,"run_attempt":%s,"run_url":"%s","actor":"%s","sha":"%s","version":"%s","branch":"%s","tag":"%s","mode":"%s","channel":"%s","override":"%s","zip":"%s"}
-' \
+          printf '{"repository":"%s","workflow":"%s","job":"%s","run_id":%s,"run_number":%s,"run_attempt":%s,"run_url":"%s","actor":"%s","sha":"%s","version":"%s","branch":"%s","tag":"%s","mode":"%s","channel":"%s","override":"%s","zip":"%s"}\n' \
             "${GITHUB_REPOSITORY}" \
             "${GITHUB_WORKFLOW}" \
             "${GITHUB_JOB}" \
