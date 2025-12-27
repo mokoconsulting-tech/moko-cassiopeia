@@ -116,7 +116,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Guardrails: release secrets and vars
+      - name: Guardrails - release secrets and vars
         env:
           PROFILE_RAW: "${{ github.event.inputs.profile }}"
           FTP_HOST: "${{ secrets.FTP_HOST }}"
