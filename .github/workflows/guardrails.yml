@@ -52,7 +52,7 @@ permissions:
 
 jobs:
   guardrails:
-    name: Guardrails
+    name: Checking Guardrails
     runs-on: ubuntu-latest
 
     steps:
