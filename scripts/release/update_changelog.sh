@@ -21,7 +21,7 @@
 # FILE INFORMATION
 # DEFGROUP: MokoStandards
 # INGROUP: Generic.Script
-# REPO: https://github.com/mokoconsulting-tech/MokoDefaults
+# REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /scripts/update_changelog.sh
 # VERSION: 03.05.00
 # BRIEF: Insert a versioned CHANGELOG.md entry immediately after the main Changelog heading
