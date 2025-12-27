@@ -297,6 +297,19 @@ EOF
           command -v php >/dev/null 2>&1 && tool_status+=("php") || true
           command -v xmllint >/dev/null 2>&1 && tool_status+=("xmllint") || true
 
+          export MISSING_FILES="$(printf '%s
+' "${missing_files[@]:-}")"
+          export LEGACY_PRESENT="$(printf '%s
+' "${legacy_present[@]:-}")"
+          export TOOLS="${tool_status[*]:-}"
+
+          export MISSING_REQUIRED="$(printf '%s
+' "${missing_required[@]:-}")"
+          export MISSING_OPTIONAL="$(printf '%s
+' "${missing_optional[@]:-}")"
+          export CONTENT_WARNINGS="$(printf '%s
+' "${content_warnings[@]:-}")"
+
           report_json="$(python3 - <<'PY'
 import json
 import os
@@ -389,10 +402,6 @@ PY
             echo "ERROR: Guardrails failed. Move scripts into scripts/validate/ with approved filenames." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
-        env:
-          MISSING_FILES: ${{ '' }}
-          LEGACY_PRESENT: ${{ '' }}
-          TOOLS: ${{ '' }}
 
   repo_health:
     name: Repository health
@@ -563,7 +572,3 @@ PY
               echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
             done
           fi
-        env:
-          MISSING_REQUIRED: ${{ '' }}
-          MISSING_OPTIONAL: ${{ '' }}
-          CONTENT_WARNINGS: ${{ '' }}
