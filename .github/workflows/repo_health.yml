@@ -179,13 +179,13 @@ jobs:
 
           echo "### Guardrails: release configuration" >> "${GITHUB_STEP_SUMMARY}"
           echo "All required release variables present." >> "${GITHUB_STEP_SUMMARY}"
-
       - name: Guardrails - SFTP connectivity
         env:
           PROFILE_RAW: "${{ github.event.inputs.profile }}"
           FTP_HOST: "${{ secrets.FTP_HOST }}"
           FTP_USER: "${{ secrets.FTP_USER }}"
           FTP_KEY: "${{ secrets.FTP_KEY }}"
+          FTP_PASSWORD: "${{ secrets.FTP_PASSWORD }}"
           FTP_PORT: "${{ secrets.FTP_PORT }}"
         run: |
           set -euo pipefail
@@ -206,15 +206,30 @@ jobs:
 
           mkdir -p "$HOME/.ssh"
           key_file="$HOME/.ssh/ci_sftp_key"
-          printf '%s\n' "${FTP_KEY}" > "${key_file}"
+          printf '%s
+' "${FTP_KEY}" > "${key_file}"
           chmod 600 "${key_file}"
+
+          # If FTP_PASSWORD is present, treat it as the private key passphrase and decrypt the key in place.
+          # If FTP_PASSWORD is empty, the key must already be unencrypted.
+          if [ -n "${FTP_PASSWORD:-}" ]; then
+            first_line="$(head -n 1 "${key_file}" || true)"
+            if printf '%s' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
+              echo "ERROR: FTP_KEY appears to be a PuTTY PPK. Provide an OpenSSH private key to use FTP_PASSWORD decryption." >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+            fi
+
+            ssh-keygen -p -P "${FTP_PASSWORD}" -N "" -f "${key_file}" >/dev/null
+          fi
 
           port="${FTP_PORT:-22}"
 
           echo "### SFTP connectivity test" >> "${GITHUB_STEP_SUMMARY}"
           echo "Attempting non-destructive SFTP session (pwd only)." >> "${GITHUB_STEP_SUMMARY}"
 
-          printf 'pwd\nbye\n' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}"
+          printf 'pwd
+bye
+' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}"
 
           echo "SFTP connectivity check passed." >> "${GITHUB_STEP_SUMMARY}"
 
