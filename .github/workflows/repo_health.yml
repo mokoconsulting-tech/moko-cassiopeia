@@ -22,13 +22,12 @@
 # DEFGROUP: GitHub.Workflow
 # INGROUP: MokoStandards.Validation
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
-# PATH: /.github/workflows/config_guardrails.yml
+# PATH: /.github/workflows/repo_health.yml
 # VERSION: 03.05.00
-# BRIEF: Validate that required repository secrets and variables exist for workflows and scripts.
-# NOTE: Secrets are never printed. This workflow only verifies presence and emits an audit JSON report.
+# BRIEF: Enforces Joomla repository guardrails by validating release configuration, required validation scripts, tooling availability, and core repository health artifacts.
 # ============================================================================
 
-name: Repo Health
+name: Joomla Repo Health
 
 on:
   workflow_dispatch:
@@ -188,7 +187,6 @@ jobs:
             echo "ERROR: Guardrails failed. Missing required release configuration." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
-
   scripts_config:
     name: Scripts and tooling
     runs-on: ubuntu-latest
@@ -203,11 +201,11 @@ jobs:
 
       - name: Guardrails: script files and toolchain
         env:
-          PROFILE: ${{ github.event.inputs.profile || 'all' }}
+          PROFILE_RAW: ${{ github.event.inputs.profile }}
         run: |
           set -euxo pipefail
 
-          profile="${PROFILE}"
+          profile="${PROFILE_RAW:-all}"
           if [ "${profile}" != "all" ] && [ "${profile}" != "release" ] && [ "${profile}" != "scripts" ]; then
             echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
             exit 1
@@ -253,7 +251,6 @@ jobs:
             fi
           done
 
-          # Report legacy scripts if present so teams can clean up.
           for f in "${legacy_script_files[@]}"; do
             if [ -f "${f}" ]; then
               legacy_present+=("${f}")
@@ -318,3 +315,189 @@ jobs:
             echo "ERROR: Guardrails failed. Missing required script files." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
+
+  repo_health:
+    name: Repository health
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Repo health checks
+        env:
+          PROFILE_RAW: ${{ github.event.inputs.profile }}
+        run: |
+          set -euxo pipefail
+
+          profile="${PROFILE_RAW:-all}"
+          if [ "${profile}" != "all" ] && [ "${profile}" != "release" ] && [ "${profile}" != "scripts" ]; then
+            echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          # Always run repo health for all profiles.
+
+          required_files=(
+            "README.md"
+            "LICENSE"
+            "CHANGELOG.md"
+            "CONTRIBUTING.md"
+            "CODE_OF_CONDUCT.md"
+          )
+
+          optional_files=(
+            "SECURITY.md"
+            "GOVERNANCE.md"
+            ".editorconfig"
+            ".gitattributes"
+            ".gitignore"
+          )
+
+          required_paths=(
+            ".github/workflows"
+            "scripts"
+          )
+
+          missing_required=()
+          missing_optional=()
+
+          for f in "${required_files[@]}"; do
+            if [ ! -f "${f}" ]; then
+              missing_required+=("${f}")
+            fi
+          done
+
+          for f in "${optional_files[@]}"; do
+            if [ ! -f "${f}" ]; then
+              missing_optional+=("${f}")
+            fi
+          done
+
+          for p in "${required_paths[@]}"; do
+            if [ ! -d "${p}" ]; then
+              missing_required+=("${p}/")
+            fi
+          done
+
+          # Branch topology health checks.
+          git fetch origin --prune
+
+          dev_paths=()
+          dev_branches=()
+
+          # Collect remote branches starting with dev/
+          while IFS= read -r b; do
+            name="${b#origin/}"
+            if [ "${name}" = "dev" ]; then
+              dev_branches+=("${name}")
+            else
+              dev_paths+=("${name}")
+            fi
+          done < <(git branch -r --list "origin/dev*" | sed 's/^ *//')
+
+          # Enforce at least one dev/* path branch
+          if [ "${#dev_paths[@]}" -eq 0 ]; then
+            missing_required+=("dev/* branch (e.g. dev/01.00.00)")
+          fi
+
+          # Enforce dev is not a concrete branch
+          if [ "${#dev_branches[@]}" -gt 0 ]; then
+            missing_required+=("invalid branch 'dev' (must be dev/<version>)")
+          fi
+
+          # Lightweight content health checks.
+          content_warnings=()
+
+          if [ -f "CHANGELOG.md" ]; then
+            if ! grep -Eq '^# Changelog' CHANGELOG.md; then
+              content_warnings+=("CHANGELOG.md missing '# Changelog' header")
+            fi
+          fi
+
+          if [ -f "LICENSE" ]; then
+            if ! grep -qiE 'GNU GENERAL PUBLIC LICENSE|GPL' LICENSE; then
+              content_warnings+=("LICENSE does not look like a GPL text")
+            fi
+          fi
+
+          if [ -f "README.md" ]; then
+            if ! grep -qiE 'moko|Moko' README.md; then
+              content_warnings+=("README.md missing expected brand keyword")
+            fi
+          fi
+
+          {
+            echo "### Guardrails: repository health"
+            echo ""
+            echo "### Guardrails report (JSON)"
+            echo "```json"
+            printf '{"profile":"%s","checked":{"required_files":[' "${profile}"
+            sep=""
+            for c in "${required_files[@]}"; do
+              printf '%s"%s"' "${sep}" "${c}"
+              sep=",";
+            done
+            printf '],"optional_files":['
+            sep=""
+            for c in "${optional_files[@]}"; do
+              printf '%s"%s"' "${sep}" "${c}"
+              sep=",";
+            done
+            printf '],"required_paths":['
+            sep=""
+            for c in "${required_paths[@]}"; do
+              printf '%s"%s"' "${sep}" "${c}"
+              sep=",";
+            done
+            printf ']},"missing_required":['
+            sep=""
+            for m in "${missing_required[@]}"; do
+              printf '%s"%s"' "${sep}" "${m}"
+              sep=",";
+            done
+            printf '],"missing_optional":['
+            sep=""
+            for m in "${missing_optional[@]}"; do
+              printf '%s"%s"' "${sep}" "${m}"
+              sep=",";
+            done
+            printf '],"content_warnings":['
+            sep=""
+            for m in "${content_warnings[@]}"; do
+              printf '%s"%s"' "${sep}" "${m}"
+              sep=",";
+            done
+            printf ']}'
+            echo
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if [ "${#missing_required[@]}" -gt 0 ]; then
+            echo "### Missing required repo artifacts" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${missing_required[@]}"; do
+              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
+            done
+            echo "MISSING_REQUIRED: ${missing_required[*]}" >&2
+            echo "ERROR: Guardrails failed. Missing required repository artifacts." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          if [ "${#missing_optional[@]}" -gt 0 ]; then
+            echo "### Missing optional repo artifacts" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${missing_optional[@]}"; do
+              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
+            done
+          fi
+
+          if [ "${#content_warnings[@]}" -gt 0 ]; then
+            echo "### Repo content warnings" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${content_warnings[@]}"; do
+              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
+            done
+          fi
+
