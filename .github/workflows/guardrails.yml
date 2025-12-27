@@ -28,7 +28,7 @@
 # NOTE: Secrets are never printed. This workflow only verifies presence and emits an audit JSON report.
 # ============================================================================
 
-name: Config Guardrails (secrets and vars)
+name: Guardrails
 
 on:
   workflow_dispatch:
