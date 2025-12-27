@@ -96,7 +96,7 @@ jobs:
           )
 
           required_script_files=(
-            "scripts/verify_manifest.sh"
+            "scripts/validate_manifest.sh"
             "scripts/validate_xml_wellformed.sh"
             "scripts/validate_changelog.sh"
             "scripts/validate_tabs.sh"
