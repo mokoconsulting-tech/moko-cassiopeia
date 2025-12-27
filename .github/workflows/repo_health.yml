@@ -59,15 +59,15 @@ jobs:
     steps:
       - name: Guardrails: release secrets and vars
         env:
-          PROFILE_RAW: ${{ github.event.inputs.profile }}
-          FTP_HOST: ${{ secrets.FTP_HOST }}
-          FTP_USER: ${{ secrets.FTP_USER }}
-          FTP_KEY: ${{ secrets.FTP_KEY }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_PATH: ${{ secrets.FTP_PATH }}
-          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
-          FTP_PORT: ${{ secrets.FTP_PORT }}
-          FTP_PATH_SUFFIX: ${{ vars.FTP_PATH_SUFFIX }}
+          PROFILE_RAW: "${{ github.event.inputs.profile }}"
+          FTP_HOST: "${{ secrets.FTP_HOST }}"
+          FTP_USER: "${{ secrets.FTP_USER }}"
+          FTP_KEY: "${{ secrets.FTP_KEY }}"
+          FTP_PASSWORD: "${{ secrets.FTP_PASSWORD }}"
+          FTP_PATH: "${{ secrets.FTP_PATH }}"
+          FTP_PROTOCOL: "${{ secrets.FTP_PROTOCOL }}"
+          FTP_PORT: "${{ secrets.FTP_PORT }}"
+          FTP_PATH_SUFFIX: "${{ vars.FTP_PATH_SUFFIX }}"
         run: |
           set -euxo pipefail
 
@@ -500,4 +500,3 @@ jobs:
               echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
             done
           fi
-
