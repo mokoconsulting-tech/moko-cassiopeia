@@ -226,9 +226,7 @@ jobs:
           echo "### SFTP connectivity test" >> "${GITHUB_STEP_SUMMARY}"
           echo "Attempting non-destructive SFTP session (pwd only)." >> "${GITHUB_STEP_SUMMARY}"
 
-          printf 'pwd
-bye
-' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}"
+          printf 'pwd\\nbye\\n' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}"
 
           echo "SFTP connectivity check passed." >> "${GITHUB_STEP_SUMMARY}"
 
