@@ -54,7 +54,7 @@ concurrency:
 
 defaults:
   run:
-    shell: bash -euxo pipefail
+    shell: bash
 
 permissions:
   contents: read
@@ -82,7 +82,7 @@ jobs:
           RELEASE_CLASSIFICATION: ${{ github.event.inputs.release_classification }}
           RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
         run: |
-          set -euo pipefail
+          set -euxo pipefail
 
           EVENT_NAME="${GITHUB_EVENT_NAME}"
           REF_NAME="${GITHUB_REF_NAME}"
@@ -199,14 +199,14 @@ jobs:
 
       - name: Configure Git identity
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Enforce promotion preconditions
         run: |
-          set -euo pipefail
+          set -euxo pipefail
 
           SRC="${{ needs.guard.outputs.source_branch }}"
           DST="${{ needs.guard.outputs.target_branch }}"
@@ -230,7 +230,7 @@ jobs:
 
       - name: Promote and delete source
         run: |
-          set -euo pipefail
+          set -euxo pipefail
 
           SRC="${{ needs.guard.outputs.source_branch }}"
           DST="${{ needs.guard.outputs.target_branch }}"
@@ -270,14 +270,14 @@ jobs:
 
       - name: Configure Git identity
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Validate repo prerequisites
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           test -d src || (echo "ERROR: src directory missing" && exit 1)
           test -f CHANGELOG.md || (echo "ERROR: CHANGELOG.md missing" && exit 1)
 
@@ -290,7 +290,7 @@ jobs:
 
       - name: Normalize dates using repository script only
         run: |
-          set -euo pipefail
+          set -euxo pipefail
 
           TODAY="${{ needs.guard.outputs.today_utc }}"
           VERSION="${{ needs.guard.outputs.version }}"
@@ -343,7 +343,7 @@ jobs:
 
       - name: Commit normalized dates (if changed)
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           if git diff --quiet; then
             echo "No date changes to commit" >> "${GITHUB_STEP_SUMMARY}"
             exit 0
@@ -375,14 +375,14 @@ jobs:
 
       - name: Configure Git identity
         run: |
-          set -euo pipefail
+          set -euxo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Run repository validation scripts (Joomla)
         run: |
-          set -euo pipefail
+          set -euxo pipefail
 
           required_scripts=(
             "scripts/validate_manifest.sh"
@@ -421,7 +421,7 @@ jobs:
       - name: Build Joomla ZIP (extension type aware)
         id: build
         run: |
-          set -euo pipefail
+          set -euxo pipefail
 
           VERSION="${{ needs.guard.outputs.version }}"
           REPO="${{ github.event.repository.name }}"
@@ -509,7 +509,7 @@ jobs:
         env:
           IS_PRERELEASE: ${{ github.event.release.prerelease }}
         run: |
-          set -euo pipefail
+          set -euxo pipefail
 
           VERSION="${{ needs.guard.outputs.version }}"
           TAG="${{ github.ref_name }}"
