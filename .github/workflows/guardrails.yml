@@ -51,21 +51,16 @@ permissions:
   contents: read
 
 jobs:
-  guardrails:
-    name: Setting Guardrails
+  release_config:
+    name: Release configuration
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Validate required repository secrets and variables
+      - name: Guardrails: release secrets and vars
         env:
           PROFILE: ${{ github.event.inputs.profile || 'all' }}
-
-          # Release pipeline SFTP configuration (secrets + vars)
           FTP_HOST: ${{ secrets.FTP_HOST }}
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_KEY: ${{ secrets.FTP_KEY }}
@@ -74,28 +69,169 @@ jobs:
           FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
           FTP_PORT: ${{ secrets.FTP_PORT }}
           FTP_PATH_SUFFIX: ${{ vars.FTP_PATH_SUFFIX }}
-
         run: |
           set -euxo pipefail
 
           profile="${PROFILE}"
+          if [ "${profile}" != "all" ] && [ "${profile}" != "release" ] && [ "${profile}" != "scripts" ]; then
+            echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
 
-          # Centralized checklist.
-          required_release_secrets=(
+          if [ "${profile}" = "scripts" ]; then
+            echo "Profile scripts selected. Skipping release configuration checks." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          required=(
             "FTP_HOST"
             "FTP_USER"
             "FTP_KEY"
             "FTP_PATH"
           )
 
-          optional_release=(
-            "FTP_PASSWORD"    # Only needed for encrypted PPK conversion
-            "FTP_PROTOCOL"    # Defaults to sftp in pipelines
-            "FTP_PORT"        # Defaults to provider default
-            "FTP_PATH_SUFFIX" # Variable, optional
+          optional=(
+            "FTP_PASSWORD"
+            "FTP_PROTOCOL"
+            "FTP_PORT"
+            "FTP_PATH_SUFFIX"
           )
 
+          missing=()
+          missing_optional=()
+
+          for k in "${required[@]}"; do
+            v="${!k:-}"
+            if [ -z "${v}" ]; then
+              missing+=("${k}")
+            fi
+          done
+
+          for k in "${optional[@]}"; do
+            v="${!k:-}"
+            if [ -z "${v}" ]; then
+              missing_optional+=("${k}")
+            fi
+          done
+
+          proto="${FTP_PROTOCOL:-sftp}"
+          if [ -n "${FTP_PROTOCOL:-}" ] && [ "${proto}" != "sftp" ]; then
+            missing+=("FTP_PROTOCOL_INVALID")
+          fi
+
+          # Key format guardrail (do not print key material).
+          if [ -n "${FTP_KEY:-}" ]; then
+            first_line="$(printf '%s' "${FTP_KEY}" | head -n 1 || true)"
+            if printf '%s' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
+              key_format="ppk"
+            elif printf '%s' "${first_line}" | grep -q '^-----BEGIN '; then
+              key_format="openssh"
+            else
+              key_format="unknown"
+              missing+=("FTP_KEY_FORMAT")
+            fi
+          else
+            key_format="missing"
+          fi
+
+          {
+            echo "### Guardrails: release configuration"
+            echo "KEY_FORMAT=${key_format}"
+            echo ""
+            echo "### Guardrails report (JSON)"
+            echo "```json"
+            printf '{"profile":"%s","checked":{"required":[' "${profile}"
+            sep=""
+            for c in "${required[@]}"; do
+              printf '%s"%s"' "${sep}" "${c}"
+              sep=",";
+            done
+            printf '],"optional":['
+            sep=""
+            for c in "${optional[@]}"; do
+              printf '%s"%s"' "${sep}" "${c}"
+              sep=",";
+            done
+            printf ']},"missing_required":['
+            sep=""
+            for m in "${missing[@]}"; do
+              printf '%s"%s"' "${sep}" "${m}"
+              sep=",";
+            done
+            printf '],"missing_optional":['
+            sep=""
+            for m in "${missing_optional[@]}"; do
+              printf '%s"%s"' "${sep}" "${m}"
+              sep=",";
+            done
+            printf ']}
+'
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "### Missing required release configuration" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${missing[@]}"; do
+              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
+            done
+          fi
+
+          if [ "${#missing_optional[@]}" -gt 0 ]; then
+            echo "### Missing optional release configuration" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${missing_optional[@]}"; do
+              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
+            done
+          fi
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "MISSING_REQUIRED: ${missing[*]}" >&2
+            echo "ERROR: Guardrails failed. Missing required release configuration." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+  scripts_config:
+    name: Scripts and tooling
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Guardrails: script files and toolchain
+        env:
+          PROFILE: ${{ github.event.inputs.profile || 'all' }}
+        run: |
+          set -euxo pipefail
+
+          profile="${PROFILE}"
+          if [ "${profile}" != "all" ] && [ "${profile}" != "release" ] && [ "${profile}" != "scripts" ]; then
+            echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          if [ "${profile}" = "release" ]; then
+            echo "Profile release selected. Skipping scripts checks." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
           required_script_files=(
+            "scripts/validate/manifest.sh"
+            "scripts/validate/xml_wellformed.sh"
+            "scripts/validate/changelog.sh"
+            "scripts/validate/tabs.sh"
+            "scripts/validate/paths.sh"
+            "scripts/validate/version_alignment.sh"
+            "scripts/validate/language_structure.sh"
+            "scripts/validate/php_syntax.sh"
+            "scripts/validate/no_secrets.sh"
+            "scripts/validate/license_headers.sh"
+          )
+
+          legacy_script_files=(
             "scripts/validate_manifest.sh"
             "scripts/validate_xml_wellformed.sh"
             "scripts/validate_changelog.sh"
@@ -108,131 +244,35 @@ jobs:
             "scripts/validate_license_headers.sh"
           )
 
-          missing=()
-          missing_optional=()
-          missing_files=()
+                      fi
+          done
 
-          check_release() {
-            for k in "${required_release_secrets[@]}"; do
-              v="${!k:-}"
-              if [ -z "${v}" ]; then
-                missing+=("${k}")
-              fi
-            done
-
-            # Optional configuration.
-            for k in "${optional_release[@]}"; do
-              v="${!k:-}"
-              if [ -z "${v}" ]; then
-                missing_optional+=("${k}")
-              fi
-            done
-
-            # Protocol sanity if provided.
-            proto="${FTP_PROTOCOL:-sftp}"
-            if [ -n "${FTP_PROTOCOL:-}" ] && [ "${proto}" != "sftp" ]; then
-              missing+=("FTP_PROTOCOL_INVALID")
+          # Report legacy scripts if present so teams can clean up.
+          for f in "${legacy_script_files[@]}"; do
+            if [ -f "${f}" ]; then
+              legacy_present+=("${f}")
             fi
+          done
 
-            # Key format guardrail (do not print key).
-            if [ -n "${FTP_KEY:-}" ]; then
-              first_line="$(printf '%s' "${FTP_KEY}" | head -n 1 || true)"
-              if printf '%s' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
-                key_format="ppk"
-              elif printf '%s' "${first_line}" | grep -q '^-----BEGIN '; then
-                key_format="openssh"
-              else
-                key_format="unknown"
-                missing+=("FTP_KEY_FORMAT")
-              fi
-            else
-              key_format="missing"
-            fi
+          tools_to_install=()
+          command -v php >/dev/null 2>&1 || tools_to_install+=("php-cli")
+          command -v xmllint >/dev/null 2>&1 || tools_to_install+=("libxml2-utils")
 
-            echo "KEY_FORMAT=${key_format}" >> "${GITHUB_STEP_SUMMARY}"
-          }
-
-          check_scripts() {
-            for f in "${required_script_files[@]}"; do
-              if [ ! -f "${f}" ]; then
-                missing_files+=("${f}")
-              fi
-            done
-
-            # Tooling expectations: scripts may rely on php and xmllint.
-            # Do not fail on tooling here; CI runners can install dependencies.
-            # Still report as guardrail visibility.
-            tool_missing=()
-            command -v php >/dev/null 2>&1 || tool_missing+=("php")
-            command -v xmllint >/dev/null 2>&1 || tool_missing+=("xmllint")
-
-            if [ "${#tool_missing[@]}" -gt 0 ]; then
-              echo "WARN: Missing tools on runner (install in workflow when required): ${tool_missing[*]}" >> "${GITHUB_STEP_SUMMARY}"
-            fi
-          }
-
-          case "${profile}" in
-            release)
-              check_release
-              ;;
-            scripts)
-              check_scripts
-              ;;
-            all)
-              check_release
-              check_scripts
-              ;;
-            *)
-              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
-              exit 1
-              ;;
-          esac
-
-          # Emit report.
-          {
-            echo "### Guardrails report (JSON)"
-            echo "```json"
-            printf '{"repository":"%s","profile":"%s","checked":{' "${GITHUB_REPOSITORY}" "${profile}"
-
-            printf '"release_required":['
-            sep=""
-            for c in "${required_release_secrets[@]}"; do
-              printf '%s"%s"' "${sep}" "${c}"
+          if [ "${#tools_to_install[@]}" -gt 0 ]; then
+            echo "Installing missing tools: ${tools_to_install[*]}" >> "${GITHUB_STEP_SUMMARY}"
+            sudo apt-get update -y
+          ntf '%s"%s"' "${sep}" "${c}"
               sep=",";
             done
-
-            printf '],"release_optional":['
-            sep=""
-            for c in "${optional_release[@]}"; do
-              printf '%s"%s"' "${sep}" "${c}"
-              sep=",";
-            done
-
-            printf '],"script_files":['
-            sep=""
-            for c in "${required_script_files[@]}"; do
-              printf '%s"%s"' "${sep}" "${c}"
-              sep=",";
-            done
-            printf ']},'
-
-            printf '"missing_required":['
-            sep=""
-            for m in "${missing[@]}"; do
-              printf '%s"%s"' "${sep}" "${m}"
-              sep=",";
-            done
-
-            printf '],"missing_optional":['
-            sep=""
-            for m in "${missing_optional[@]}"; do
-              printf '%s"%s"' "${sep}" "${m}"
-              sep=",";
-            done
-
-            printf '],"missing_script_files":['
+            printf ']},"missing_script_files":['
             sep=""
             for m in "${missing_files[@]}"; do
+              printf '%s"%s"' "${sep}" "${m}"
+              sep=",";
+            done
+            printf '],"legacy_present":['
+            sep=""
+            for m in "${legacy_present[@]}"; do
               printf '%s"%s"' "${sep}" "${m}"
               sep=",";
             done
@@ -241,30 +281,12 @@ jobs:
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-          # Human-readable missing items (in addition to JSON)
-          if [ "${#missing[@]}" -gt 0 ]; then
-            echo "### Missing required configuration" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing[@]}"; do
-              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
-            done
-          fi
-
-          if [ "${#missing_optional[@]}" -gt 0 ]; then
-            echo "### Missing optional configuration" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing_optional[@]}"; do
-              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
-            done
-          fi
-
           if [ "${#missing_files[@]}" -gt 0 ]; then
             echo "### Missing script files" >> "${GITHUB_STEP_SUMMARY}"
             for m in "${missing_files[@]}"; do
               echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
             done
-          fi
-
-          # Fail the workflow if required items are missing.
-          if [ "${#missing[@]}" -gt 0 ] || [ "${#missing_files[@]}" -gt 0 ]; then
-            echo "ERROR: Guardrails failed. Missing required configuration or script files." >> "${GITHUB_STEP_SUMMARY}"
+            echo "MISSING_SCRIPT_FILES: ${missing_files[*]}" >&2
+            echo "ERROR: Guardrails failed. Missing required script files." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
