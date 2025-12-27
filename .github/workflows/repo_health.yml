@@ -57,7 +57,7 @@ jobs:
       contents: read
 
     steps:
-      - name: Guardrails: release secrets and vars
+      - name: "Guardrails: release secrets and vars"
         env:
           PROFILE_RAW: "${{ github.event.inputs.profile }}"
           FTP_HOST: "${{ secrets.FTP_HOST }}"
@@ -199,9 +199,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Guardrails: script files and toolchain
+      - name: "Guardrails: script files and toolchain"
         env:
-          PROFILE_RAW: ${{ github.event.inputs.profile }}
+          PROFILE_RAW: "${{ github.event.inputs.profile }}"
         run: |
           set -euxo pipefail
 
@@ -330,7 +330,7 @@ jobs:
 
       - name: Repo health checks
         env:
-          PROFILE_RAW: ${{ github.event.inputs.profile }}
+          PROFILE_RAW: "${{ github.event.inputs.profile }}"
         run: |
           set -euxo pipefail
 
@@ -500,3 +500,4 @@ jobs:
               echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
             done
           fi
+
