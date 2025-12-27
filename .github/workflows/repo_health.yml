@@ -641,44 +641,41 @@ jobs:
             content_warnings+=("README.md missing expected brand keyword")
           fi
 
-          export MISSING_REQUIRED="$(printf '%s
-' "${missing_required[@]:-}")"
-          export MISSING_OPTIONAL="$(printf '%s
-' "${missing_optional[@]:-}")"
-          export CONTENT_WARNINGS="$(printf '%s
-' "${content_warnings[@]:-}")"
+          export MISSING_REQUIRED="$(printf '%s\\n' "${missing_required[@]:-}")"
+          export MISSING_OPTIONAL="$(printf '%s\\n' "${missing_optional[@]:-}")"
+          export CONTENT_WARNINGS="$(printf '%s\\n' "${content_warnings[@]:-}")"
 
           report_json="$(python3 - <<'PY'
-import json
-import os
+          import json
+          import os
 
-profile = os.environ.get('PROFILE_RAW') or 'all'
-required_files = ["README.md","LICENSE","CHANGELOG.md","CONTRIBUTING.md","CODE_OF_CONDUCT.md","TODO.md","docs/docs-index.md"]
-optional_files = ["SECURITY.md","GOVERNANCE.md",".editorconfig",".gitattributes",".gitignore"]
-required_paths = [".github/workflows","scripts","docs","dev"]
+          profile = os.environ.get('PROFILE_RAW') or 'all'
+          required_files = ["README.md","LICENSE","CHANGELOG.md","CONTRIBUTING.md","CODE_OF_CONDUCT.md","TODO.md","docs/docs-index.md"]
+          optional_files = ["SECURITY.md","GOVERNANCE.md",".editorconfig",".gitattributes",".gitignore"]
+          required_paths = [".github/workflows","scripts","docs","dev"]
 
-missing_required = os.environ.get('MISSING_REQUIRED','').split('
-') if os.environ.get('MISSING_REQUIRED') else []
-missing_optional = os.environ.get('MISSING_OPTIONAL','').split('
-') if os.environ.get('MISSING_OPTIONAL') else []
-content_warnings = os.environ.get('CONTENT_WARNINGS','').split('
-') if os.environ.get('CONTENT_WARNINGS') else []
+          missing_required = os.environ.get('MISSING_REQUIRED','').split('
+          ') if os.environ.get('MISSING_REQUIRED') else []
+          missing_optional = os.environ.get('MISSING_OPTIONAL','').split('
+          ') if os.environ.get('MISSING_OPTIONAL') else []
+          content_warnings = os.environ.get('CONTENT_WARNINGS','').split('
+          ') if os.environ.get('CONTENT_WARNINGS') else []
 
-out = {
-  "profile": profile,
-  "checked": {
-    "required_files": required_files,
-    "optional_files": optional_files,
-    "required_paths": required_paths,
-  },
-  "missing_required": [x for x in missing_required if x],
-  "missing_optional": [x for x in missing_optional if x],
-  "content_warnings": [x for x in content_warnings if x],
-}
+          out = {
+            "profile": profile,
+            "checked": {
+              "required_files": required_files,
+              "optional_files": optional_files,
+              "required_paths": required_paths,
+            },
+            "missing_required": [x for x in missing_required if x],
+            "missing_optional": [x for x in missing_optional if x],
+            "content_warnings": [x for x in content_warnings if x],
+          }
 
-print(json.dumps(out, indent=2))
-PY
-)"
+          print(json.dumps(out, indent=2))
+          PY
+          )"
 
           {
             echo "### Guardrails: repository health"
