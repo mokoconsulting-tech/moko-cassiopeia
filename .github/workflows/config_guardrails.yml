@@ -192,23 +192,49 @@ jobs:
           {
             echo "### Config guardrails report (JSON)"
             echo "```json"
-            printf '{"repository":"%s","profile":"%s","missing_required":[' "${GITHUB_REPOSITORY}" "${profile}"
+            printf '{"repository":"%s","profile":"%s","checked":{' "${GITHUB_REPOSITORY}" "${profile}"
+
+            printf '"release_required":['
+            sep=""
+            for c in "${required_release_secrets[@]}"; do
+              printf '%s"%s"' "${sep}" "${c}"
+              sep=",";
+            done
+
+            printf '],"release_optional":['
+            sep=""
+            for c in "${optional_release[@]}"; do
+              printf '%s"%s"' "${sep}" "${c}"
+              sep=",";
+            done
+
+            printf '],"script_files":['
+            sep=""
+            for c in "${required_script_files[@]}"; do
+              printf '%s"%s"' "${sep}" "${c}"
+              sep=",";
+            done
+            printf ']},'
+
+            printf '"missing_required":['
             sep=""
             for m in "${missing[@]}"; do
               printf '%s"%s"' "${sep}" "${m}"
-              sep=","
+              sep=",";
             done
+
             printf '],"missing_optional":['
             sep=""
             for m in "${missing_optional[@]}"; do
               printf '%s"%s"' "${sep}" "${m}"
-              sep=","
+              sep=",";
             done
+
             printf '],"missing_script_files":['
             sep=""
             for m in "${missing_files[@]}"; do
               printf '%s"%s"' "${sep}" "${m}"
-              sep=","
+              sep=",";
             done
             printf ']}'
             echo
@@ -219,4 +245,5 @@ jobs:
           if [ "${#missing[@]}" -gt 0 ] || [ "${#missing_files[@]}" -gt 0 ]; then
             echo "ERROR: Config guardrails failed. Missing required configuration or script files." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
+          fi
           fi
