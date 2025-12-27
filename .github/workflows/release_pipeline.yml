@@ -903,8 +903,7 @@ jobs:
 
           echo "### Release event report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
           echo "```json" >> "${GITHUB_STEP_SUMMARY}"
-          printf '{"repository":"%s","workflow":"%s","job":"%s","run_id":%s,"run_number":%s,"run_attempt":%s,"run_url":"%s","actor":"%s","sha":"%s","version":"%s","tag":"%s","prerelease":%s}
-' \
+          printf '{"repository":"%s","workflow":"%s","job":"%s","run_id":%s,"run_number":%s,"run_attempt":%s,"run_url":"%s","actor":"%s","sha":"%s","version":"%s","tag":"%s","prerelease":%s}\n' \
             "${GITHUB_REPOSITORY}" \
             "${GITHUB_WORKFLOW}" \
             "${GITHUB_JOB}" \
