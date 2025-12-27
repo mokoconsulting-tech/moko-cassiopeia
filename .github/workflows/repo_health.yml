@@ -206,8 +206,7 @@ jobs:
 
           mkdir -p "$HOME/.ssh"
           key_file="$HOME/.ssh/ci_sftp_key"
-          printf '%s
-' "${FTP_KEY}" > "${key_file}"
+          printf '%s\\n' "${FTP_KEY}" > "${key_file}"
           chmod 600 "${key_file}"
 
           # If FTP_PASSWORD is present, treat it as the private key passphrase and decrypt the key in place.
