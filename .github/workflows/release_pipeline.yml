@@ -166,6 +166,15 @@ jobs:
             echo "### Guard report"
             echo "```json"
             echo "{"
+            echo "  \"repository\": \"${GITHUB_REPOSITORY}\","
+            echo "  \"workflow\": \"${GITHUB_WORKFLOW}\","
+            echo "  \"job\": \"${GITHUB_JOB}\","
+            echo "  \"run_id\": ${GITHUB_RUN_ID},"
+            echo "  \"run_number\": ${GITHUB_RUN_NUMBER},"
+            echo "  \"run_attempt\": ${GITHUB_RUN_ATTEMPT},"
+            echo "  \"run_url\": \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\","
+            echo "  \"actor\": \"${GITHUB_ACTOR}\","
+            echo "  \"sha\": \"${GITHUB_SHA}\","
             echo "  \"event\": \"${EVENT_NAME}\","
             echo "  \"ref\": \"${REF_NAME}\","
             echo "  \"version\": \"${VERSION}\","
@@ -243,6 +252,15 @@ jobs:
             echo "### Promotion report"
             echo "```json"
             echo "{"
+            echo "  \"repository\": \"${GITHUB_REPOSITORY}\","
+            echo "  \"workflow\": \"${GITHUB_WORKFLOW}\","
+            echo "  \"job\": \"${GITHUB_JOB}\","
+            echo "  \"run_id\": ${GITHUB_RUN_ID},"
+            echo "  \"run_number\": ${GITHUB_RUN_NUMBER},"
+            echo "  \"run_attempt\": ${GITHUB_RUN_ATTEMPT},"
+            echo "  \"run_url\": \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\","
+            echo "  \"actor\": \"${GITHUB_ACTOR}\","
+            echo "  \"sha\": \"${GITHUB_SHA}\","
             echo "  \"promoted\": \"${SRC} -> ${DST}\","
             echo "  \"deleted\": \"${SRC}\""
             echo "}"
@@ -484,7 +502,7 @@ jobs:
           {
             echo "### Build report"
             echo "```json"
-            echo "{\"root\":\"${ROOT}\",\"manifest\":\"${MANIFEST}\",\"extension_type\":\"${EXT_TYPE}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES}}"
+            echo "{\"repository\":\"${GITHUB_REPOSITORY}\",\"workflow\":\"${GITHUB_WORKFLOW}\",\"job\":\"${GITHUB_JOB}\",\"run_id\":${GITHUB_RUN_ID},\"run_number\":${GITHUB_RUN_NUMBER},\"run_attempt\":${GITHUB_RUN_ATTEMPT},\"run_url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\",\"actor\":\"${GITHUB_ACTOR}\",\"sha\":\"${GITHUB_SHA}\",\"root\":\"${ROOT}\",\"manifest\":\"${MANIFEST}\",\"extension_type\":\"${EXT_TYPE}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES}}"
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -516,5 +534,17 @@ jobs:
 
           echo "### Release event report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
           echo "```json" >> "${GITHUB_STEP_SUMMARY}"
-          printf '{"version":"%s","tag":"%s","prerelease":%s}\n' "${VERSION}" "${TAG}" "${IS_PRERELEASE}" >> "${GITHUB_STEP_SUMMARY}"
+          printf '{"repository":"%s","workflow":"%s","job":"%s","run_id":%s,"run_number":%s,"run_attempt":%s,"run_url":"%s","actor":"%s","sha":"%s","version":"%s","tag":"%s","prerelease":%s}\n' \
+  "${GITHUB_REPOSITORY}" \
+  "${GITHUB_WORKFLOW}" \
+  "${GITHUB_JOB}" \
+  "${GITHUB_RUN_ID}" \
+  "${GITHUB_RUN_NUMBER}" \
+  "${GITHUB_RUN_ATTEMPT}" \
+  "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+  "${GITHUB_ACTOR}" \
+  "${GITHUB_SHA}" \
+  "${VERSION}" \
+  "${TAG}" \
+  "${IS_PRERELEASE}" >> "${GITHUB_STEP_SUMMARY}"
           echo "```" >> "${GITHUB_STEP_SUMMARY}"
