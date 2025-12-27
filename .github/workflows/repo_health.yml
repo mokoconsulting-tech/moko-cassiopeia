@@ -97,7 +97,7 @@ jobs:
         if: ${{ steps.perm.outputs.allowed != 'true' }}
         run: |
           set -euo pipefail
-          echo "ERROR: Access denied. Actor must have admin or maintain permission to run this workflow." >> "${GITHUB_STEP_SUMMARY}"
+          echo "ERROR: Access denied. Actor must have admin permission to run this workflow." >> "${GITHUB_STEP_SUMMARY}"
           exit 1
 
   release_config:
@@ -227,6 +227,14 @@ EOF
             exit 0
           fi
 
+          required_script_dirs=(
+            "scripts/fix"
+            "scripts/lib"
+            "scripts/release"
+            "scripts/run"
+            "scripts/validate"
+          )
+
           required_script_files=(
             "scripts/validate/manifest.sh"
             "scripts/validate/xml_wellformed.sh"
@@ -254,7 +262,14 @@ EOF
           )
 
           missing_files=()
+          missing_dirs=()
           legacy_present=()
+
+          for d in "${required_script_dirs[@]}"; do
+            if [ ! -d "${d}" ]; then
+              missing_dirs+=("${d}/")
+            fi
+          done
 
           for f in "${required_script_files[@]}"; do
             if [ ! -f "${f}" ]; then
@@ -334,12 +349,44 @@ PY
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
+          if [ "${#missing_dirs[@]}" -gt 0 ]; then
+            echo "### Missing required script directories" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${missing_dirs[@]}"; do
+              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
+            done
+            echo "ERROR: Guardrails failed. Missing required script directories." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
           if [ "${#missing_files[@]}" -gt 0 ]; then
             echo "### Missing script files" >> "${GITHUB_STEP_SUMMARY}"
             for m in "${missing_files[@]}"; do
               echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
             done
             echo "ERROR: Guardrails failed. Missing required script files." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          if [ "${#legacy_present[@]}" -gt 0 ]; then
+            echo "### Legacy scripts detected (disallowed)" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${legacy_present[@]}"; do
+              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
+            done
+            echo "ERROR: Guardrails failed. Legacy script files must be removed." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          legacy_glob_found=()
+          while IFS= read -r f; do
+            [ -n "${f}" ] && legacy_glob_found+=("${f}")
+          done < <(find scripts -maxdepth 1 -type f -name 'validate_*.sh' 2>/dev/null || true)
+
+          if [ "${#legacy_glob_found[@]}" -gt 0 ]; then
+            echo "### Legacy validate_* scripts detected at scripts/ root (disallowed)" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${legacy_glob_found[@]}"; do
+              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
+            done
+            echo "ERROR: Guardrails failed. Move scripts into scripts/validate/ with approved filenames." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
         env:
