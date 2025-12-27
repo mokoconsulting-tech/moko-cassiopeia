@@ -116,7 +116,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Guardrails: release secrets and vars
         env:
           PROFILE_RAW: "${{ github.event.inputs.profile }}"
@@ -411,12 +410,20 @@ PY
             exit 1
           fi
 
+          sh_files="$(find scripts -type f -name '*.sh' 2>/dev/null || true)"
+
+          if [ -z "${sh_files}" ]; then
+            echo "No shell scripts found under scripts/." >> "${GITHUB_STEP_SUMMARY}"
+            echo "Shell quality gate skipped." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
           while IFS= read -r f; do
             [ -z "${f}" ] && continue
             bash -n "${f}"
-          done < <(find scripts -type f -name '*.sh' 2>/dev/null)
+          done <<< "${sh_files}"
 
-          shellcheck -x $(find scripts -type f -name '*.sh' 2>/dev/null)
+          shellcheck -x ${sh_files}
 
           echo "Shell quality gate passed." >> "${GITHUB_STEP_SUMMARY}"
 
