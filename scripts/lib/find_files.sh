@@ -1,0 +1,120 @@
+#!/usr/bin/env sh
+
+# ============================================================================
+# Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+#
+# This file is part of a Moko Consulting project.
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program (./LICENSE.md).
+# ============================================================================
+
+# ============================================================================
+# FILE INFORMATION
+# ============================================================================
+# DEFGROUP: Script.Library
+# INGROUP: RepoHealth
+# REPO: https://github.com/mokoconsulting-tech
+# PATH: /scripts/lib/find_files.sh
+# VERSION: 01.00.00
+# BRIEF: Find files by glob patterns with standard ignore rules for CI checks
+# NOTE:
+# ============================================================================
+
+set -eu
+
+# Shared utilities
+. "$(dirname "$0")/common.sh"
+
+# ----------------------------------------------------------------------------
+# Purpose:
+# - Provide a consistent, reusable file discovery primitive for repo scripts.
+# - Support multiple glob patterns.
+# - Apply standard ignore rules to reduce noise (vendor, node_modules, .git).
+# - Output one path per line, relative to repo root.
+#
+# Usage:
+#   ./scripts/lib/find_files.sh <glob> [<glob> ...]
+#
+# Examples:
+#   ./scripts/lib/find_files.sh "*.yml" "*.yaml"
+#   ./scripts/lib/find_files.sh "src/**/*.php" "tests/**/*.php"
+# ----------------------------------------------------------------------------
+
+ROOT="$(script_root)"
+
+if [ "${1:-}" = "" ]; then
+	die "Usage: $0 <glob> [<glob> ...]"
+fi
+
+require_cmd find
+require_cmd sed
+
+# Standard excludes (pragmatic defaults for CI)
+# Note: Keep these broad to avoid scanning generated or third-party content.
+EXCLUDES='
+	-path "*/.git/*" -o
+	-path "*/.github/*/node_modules/*" -o
+	-path "*/node_modules/*" -o
+	-path "*/vendor/*" -o
+	-path "*/dist/*" -o
+	-path "*/build/*" -o
+	-path "*/cache/*" -o
+	-path "*/tmp/*" -o
+	-path "*/.tmp/*" -o
+	-path "*/.cache/*"
+'
+
+# Convert a glob (bash-like) to a find -path pattern.
+# - Supports ** for "any directories" by translating to *
+# - Ensures leading */ so patterns apply anywhere under repo root
+glob_to_find_path() {
+	g="$1"
+
+	# normalize path separators for WSL/CI compatibility
+	g="$(normalize_path "$g")"
+
+	# translate ** to * (find -path uses shell glob semantics)
+	g="$(printf '%s' "$g" | sed 's|\*\*|*|g')"
+
+	case "$g" in
+		/*) printf '%s\n' "$g" ;;
+		*)  printf '%s\n' "*/$g" ;;
+	esac
+}
+
+# Build a single find invocation that ORs all patterns.
+# Shell portability note: avoid arrays; build an expression string.
+PAT_EXPR=""
+for GLOB in "$@"; do
+	P="$(glob_to_find_path "$GLOB")"
+	if [ -z "$PAT_EXPR" ]; then
+		PAT_EXPR="-path \"$P\""
+	else
+		PAT_EXPR="$PAT_EXPR -o -path \"$P\""
+	fi
+done
+
+# Execute find and emit relative paths.
+# - Use eval to apply the constructed predicate string safely as a single expression.
+# - We scope to files only.
+# - We prune excluded directories.
+cd "$ROOT"
+
+# shellcheck disable=SC2086
+eval "find . \\( $EXCLUDES \\) -prune -o -type f \\( $PAT_EXPR \\) -print" \
+	| sed 's|^\./||' \
+	| sed '/^$/d' \
+	| sort -u
