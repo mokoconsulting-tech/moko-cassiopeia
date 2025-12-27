@@ -321,8 +321,7 @@ jobs:
             {
               echo "ERROR: Date normalization script not found in approved locations."
               echo "Approved locations:"
-              printf '%s
-' "${CANDIDATES[@]}"
+              printf '%s\\n' "${CANDIDATES[@]}"
               echo "Discovered candidates (first 5):"
               echo "${FOUND:-<none>}"
               echo "Required action: add scripts/update_dates.sh (or scripts/release/update_dates.sh) to the repo."
@@ -407,8 +406,7 @@ jobs:
                 printf '%s"%s"' "${sep}" "${m}"
                 sep=","
               done
-              printf ']}
-'
+              printf ']}\\n'
               echo "```"
               echo "Required action: add missing scripts under /scripts and ensure they are executable."
             } >> "${GITHUB_STEP_SUMMARY}"
@@ -518,6 +516,5 @@ jobs:
 
           echo "### Release event report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
           echo "```json" >> "${GITHUB_STEP_SUMMARY}"
-          printf '{"version":"%s","tag":"%s","prerelease":%s}
-' "${VERSION}" "${TAG}" "${IS_PRERELEASE}" >> "${GITHUB_STEP_SUMMARY}"
+          printf '{"version":"%s","tag":"%s","prerelease":%s}\\n' "${VERSION}" "${TAG}" "${IS_PRERELEASE}" >> "${GITHUB_STEP_SUMMARY}"
           echo "```" >> "${GITHUB_STEP_SUMMARY}"
