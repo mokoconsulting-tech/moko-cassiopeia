@@ -178,7 +178,7 @@ jobs:
 
           mkdir -p "$HOME/.ssh"
           key_file="$HOME/.ssh/ci_sftp_key"
-          printf '%s\\n' "${FTP_KEY}" > "${key_file}"
+          printf '%s\n' "${FTP_KEY}" > "${key_file}"
           chmod 600 "${key_file}"
 
           port="${FTP_PORT:-22}"
@@ -189,7 +189,7 @@ jobs:
           sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" <<'EOF'
           pwd
           bye
-          EOF
+EOF
 
           echo "SFTP connectivity check passed." >> "${GITHUB_STEP_SUMMARY}"
 
