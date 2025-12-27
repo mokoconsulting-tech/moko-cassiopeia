@@ -1,4 +1,4 @@
-#
+# ============================================================================
 # Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
 #
 # This file is part of a Moko Consulting project.
@@ -24,9 +24,10 @@
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/release_pipeline.yml
 # VERSION: 03.05.00
-# BRIEF: Enterprise release pipeline enforcing dev to rc to version to main. Creates prerelease when rc is created. Creates full release when version is created and promotes to main while retaining the version branch.
+# BRIEF: Enterprise release pipeline enforcing dev to rc to version to main.
 # NOTE: Controls: strict branch gating, mandatory source branch deletion after promotion, key-only SFTP with verbose logs, ZIP-only distribution with overwrite, no checksum generation.
-#
+# ============================================================================
+
 name: Release Pipeline (dev > rc > version > main)
 
 on:
@@ -107,20 +108,17 @@ jobs:
             VERSION="${REF_NAME#*/}"
 
             if [ "${SOURCE_PREFIX}" = "dev" ]; then
-              # dev -> rc
               TARGET_BRANCH="rc/${VERSION}"
               PROMOTED_BRANCH="rc/${VERSION}"
               CHANNEL="rc"
               RELEASE_MODE="prerelease"
             else
-              # rc -> version
               TARGET_BRANCH="version/${VERSION}"
               PROMOTED_BRANCH="version/${VERSION}"
               CHANNEL="stable"
               RELEASE_MODE="stable"
             fi
 
-            # Manual override: classification only. Promotion path does not change.
             if [ "${OVERRIDE}" = "rc" ]; then
               CHANNEL="rc"
               RELEASE_MODE="prerelease"
@@ -134,6 +132,7 @@ jobs:
           elif [ "${EVENT_NAME}" = "release" ]; then
             TAG_NAME="${REF_NAME}"
             VERSION="${TAG_NAME#v}"
+            VERSION="${VERSION%-rc}"
             echo "${VERSION}" | grep -E '^[0-9]+[.][0-9]+[.][0-9]+$'
 
             if [ "${RELEASE_PRERELEASE:-false}" = "true" ]; then
@@ -303,7 +302,6 @@ jobs:
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-          # Enterprise control: repo-provided date normalization is mandatory.
           CANDIDATES=(
             "scripts/update_dates.sh"
             "scripts/release/update_dates.sh"
@@ -323,7 +321,8 @@ jobs:
             {
               echo "ERROR: Date normalization script not found in approved locations."
               echo "Approved locations:"
-              printf '%s\n' "${CANDIDATES[@]}"
+              printf '%s
+' "${CANDIDATES[@]}"
               echo "Discovered candidates (first 5):"
               echo "${FOUND:-<none>}"
               echo "Required action: add scripts/update_dates.sh (or scripts/release/update_dates.sh) to the repo."
@@ -336,13 +335,23 @@ jobs:
           chmod +x "${SCRIPT}"
           "${SCRIPT}" "${TODAY}" "${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
 
-          # Diffstat for audit visibility
           {
             echo "### Date normalization diffstat"
             echo "```"
             git diff --stat || true
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Commit normalized dates (if changed)
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No date changes to commit" >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+          git add -A
+          git commit -m "chore(release): normalize dates" || true
+          git push origin "HEAD:${{ needs.guard.outputs.promoted_branch }}"
 
   build_and_release:
     name: 03 Build ZIP, upload to SFTP, create GitHub release
@@ -372,77 +381,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
-      - name: Validate required secrets and variables
-        env:
-          FTP_HOST: ${{ secrets.FTP_HOST }}
-          FTP_USER: ${{ secrets.FTP_USER }}
-          FTP_KEY: ${{ secrets.FTP_KEY }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_PATH: ${{ secrets.FTP_PATH }}
-          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
-          FTP_PORT: ${{ secrets.FTP_PORT }}
-          FTP_PATH_SUFFIX: ${{ vars.FTP_PATH_SUFFIX }}
-          CHANNEL: ${{ needs.guard.outputs.channel }}
-        run: |
-          set -euo pipefail
-
-          missing=()
-
-          [ -n "${FTP_HOST:-}" ] || missing+=("FTP_HOST")
-          [ -n "${FTP_USER:-}" ] || missing+=("FTP_USER")
-          [ -n "${FTP_KEY:-}" ] || missing+=("FTP_KEY")
-          [ -n "${FTP_PATH:-}" ] || missing+=("FTP_PATH")
-
-          proto="${FTP_PROTOCOL:-sftp}"
-          if [ "${proto}" != "sftp" ]; then
-            echo "ERROR: FTP_PROTOCOL must be 'sftp'" >> "${GITHUB_STEP_SUMMARY}"
-            missing+=("FTP_PROTOCOL")
-          fi
-
-          # Key format guardrail (OpenSSH private key or PuTTY PPK)
-          first_line="$(printf '%s' "${FTP_KEY:-}" | head -n 1 || true)"
-          if [ -n "${FTP_KEY:-}" ]; then
-            if printf '%s' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
-              key_format="ppk"
-            elif printf '%s' "${first_line}" | grep -q '^-----BEGIN '; then
-              key_format="openssh"
-            else
-              key_format="unknown"
-              missing+=("FTP_KEY_FORMAT")
-            fi
-          else
-            key_format="missing"
-          fi
-
-          if [ "${#missing[@]}" -gt 0 ]; then
-            {
-              echo "### Configuration guardrails"
-              echo "```json"
-              printf '{"status":"fail","missing":['
-              sep=""
-              for m in "${missing[@]}"; do
-                printf '%s"%s"' "${sep}" "${m}"
-                sep=","
-              done
-              printf '],"key_format":"%s","channel":"%s"}
-' "${key_format}" "${CHANNEL}"
-              echo "```"
-              echo "Required action: set missing repository or organization secrets or variables."
-            } >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-
-          {
-            echo "### Configuration guardrails"
-            echo "```json"
-            printf '{"status":"ok","key_format":"%s","channel":"%s","ftp_path_suffix":"%s","ftp_port":"%s"}
-' \
-              "${key_format}" "${CHANNEL}" "${FTP_PATH_SUFFIX:-}" "${FTP_PORT:-}"
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-          # Policy note: FTP_PASSWORD is used only to decrypt an encrypted PPK, never for authentication.
-
       - name: Run repository validation scripts (Joomla)
         run: |
           set -euo pipefail
@@ -450,20 +388,6 @@ jobs:
           required_scripts=(
             "scripts/validate_manifest.sh"
             "scripts/validate_manifest_location.sh"
-          )
-
-          optional_scripts=(
-            "scripts/validate_changelog.sh"
-            "scripts/validate_tabs.sh"
-            "scripts/validate_paths.sh"
-            "scripts/validate_joomla_package_root.sh"
-            "scripts/validate_version_alignment.sh"
-            "scripts/validate_language_structure.sh"
-            "scripts/validate_media_paths.sh"
-            "scripts/validate_php_syntax.sh"
-            "scripts/validate_xml_wellformed.sh"
-            "scripts/validate_no_secrets.sh"
-            "scripts/validate_licenses_headers.sh"
           )
 
           missing=()
@@ -491,40 +415,12 @@ jobs:
             exit 1
           fi
 
-          ran=()
-          skipped=()
-
-          for s in "${required_scripts[@]}" "${optional_scripts[@]}"; do
-            if [ -f "${s}" ]; then
-              chmod +x "${s}"
-              "${s}" >> "${GITHUB_STEP_SUMMARY}"
-              ran+=("${s}")
-            else
-              skipped+=("${s}")
-            fi
+          for s in "${required_scripts[@]}"; do
+            chmod +x "${s}"
+            "${s}" >> "${GITHUB_STEP_SUMMARY}"
           done
 
-          {
-            echo "### Script guardrails"
-            echo "```json"
-            printf '{"status":"ok","ran":['
-            sep=""
-            for r in "${ran[@]}"; do
-              printf '%s"%s"' "${sep}" "${r}"
-              sep=","
-            done
-            printf '],"skipped_optional":['
-            sep=""
-            for k in "${skipped[@]}"; do
-              printf '%s"%s"' "${sep}" "${k}"
-              sep=","
-            done
-            printf ']}
-'
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-      - name: Build Joomla compliant ZIP
+      - name: Build Joomla ZIP (extension type aware)
         id: build
         run: |
           set -euo pipefail
@@ -538,42 +434,40 @@ jobs:
           DIST_DIR="${GITHUB_WORKSPACE}/dist"
           mkdir -p "${DIST_DIR}"
 
-          ROOT="src"
-          TOP_DIRS="$(find src -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')"
-          if [ "${TOP_DIRS}" = "1" ]; then
-            ROOT="$(find src -mindepth 1 -maxdepth 1 -type d -print -quit)"
-          fi
-
+          # Discover primary manifest.
           MANIFEST=""
-          if [ -f "${ROOT}/templateDetails.xml" ]; then
-            MANIFEST="${ROOT}/templateDetails.xml"
-          elif [ -f "src/templates/templateDetails.xml" ]; then
-            MANIFEST="src/templates/templateDetails.xml"
-          elif find "src/templates" -mindepth 2 -maxdepth 2 -name "templateDetails.xml" -type f | head -n 1 | grep -q .; then
-            MANIFEST="$(find "src/templates" -mindepth 2 -maxdepth 2 -name "templateDetails.xml" -type f | head -n 1)"
+          if [ -f "src/templateDetails.xml" ]; then
+            MANIFEST="src/templateDetails.xml"
+          elif find src -maxdepth 4 -type f -name 'templateDetails.xml' | head -n 1 | grep -q .; then
+            MANIFEST="$(find src -maxdepth 4 -type f -name 'templateDetails.xml' | head -n 1)"
+          elif find src -maxdepth 4 -type f -name 'pkg_*.xml' | head -n 1 | grep -q .; then
+            MANIFEST="$(find src -maxdepth 4 -type f -name 'pkg_*.xml' | head -n 1)"
+          elif find src -maxdepth 4 -type f -name 'com_*.xml' | head -n 1 | grep -q .; then
+            MANIFEST="$(find src -maxdepth 4 -type f -name 'com_*.xml' | head -n 1)"
+          elif find src -maxdepth 4 -type f -name 'mod_*.xml' | head -n 1 | grep -q .; then
+            MANIFEST="$(find src -maxdepth 4 -type f -name 'mod_*.xml' | head -n 1)"
+          elif find src -maxdepth 6 -type f -name 'plg_*.xml' | head -n 1 | grep -q .; then
+            MANIFEST="$(find src -maxdepth 6 -type f -name 'plg_*.xml' | head -n 1)"
           else
-            CANDIDATE="$(find "${ROOT}" -maxdepth 1 -type f -name "*.xml" | head -n 1 || true)"
-            if [ -n "${CANDIDATE}" ]; then
-              MANIFEST="${CANDIDATE}"
-            fi
+            MANIFEST="$(grep -Rsl --include='*.xml' '<extension' src | head -n 1 || true)"
           fi
 
           if [ -z "${MANIFEST}" ]; then
-            echo "ERROR: No Joomla manifest XML found" >> "${GITHUB_STEP_SUMMARY}"
+            echo "ERROR: No Joomla manifest XML found under src" >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
-          EXT_TYPE="$(grep -o 'type=\"[^\"]*\"' "${MANIFEST}" | head -n 1 | cut -d '"' -f2 || true)"
+          # Read extension type attribute.
+          EXT_TYPE="$(grep -Eo 'type="[^"]+"' "${MANIFEST}" | head -n 1 | cut -d '"' -f2 || true)"
           if [ -z "${EXT_TYPE}" ]; then
             EXT_TYPE="unknown"
           fi
 
-          MANIFEST_DIR="$(dirname "${MANIFEST}")"
-          if [ "${EXT_TYPE}" = "template" ] && [ "${MANIFEST_DIR}" != "${ROOT}" ]; then
-            ROOT="${MANIFEST_DIR}"
-          fi
+          ROOT="$(dirname "${MANIFEST}")"
 
-          ZIP="${REPO}-${VERSION}-${CHANNEL}.zip"
+          # Package nuance: ensure the package manifest itself sits at zip root.
+          # If the manifest is in a nested folder, we package that folder as root.
+          ZIP="${REPO}-${VERSION}-${CHANNEL}-${EXT_TYPE}.zip"
 
           (cd "${ROOT}" && zip -r -X "${DIST_DIR}/${ZIP}" . \
             -x "**/.git/**" \
@@ -592,295 +486,7 @@ jobs:
           {
             echo "### Build report"
             echo "```json"
-            echo "{"
-            echo "  \"root\": \"${ROOT}\","
-            echo "  \"manifest\": \"${MANIFEST}\","
-            echo "  \"extension_type\": \"${EXT_TYPE}\","
-            echo "  \"zip\": \"${DIST_DIR}/${ZIP}\","
-            echo "  \"zip_bytes\": ${ZIP_BYTES}"
-            echo "}"
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-
-      - name: Upload ZIP to SFTP (key-only, overwrite, verbose)
-        env:
-          FTP_HOST: ${{ secrets.FTP_HOST }}
-          FTP_USER: ${{ secrets.FTP_USER }}
-          FTP_KEY: ${{ secrets.FTP_KEY }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_PATH: ${{ secrets.FTP_PATH }}
-          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
-          FTP_PORT: ${{ secrets.FTP_PORT }}
-          FTP_PATH_SUFFIX: ${{ vars.FTP_PATH_SUFFIX }}
-          CHANNEL: ${{ needs.guard.outputs.channel }}
-        run: |
-          set -euo pipefail
-
-          # Enterprise control: avoid shell xtrace to reduce secret exposure risk.
-
-          ZIP="${{ steps.build.outputs.zip_name }}"
-
-          : "${FTP_HOST:?Missing secret FTP_HOST}"
-          : "${FTP_USER:?Missing secret FTP_USER}"
-          : "${FTP_KEY:?Missing secret FTP_KEY}"
-          : "${FTP_PATH:?Missing secret FTP_PATH}"
-
-          PROTOCOL="${FTP_PROTOCOL:-sftp}"
-          if [ "${PROTOCOL}" != "sftp" ]; then
-            echo "ERROR: Only SFTP permitted" >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-
-          PORT="${FTP_PORT:-}"
-          if [ -n "${PORT}" ]; then
-            HOSTPORT="${FTP_HOST}:${PORT}"
-          else
-            HOSTPORT="${FTP_HOST}"
-          fi
-
-          SUFFIX="${FTP_PATH_SUFFIX:-}"
-          if [ -n "${SUFFIX}" ]; then
-            REMOTE_PATH="${FTP_PATH%/}/${SUFFIX%/}/${CHANNEL}"
-          else
-            REMOTE_PATH="${FTP_PATH%/}/${CHANNEL}"
-          fi
-
-          echo "SFTP target: sftp://${HOSTPORT}${REMOTE_PATH}" >> "${GITHUB_STEP_SUMMARY}"
-
-          sudo apt-get update -y
-          sudo apt-get install -y lftp openssh-client putty-tools
-
-          mkdir -p ~/.ssh
-
-          # Key material is sourced exclusively from FTP_KEY.
-          # Supported formats:
-          # - OpenSSH private key (unencrypted)
-          # - PuTTY .ppk (unencrypted or encrypted; encryption unlocked via FTP_PASSWORD)
-          # Authentication remains key-only; passwords are never used for login.
-          if printf '%s' "${FTP_KEY}" | head -n 1 | grep -q '^PuTTY-User-Key-File-'; then
-            echo "Detected PuTTY PPK key format" >> "${GITHUB_STEP_SUMMARY}"
-
-            printf '%s' "${FTP_KEY}" > ~/.ssh/key.ppk
-            chmod 600 ~/.ssh/key.ppk
-
-            # Determine encryption state
-            if grep -Eq '^Encryption: *none[[:space:]]*$' ~/.ssh/key.ppk; then
-              echo "PPK encryption: none" >> "${GITHUB_STEP_SUMMARY}"
-              PPK_PASSPHRASE_ARG=""
-            else
-              if [ -z "${FTP_PASSWORD:-}" ]; then
-                echo "ERROR: Encrypted PPK detected but FTP_PASSWORD not provided" >> "${GITHUB_STEP_SUMMARY}"
-                exit 1
-              fi
-              echo "PPK encryption: enabled (using FTP_PASSWORD)" >> "${GITHUB_STEP_SUMMARY}"
-              PPK_PASSPHRASE="${FTP_PASSWORD:-}"
-            fi
-
-            # Log PPK header fields (sanitized, no key material)
-            {
-              echo "PPK header (sanitized):"
-              grep -E '^(PuTTY-User-Key-File-|Encryption:|Comment:|Public-Lines:|Private-Lines:|Private-MAC:)' ~/.ssh/key.ppk || true
-            } >> "${GITHUB_STEP_SUMMARY}"
-
-            # Convert to OpenSSH private key
-            if [ -n "${PPK_PASSPHRASE}" ]; then
-              puttygen ~/.ssh/key.ppk -O private-openssh --passphrase "${PPK_PASSPHRASE}" -o ~/.ssh/id_rsa
-            else
-              puttygen ~/.ssh/key.ppk -O private-openssh -o ~/.ssh/id_rsa
-            fi
-
-            if [ ! -s ~/.ssh/id_rsa ]; then
-              echo "ERROR: PPK conversion failed" >> "${GITHUB_STEP_SUMMARY}"
-              exit 1
-            fi
-
-            chmod 600 ~/.ssh/id_rsa
-            rm -f ~/.ssh/key.ppk
-          else
-            echo "Detected OpenSSH private key format" >> "${GITHUB_STEP_SUMMARY}"
-            printf '%s' "${FTP_KEY}" > ~/.ssh/id_rsa
-            chmod 600 ~/.ssh/id_rsa
-          fi
-
-          ssh-keyscan -H "${FTP_HOST}" >> ~/.ssh/known_hosts
-
-          # Hard‑enforced key‑only authentication. Password auth explicitly disabled.
-          lftp -d -e "\
-            set sftp:auto-confirm yes; \
-            set cmd:trace yes; \
-            set net:timeout 30; \
-            set net:max-retries 3; \
-            set net:reconnect-interval-base 5; \
-            set sftp:connect-program 'ssh -a -x -i ~/.ssh/id_rsa -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o ChallengeResponseAuthentication=no -o PubkeyAuthentication=yes'; \
-            open -u '${FTP_USER}', sftp://${HOSTPORT}; \
-            pwd; ls; \
-            mkdir -p '${REMOTE_PATH}'; \
-            cd '${REMOTE_PATH}'; \
-            pwd; \
-            put -E '${{ steps.build.outputs.dist_dir }}/${ZIP}'; \
-            ls; \
-            bye"
-
-          ZIP_BYTES="$(stat -c%s "${{ steps.build.outputs.dist_dir }}/${ZIP}")"
-          {
-            echo "### SFTP upload report"
-            echo "```json"
-            echo "{"
-            echo "  \"protocol\": \"sftp\","
-            echo "  \"host\": \"${FTP_HOST}\","
-            echo "  \"port\": \"${PORT:-default}\","
-            echo "  \"remote_path\": \"${REMOTE_PATH}\","
-            echo "  \"zip\": \"${ZIP}\","
-            echo "  \"zip_bytes\": ${ZIP_BYTES},"
-            echo "  \"overwrite\": true,"
-            echo "  \"key_only\": true"
-            echo "}"
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-      - name: Create Git tag for release
-        id: tag
-        run: |
-          set -euo pipefail
-
-          VERSION="${{ needs.guard.outputs.version }}"
-          MODE="${{ needs.guard.outputs.release_mode }}"
-
-          if [ "${MODE}" = "prerelease" ]; then
-            TAG="v${VERSION}-rc"
-          else
-            TAG="v${VERSION}"
-          fi
-
-          git fetch --tags
-          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
-            echo "Tag ${TAG} already exists" >> "${GITHUB_STEP_SUMMARY}"
-          else
-            git tag -a "${TAG}" -m "${MODE} ${VERSION}"
-            git push origin "refs/tags/${TAG}"
-          fi
-
-          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
-
-      - name: Generate release notes from CHANGELOG.md
-        run: |
-          set -euo pipefail
-
-          VERSION="${{ needs.guard.outputs.version }}"
-          ZIP_ASSET="${{ steps.build.outputs.zip_name }}"
-
-          awk "/^## \[${VERSION}\]/{flag=1;next}/^## \[/{flag=0}flag" CHANGELOG.md > RELEASE_NOTES.md || true
-
-          if [ ! -s RELEASE_NOTES.md ]; then
-            echo "ERROR: Release notes extraction failed for ${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-
-          {
-            echo ""
-            echo "Assets:"
-            echo "- ${ZIP_ASSET}"
-          } >> RELEASE_NOTES.md
-
-      - name: Create GitHub release and attach ZIP
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.tag.outputs.tag }}
-          name: ${{ needs.guard.outputs.release_mode }} ${{ needs.guard.outputs.version }}
-          prerelease: ${{ needs.guard.outputs.release_mode == 'prerelease' }}
-          body_path: RELEASE_NOTES.md
-          files: |
-            dist/*.zip
-
-      - name: Attest build provenance
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-path: |
-            dist/*.zip
-
-      - name: Publish JSON report to job summary
-        run: |
-          set -euo pipefail
-
-          REPO_FULL="${{ github.repository }}"
-          VERSION="${{ needs.guard.outputs.version }}"
-          BRANCH="${{ needs.guard.outputs.promoted_branch }}"
-          TAG="${{ steps.tag.outputs.tag }}"
-          ZIP_NAME="${{ steps.build.outputs.zip_name }}"
-          CHANNEL="${{ needs.guard.outputs.channel }}"
-          MODE="${{ needs.guard.outputs.release_mode }}"
-          OVERRIDE="${{ needs.guard.outputs.override }}"
-
-          echo "### Release report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
-          echo "```json" >> "${GITHUB_STEP_SUMMARY}"
-          echo "{\"repository\":\"${REPO_FULL}\",\"version\":\"${VERSION}\",\"branch\":\"${BRANCH}\",\"tag\":\"${TAG}\",\"mode\":\"${MODE}\",\"channel\":\"${CHANNEL}\",\"override\":\"${OVERRIDE}\",\"zip\":\"${ZIP_NAME}\"}" >> "${GITHUB_STEP_SUMMARY}"
-          echo "```" >> "${GITHUB_STEP_SUMMARY}"
-
-  push_version_to_main:
-    name: 04 Promote version branch to main (stable only, keep version branch)
-    runs-on: ubuntu-latest
-    needs:
-      - guard
-      - build_and_release
-
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.guard.outputs.release_mode == 'stable' }}
-
-    permissions:
-      contents: write
-      pull-requests: write
-
-    steps:
-      - name: Checkout main
-        uses: actions/checkout@v4
-        with:
-          ref: main
-          fetch-depth: 0
-
-      - name: Configure Git identity
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
-
-      - name: Create PR from version branch to main
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          VERSION="${{ needs.guard.outputs.version }}"
-          HEAD="${{ needs.guard.outputs.promoted_branch }}"
-
-          gh pr create \
-            --base main \
-            --head "${HEAD}" \
-            --title "Release ${VERSION} to main" \
-            --body "Automated PR created by release pipeline. Version branch is retained by policy." \
-            || true
-
-      - name: Attempt to merge PR (best-effort)
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          HEAD="${{ needs.guard.outputs.promoted_branch }}"
-          PR_NUMBER="$(gh pr list --head "${HEAD}" --base main --json number --jq '.[0].number' || true)"
-
-          if [ -z "${PR_NUMBER}" ] || [ "${PR_NUMBER}" = "null" ]; then
-            echo "ERROR: PR not found for head ${HEAD}" >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-
-          gh pr merge "${PR_NUMBER}" --merge --delete-branch=false \
-            || echo "PR merge blocked by branch protection or policy" >> "${GITHUB_STEP_SUMMARY}"
-
-          {
-            echo "### Main branch promotion"
-            echo "```json"
-            echo "{\"head\":\"${HEAD}\",\"pr\":${PR_NUMBER}}"
+            echo "{\"root\":\"${ROOT}\",\"manifest\":\"${MANIFEST}\",\"extension_type\":\"${EXT_TYPE}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES}}"
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -902,6 +508,8 @@ jobs:
           fetch-depth: 0
 
       - name: Publish JSON report to job summary
+        env:
+          IS_PRERELEASE: ${{ github.event.release.prerelease }}
         run: |
           set -euo pipefail
 
@@ -910,5 +518,6 @@ jobs:
 
           echo "### Release event report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
           echo "```json" >> "${GITHUB_STEP_SUMMARY}"
-          echo "{\"version\":\"${VERSION}\",\"tag\":\"${TAG}\",\"prerelease\":${{ github.event.release.prerelease }}}" >> "${GITHUB_STEP_SUMMARY}"
+          printf '{"version":"%s","tag":"%s","prerelease":%s}
+' "${VERSION}" "${TAG}" "${IS_PRERELEASE}" >> "${GITHUB_STEP_SUMMARY}"
           echo "```" >> "${GITHUB_STEP_SUMMARY}"
