@@ -28,7 +28,7 @@
 # NOTE: Secrets are never printed. This workflow only verifies presence and emits an audit JSON report.
 # ============================================================================
 
-name: Guardrails
+name: Repo Health
 
 on:
   workflow_dispatch:
@@ -60,7 +60,7 @@ jobs:
     steps:
       - name: Guardrails: release secrets and vars
         env:
-          PROFILE: ${{ github.event.inputs.profile || 'all' }}
+          PROFILE_RAW: ${{ github.event.inputs.profile }}
           FTP_HOST: ${{ secrets.FTP_HOST }}
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_KEY: ${{ secrets.FTP_KEY }}
@@ -72,7 +72,7 @@ jobs:
         run: |
           set -euxo pipefail
 
-          profile="${PROFILE}"
+          profile="${PROFILE_RAW:-all}"
           if [ "${profile}" != "all" ] && [ "${profile}" != "release" ] && [ "${profile}" != "scripts" ]; then
             echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
             exit 1
@@ -244,7 +244,13 @@ jobs:
             "scripts/validate_license_headers.sh"
           )
 
-                      fi
+          missing_files=()
+          legacy_present=()
+
+          for f in "${required_script_files[@]}"; do
+            if [ ! -f "${f}" ]; then
+              missing_files+=("${f}")
+            fi
           done
 
           # Report legacy scripts if present so teams can clean up.
@@ -261,7 +267,29 @@ jobs:
           if [ "${#tools_to_install[@]}" -gt 0 ]; then
             echo "Installing missing tools: ${tools_to_install[*]}" >> "${GITHUB_STEP_SUMMARY}"
             sudo apt-get update -y
-          ntf '%s"%s"' "${sep}" "${c}"
+            sudo apt-get install -y ${tools_to_install[*]}
+          fi
+
+          tool_status=()
+          command -v php >/dev/null 2>&1 && tool_status+=("php") || true
+          command -v xmllint >/dev/null 2>&1 && tool_status+=("xmllint") || true
+
+          {
+            echo "### Guardrails: scripts and tooling"
+            echo "Tools available: ${tool_status[*]:-none}"
+            echo ""
+            echo "### Guardrails report (JSON)"
+            echo "```json"
+            printf '{"profile":"%s","checked":{"script_files":[' "${profile}"
+            sep=""
+            for c in "${required_script_files[@]}"; do
+              printf '%s"%s"' "${sep}" "${c}"
+              sep=",";
+            done
+            printf '],"legacy_script_files":['
+            sep=""
+            for c in "${legacy_script_files[@]}"; do
+              printf '%s"%s"' "${sep}" "${c}"
               sep=",";
             done
             printf ']},"missing_script_files":['
