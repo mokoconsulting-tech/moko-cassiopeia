@@ -46,6 +46,8 @@ on:
     paths:
       - ".github/workflows/**"
       - "scripts/**"
+      - "docs/**"
+      - "dev/**"
 
 permissions:
   contents: read
@@ -62,7 +64,7 @@ jobs:
       permission: ${{ steps.perm.outputs.permission }}
 
     steps:
-      - name: Check actor permission (admin or maintain only)
+      - name: Check actor permission (admin only)
         id: perm
         uses: actions/github-script@v7
         with:
@@ -110,7 +112,11 @@ jobs:
       contents: read
 
     steps:
-      - name: "Guardrails: release secrets and vars"
+      - name: Checkout
+        uses: actions/checkout@v4
+          fetch-depth: 0
+
+      - name: Guardrails: release secrets and vars
         env:
           PROFILE_RAW: "${{ github.event.inputs.profile }}"
           FTP_HOST: "${{ secrets.FTP_HOST }}"
@@ -134,7 +140,7 @@ jobs:
           esac
 
           if [ "${profile}" = "scripts" ] || [ "${profile}" = "repo" ]; then
-            echo "Profile scripts selected. Skipping release configuration checks." >> "${GITHUB_STEP_SUMMARY}"
+            echo "Profile ${profile} selected. Skipping release configuration checks." >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
 
@@ -159,23 +165,44 @@ jobs:
             missing+=("FTP_PROTOCOL_INVALID")
           fi
 
+          if [ "${#missing_optional[@]}" -gt 0 ]; then
+            echo "### Missing optional release configuration" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${missing_optional[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+          fi
+
           if [ "${#missing[@]}" -gt 0 ]; then
             echo "### Missing required release configuration" >> "${GITHUB_STEP_SUMMARY}"
             for m in "${missing[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+            echo "ERROR: Guardrails failed. Missing required release configuration." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
           echo "### Guardrails: release configuration" >> "${GITHUB_STEP_SUMMARY}"
           echo "All required release variables present." >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: "Guardrails: SFTP connectivity"
+      - name: Guardrails: SFTP connectivity
         env:
+          PROFILE_RAW: "${{ github.event.inputs.profile }}"
           FTP_HOST: "${{ secrets.FTP_HOST }}"
           FTP_USER: "${{ secrets.FTP_USER }}"
           FTP_KEY: "${{ secrets.FTP_KEY }}"
           FTP_PORT: "${{ secrets.FTP_PORT }}"
         run: |
           set -euo pipefail
+
+          profile="${PROFILE_RAW:-all}"
+          case "${profile}" in
+            all|release|scripts|repo) ;;
+            *)
+              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+              ;;
+          esac
+
+          if [ "${profile}" = "scripts" ] || [ "${profile}" = "repo" ]; then
+            echo "Profile ${profile} selected. Skipping SFTP connectivity check." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
 
           mkdir -p "$HOME/.ssh"
           key_file="$HOME/.ssh/ci_sftp_key"
@@ -208,7 +235,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: "Guardrails: script files and toolchain"
+      - name: Guardrails: scripts folder governance
         env:
           PROFILE_RAW: "${{ github.event.inputs.profile }}"
         run: |
@@ -224,7 +251,7 @@ jobs:
           esac
 
           if [ "${profile}" = "release" ] || [ "${profile}" = "repo" ]; then
-            echo "Profile release selected. Skipping scripts checks." >> "${GITHUB_STEP_SUMMARY}"
+            echo "Profile ${profile} selected. Skipping scripts checks." >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
 
@@ -249,44 +276,34 @@ jobs:
             "scripts/validate/license_headers.sh"
           )
 
-          legacy_script_files=(
-            "scripts/validate_manifest.sh"
-            "scripts/validate_xml_wellformed.sh"
-            "scripts/validate_changelog.sh"
-            "scripts/validate_tabs.sh"
-            "scripts/validate_paths.sh"
-            "scripts/validate_version_alignment.sh"
-            "scripts/validate_language_structure.sh"
-            "scripts/validate_php_syntax.sh"
-            "scripts/validate_no_secrets.sh"
-            "scripts/validate_license_headers.sh"
-          )
-
-          missing_files=()
           missing_dirs=()
-          legacy_present=()
+          missing_files=()
 
           for d in "${required_script_dirs[@]}"; do
-            if [ ! -d "${d}" ]; then
-              missing_dirs+=("${d}/")
-            fi
+            [ ! -d "${d}" ] && missing_dirs+=("${d}/")
           done
+
+          unapproved_dirs=()
+          while IFS= read -r d; do
+            case "${d}" in
+              scripts|scripts/fix|scripts/lib|scripts/release|scripts/run|scripts/validate) ;;
+              *) unapproved_dirs+=("${d}/") ;;
+            esac
+          done < <(find scripts -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sed 's#^\./##')
 
           for f in "${required_script_files[@]}"; do
-            if [ ! -f "${f}" ]; then
-              missing_files+=("${f}")
-            fi
+            [ ! -f "${f}" ] && missing_files+=("${f}")
           done
 
-          for f in "${legacy_script_files[@]}"; do
-            if [ -f "${f}" ]; then
-              legacy_present+=("${f}")
-            fi
-          done
+          legacy_glob_found=()
+          while IFS= read -r f; do
+            [ -n "${f}" ] && legacy_glob_found+=("${f}")
+          done < <(find scripts -maxdepth 1 -type f -name 'validate_*.sh' 2>/dev/null || true)
 
           tools_to_install=()
           command -v php >/dev/null 2>&1 || tools_to_install+=("php-cli")
           command -v xmllint >/dev/null 2>&1 || tools_to_install+=("libxml2-utils")
+          command -v shellcheck >/dev/null 2>&1 || tools_to_install+=("shellcheck")
 
           if [ "${#tools_to_install[@]}" -gt 0 ]; then
             echo "Installing missing tools: ${tools_to_install[*]}" >> "${GITHUB_STEP_SUMMARY}"
@@ -297,10 +314,10 @@ jobs:
           tool_status=()
           command -v php >/dev/null 2>&1 && tool_status+=("php") || true
           command -v xmllint >/dev/null 2>&1 && tool_status+=("xmllint") || true
+          command -v shellcheck >/dev/null 2>&1 && tool_status+=("shellcheck") || true
 
-          export MISSING_DIRS="$(printf '%s\\n' "${missing_dirs[@]:-}")"
-          export MISSING_FILES="$(printf '%s\\n' "${missing_files[@]:-}")"
-          export LEGACY_PRESENT="$(printf '%s\\n' "${legacy_present[@]:-}")"
+          export MISSING_DIRS="$(printf '%s\n' "${missing_dirs[@]:-}")"
+          export MISSING_FILES="$(printf '%s\n' "${missing_files[@]:-}")"
           export TOOLS="${tool_status[*]:-}"
 
           report_json="$(python3 - <<'PY'
@@ -326,40 +343,22 @@ required_script_files = [
   "scripts/validate/no_secrets.sh",
   "scripts/validate/license_headers.sh",
 ]
-legacy_script_files = [
-  "scripts/validate_manifest.sh",
-  "scripts/validate_xml_wellformed.sh",
-  "scripts/validate_changelog.sh",
-  "scripts/validate_tabs.sh",
-  "scripts/validate_paths.sh",
-  "scripts/validate_version_alignment.sh",
-  "scripts/validate_language_structure.sh",
-  "scripts/validate_php_syntax.sh",
-  "scripts/validate_no_secrets.sh",
-  "scripts/validate_license_headers.sh",
-]
-missing_dirs = os.environ.get('MISSING_DIRS','').split('
-') if os.environ.get('MISSING_DIRS') else []
-missing_files = os.environ.get('MISSING_FILES','').split('
-') if os.environ.get('MISSING_FILES') else []
-legacy_present = os.environ.get('LEGACY_PRESENT','').split('
-') if os.environ.get('LEGACY_PRESENT') else []
+missing_dirs = os.environ.get('MISSING_DIRS','').split('\n') if os.environ.get('MISSING_DIRS') else []
+missing_files = os.environ.get('MISSING_FILES','').split('\n') if os.environ.get('MISSING_FILES') else []
 tools = os.environ.get('TOOLS','').split() if os.environ.get('TOOLS') else []
 out = {
   "profile": profile,
   "checked": {
     "required_script_dirs": required_script_dirs,
     "required_script_files": required_script_files,
-    "legacy_script_files": legacy_script_files,
   },
   "missing_dirs": [x for x in missing_dirs if x],
   "missing_files": [x for x in missing_files if x],
-  "legacy_present": [x for x in legacy_present if x],
   "tools_available": tools,
 }
 print(json.dumps(out, indent=2))
 PY
-)"
+          )"
 
           {
             echo "### Guardrails: scripts and tooling"
@@ -373,44 +372,52 @@ PY
 
           if [ "${#missing_dirs[@]}" -gt 0 ]; then
             echo "### Missing required script directories" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing_dirs[@]}"; do
-              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
-            done
+            for m in "${missing_dirs[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
             echo "ERROR: Guardrails failed. Missing required script directories." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          if [ "${#unapproved_dirs[@]}" -gt 0 ]; then
+            echo "### Unapproved script directories detected" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${unapproved_dirs[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+            echo "ERROR: Guardrails failed. Only fix, lib, release, run, validate directories are allowed under scripts/." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
           if [ "${#missing_files[@]}" -gt 0 ]; then
             echo "### Missing script files" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing_files[@]}"; do
-              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
-            done
+            for m in "${missing_files[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
             echo "ERROR: Guardrails failed. Missing required script files." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
-          if [ "${#legacy_present[@]}" -gt 0 ]; then
-            echo "### Legacy scripts detected (disallowed)" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${legacy_present[@]}"; do
-              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
-            done
-            echo "ERROR: Guardrails failed. Legacy script files must be removed." >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-
-          legacy_glob_found=()
-          while IFS= read -r f; do
-            [ -n "${f}" ] && legacy_glob_found+=("${f}")
-          done < <(find scripts -maxdepth 1 -type f -name 'validate_*.sh' 2>/dev/null || true)
-
           if [ "${#legacy_glob_found[@]}" -gt 0 ]; then
             echo "### Legacy validate_* scripts detected at scripts/ root (disallowed)" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${legacy_glob_found[@]}"; do
-              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
-            done
+            for m in "${legacy_glob_found[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
             echo "ERROR: Guardrails failed. Move scripts into scripts/validate/ with approved filenames." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
+
+          non_exec=()
+          while IFS= read -r f; do
+            [ -n "${f}" ] && non_exec+=("${f}")
+          done < <(find scripts -type f -name '*.sh' ! -perm -u=x 2>/dev/null || true)
+
+          if [ "${#non_exec[@]}" -gt 0 ]; then
+            echo "### Non-executable shell scripts detected" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${non_exec[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+            echo "ERROR: Guardrails failed. All scripts/**/*.sh must be executable." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          while IFS= read -r f; do
+            [ -z "${f}" ] && continue
+            bash -n "${f}"
+          done < <(find scripts -type f -name '*.sh' 2>/dev/null)
+
+          shellcheck -x $(find scripts -type f -name '*.sh' 2>/dev/null)
+
+          echo "Shell quality gate passed." >> "${GITHUB_STEP_SUMMARY}"
 
   repo_health:
     name: Repository health
@@ -460,28 +467,29 @@ PY
           required_paths=(
             ".github/workflows"
             "scripts"
+            "docs"
+            "dev"
           )
 
           missing_required=()
           missing_optional=()
 
           for f in "${required_files[@]}"; do
-            if [ ! -f "${f}" ]; then
-              missing_required+=("${f}")
-            fi
+            [ ! -f "${f}" ] && missing_required+=("${f}")
           done
 
           for f in "${optional_files[@]}"; do
-            if [ ! -f "${f}" ]; then
-              missing_optional+=("${f}")
-            fi
+            [ ! -f "${f}" ] && missing_optional+=("${f}")
           done
 
           for p in "${required_paths[@]}"; do
-            if [ ! -d "${p}" ]; then
-              missing_required+=("${p}/")
-            fi
+            [ ! -d "${p}" ] && missing_required+=("${p}/")
           done
+
+          # dev/ is the only source root. src/ must not exist.
+          if [ -d "src" ]; then
+            missing_required+=("src/ (disallowed, use dev/ only)")
+          fi
 
           git fetch origin --prune
 
@@ -507,23 +515,21 @@ PY
 
           content_warnings=()
 
-          if [ -f "CHANGELOG.md" ]; then
-            if ! grep -Eq '^# Changelog' CHANGELOG.md; then
-              content_warnings+=("CHANGELOG.md missing '# Changelog' header")
-            fi
+          if [ -f "CHANGELOG.md" ] && ! grep -Eq '^# Changelog' CHANGELOG.md; then
+            content_warnings+=("CHANGELOG.md missing '# Changelog' header")
           fi
 
-          if [ -f "LICENSE" ]; then
-            if ! grep -qiE 'GNU GENERAL PUBLIC LICENSE|GPL' LICENSE; then
-              content_warnings+=("LICENSE does not look like a GPL text")
-            fi
+          if [ -f "LICENSE" ] && ! grep -qiE 'GNU GENERAL PUBLIC LICENSE|GPL' LICENSE; then
+            content_warnings+=("LICENSE does not look like a GPL text")
           fi
 
-          if [ -f "README.md" ]; then
-            if ! grep -qiE 'moko|Moko' README.md; then
-              content_warnings+=("README.md missing expected brand keyword")
-            fi
+          if [ -f "README.md" ] && ! grep -qiE 'moko|Moko' README.md; then
+            content_warnings+=("README.md missing expected brand keyword")
           fi
+
+          export MISSING_REQUIRED="$(printf '%s\n' "${missing_required[@]:-}")"
+          export MISSING_OPTIONAL="$(printf '%s\n' "${missing_optional[@]:-}")"
+          export CONTENT_WARNINGS="$(printf '%s\n' "${content_warnings[@]:-}")"
 
           report_json="$(python3 - <<'PY'
 import json
@@ -531,7 +537,7 @@ import os
 profile = os.environ.get('PROFILE_RAW') or 'all'
 required_files = ["README.md","LICENSE","CHANGELOG.md","CONTRIBUTING.md","CODE_OF_CONDUCT.md"]
 optional_files = ["SECURITY.md","GOVERNANCE.md",".editorconfig",".gitattributes",".gitignore"]
-required_paths = [".github/workflows","scripts"]
+required_paths = [".github/workflows","scripts","docs","dev"]
 missing_required = os.environ.get('MISSING_REQUIRED','').split('\n') if os.environ.get('MISSING_REQUIRED') else []
 missing_optional = os.environ.get('MISSING_OPTIONAL','').split('\n') if os.environ.get('MISSING_OPTIONAL') else []
 content_warnings = os.environ.get('CONTENT_WARNINGS','').split('\n') if os.environ.get('CONTENT_WARNINGS') else []
@@ -542,9 +548,9 @@ out = {
     "optional_files": optional_files,
     "required_paths": required_paths,
   },
-  "missing_required": missing_required,
-  "missing_optional": missing_optional,
-  "content_warnings": content_warnings,
+  "missing_required": [x for x in missing_required if x],
+  "missing_optional": [x for x in missing_optional if x],
+  "content_warnings": [x for x in content_warnings if x],
 }
 print(json.dumps(out, indent=2))
 PY
@@ -561,23 +567,17 @@ PY
 
           if [ "${#missing_required[@]}" -gt 0 ]; then
             echo "### Missing required repo artifacts" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing_required[@]}"; do
-              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
-            done
+            for m in "${missing_required[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
             echo "ERROR: Guardrails failed. Missing required repository artifacts." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
           if [ "${#missing_optional[@]}" -gt 0 ]; then
             echo "### Missing optional repo artifacts" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing_optional[@]}"; do
-              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
-            done
+            for m in "${missing_optional[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
           fi
 
           if [ "${#content_warnings[@]}" -gt 0 ]; then
             echo "### Repo content warnings" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${content_warnings[@]}"; do
-              echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"
-            done
+            for m in "${content_warnings[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
           fi
