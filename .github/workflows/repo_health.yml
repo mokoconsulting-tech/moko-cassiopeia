@@ -347,57 +347,55 @@ jobs:
           command -v xmllint >/dev/null 2>&1 && tool_status+=("xmllint") || true
           command -v shellcheck >/dev/null 2>&1 && tool_status+=("shellcheck") || true
 
-          export MISSING_DIRS="$(printf '%s
-' "${missing_dirs[@]:-}")"
-          export MISSING_FILES="$(printf '%s
-' "${missing_files[@]:-}")"
+          export MISSING_DIRS="$(printf '%s\\n' "${missing_dirs[@]:-}")"
+          export MISSING_FILES="$(printf '%s\\n' "${missing_files[@]:-}")"
           export TOOLS="${tool_status[*]:-}"
 
           report_json="$(python3 - <<'PY'
-import json
-import os
+          import json
+          import os
 
-profile = os.environ.get('PROFILE_RAW') or 'all'
-required_script_dirs = [
-  "scripts/fix",
-  "scripts/lib",
-  "scripts/release",
-  "scripts/run",
-  "scripts/validate",
-]
-required_script_files = [
-  "scripts/validate/manifest.sh",
-  "scripts/validate/xml_wellformed.sh",
-  "scripts/validate/changelog.sh",
-  "scripts/validate/tabs.sh",
-  "scripts/validate/paths.sh",
-  "scripts/validate/version_alignment.sh",
-  "scripts/validate/language_structure.sh",
-  "scripts/validate/php_syntax.sh",
-  "scripts/validate/no_secrets.sh",
-  "scripts/validate/license_headers.sh",
-]
+          profile = os.environ.get('PROFILE_RAW') or 'all'
+          required_script_dirs = [
+            "scripts/fix",
+            "scripts/lib",
+            "scripts/release",
+            "scripts/run",
+            "scripts/validate",
+          ]
+          required_script_files = [
+            "scripts/validate/manifest.sh",
+            "scripts/validate/xml_wellformed.sh",
+            "scripts/validate/changelog.sh",
+            "scripts/validate/tabs.sh",
+            "scripts/validate/paths.sh",
+            "scripts/validate/version_alignment.sh",
+            "scripts/validate/language_structure.sh",
+            "scripts/validate/php_syntax.sh",
+            "scripts/validate/no_secrets.sh",
+            "scripts/validate/license_headers.sh",
+          ]
 
-missing_dirs = os.environ.get('MISSING_DIRS','').split('
-') if os.environ.get('MISSING_DIRS') else []
-missing_files = os.environ.get('MISSING_FILES','').split('
-') if os.environ.get('MISSING_FILES') else []
-tools = os.environ.get('TOOLS','').split() if os.environ.get('TOOLS') else []
+          missing_dirs = os.environ.get('MISSING_DIRS','').split('
+          ') if os.environ.get('MISSING_DIRS') else []
+          missing_files = os.environ.get('MISSING_FILES','').split('
+          ') if os.environ.get('MISSING_FILES') else []
+          tools = os.environ.get('TOOLS','').split() if os.environ.get('TOOLS') else []
 
-out = {
-  "profile": profile,
-  "checked": {
-    "required_script_dirs": required_script_dirs,
-    "required_script_files": required_script_files,
-  },
-  "missing_dirs": [x for x in missing_dirs if x],
-  "missing_files": [x for x in missing_files if x],
-  "tools_available": tools,
-}
+          out = {
+            "profile": profile,
+            "checked": {
+              "required_script_dirs": required_script_dirs,
+              "required_script_files": required_script_files,
+            },
+            "missing_dirs": [x for x in missing_dirs if x],
+            "missing_files": [x for x in missing_files if x],
+            "tools_available": tools,
+          }
 
-print(json.dumps(out, indent=2))
-PY
-)"
+          print(json.dumps(out, indent=2))
+          PY
+          )"
 
           {
             echo "### Guardrails: scripts and tooling"
