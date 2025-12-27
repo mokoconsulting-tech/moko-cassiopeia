@@ -1,0 +1,222 @@
+# ============================================================================
+# Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+#
+# This file is part of a Moko Consulting project.
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+# FILE INFORMATION
+# DEFGROUP: GitHub.Workflow
+# INGROUP: MokoStandards.Validation
+# REPO: https://github.com/mokoconsulting-tech/MokoStandards
+# PATH: /.github/workflows/config_guardrails.yml
+# VERSION: 03.05.00
+# BRIEF: Validate that required repository secrets and variables exist for workflows and scripts.
+# NOTE: Secrets are never printed. This workflow only verifies presence and emits an audit JSON report.
+# ============================================================================
+
+name: Config Guardrails (secrets and vars)
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Which configuration profile to validate. release checks SFTP variables used by release_pipeline. scripts checks baseline script prerequisites. all runs both."
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - release
+          - scripts
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - "scripts/**"
+
+permissions:
+  contents: read
+
+jobs:
+  guardrails:
+    name: Guardrails
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate required repository secrets and variables
+        env:
+          PROFILE: ${{ github.event.inputs.profile || 'all' }}
+
+          # Release pipeline SFTP configuration (secrets + vars)
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_KEY: ${{ secrets.FTP_KEY }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PATH: ${{ secrets.FTP_PATH }}
+          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_PATH_SUFFIX: ${{ vars.FTP_PATH_SUFFIX }}
+
+        run: |
+          set -euxo pipefail
+
+          profile="${PROFILE}"
+
+          # Centralized checklist.
+          required_release_secrets=(
+            "FTP_HOST"
+            "FTP_USER"
+            "FTP_KEY"
+            "FTP_PATH"
+          )
+
+          optional_release=(
+            "FTP_PASSWORD"    # Only needed for encrypted PPK conversion
+            "FTP_PROTOCOL"    # Defaults to sftp in pipelines
+            "FTP_PORT"        # Defaults to provider default
+            "FTP_PATH_SUFFIX" # Variable, optional
+          )
+
+          required_script_files=(
+            "scripts/verify_manifest.sh"
+            "scripts/validate_xml_wellformed.sh"
+            "scripts/validate_changelog.sh"
+            "scripts/validate_tabs.sh"
+            "scripts/validate_paths.sh"
+            "scripts/validate_version_alignment.sh"
+            "scripts/validate_language_structure.sh"
+            "scripts/validate_php_syntax.sh"
+            "scripts/validate_no_secrets.sh"
+            "scripts/validate_license_headers.sh"
+          )
+
+          missing=()
+          missing_optional=()
+          missing_files=()
+
+          check_release() {
+            for k in "${required_release_secrets[@]}"; do
+              v="${!k:-}"
+              if [ -z "${v}" ]; then
+                missing+=("${k}")
+              fi
+            done
+
+            # Optional configuration.
+            for k in "${optional_release[@]}"; do
+              v="${!k:-}"
+              if [ -z "${v}" ]; then
+                missing_optional+=("${k}")
+              fi
+            done
+
+            # Protocol sanity if provided.
+            proto="${FTP_PROTOCOL:-sftp}"
+            if [ -n "${FTP_PROTOCOL:-}" ] && [ "${proto}" != "sftp" ]; then
+              missing+=("FTP_PROTOCOL_INVALID")
+            fi
+
+            # Key format guardrail (do not print key).
+            if [ -n "${FTP_KEY:-}" ]; then
+              first_line="$(printf '%s' "${FTP_KEY}" | head -n 1 || true)"
+              if printf '%s' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
+                key_format="ppk"
+              elif printf '%s' "${first_line}" | grep -q '^-----BEGIN '; then
+                key_format="openssh"
+              else
+                key_format="unknown"
+                missing+=("FTP_KEY_FORMAT")
+              fi
+            else
+              key_format="missing"
+            fi
+
+            echo "KEY_FORMAT=${key_format}" >> "${GITHUB_STEP_SUMMARY}"
+          }
+
+          check_scripts() {
+            for f in "${required_script_files[@]}"; do
+              if [ ! -f "${f}" ]; then
+                missing_files+=("${f}")
+              fi
+            done
+
+            # Tooling expectations: scripts may rely on php and xmllint.
+            # Do not fail on tooling here; CI runners can install dependencies.
+            # Still report as guardrail visibility.
+            tool_missing=()
+            command -v php >/dev/null 2>&1 || tool_missing+=("php")
+            command -v xmllint >/dev/null 2>&1 || tool_missing+=("xmllint")
+
+            if [ "${#tool_missing[@]}" -gt 0 ]; then
+              echo "WARN: Missing tools on runner (install in workflow when required): ${tool_missing[*]}" >> "${GITHUB_STEP_SUMMARY}"
+            fi
+          }
+
+          case "${profile}" in
+            release)
+              check_release
+              ;;
+            scripts)
+              check_scripts
+              ;;
+            all)
+              check_release
+              check_scripts
+              ;;
+            *)
+              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+              ;;
+          esac
+
+          # Emit report.
+          {
+            echo "### Config guardrails report (JSON)"
+            echo "```json"
+            printf '{"repository":"%s","profile":"%s","missing_required":[' "${GITHUB_REPOSITORY}" "${profile}"
+            sep=""
+            for m in "${missing[@]}"; do
+              printf '%s"%s"' "${sep}" "${m}"
+              sep=","
+            done
+            printf '],"missing_optional":['
+            sep=""
+            for m in "${missing_optional[@]}"; do
+              printf '%s"%s"' "${sep}" "${m}"
+              sep=","
+            done
+            printf '],"missing_script_files":['
+            sep=""
+            for m in "${missing_files[@]}"; do
+              printf '%s"%s"' "${sep}" "${m}"
+              sep=","
+            done
+            printf ']}'
+            echo
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          # Fail the workflow if required items are missing.
+          if [ "${#missing[@]}" -gt 0 ] || [ "${#missing_files[@]}" -gt 0 ]; then
+            echo "ERROR: Config guardrails failed. Missing required configuration or script files." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
