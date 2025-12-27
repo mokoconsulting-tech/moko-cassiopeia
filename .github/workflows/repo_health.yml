@@ -298,12 +298,9 @@ jobs:
           command -v php >/dev/null 2>&1 && tool_status+=("php") || true
           command -v xmllint >/dev/null 2>&1 && tool_status+=("xmllint") || true
 
-          export MISSING_DIRS="$(printf '%s
-' "${missing_dirs[@]:-}")"
-          export MISSING_FILES="$(printf '%s
-' "${missing_files[@]:-}")"
-          export LEGACY_PRESENT="$(printf '%s
-' "${legacy_present[@]:-}")"
+          export MISSING_DIRS="$(printf '%s\\n' "${missing_dirs[@]:-}")"
+          export MISSING_FILES="$(printf '%s\\n' "${missing_files[@]:-}")"
+          export LEGACY_PRESENT="$(printf '%s\\n' "${legacy_present[@]:-}")"
           export TOOLS="${tool_status[*]:-}"
 
           report_json="$(python3 - <<'PY'
