@@ -321,8 +321,7 @@ jobs:
             {
               echo "ERROR: Date normalization script not found in approved locations."
               echo "Approved locations:"
-              printf '%s
-' "${CANDIDATES[@]}"
+              printf '%s\n' "${CANDIDATES[@]}"
               echo "Discovered candidates (first 5):"
               echo "${FOUND:-<none>}"
               echo "Required action: add scripts/update_dates.sh (or scripts/release/update_dates.sh) to the repo."
