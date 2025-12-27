@@ -222,7 +222,7 @@ jobs:
           moko_init "Enterprise policy gate"
 
           required=(
-            "LICENSE.md"
+            "LICENSE"
             "CONTRIBUTING.md"
             "CODE_OF_CONDUCT.md"
             "SECURITY.md"
