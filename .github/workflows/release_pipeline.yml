@@ -57,8 +57,6 @@ defaults:
 
 permissions:
   contents: read
-
-$1
       - name: Report run context (always)
         if: ${{ always() }}
         run: |
