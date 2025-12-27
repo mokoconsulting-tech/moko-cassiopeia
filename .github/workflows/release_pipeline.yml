@@ -548,8 +548,7 @@ jobs:
               printf '%s"%s"' "${sep}" "${k}"
               sep=",";
             done
-            printf ']}
-'
+$2printf ']}\n'
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
