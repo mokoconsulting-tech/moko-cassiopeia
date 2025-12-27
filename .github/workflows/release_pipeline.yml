@@ -1,3 +1,5 @@
+#!/usr/bin/env sh
+
 # ============================================================================
 # Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
 #
@@ -16,536 +18,103 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
-#
-# FILE INFORMATION
-# DEFGROUP: GitHub.Workflow
-# INGROUP: MokoStandards.Release
-# REPO: https://github.com/mokoconsulting-tech/MokoStandards
-# PATH: /.github/workflows/release_pipeline.yml
-# VERSION: 03.05.00
-# BRIEF: Enterprise release pipeline enforcing dev to rc to version to main.
-# NOTE: Controls: strict branch gating, mandatory source branch deletion after promotion, key-only SFTP with verbose logs, ZIP-only distribution with overwrite, no checksum generation.
+# along with this program (./LICENSE.md).
 # ============================================================================
 
-name: Release Pipeline (dev > rc > version > main)
-
-on:
-  workflow_dispatch:
-    inputs:
-      release_classification:
-        description: "Manual override for classification. auto follows branch policy; rc forces prerelease behavior; stable forces full release behavior."
-        required: true
-        default: auto
-        type: choice
-        options:
-          - auto
-          - rc
-          - stable
-  release:
-    types:
-      - created
-      - prereleased
-      - published
-
-concurrency:
-  group: release-pipeline-${{ github.ref_name }}
-  cancel-in-progress: false
-
-defaults:
-  run:
-    shell: bash
-
-permissions:
-  contents: read
-
-jobs:
-  guard:
-    name: 00 Guard and derive promotion metadata
-    runs-on: ubuntu-latest
-
-    outputs:
-      version: ${{ steps.meta.outputs.version }}
-      source_branch: ${{ steps.meta.outputs.source_branch }}
-      source_prefix: ${{ steps.meta.outputs.source_prefix }}
-      target_branch: ${{ steps.meta.outputs.target_branch }}
-      promoted_branch: ${{ steps.meta.outputs.promoted_branch }}
-      today_utc: ${{ steps.meta.outputs.today_utc }}
-      channel: ${{ steps.meta.outputs.channel }}
-      release_mode: ${{ steps.meta.outputs.release_mode }}
-      override: ${{ steps.meta.outputs.override }}
-
-    steps:
-      - name: Validate trigger and extract metadata
-        id: meta
-        env:
-          RELEASE_CLASSIFICATION: ${{ github.event.inputs.release_classification }}
-          RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
-        run: |
-          set -euxo pipefail
-
-          EVENT_NAME="${GITHUB_EVENT_NAME}"
-          REF_NAME="${GITHUB_REF_NAME}"
-
-          VERSION=""
-          SOURCE_BRANCH=""
-          SOURCE_PREFIX=""
-          TARGET_BRANCH=""
-          PROMOTED_BRANCH=""
-          CHANNEL=""
-          RELEASE_MODE="none"
-
-          OVERRIDE="${RELEASE_CLASSIFICATION:-auto}"
-          if [ -z "${OVERRIDE}" ]; then
-            OVERRIDE="auto"
-          fi
-
-          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
-            echo "${REF_NAME}" | grep -E '^(dev|rc)/[0-9]+[.][0-9]+[.][0-9]+$'
-
-            SOURCE_BRANCH="${REF_NAME}"
-            SOURCE_PREFIX="${REF_NAME%%/*}"
-            VERSION="${REF_NAME#*/}"
-
-            if [ "${SOURCE_PREFIX}" = "dev" ]; then
-              TARGET_BRANCH="rc/${VERSION}"
-              PROMOTED_BRANCH="rc/${VERSION}"
-              CHANNEL="rc"
-              RELEASE_MODE="prerelease"
-            else
-              TARGET_BRANCH="version/${VERSION}"
-              PROMOTED_BRANCH="version/${VERSION}"
-              CHANNEL="stable"
-              RELEASE_MODE="stable"
-            fi
-
-            if [ "${OVERRIDE}" = "rc" ]; then
-              CHANNEL="rc"
-              RELEASE_MODE="prerelease"
-            elif [ "${OVERRIDE}" = "stable" ]; then
-              CHANNEL="stable"
-              RELEASE_MODE="stable"
-            else
-              OVERRIDE="auto"
-            fi
-
-          elif [ "${EVENT_NAME}" = "release" ]; then
-            TAG_NAME="${REF_NAME}"
-            VERSION="${TAG_NAME#v}"
-            VERSION="${VERSION%-rc}"
-            echo "${VERSION}" | grep -E '^[0-9]+[.][0-9]+[.][0-9]+$'
-
-            if [ "${RELEASE_PRERELEASE:-false}" = "true" ]; then
-              CHANNEL="rc"
-              RELEASE_MODE="prerelease"
-            else
-              CHANNEL="stable"
-              RELEASE_MODE="stable"
-            fi
-
-            OVERRIDE="auto"
-
-          else
-            echo "ERROR: Unsupported trigger ${EVENT_NAME}" >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-
-          TODAY_UTC="$(date -u +%Y-%m-%d)"
-
-          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
-          echo "source_branch=${SOURCE_BRANCH}" >> "${GITHUB_OUTPUT}"
-          echo "source_prefix=${SOURCE_PREFIX}" >> "${GITHUB_OUTPUT}"
-          echo "target_branch=${TARGET_BRANCH}" >> "${GITHUB_OUTPUT}"
-          echo "promoted_branch=${PROMOTED_BRANCH}" >> "${GITHUB_OUTPUT}"
-          echo "today_utc=${TODAY_UTC}" >> "${GITHUB_OUTPUT}"
-          echo "channel=${CHANNEL}" >> "${GITHUB_OUTPUT}"
-          echo "release_mode=${RELEASE_MODE}" >> "${GITHUB_OUTPUT}"
-          echo "override=${OVERRIDE}" >> "${GITHUB_OUTPUT}"
-
-          {
-            echo "### Guard report"
-            echo "```json"
-            echo "{"
-            echo "  \"repository\": \"${GITHUB_REPOSITORY}\","
-            echo "  \"workflow\": \"${GITHUB_WORKFLOW}\","
-            echo "  \"job\": \"${GITHUB_JOB}\","
-            echo "  \"run_id\": ${GITHUB_RUN_ID},"
-            echo "  \"run_number\": ${GITHUB_RUN_NUMBER},"
-            echo "  \"run_attempt\": ${GITHUB_RUN_ATTEMPT},"
-            echo "  \"run_url\": \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\","
-            echo "  \"actor\": \"${GITHUB_ACTOR}\","
-            echo "  \"sha\": \"${GITHUB_SHA}\","
-            echo "  \"event\": \"${EVENT_NAME}\","
-            echo "  \"ref\": \"${REF_NAME}\","
-            echo "  \"version\": \"${VERSION}\","
-            echo "  \"source_branch\": \"${SOURCE_BRANCH}\","
-            echo "  \"target_branch\": \"${TARGET_BRANCH}\","
-            echo "  \"promoted_branch\": \"${PROMOTED_BRANCH}\","
-            echo "  \"channel\": \"${CHANNEL}\","
-            echo "  \"release_mode\": \"${RELEASE_MODE}\","
-            echo "  \"override\": \"${OVERRIDE}\","
-            echo "  \"today_utc\": \"${TODAY_UTC}\""
-            echo "}"
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-  promote_branch:
-    name: 01 Promote branch and delete source
-    runs-on: ubuntu-latest
-    needs: guard
-
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout source branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.guard.outputs.source_branch }}
-          fetch-depth: 0
-
-      - name: Configure Git identity
-        run: |
-          set -euxo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
-
-      - name: Enforce promotion preconditions
-        run: |
-          set -euxo pipefail
-
-          SRC="${{ needs.guard.outputs.source_branch }}"
-          DST="${{ needs.guard.outputs.target_branch }}"
-
-          git fetch origin --prune
-
-          if [ -z "${SRC}" ] || [ -z "${DST}" ]; then
-            echo "ERROR: guard did not emit SRC or DST" >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-
-          if ! git show-ref --verify --quiet "refs/remotes/origin/${SRC}"; then
-            echo "ERROR: origin/${SRC} not found" >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-
-          if git show-ref --verify --quiet "refs/remotes/origin/${DST}"; then
-            echo "ERROR: origin/${DST} already exists" >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-
-      - name: Promote and delete source
-        run: |
-          set -euxo pipefail
-
-          SRC="${{ needs.guard.outputs.source_branch }}"
-          DST="${{ needs.guard.outputs.target_branch }}"
-
-          git checkout -B "${DST}" "origin/${SRC}"
-          git push origin "${DST}"
-          git push origin --delete "${SRC}"
-
-          {
-            echo "### Promotion report"
-            echo "```json"
-            echo "{"
-            echo "  \"repository\": \"${GITHUB_REPOSITORY}\","
-            echo "  \"workflow\": \"${GITHUB_WORKFLOW}\","
-            echo "  \"job\": \"${GITHUB_JOB}\","
-            echo "  \"run_id\": ${GITHUB_RUN_ID},"
-            echo "  \"run_number\": ${GITHUB_RUN_NUMBER},"
-            echo "  \"run_attempt\": ${GITHUB_RUN_ATTEMPT},"
-            echo "  \"run_url\": \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\","
-            echo "  \"actor\": \"${GITHUB_ACTOR}\","
-            echo "  \"sha\": \"${GITHUB_SHA}\","
-            echo "  \"promoted\": \"${SRC} -> ${DST}\","
-            echo "  \"deleted\": \"${SRC}\""
-            echo "}"
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-  normalize_dates:
-    name: 02 Normalize dates on promoted branch
-    runs-on: ubuntu-latest
-    needs:
-      - guard
-      - promote_branch
-
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-
-    permissions:
-      contents: write
-
-    steps:
-      - name: Checkout promoted branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.guard.outputs.promoted_branch }}
-          fetch-depth: 0
-
-      - name: Configure Git identity
-        run: |
-          set -euxo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
-
-      - name: Validate repo prerequisites
-        run: |
-          set -euxo pipefail
-          test -d src || (echo "ERROR: src directory missing" && exit 1)
-          test -f CHANGELOG.md || (echo "ERROR: CHANGELOG.md missing" && exit 1)
-
-          VERSION="${{ needs.guard.outputs.version }}"
-
-          if ! grep -F "## [${VERSION}] " CHANGELOG.md >/dev/null; then
-            echo "ERROR: CHANGELOG.md missing heading for version [${VERSION}]" >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-
-      - name: Normalize dates using repository script only
-        run: |
-          set -euxo pipefail
-
-          TODAY="${{ needs.guard.outputs.today_utc }}"
-          VERSION="${{ needs.guard.outputs.version }}"
-
-          {
-            echo "### Date normalization (repo script only)"
-            echo "```json"
-            echo "{\"today_utc\":\"${TODAY}\",\"version\":\"${VERSION}\"}"
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-          CANDIDATES=(
-            "scripts/update_dates.sh"
-            "scripts/release/update_dates.sh"
-            "scripts/release/update_dates"
-          )
-
-          SCRIPT=""
-          for c in "${CANDIDATES[@]}"; do
-            if [ -f "${c}" ]; then
-              SCRIPT="${c}"
-              break
-            fi
-          done
-
-          if [ -z "${SCRIPT}" ]; then
-            FOUND="$(find . -maxdepth 3 -type f \( -name 'update_dates.sh' -o -name 'update-dates.sh' \) 2>/dev/null | head -n 5 || true)"
-            {
-              echo "ERROR: Date normalization script not found in approved locations."
-              echo "Approved locations:"
-              printf '%s\n' "${CANDIDATES[@]}"
-              echo "Discovered candidates (first 5):"
-              echo "${FOUND:-<none>}"
-              echo "Required action: add scripts/update_dates.sh (or scripts/release/update_dates.sh) to the repo."
-            } >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-
-          echo "Using date script: ${SCRIPT}" >> "${GITHUB_STEP_SUMMARY}"
-
-          chmod +x "${SCRIPT}"
-          "${SCRIPT}" "${TODAY}" "${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
-
-          {
-            echo "### Date normalization diffstat"
-            echo "```"
-            git diff --stat || true
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-      - name: Commit normalized dates (if changed)
-        run: |
-          set -euxo pipefail
-          if git diff --quiet; then
-            echo "No date changes to commit" >> "${GITHUB_STEP_SUMMARY}"
-            exit 0
-          fi
-          git add -A
-          git commit -m "chore(release): normalize dates" || true
-          git push origin "HEAD:${{ needs.guard.outputs.promoted_branch }}"
-
-  build_and_release:
-    name: 03 Build ZIP, upload to SFTP, create GitHub release
-    runs-on: ubuntu-latest
-    needs:
-      - guard
-      - normalize_dates
-
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-
-    permissions:
-      contents: write
-      id-token: write
-      attestations: write
-
-    steps:
-      - name: Checkout promoted branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.guard.outputs.promoted_branch }}
-          fetch-depth: 0
-
-      - name: Configure Git identity
-        run: |
-          set -euxo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
-
-      - name: Run repository validation scripts (Joomla)
-        run: |
-          set -euxo pipefail
-
-          required_scripts=(
-            "scripts/validate_manifest.sh"
-            "scripts/validate_manifest_location.sh"
-          )
-
-          missing=()
-          for s in "${required_scripts[@]}"; do
-            if [ ! -f "${s}" ]; then
-              missing+=("${s}")
-            fi
-          done
-
-          if [ "${#missing[@]}" -gt 0 ]; then
-            {
-              echo "### Script guardrails"
-              echo "```json"
-              printf '{"status":"fail","missing_required_scripts":['
-              sep=""
-              for m in "${missing[@]}"; do
-                printf '%s"%s"' "${sep}" "${m}"
-                sep=","
-              done
-              printf ']}\n'
-              echo "```"
-              echo "Required action: add missing scripts under /scripts and ensure they are executable."
-            } >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-
-          for s in "${required_scripts[@]}"; do
-            chmod +x "${s}"
-            "${s}" >> "${GITHUB_STEP_SUMMARY}"
-          done
-
-      - name: Build Joomla ZIP (extension type aware)
-        id: build
-        run: |
-          set -euxo pipefail
-
-          VERSION="${{ needs.guard.outputs.version }}"
-          REPO="${{ github.event.repository.name }}"
-          CHANNEL="${{ needs.guard.outputs.channel }}"
-
-          test -d src || (echo "ERROR: src directory missing" && exit 1)
-
-          DIST_DIR="${GITHUB_WORKSPACE}/dist"
-          mkdir -p "${DIST_DIR}"
-
-          # Discover primary manifest.
-          MANIFEST=""
-          if [ -f "src/templateDetails.xml" ]; then
-            MANIFEST="src/templateDetails.xml"
-          elif find src -maxdepth 4 -type f -name 'templateDetails.xml' | head -n 1 | grep -q .; then
-            MANIFEST="$(find src -maxdepth 4 -type f -name 'templateDetails.xml' | head -n 1)"
-          elif find src -maxdepth 4 -type f -name 'pkg_*.xml' | head -n 1 | grep -q .; then
-            MANIFEST="$(find src -maxdepth 4 -type f -name 'pkg_*.xml' | head -n 1)"
-          elif find src -maxdepth 4 -type f -name 'com_*.xml' | head -n 1 | grep -q .; then
-            MANIFEST="$(find src -maxdepth 4 -type f -name 'com_*.xml' | head -n 1)"
-          elif find src -maxdepth 4 -type f -name 'mod_*.xml' | head -n 1 | grep -q .; then
-            MANIFEST="$(find src -maxdepth 4 -type f -name 'mod_*.xml' | head -n 1)"
-          elif find src -maxdepth 6 -type f -name 'plg_*.xml' | head -n 1 | grep -q .; then
-            MANIFEST="$(find src -maxdepth 6 -type f -name 'plg_*.xml' | head -n 1)"
-          else
-            MANIFEST="$(grep -Rsl --include='*.xml' '<extension' src | head -n 1 || true)"
-          fi
-
-          if [ -z "${MANIFEST}" ]; then
-            echo "ERROR: No Joomla manifest XML found under src" >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-
-          # Read extension type attribute.
-          EXT_TYPE="$(grep -Eo 'type="[^"]+"' "${MANIFEST}" | head -n 1 | cut -d '"' -f2 || true)"
-          if [ -z "${EXT_TYPE}" ]; then
-            EXT_TYPE="unknown"
-          fi
-
-          ROOT="$(dirname "${MANIFEST}")"
-
-          # Package nuance: ensure the package manifest itself sits at zip root.
-          # If the manifest is in a nested folder, we package that folder as root.
-          ZIP="${REPO}-${VERSION}-${CHANNEL}-${EXT_TYPE}.zip"
-
-          (cd "${ROOT}" && zip -r -X "${DIST_DIR}/${ZIP}" . \
-            -x "**/.git/**" \
-            -x "**/.github/**" \
-            -x "**/.DS_Store" \
-            -x "**/__MACOSX/**")
-
-          echo "zip_name=${ZIP}" >> "${GITHUB_OUTPUT}"
-          echo "dist_dir=${DIST_DIR}" >> "${GITHUB_OUTPUT}"
-          echo "root=${ROOT}" >> "${GITHUB_OUTPUT}"
-          echo "manifest=${MANIFEST}" >> "${GITHUB_OUTPUT}"
-          echo "ext_type=${EXT_TYPE}" >> "${GITHUB_OUTPUT}"
-
-          ZIP_BYTES="$(stat -c%s "${DIST_DIR}/${ZIP}")"
-
-          {
-            echo "### Build report"
-            echo "```json"
-            echo "{\"repository\":\"${GITHUB_REPOSITORY}\",\"workflow\":\"${GITHUB_WORKFLOW}\",\"job\":\"${GITHUB_JOB}\",\"run_id\":${GITHUB_RUN_ID},\"run_number\":${GITHUB_RUN_NUMBER},\"run_attempt\":${GITHUB_RUN_ATTEMPT},\"run_url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\",\"actor\":\"${GITHUB_ACTOR}\",\"sha\":\"${GITHUB_SHA}\",\"root\":\"${ROOT}\",\"manifest\":\"${MANIFEST}\",\"extension_type\":\"${EXT_TYPE}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES}}"
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-  release_event_report:
-    name: 99 Release event report (GitHub UI created release)
-    runs-on: ubuntu-latest
-    needs: guard
-
-    if: ${{ github.event_name == 'release' }}
-
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout tag
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-          fetch-depth: 0
-
-      - name: Publish JSON report to job summary
-        env:
-          IS_PRERELEASE: ${{ github.event.release.prerelease }}
-        run: |
-          set -euxo pipefail
-
-          VERSION="${{ needs.guard.outputs.version }}"
-          TAG="${{ github.ref_name }}"
-
-          echo "### Release event report (JSON)" >> "${GITHUB_STEP_SUMMARY}"
-          echo "```json" >> "${GITHUB_STEP_SUMMARY}"
-          printf '{"repository":"%s","workflow":"%s","job":"%s","run_id":%s,"run_number":%s,"run_attempt":%s,"run_url":"%s","actor":"%s","sha":"%s","version":"%s","tag":"%s","prerelease":%s}
-' \
-            "${GITHUB_REPOSITORY}" \
-            "${GITHUB_WORKFLOW}" \
-            "${GITHUB_JOB}" \
-            "${GITHUB_RUN_ID}" \
-            "${GITHUB_RUN_NUMBER}" \
-            "${GITHUB_RUN_ATTEMPT}" \
-            "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
-            "${GITHUB_ACTOR}" \
-            "${GITHUB_SHA}" \
-            "${VERSION}" \
-            "${TAG}" \
-            "${IS_PRERELEASE}" >> "${GITHUB_STEP_SUMMARY}"
-          echo "```" >> "${GITHUB_STEP_SUMMARY}"
+# ============================================================================
+# FILE INFORMATION
+# ============================================================================
+# DEFGROUP: Script.Library
+# INGROUP: RepoHealth
+# REPO: https://github.com/mokoconsulting-tech
+# PATH: /scripts/lib/find_files.sh
+# VERSION: 01.00.00
+# BRIEF: Find files by glob patterns with standard ignore rules for CI checks
+# NOTE:
+# ============================================================================
+
+set -eu
+
+# Shared utilities
+. "$(dirname "$0")/common.sh"
+
+# ----------------------------------------------------------------------------
+# Purpose:
+# - Provide a consistent, reusable file discovery primitive for repo scripts.
+# - Support multiple glob patterns.
+# - Apply standard ignore rules to reduce noise (vendor, node_modules, .git).
+# - Output one path per line, relative to repo root.
+#
+# Usage:
+#   ./scripts/lib/find_files.sh <glob> [<glob> ...]
+#
+# Examples:
+#   ./scripts/lib/find_files.sh "*.yml" "*.yaml"
+#   ./scripts/lib/find_files.sh "src/**/*.php" "tests/**/*.php"
+# ----------------------------------------------------------------------------
+
+ROOT="$(script_root)"
+
+if [ "${1:-}" = "" ]; then
+    die "Usage: $0 <glob> [<glob> ...]"
+fi
+
+require_cmd find
+require_cmd sed
+
+# Standard excludes (pragmatic defaults for CI)
+# Note: Keep these broad to avoid scanning generated or third-party content.
+EXCLUDES='
+    -path "*/.git/*" -o
+    -path "*/.github/*/node_modules/*" -o
+    -path "*/node_modules/*" -o
+    -path "*/vendor/*" -o
+    -path "*/dist/*" -o
+    -path "*/build/*" -o
+    -path "*/cache/*" -o
+    -path "*/tmp/*" -o
+    -path "*/.tmp/*" -o
+    -path "*/.cache/*"
+'
+
+# Convert a glob (bash-like) to a find -path pattern.
+# - Supports ** for "any directories" by translating to *
+# - Ensures leading */ so patterns apply anywhere under repo root
+glob_to_find_path() {
+    g="$1"
+
+    # normalize path separators for WSL/CI compatibility
+    g="$(normalize_path "$g")"
+
+    # translate ** to * (find -path uses shell glob semantics)
+    g="$(printf '%s' "$g" | sed 's|\*\*|*|g')"
+
+    case "$g" in
+        /*) printf '%s\n' "$g" ;;
+        *)  printf '%s\n' "*/$g" ;;
+    esac
+}
+
+# Build a single find invocation that ORs all patterns.
+# Shell portability note: avoid arrays; build an expression string.
+PAT_EXPR=""
+for GLOB in "$@"; do
+    P="$(glob_to_find_path "$GLOB")"
+    if [ -z "$PAT_EXPR" ]; then
+        PAT_EXPR="-path \"$P\""
+    else
+        PAT_EXPR="$PAT_EXPR -o -path \"$P\""
+    fi
+done
+
+# Execute find and emit relative paths.
+# - Use eval to apply the constructed predicate string safely as a single expression.
+# - We scope to files only.
+# - We prune excluded directories.
+cd "$ROOT"
+
+# shellcheck disable=SC2086
+eval "find . \\( $EXCLUDES \\) -prune -o -type f \\( $PAT_EXPR \\) -print" \
+    | sed 's|^\./||' \
+    | sed '/^$/d' \
+    | sort -u
