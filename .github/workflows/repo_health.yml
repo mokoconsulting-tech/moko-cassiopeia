@@ -104,8 +104,7 @@ jobs:
             lines.push(`Allowed: ${allowed}`);
             lines.push("");
             lines.push("Policy: This workflow runs only for users with admin permission on the repository.");
-            await core.summary.addRaw(lines.join("
-")).write();
+            await core.summary.addRaw(lines.join("\n")).write();
 
       - name: Deny execution when not permitted
         if: ${{ steps.perm.outputs.allowed != 'true' }}
