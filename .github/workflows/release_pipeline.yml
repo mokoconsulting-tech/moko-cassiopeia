@@ -5,13 +5,26 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
 # FILE INFORMATION
 # DEFGROUP: GitHub.Workflow
 # INGROUP: MokoStandards.Validation
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/repo_health.yml
 # VERSION: 03.05.00
-# BRIEF: Enforces Joomla repository guardrails by validating release configuration, scripts governance, and core repository health.
+# BRIEF: Enforces Joomla repository guardrails by validating release configuration, required validation scripts, tooling availability, and core repository health artifacts.
 # ============================================================================
 
 name: Repo Health
@@ -28,11 +41,15 @@ on:
   workflow_dispatch:
     inputs:
       profile:
-        description: Which configuration profile to validate
+        description: Which configuration profile to validate. release checks SFTP variables used by release pipeline. scripts checks baseline script prerequisites. repo runs repository health only. all runs release, scripts, and repo health.
         required: true
         default: all
         type: choice
-        options: [all, release, scripts, repo]
+        options:
+          - all
+          - release
+          - scripts
+          - repo
   pull_request:
     paths:
       - .github/workflows/**
@@ -47,8 +64,14 @@ jobs:
   access_check:
     name: Access control
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
     outputs:
       allowed: ${{ steps.perm.outputs.allowed }}
+      permission: ${{ steps.perm.outputs.permission }}
+
     steps:
       - name: Check actor permission admin only
         id: perm
@@ -60,131 +83,625 @@ jobs:
             const repo = context.repo.repo;
             const username = context.actor;
 
-            const res = await github.rest.repos.getCollaboratorPermissionLevel({ owner, repo, username });
-            const permission = (res?.data?.permission || "unknown").toLowerCase();
-            const allowed = permission === "admin";
+            const res = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner,
+              repo,
+              username,
+            });
 
+            const permission = (res?.data?.permission || "unknown").toLowerCase();
+            const allowed = (permission === "admin");
+
+            core.setOutput("permission", permission);
             core.setOutput("allowed", allowed ? "true" : "false");
 
-            const lines = [
-              "### Access control",
-              "",
-              `Actor: ${username}`,
-              `Permission: ${permission}`,
-              `Allowed: ${allowed}`,
-              "",
-              "Policy: Workflow requires admin permission"
-            ];
-
+            const lines = [];
+            lines.push("### Access control");
+            lines.push("");
+            lines.push(`Actor: ${username}`);
+            lines.push(`Permission: ${permission}`);
+            lines.push(`Allowed: ${allowed}`);
+            lines.push("");
+            lines.push("Policy: This workflow runs only for users with admin permission on the repository.");
             await core.summary.addRaw(lines.join("\n")).write();
 
       - name: Deny execution when not permitted
         if: ${{ steps.perm.outputs.allowed != 'true' }}
         run: |
-          echo "ERROR: Access denied. Admin permission required." >> "$GITHUB_STEP_SUMMARY"
+          set -euo pipefail
+          echo "ERROR: Access denied. Actor must have admin permission to run this workflow." >> "${GITHUB_STEP_SUMMARY}"
           exit 1
 
   release_config:
     name: Release configuration
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [access_check]
     if: ${{ needs.access_check.outputs.allowed == 'true' }}
-    steps:
-      - uses: actions/checkout@v4
+    permissions:
+      contents: read
 
-      - name: Guardrails release configuration
+    steps:
+      $1
+      - name: Load guardrails definition
         env:
-          PROFILE_RAW: ${{ github.event.inputs.profile }}
-          FTP_HOST: ${{ secrets.FTP_HOST }}
-          FTP_USER: ${{ secrets.FTP_USER }}
-          FTP_KEY: ${{ secrets.FTP_KEY }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
-          FTP_PORT: ${{ secrets.FTP_PORT }}
+          GUARDRAILS_DEFINITION_URL: ${{ vars.MOKOSTANDARDS_GUARDRAILS_URL || 'https://raw.githubusercontent.com/mokoconsulting-tech/MokoStandards/main/repo-guardrails.definition.json' }}
+        run: |
+          set -euo pipefail
+
+          url="${GUARDRAILS_DEFINITION_URL}"
+          echo "### Guardrails policy source" >> "${GITHUB_STEP_SUMMARY}"
+          echo "${url}" >> "${GITHUB_STEP_SUMMARY}"
+
+          if ! curl -fsSL "${url}" -o /tmp/repo_guardrails.definition.json; then
+            echo "Warning: Unable to fetch guardrails definition. Falling back to workflow defaults." >> "${GITHUB_STEP_SUMMARY}"
+            echo "GUARDRAILS_LOADED=false" >> "${GITHUB_ENV}"
+            exit 0
+          fi
+
+          python3 - <<'PY'
+import json
+import os
+
+path = "/tmp/repo_guardrails.definition.json"
+with open(path, "r", encoding="utf-8") as f:
+  data = json.load(f)
+
+env_path = os.environ.get("GITHUB_ENV")
+if not env_path:
+  raise SystemExit("GITHUB_ENV not set")
+
+def put_multiline(key: str, values):
+  vals = [str(v) for v in (values or []) if str(v).strip()]
+  with open(env_path, "a", encoding="utf-8") as w:
+    w.write(f"{key}<<EOF
+")
+    for v in vals:
+      w.write(v + "
+")
+    w.write("EOF
+")
+
+put_multiline("GUARDRAILS_REQUIRED_FILES", data.get("repo", {}).get("required_files"))
+put_multiline("GUARDRAILS_OPTIONAL_FILES", data.get("repo", {}).get("optional_files"))
+put_multiline("GUARDRAILS_REQUIRED_PATHS", data.get("repo", {}).get("required_paths"))
+put_multiline("GUARDRAILS_DISALLOWED_DIRS", data.get("repo", {}).get("paths", {}).get("disallowed_dirs"))
+
+put_multiline("GUARDRAILS_RELEASE_REQUIRED_SECRETS", data.get("release", {}).get("required_secrets"))
+put_multiline("GUARDRAILS_RELEASE_OPTIONAL_SECRETS", data.get("release", {}).get("optional_secrets"))
+put_multiline("GUARDRAILS_RELEASE_OPTIONAL_VARS", data.get("release", {}).get("optional_vars"))
+put_multiline("GUARDRAILS_RELEASE_PROTOCOL_ALLOWED", data.get("release", {}).get("protocol", {}).get("allowed"))
+
+put_multiline("GUARDRAILS_SCRIPTS_ALLOWED_DIRS", data.get("scripts", {}).get("allowed_top_level_dirs"))
+put_multiline("GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS", data.get("scripts", {}).get("recommended_dirs"))
+put_multiline("GUARDRAILS_SCRIPTS_REQUIRED_VALIDATE_FILES", data.get("scripts", {}).get("required_validate_files_when_present"))
+
+with open(env_path, "a", encoding="utf-8") as w:
+  w.write("GUARDRAILS_LOADED=true
+")
+
+print("Guardrails definition loaded")
+PY
+
+      - name: Guardrails release secrets and vars
+        env:
+          PROFILE_RAW: "${{ github.event.inputs.profile }}"
+          FTP_HOST: "${{ secrets.FTP_HOST }}"
+          FTP_USER: "${{ secrets.FTP_USER }}"
+          FTP_KEY: "${{ secrets.FTP_KEY }}"
+          FTP_PASSWORD: "${{ secrets.FTP_PASSWORD }}"
+          FTP_PATH: "${{ secrets.FTP_PATH }}"
+          FTP_PROTOCOL: "${{ secrets.FTP_PROTOCOL }}"
+          FTP_PORT: "${{ secrets.FTP_PORT }}"
+          FTP_PATH_SUFFIX: "${{ vars.FTP_PATH_SUFFIX }}"
         run: |
           set -euo pipefail
 
           profile="${PROFILE_RAW:-all}"
-          if [[ "$profile" == "scripts" || "$profile" == "repo" ]]; then
-            echo "Skipping release checks" >> "$GITHUB_STEP_SUMMARY"
+          case "${profile}" in
+            all|release|scripts|repo) ;;
+            *)
+              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+              ;;
+          esac
+
+          if [ "${profile}" = "scripts" ] || [ "${profile}" = "repo" ]; then
+            echo "Profile ${profile} selected. Skipping release configuration checks." >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
 
-          required=(FTP_HOST FTP_USER FTP_KEY)
+          required=("FTP_HOST" "FTP_USER" "FTP_KEY" "FTP_PATH")
+          optional=("FTP_PASSWORD" "FTP_PROTOCOL" "FTP_PORT" "FTP_PATH_SUFFIX")
+
           missing=()
+          missing_optional=()
+
           for k in "${required[@]}"; do
-            [[ -z "${!k:-}" ]] && missing+=("$k")
+            v="${!k:-}"
+            [ -z "${v}" ] && missing+=("${k}")
           done
 
-          if [[ "${#missing[@]}" -gt 0 ]]; then
-            echo "### Missing required release configuration" >> "$GITHUB_STEP_SUMMARY"
-            for m in "${missing[@]}"; do echo "- $m" >> "$GITHUB_STEP_SUMMARY"; done
+          for k in "${optional[@]}"; do
+            v="${!k:-}"
+            [ -z "${v}" ] && missing_optional+=("${k}")
+          done
+
+          proto="${FTP_PROTOCOL:-sftp}"
+          if [ -n "${FTP_PROTOCOL:-}" ] && [ "${proto}" != "sftp" ]; then
+            missing+=("FTP_PROTOCOL_INVALID")
+          fi
+
+          if [ "${#missing_optional[@]}" -gt 0 ]; then
+            echo "### Missing optional release configuration" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${missing_optional[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+          fi
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "### Missing required release configuration" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${missing[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+            echo "ERROR: Guardrails failed. Missing required release configuration." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
-          echoF
-          echo "Release configuration validated" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Guardrails release configuration" >> "${GITHUB_STEP_SUMMARY}"
+          echo "All required release variables present." >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Guardrails SFTP connectivity
+        env:
+          PROFILE_RAW: "${{ github.event.inputs.profile }}"
+          FTP_HOST: "${{ secrets.FTP_HOST }}"
+          FTP_USER: "${{ secrets.FTP_USER }}"
+          FTP_KEY: "${{ secrets.FTP_KEY }}"
+          FTP_PASSWORD: "${{ secrets.FTP_PASSWORD }}"
+          FTP_PORT: "${{ secrets.FTP_PORT }}"
+        run: |
+          set -euo pipefail
+
+          profile="${PROFILE_RAW:-all}"
+          case "${profile}" in
+            all|release|scripts|repo) ;;
+            *)
+              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+              ;;
+          esac
+
+          if [ "${profile}" = "scripts" ] || [ "${profile}" = "repo" ]; then
+            echo "Profile ${profile} selected. Skipping SFTP connectivity check." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          mkdir -p "$HOME/.ssh"
+          key_file="$HOME/.ssh/ci_sftp_key"
+          printf '%s' "${FTP_KEY}" > "${key_file}"
+          printf '\n' >> "${key_file}"
+          chmod 600 "${key_file}"
+
+          if [ -n "${FTP_PASSWORD:-}" ]; then
+            first_line="$(head -n 1 "${key_file}" || true)"
+            if printf '%s' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
+              echo "ERROR: FTP_KEY appears to be a PuTTY PPK. Provide an OpenSSH private key." >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+            fi
+            ssh-keygen -p -P "${FTP_PASSWORD}" -N "" -f "${key_file}" >/dev/null
+          fi
+
+          port="${FTP_PORT:-22}"
+
+          echo "### SFTP connectivity test" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Attempting non-destructive SFTP session" >> "${GITHUB_STEP_SUMMARY}"
+
+          set +e
+          printf 'pwd
+bye
+' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+          sftp_rc=$?
+          set -e
+
+          echo "### SFTP connectivity result" >> "${GITHUB_STEP_SUMMARY}"
+          if [ "${sftp_rc}" -eq 0 ]; then
+            echo "Status: SUCCESS" >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          echo "Status: FAILED (exit code ${sftp_rc})" >> "${GITHUB_STEP_SUMMARY}"
+          echo "" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Last SFTP output" >> "${GITHUB_STEP_SUMMARY}"
+          tail -n 20 /tmp/sftp_check.log >> "${GITHUB_STEP_SUMMARY}" || true
+          exit 1
 
   scripts_config:
     name: Scripts and tooling
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [access_check]
     if: ${{ needs.access_check.outputs.allowed == 'true' }}
-    steps:
-      - uses: actions/checkout@v4
+    permissions:
+      contents: read
 
-      - name: Validate scripts governance
+    steps:
+      $1
+      - name: Load guardrails definition
         env:
-          PROFILE_RAW: ${{ github.event.inputs.profile }}
+          GUARDRAILS_DEFINITION_URL: ${{ vars.MOKOSTANDARDS_GUARDRAILS_URL || 'https://raw.githubusercontent.com/mokoconsulting-tech/MokoStandards/main/repo-guardrails.definition.json' }}
+        run: |
+          set -euo pipefail
+
+          url="${GUARDRAILS_DEFINITION_URL}"
+          echo "### Guardrails policy source" >> "${GITHUB_STEP_SUMMARY}"
+          echo "${url}" >> "${GITHUB_STEP_SUMMARY}"
+
+          if ! curl -fsSL "${url}" -o /tmp/repo_guardrails.definition.json; then
+            echo "Warning: Unable to fetch guardrails definition. Falling back to workflow defaults." >> "${GITHUB_STEP_SUMMARY}"
+            echo "GUARDRAILS_LOADED=false" >> "${GITHUB_ENV}"
+            exit 0
+          fi
+
+          python3 - <<'PY'
+import json
+import os
+
+path = "/tmp/repo_guardrails.definition.json"
+with open(path, "r", encoding="utf-8") as f:
+  data = json.load(f)
+
+env_path = os.environ.get("GITHUB_ENV")
+if not env_path:
+    raise SystemExit("GITHUB_ENV not set")
+
+def put_multiline(key: str, values):
+    vals = [str(v) for v in (values or []) if str(v).strip()]
+    with open(env_path, "a", encoding="utf-8") as w:
+        w.write(f"{key}<<EOF\n")
+        for v in vals:
+            w.write(f"{v}\n")
+        w.write("EOF\n")
+
+put_multiline("GUARDRAILS_REQUIRED_FILES", data.get("repo", {}).get("required_files"))
+put_multiline("GUARDRAILS_OPTIONAL_FILES", data.get("repo", {}).get("optional_files"))
+put_multiline("GUARDRAILS_REQUIRED_PATHS", data.get("repo", {}).get("required_paths"))
+put_multiline("GUARDRAILS_DISALLOWED_DIRS", data.get("repo", {}).get("paths", {}).get("disallowed_dirs"))
+
+put_multiline("GUARDRAILS_RELEASE_REQUIRED_SECRETS", data.get("release", {}).get("required_secrets"))
+put_multiline("GUARDRAILS_RELEASE_OPTIONAL_SECRETS", data.get("release", {}).get("optional_secrets"))
+put_multiline("GUARDRAILS_RELEASE_OPTIONAL_VARS", data.get("release", {}).get("optional_vars"))
+put_multiline("GUARDRAILS_RELEASE_PROTOCOL_ALLOWED", data.get("release", {}).get("protocol", {}).get("allowed"))
+
+put_multiline("GUARDRAILS_SCRIPTS_ALLOWED_DIRS", data.get("scripts", {}).get("allowed_top_level_dirs"))
+put_multiline("GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS", data.get("scripts", {}).get("recommended_dirs"))
+put_multiline("GUARDRAILS_SCRIPTS_REQUIRED_VALIDATE_FILES", data.get("scripts", {}).get("required_validate_files_when_present"))
+
+with open(env_path, "a", encoding="utf-8") as w:
+  w.write("GUARDRAILS_LOADED=true\n")
+
+print("Guardrails definition loaded")
+PY
+
+      - name: Guardrails scripts folder governance
+        env:
+          PROFILE_RAW: "${{ github.event.inputs.profile }}"
         run: |
           set -euo pipefail
 
           profile="${PROFILE_RAW:-all}"
-          [[ "$profile" == "release" || "$profile" == "repo" ]] && exit 0
+          case "${profile}" in
+            all|release|scripts|repo) ;;
+            *)
+              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+              ;;
+          esac
 
-          required_dirs=(scripts/fix scripts/lib scripts/release scripts/run scripts/validate)
-          missing_dirs=()
-
-          for d in "${required_dirs[@]}"; do
-            [[ ! -d "$d" ]] && missing_dirs+=("$d/")
-          done
-
-          if [[ "${#missing_dirs[@]}" -gt 0 ]]; then
-            echo "### Missing script directories" >> "$GITHUB_STEP_SUMMARY"
-            for d in "${missing_dirs[@]}"; do echo "- $d" >> "$GITHUB_STEP_SUMMARY"; done
-            exit 1
+          if [ "${profile}" = "release" ] || [ "${profile}" = "repo" ]; then
+            echo "Profile ${profile} selected. Skipping scripts checks." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
           fi
 
-          echo "Scripts governance validated" >> "$GITHUB_STEP_SUMMARY"
+          # scripts/ is OPTIONAL and informational only
+          if [ ! -d "scripts" ]; then
+            echo "### Scripts folder not present" >> "${GITHUB_STEP_SUMMARY}"
+            echo "Warning: scripts/ directory is optional. No scripts governance enforced." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          required_script_dirs=(
+            "scripts/fix"
+            "scripts/lib"
+            "scripts/release"
+            "scripts/run"
+            "scripts/validate"
+          )
+
+          optional_script_dirs=(
+            "scripts/config"
+            "scripts/tools"
+            "scripts/docs"
+          )
+
+          allowed_script_dirs=(
+            "scripts"
+            "scripts/fix"
+            "scripts/lib"
+            "scripts/release"
+            "scripts/run"
+            "scripts/validate"
+            "scripts/config"
+            "scripts/tools"
+            "scripts/docs"
+          )
+
+          missing_dirs=()
+          unapproved_dirs=()
+
+          for d in "${required_script_dirs[@]}"; do
+            [ ! -d "${d}" ] && missing_dirs+=("${d}/")
+          done
+
+          while IFS= read -r d; do
+            allowed=false
+            for a in "${allowed_script_dirs[@]}"; do
+              [ "${d}" = "${a}" ] && allowed=true
+            done
+            [ "${allowed}" = false ] && unapproved_dirs+=("${d}/")
+          done < <(find scripts -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sed 's#^\./##')
+
+          if [ "${#missing_dirs[@]}" -gt 0 ]; then
+            echo "### Scripts governance warnings" >> "${GITHUB_STEP_SUMMARY}"
+            echo "Missing recommended script directories:" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${missing_dirs[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+          fi
+
+          if [ "${#unapproved_dirs[@]}" -gt 0 ]; then
+            echo "### Scripts governance warnings" >> "${GITHUB_STEP_SUMMARY}"
+            echo "Unapproved script directories detected:" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${unapproved_dirs[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+          fi
+
+          {
+            echo "### Scripts governance summary"
+            echo "| Area | Status | Notes |"
+            echo "|------|--------|-------|"
+            if [ "${#missing_dirs[@]}" -gt 0 ]; then
+              echo "| Recommended directories | Warning | Missing recommended subfolders |"
+            else
+              echo "| Recommended directories | OK | All recommended subfolders present |"
+            fi
+            if [ "${#unapproved_dirs[@]}" -gt 0 ]; then
+              echo "| Directory policy | Warning | Unapproved directories detected |"
+            else
+              echo "| Directory policy | OK | No unapproved directories |"
+            fi
+            echo "| Enforcement mode | Advisory | scripts folder is optional |"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          echo "Scripts governance completed in advisory mode." >> "${GITHUB_STEP_SUMMARY}"
+
 
   repo_health:
     name: Repository health
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [access_check]
     if: ${{ needs.access_check.outputs.allowed == 'true' }}
-    steps:
-      - uses: actions/checkout@v4
+    permissions:
+      contents: read
 
-      - name: Repository health checks
+    steps:
+      $1
+      - name: Load guardrails definition
         env:
-          PROFILE_RAW: ${{ github.event.inputs.profile }}
+          GUARDRAILS_DEFINITION_URL: ${{ vars.MOKOSTANDARDS_GUARDRAILS_URL || 'https://raw.githubusercontent.com/mokoconsulting-tech/MokoStandards/main/repo-guardrails.definition.json' }}
+        run: |
+          set -euo pipefail
+
+          url="${GUARDRAILS_DEFINITION_URL}"
+          echo "### Guardrails policy source" >> "${GITHUB_STEP_SUMMARY}"
+          echo "${url}" >> "${GITHUB_STEP_SUMMARY}"
+
+          if ! curl -fsSL "${url}" -o /tmp/repo_guardrails.definition.json; then
+            echo "Warning: Unable to fetch guardrails definition. Falling back to workflow defaults." >> "${GITHUB_STEP_SUMMARY}"
+            echo "GUARDRAILS_LOADED=false" >> "${GITHUB_ENV}"
+            exit 0
+          fi
+
+          python3 - <<'PY'
+import json
+import os
+
+path = "/tmp/repo_guardrails.definition.json"
+with open(path, "r", encoding="utf-8") as f:
+  data = json.load(f)
+
+env_path = os.environ.get("GITHUB_ENV")
+if not env_path:
+  raise SystemExit("GITHUB_ENV not set")
+
+def put_multiline(key: str, values):
+    vals = [str(v) for v in (values or []) if str(v).strip()]
+    with open(env_path, "a", encoding="utf-8") as w:
+        w.write(f"{key}<<EOF\n")
+        for v in vals:
+            w.write(f"{v}\n")
+        w.write("EOF\n")
+
+put_multiline("GUARDRAILS_REQUIRED_FILES", data.get("repo", {}).get("required_files"))
+put_multiline("GUARDRAILS_OPTIONAL_FILES", data.get("repo", {}).get("optional_files"))
+put_multiline("GUARDRAILS_REQUIRED_PATHS", data.get("repo", {}).get("required_paths"))
+put_multiline("GUARDRAILS_DISALLOWED_DIRS", data.get("repo", {}).get("paths", {}).get("disallowed_dirs"))
+
+put_multiline("GUARDRAILS_RELEASE_REQUIRED_SECRETS", data.get("release", {}).get("required_secrets"))
+put_multiline("GUARDRAILS_RELEASE_OPTIONAL_SECRETS", data.get("release", {}).get("optional_secrets"))
+put_multiline("GUARDRAILS_RELEASE_OPTIONAL_VARS", data.get("release", {}).get("optional_vars"))
+put_multiline("GUARDRAILS_RELEASE_PROTOCOL_ALLOWED", data.get("release", {}).get("protocol", {}).get("allowed"))
+
+put_multiline("GUARDRAILS_SCRIPTS_ALLOWED_DIRS", data.get("scripts", {}).get("allowed_top_level_dirs"))
+put_multiline("GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS", data.get("scripts", {}).get("recommended_dirs"))
+put_multiline("GUARDRAILS_SCRIPTS_REQUIRED_VALIDATE_FILES", data.get("scripts", {}).get("required_validate_files_when_present"))
+
+with open(env_path, "a", encoding="utf-8") as w:
+  w.write("GUARDRAILS_LOADED=true\n")
+
+print("Guardrails definition loaded")
+PY
+
+      - name: Repo health checks
+        env:
+          PROFILE_RAW: "${{ github.event.inputs.profile }}"
         run: |
           set -euo pipefail
 
           profile="${PROFILE_RAW:-all}"
-          [[ "$profile" == "release" || "$profile" == "scripts" ]] && exit 0
+          case "${profile}" in
+            all|release|scripts|repo) ;;
+            *)
+              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+              ;;
+          esac
 
-          required_files=(README.md LICENSE CHANGELOG.md CONTRIBUTING.md CODE_OF_CONDUCT.md TODO.md docs/docs-index.md)
-          missing=()
+          if [ "${profile}" = "release" ] || [ "${profile}" = "scripts" ]; then
+            echo "Profile ${profile} selected. Skipping repository health checks." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          required_files=(
+            "README.md"
+            "LICENSE"
+            "CHANGELOG.md"
+            "CONTRIBUTING.md"
+            "CODE_OF_CONDUCT.md"
+            "TODO.md"
+            "docs/docs-index.md"
+          )
+
+          optional_files=(
+            "SECURITY.md"
+            "GOVERNANCE.md"
+            ".editorconfig"
+            ".gitattributes"
+            ".gitignore"
+          )
+
+          required_paths=(
+            ".github/workflows"
+            "scripts"
+            "docs"
+            "dev"
+          )
+
+          missing_required=()
+          missing_optional=()
 
           for f in "${required_files[@]}"; do
-            [[ ! -f "$f" ]] && missing+=("$f")
+            [ ! -f "${f}" ] && missing_required+=("${f}")
           done
 
-          if [[ "${#missing[@]}" -gt 0 ]]; then
-            echo "### Missing required repository artifacts" >> "$GITHUB_STEP_SUMMARY"
-            for f in "${missing[@]}"; do echo "- $f" >> "$GITHUB_STEP_SUMMARY"; done
+          for f in "${optional_files[@]}"; do
+            [ ! -f "${f}" ] && missing_optional+=("${f}")
+          done
+
+          for p in "${required_paths[@]}"; do
+            [ ! -d "${p}" ] && missing_required+=("${p}/")
+          done
+
+          if [ -d "src" ]; then
+            missing_required+=("src/ (disallowed, use dev/ only)")
+          fi
+
+          git fetch origin --prune
+
+          dev_paths=()
+          dev_branches=()
+
+          while IFS= read -r b; do
+            name="${b#origin/}"
+            if [ "${name}" = "dev" ]; then
+              dev_branches+=("${name}")
+            else
+              dev_paths+=("${name}")
+            fi
+          done < <(git branch -r --list "origin/dev*" | sed 's/^ *//')
+
+          if [ "${#dev_paths[@]}" -eq 0 ]; then
+            missing_required+=("dev/* branch (e.g. dev/01.00.00)")
+          fi
+
+          if [ "${#dev_branches[@]}" -gt 0 ]; then
+            missing_required+=("invalid branch dev (must be dev/<version>)")
+          fi
+
+          content_warnings=()
+
+          if [ -f "CHANGELOG.md" ] && ! grep -Eq '^# Changelog' CHANGELOG.md; then
+            content_warnings+=("CHANGELOG.md missing '# Changelog' header")
+          fi
+
+          if [ -f "LICENSE" ] && ! grep -qiE 'GNU GENERAL PUBLIC LICENSE|GPL' LICENSE; then
+            content_warnings+=("LICENSE does not look like a GPL text")
+          fi
+
+          if [ -f "README.md" ] && ! grep -qiE 'moko|Moko' README.md; then
+            content_warnings+=("README.md missing expected brand keyword")
+          fi
+
+          export MISSING_REQUIRED="$(printf '%s\n' "${missing_required[@]:-}")"
+					export MISSING_OPTIONAL="$(printf '%s\n' "${missing_optional[@]:-}")"
+					export CONTENT_WARNINGS="$(printf '%s\n' "${content_warnings[@]:-}")"
+
+          report_json="$(python3 - <<'PY'
+import json
+import os
+
+profile = os.environ.get("PROFILE_RAW") or "all"
+required_files = ["README.md","LICENSE","CHANGELOG.md","CONTRIBUTING.md","CODE_OF_CONDUCT.md","TODO.md","docs/docs-index.md"]
+optional_files = ["SECURITY.md","GOVERNANCE.md",".editorconfig",".gitattributes",".gitignore"]
+required_paths = [".github/workflows","scripts","docs","dev"]
+
+missing_required = os.environ.get("MISSING_REQUIRED", "").splitlines() if os.environ.get("MISSING_REQUIRED") else []
+missing_optional = os.environ.get("MISSING_OPTIONAL", "").splitlines() if os.environ.get("MISSING_OPTIONAL") else []
+content_warnings = os.environ.get("CONTENT_WARNINGS", "").splitlines() if os.environ.get("CONTENT_WARNINGS") else []
+
+out = {
+  "profile": profile,
+  "checked": {
+    "required_files": required_files,
+    "optional_files": optional_files,
+    "required_paths": required_paths,
+  },
+  "missing_required": [x for x in missing_required if x],
+  "missing_optional": [x for x in missing_optional if x],
+  "content_warnings": [x for x in content_warnings if x],
+}
+
+print(json.dumps(out, indent=2))
+PY
+)"
+
+					{
+					  printf "### Guardrails repository health\n\n"
+					  printf "### Guardrails report (JSON)\n"
+					  printf "```json\n"
+					  printf "%s\n" "${report_json}"
+					  printf "```\n"
+					} >> "${GITHUB_STEP_SUMMARY}"
+
+          if [ "${#missing_required[@]}" -gt 0 ]; then
+            echo "### Missing required repo artifacts" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${missing_required[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+            echo "ERROR: Guardrails failed. Missing required repository artifacts." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
-          echo "Repository health validated" >> "$GITHUB_STEP_SUMMARY"
+          if [ "${#missing_optional[@]}" -gt 0 ]; then
+            echo "### Missing optional repo artifacts" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${missing_optional[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+          fi
+
+          if [ "${#content_warnings[@]}" -gt 0 ]; then
+            echo "### Repo content warnings" >> "${GITHUB_STEP_SUMMARY}"
+            for m in "${content_warnings[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+          fi
+
+          echo "Repository health guardrails passed." >> "${GITHUB_STEP_SUMMARY}"
+\n
