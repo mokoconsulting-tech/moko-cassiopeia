@@ -505,25 +505,25 @@ jobs:
           export CONTENT_WARNINGS="$(printf '%s\n' "${content_warnings[@]:-}")"
 
           report_json="$(python3 - <<'PY'
-import json
-import os
+          import json
+          import os
 
-profile = os.environ.get('PROFILE_RAW') or 'all'
+          profile = os.environ.get('PROFILE_RAW') or 'all'
 
-missing_required = os.environ.get('MISSING_REQUIRED', '').splitlines() if os.environ.get('MISSING_REQUIRED') else []
-missing_optional = os.environ.get('MISSING_OPTIONAL', '').splitlines() if os.environ.get('MISSING_OPTIONAL') else []
-content_warnings = os.environ.get('CONTENT_WARNINGS', '').splitlines() if os.environ.get('CONTENT_WARNINGS') else []
+          missing_required = os.environ.get('MISSING_REQUIRED', '').splitlines() if os.environ.get('MISSING_REQUIRED') else []
+          missing_optional = os.environ.get('MISSING_OPTIONAL', '').splitlines() if os.environ.get('MISSING_OPTIONAL') else []
+          content_warnings = os.environ.get('CONTENT_WARNINGS', '').splitlines() if os.environ.get('CONTENT_WARNINGS') else []
 
-out = {
-  'profile': profile,
-  'missing_required': [x for x in missing_required if x],
-  'missing_optional': [x for x in missing_optional if x],
-  'content_warnings': [x for x in content_warnings if x],
-}
+          out = {
+            'profile': profile,
+            'missing_required': [x for x in missing_required if x],
+            'missing_optional': [x for x in missing_optional if x],
+            'content_warnings': [x for x in content_warnings if x],
+          }
 
-print(json.dumps(out, indent=2))
-PY
-)"
+          print(json.dumps(out, indent=2))
+          PY
+          )"
 
           {
             printf '%s\n' '### Guardrails repository health'
