@@ -25,6 +25,7 @@
 # PATH: /.github/workflows/repo_health.yml
 # VERSION: 03.05.00
 # BRIEF: Enforces repository guardrails by validating release configuration, scripts governance, tooling availability, and core repository health artifacts using MokoStandards definition files.
+# NOTE: Field is user-managed.
 # ============================================================================
 
 name: Repo Health
@@ -103,7 +104,8 @@ jobs:
             lines.push(`Allowed: ${allowed}`);
             lines.push("");
             lines.push("Policy: This workflow runs only for users with admin permission on the repository.");
-            await core.summary.addRaw(lines.join("\n")).write();
+            await core.summary.addRaw(lines.join("
+")).write();
 
       - name: Deny execution when not permitted
         if: ${{ steps.perm.outputs.allowed != 'true' }}
@@ -212,10 +214,10 @@ PY
 
             opt=()
             if [ -n "${GUARDRAILS_RELEASE_OPTIONAL_SECRETS:-}" ]; then
-              while IFS= read -r v; do [ -n "${v}" ] && opt+=("${v}"); done < <(printf '%s\n' "${GUARDRAILS_RELEASE_OPTIONAL_SECRETS}")
+              while IFS= read -r v; do [ -n "${v}" ] && opt+=("${v}"); done < <(printf '%s\n' "${GUARDRAILS_RELEASE_OPTIONAL_SECRETS}" | sed '/^$/d')
             fi
             if [ -n "${GUARDRAILS_RELEASE_OPTIONAL_VARS:-}" ]; then
-              while IFS= read -r v; do [ -n "${v}" ] && opt+=("${v}"); done < <(printf '%s\n' "${GUARDRAILS_RELEASE_OPTIONAL_VARS}")
+              while IFS= read -r v; do [ -n "${v}" ] && opt+=("${v}"); done < <(printf '%s\n' "${GUARDRAILS_RELEASE_OPTIONAL_VARS}" | sed '/^$/d')
             fi
             if [ "${#opt[@]}" -gt 0 ]; then
               optional=("${opt[@]}")
@@ -310,7 +312,9 @@ PY
           echo "Attempting non-destructive SFTP session" >> "${GITHUB_STEP_SUMMARY}"
 
           set +e
-          printf 'pwd\nbye\n' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+          printf 'pwd
+bye
+' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
           sftp_rc=$?
           set -e
 
@@ -327,7 +331,7 @@ PY
           exit 1
 
   scripts_config:
-    name: Scripts and tooling
+    name: Scripts governance
     runs-on: ubuntu-latest
     timeout-minutes: 15
     needs: [access_check]
@@ -387,7 +391,7 @@ with open(env_path, "a", encoding="utf-8") as w:
 print("Guardrails definition loaded")
 PY
 
-      - name: Guardrails scripts folder governance
+      - name: Scripts folder governance
         env:
           PROFILE_RAW: "${{ github.event.inputs.profile }}"
         run: |
@@ -413,46 +417,28 @@ PY
             exit 0
           fi
 
-          required_script_dirs=("scripts/fix" "scripts/lib" "scripts/release" "scripts/run" "scripts/validate")
-          optional_script_dirs=("scripts/config" "scripts/tools" "scripts/docs")
-          allowed_script_dirs=(
-            "scripts"
-            "scripts/fix"
-            "scripts/lib"
-            "scripts/release"
-            "scripts/run"
-            "scripts/validate"
-            "scripts/config"
-            "scripts/tools"
-            "scripts/docs"
-          )
+          recommended_dirs=("scripts/fix" "scripts/lib" "scripts/release" "scripts/run" "scripts/validate")
+          allowed_dirs=("scripts" "scripts/fix" "scripts/lib" "scripts/release" "scripts/run" "scripts/validate")
 
-          if [ "${GUARDRAILS_LOADED:-false}" = "true" ] && [ -n "${GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS:-}" ]; then
-            rec=()
-            while IFS= read -r v; do [ -n "${v}" ] && rec+=("${v}"); done < <(printf '%s\n' "${GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS}")
-            if [ "${#rec[@]}" -gt 0 ]; then
-              required_script_dirs=("${rec[@]}")
+          if [ "${GUARDRAILS_LOADED:-false}" = "true" ]; then
+            if [ -n "${GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS:-}" ]; then
+              mapfile -t recommended_dirs < <(printf '%s\n' "${GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS}" | sed '/^$/d')
             fi
-          fi
-
-          if [ "${GUARDRAILS_LOADED:-false}" = "true" ] && [ -n "${GUARDRAILS_SCRIPTS_ALLOWED_DIRS:-}" ]; then
-            al=()
-            while IFS= read -r v; do [ -n "${v}" ] && al+=("${v}"); done < <(printf '%s\n' "${GUARDRAILS_SCRIPTS_ALLOWED_DIRS}")
-            if [ "${#al[@]}" -gt 0 ]; then
-              allowed_script_dirs=("${al[@]}")
+            if [ -n "${GUARDRAILS_SCRIPTS_ALLOWED_DIRS:-}" ]; then
+              mapfile -t allowed_dirs < <(printf '%s\n' "${GUARDRAILS_SCRIPTS_ALLOWED_DIRS}" | sed '/^$/d')
             fi
           fi
 
           missing_dirs=()
           unapproved_dirs=()
 
-          for d in "${required_script_dirs[@]}"; do
+          for d in "${recommended_dirs[@]}"; do
             [ ! -d "${d}" ] && missing_dirs+=("${d}/")
           done
 
           while IFS= read -r d; do
             allowed=false
-            for a in "${allowed_script_dirs[@]}"; do
+            for a in "${allowed_dirs[@]}"; do
               [ "${d}" = "${a}" ] && allowed=true
             done
             [ "${allowed}" = false ] && unapproved_dirs+=("${d}/")
@@ -695,29 +681,45 @@ print(json.dumps(out, indent=2))
 PY
 )"
 
-          {
-            printf "### Guardrails repository health\n\n"
-            printf "### Guardrails report (JSON)\n"
-            printf "```json\n"
-            printf "%s\n" "${report_json}"
-            printf "```\n"
-          } >> "${GITHUB_STEP_SUMMARY}"
+					{
+					  printf '%s\n' "### Guardrails repository health"
+					  printf '\n'
+					  printf '%s\n' "### Guardrails report (JSON)"
+					  printf '%s\n' '```json'
+					  printf '%s\n' "${report_json}"
+					  printf '%s\n' '```'
+					  printf '\n'
+					} >> "${GITHUB_STEP_SUMMARY}"
 
-          if [ "${#missing_required[@]}" -gt 0 ]; then
-            echo "### Missing required repo artifacts" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing_required[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
-            echo "ERROR: Guardrails failed. Missing required repository artifacts." >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
+					if [ "${#missing_required[@]}" -gt 0 ]; then
+					  {
+					    printf '%s\n' "### Missing required repo artifacts"
+					    for m in "${missing_required[@]}"; do
+					      printf '%s\n' "- ${m}"
+					    done
+					    printf '%s\n' "ERROR: Guardrails failed. Missing required repository artifacts."
+					  } >> "${GITHUB_STEP_SUMMARY}"
+					  exit 1
+					fi
 
-          if [ "${#missing_optional[@]}" -gt 0 ]; then
-            echo "### Missing optional repo artifacts" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing_optional[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
-          fi
+					if [ "${#missing_optional[@]}" -gt 0 ]; then
+					  {
+					    printf '%s\n' "### Missing optional repo artifacts"
+					    for m in "${missing_optional[@]}"; do
+					      printf '%s\n' "- ${m}"
+					    done
+					    printf '\n'
+					  } >> "${GITHUB_STEP_SUMMARY}"
+					fi
 
-          if [ "${#content_warnings[@]}" -gt 0 ]; then
-            echo "### Repo content warnings" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${content_warnings[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
-          fi
+					if [ "${#content_warnings[@]}" -gt 0 ]; then
+					  {
+					    printf '%s\n' "### Repo content warnings"
+					    for m in "${content_warnings[@]}"; do
+					      printf '%s\n' "- ${m}"
+					    done
+					    printf '\n'
+					  } >> "${GITHUB_STEP_SUMMARY}"
+					fi
 
-          echo "Repository health guardrails passed." >> "${GITHUB_STEP_SUMMARY}"
+					printf '%s\n' "Repository health guardrails passed." >> "${GITHUB_STEP_SUMMARY}"
