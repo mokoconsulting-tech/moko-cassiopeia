@@ -66,14 +66,14 @@ env:
 
   # Scripts governance policy
   # Note: directories listed without a trailing slash.
-  SCRIPTS_REQUIRED_DIRS: scripts/fix,scripts/lib,scripts/release,scripts/run,scripts/validate
+  SCRIPTS_REQUIRED_DIRS:
   SCRIPTS_ALLOWED_DIRS: scripts,scripts/fix,scripts/lib,scripts/release,scripts/run,scripts/validate
 
   # Repo health policy
   # Files are listed as-is; directories must end with a trailing slash.
-  REPO_REQUIRED_ARTIFACTS: README.md,LICENSE,CHANGELOG.md,CONTRIBUTING.md,CODE_OF_CONDUCT.md,docs/docs-index.md,.github/workflows/,scripts/,docs/,dev/
-  REPO_OPTIONAL_FILES: SECURITY.md,GOVERNANCE.md,.editorconfig,.gitattributes,.gitignore
-  REPO_DISALLOWED_DIRS: src
+  REPO_REQUIRED_ARTIFACTS: README.md,LICENSE,CHANGELOG.md,CONTRIBUTING.md,CODE_OF_CONDUCT.md,.github/workflows/,src/
+  REPO_OPTIONAL_FILES: SECURITY.md,GOVERNANCE.md,.editorconfig,.gitattributes,.gitignore,README.md,docs/,dev/
+  REPO_DISALLOWED_DIRS:
   REPO_DISALLOWED_FILES: TODO.md,todo.md
 
   # Extended checks toggles
