@@ -700,36 +700,36 @@ jobs:
             # Docs index link integrity (docs/docs-index.md)
             if [ -f 'docs/docs-index.md' ]; then
               missing_links="$(python3 - <<'PY'
-import os
-import re
+              import os
+              import re
 
-idx = 'docs/docs-index.md'
-base = os.getcwd()
+              idx = 'docs/docs-index.md'
+              base = os.getcwd()
 
-bad = []
-pat = re.compile(r'\[[^\]]+\]\(([^)]+)\)')
+              bad = []
+              pat = re.compile(r'\[[^\]]+\]\(([^)]+)\)')
 
-with open(idx, 'r', encoding='utf-8') as f:
-  for line in f:
-    for m in pat.findall(line):
-      link = m.strip()
-      if link.startswith('http://') or link.startswith('https://') or link.startswith('#') or link.startswith('mailto:'):
-        continue
-      if link.startswith('/'):
-        rel = link.lstrip('/')
-      else:
-        rel = os.path.normpath(os.path.join(os.path.dirname(idx), link))
-      rel = rel.split('#', 1)[0]
-      rel = rel.split('?', 1)[0]
-      if not rel:
-        continue
-      p = os.path.join(base, rel)
-      if not os.path.exists(p):
-        bad.append(rel)
+              with open(idx, 'r', encoding='utf-8') as f:
+                for line in f:
+                  for m in pat.findall(line):
+                    link = m.strip()
+                    if link.startswith('http://') or link.startswith('https://') or link.startswith('#') or link.startswith('mailto:'):
+                      continue
+                    if link.startswith('/'):
+                      rel = link.lstrip('/')
+                    else:
+                      rel = os.path.normpath(os.path.join(os.path.dirname(idx), link))
+                    rel = rel.split('#', 1)[0]
+                    rel = rel.split('?', 1)[0]
+                    if not rel:
+                      continue
+                    p = os.path.join(base, rel)
+                    if not os.path.exists(p):
+                      bad.append(rel)
 
-print('\n'.join(sorted(set(bad))))
-PY
-)"
+              print('\n'.join(sorted(set(bad))))
+              PY
+              )"
               if [ -n "${missing_links}" ]; then
                 extended_findings+=("docs/docs-index.md contains broken relative links")
                 {
