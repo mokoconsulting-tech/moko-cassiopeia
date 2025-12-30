@@ -14,7 +14,7 @@
 # BRIEF: Enforces Joomla repository guardrails by validating release configuration, scripts governance, and core repository health.
 # ============================================================================
 
-name: Joomla Repo Health
+name: Repo Health
 
 concurrency:
   group: repo-health-${{ github.repository }}-${{ github.ref }}
