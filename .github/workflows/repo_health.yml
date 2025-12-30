@@ -48,12 +48,25 @@ on:
 permissions:
   contents: read
 
+env:
+  GUARDRAILS_DEFINITION_URL: ${{ vars.MOKOSTANDARDS_GUARDRAILS_URL || 'https://raw.githubusercontent.com/mokoconsulting-tech/MokoStandards/main/repo-guardrails.definition.json' }}
+
 jobs:
   access_check:
+    name: Access control
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    outputs:
+      allowed: ${{ steps.perm.outputs.allowed }}
+      permission: ${{ steps.perm.outputs.permission }}
+
     steps:
-      - uses: actions/github-script@v7
+      - name: Check actor permission (admin only)
         id: perm
+        uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -62,19 +75,659 @@ jobs:
               repo: context.repo.repo,
               username: context.actor
             });
-            const allowed = res.data.permission === 'admin';
+
+            const permission = (res?.data?.permission || 'unknown').toLowerCase();
+            const allowed = permission === 'admin';
+
+            core.setOutput('permission', permission);
             core.setOutput('allowed', allowed ? 'true' : 'false');
 
-  repo_health:
+            const lines = [];
+            lines.push('### Access control');
+            lines.push('');
+            lines.push(`Actor: ${context.actor}`);
+            lines.push(`Permission: ${permission}`);
+            lines.push(`Allowed: ${allowed}`);
+            lines.push('');
+            lines.push('Policy: This workflow runs only for users with admin permission on the repository.');
+
+            await core.summary.addRaw(lines.join('\n')).write();
+
+      - name: Deny execution when not permitted
+        if: ${{ steps.perm.outputs.allowed != 'true' }}
+        run: |
+          set -euo pipefail
+          printf '%s\n' 'ERROR: Access denied. Admin permission required.' >> "${GITHUB_STEP_SUMMARY}"
+          exit 1
+
+  release_config:
+    name: Release configuration
     needs: access_check
     if: ${{ needs.access_check.outputs.allowed == 'true' }}
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    timeout-minutes: 20
+    permissions:
+      contents: read
 
-      - name: Repo health checks
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Load guardrails definition
         run: |
           set -euo pipefail
-          printf '%s\n' "Repository health guardrails passed." >> "${GITHUB_STEP_SUMMARY}"
+
+          url="${GUARDRAILS_DEFINITION_URL}"
+          {
+            printf '%s\n' '### Guardrails policy source'
+            printf '%s\n' "${url}"
+            printf '\n'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if ! curl -fsSL "${url}" -o /tmp/repo_guardrails.definition.json; then
+            printf '%s\n' 'Warning: Unable to fetch guardrails definition. Falling back to workflow defaults.' >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s\n' 'GUARDRAILS_LOADED=false' >> "${GITHUB_ENV}"
+            exit 0
+          fi
+
+          python3 - <<'PY'
+          import json
+          import os
+          import uuid
+
+          path = "/tmp/repo_guardrails.definition.json"
+          with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+          env_path = os.environ.get("GITHUB_ENV")
+          if not env_path:
+            raise SystemExit("GITHUB_ENV not set")
+
+          def put_multiline(key: str, values):
+            vals = [str(v) for v in (values or []) if str(v).strip()]
+            marker = f"EOF_{uuid.uuid4().hex}"
+            with open(env_path, "a", encoding="utf-8") as w:
+              w.write(f"{key}<<{marker}\n")
+              for v in vals:
+                w.write(v + "\n")
+              w.write(f"{marker}\n\n")
+
+          put_multiline("GUARDRAILS_RELEASE_REQUIRED_SECRETS", data.get("release", {}).get("required_secrets"))
+          put_multiline("GUARDRAILS_RELEASE_OPTIONAL_SECRETS", data.get("release", {}).get("optional_secrets"))
+          put_multiline("GUARDRAILS_RELEASE_OPTIONAL_VARS", data.get("release", {}).get("optional_vars"))
+          put_multiline("GUARDRAILS_RELEASE_PROTOCOL_ALLOWED", data.get("release", {}).get("protocol", {}).get("allowed"))
+
+          with open(env_path, "a", encoding="utf-8") as w:
+            w.write("GUARDRAILS_LOADED=true\n")
+
+          print("Guardrails definition loaded")
+          PY
+
+      - name: Guardrails release secrets and vars
+        env:
+          PROFILE_RAW: ${{ github.event.inputs.profile }}
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_KEY: ${{ secrets.FTP_KEY }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PATH: ${{ secrets.FTP_PATH }}
+          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_PATH_SUFFIX: ${{ vars.FTP_PATH_SUFFIX }}
+        run: |
+          set -euo pipefail
+
+          profile="${PROFILE_RAW:-all}"
+          case "${profile}" in
+            all|release|scripts|repo) ;;
+            *)
+              printf '%s\n' "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+              ;;
+          esac
+
+          if [ "${profile}" = 'scripts' ] || [ "${profile}" = 'repo' ]; then
+            printf '%s\n' "Profile ${profile} selected. Skipping release configuration checks." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          required=("FTP_HOST" "FTP_USER" "FTP_KEY" "FTP_PATH")
+          optional=("FTP_PASSWORD" "FTP_PROTOCOL" "FTP_PORT" "FTP_PATH_SUFFIX")
+
+          if [ "${GUARDRAILS_LOADED:-false}" = 'true' ]; then
+            if [ -n "${GUARDRAILS_RELEASE_REQUIRED_SECRETS:-}" ]; then
+              mapfile -t required < <(printf '%s\n' "${GUARDRAILS_RELEASE_REQUIRED_SECRETS}" | sed '/^$/d')
+            fi
+
+            opt=()
+            if [ -n "${GUARDRAILS_RELEASE_OPTIONAL_SECRETS:-}" ]; then
+              while IFS= read -r v; do [ -n "${v}" ] && opt+=("${v}"); done < <(printf '%s\n' "${GUARDRAILS_RELEASE_OPTIONAL_SECRETS}" | sed '/^$/d')
+            fi
+            if [ -n "${GUARDRAILS_RELEASE_OPTIONAL_VARS:-}" ]; then
+              while IFS= read -r v; do [ -n "${v}" ] && opt+=("${v}"); done < <(printf '%s\n' "${GUARDRAILS_RELEASE_OPTIONAL_VARS}" | sed '/^$/d')
+            fi
+            if [ "${#opt[@]}" -gt 0 ]; then
+              optional=("${opt[@]}")
+            fi
+          fi
+
+          missing=()
+          missing_optional=()
+
+          for k in "${required[@]}"; do
+            v="${!k:-}"
+            [ -z "${v}" ] && missing+=("${k}")
+          done
+
+          for k in "${optional[@]}"; do
+            v="${!k:-}"
+            [ -z "${v}" ] && missing_optional+=("${k}")
+          done
+
+          proto="${FTP_PROTOCOL:-sftp}"
+
+          allowed_proto=("sftp")
+          if [ "${GUARDRAILS_LOADED:-false}" = 'true' ] && [ -n "${GUARDRAILS_RELEASE_PROTOCOL_ALLOWED:-}" ]; then
+            mapfile -t allowed_proto < <(printf '%s\n' "${GUARDRAILS_RELEASE_PROTOCOL_ALLOWED}" | sed '/^$/d')
+          fi
+
+          if [ -n "${FTP_PROTOCOL:-}" ]; then
+            ok=false
+            for ap in "${allowed_proto[@]}"; do
+              [ "${proto}" = "${ap}" ] && ok=true
+            done
+            [ "${ok}" = false ] && missing+=("FTP_PROTOCOL_INVALID")
+          fi
+
+          if [ "${#missing_optional[@]}" -gt 0 ]; then
+            {
+              printf '%s\n' '### Missing optional release configuration'
+              for m in "${missing_optional[@]}"; do printf '%s\n' "- ${m}"; done
+              printf '\n'
+            } >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            {
+              printf '%s\n' '### Missing required release configuration'
+              for m in "${missing[@]}"; do printf '%s\n' "- ${m}"; done
+              printf '%s\n' 'ERROR: Guardrails failed. Missing required release configuration.'
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          {
+            printf '%s\n' '### Guardrails release configuration'
+            printf '%s\n' 'All required release variables present.'
+            printf '\n'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Guardrails SFTP connectivity
+        env:
+          PROFILE_RAW: ${{ github.event.inputs.profile }}
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_KEY: ${{ secrets.FTP_KEY }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+        run: |
+          set -euo pipefail
+
+          profile="${PROFILE_RAW:-all}"
+          case "${profile}" in
+            all|release|scripts|repo) ;;
+            *)
+              printf '%s\n' "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+              ;;
+          esac
+
+          if [ "${profile}" = 'scripts' ] || [ "${profile}" = 'repo' ]; then
+            printf '%s\n' "Profile ${profile} selected. Skipping SFTP connectivity check." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          mkdir -p "$HOME/.ssh"
+          key_file="$HOME/.ssh/ci_sftp_key"
+          printf '%s\n' "${FTP_KEY}" > "${key_file}"
+          chmod 600 "${key_file}"
+
+          if [ -n "${FTP_PASSWORD:-}" ]; then
+            first_line="$(head -n 1 "${key_file}" || true)"
+            if printf '%s\n' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
+              printf '%s\n' 'ERROR: FTP_KEY appears to be a PuTTY PPK. Provide an OpenSSH private key.' >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+            fi
+            ssh-keygen -p -P "${FTP_PASSWORD}" -N '' -f "${key_file}" >/dev/null
+          fi
+
+          port="${FTP_PORT:-22}"
+
+          {
+            printf '%s\n' '### SFTP connectivity test'
+            printf '%s\n' 'Attempting non-destructive SFTP session'
+            printf '\n'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          set +e
+          printf 'pwd
+bye
+' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+          sftp_rc=$?
+          set -e
+
+          printf '%s\n' '### SFTP connectivity result' >> "${GITHUB_STEP_SUMMARY}"
+          if [ "${sftp_rc}" -eq 0 ]; then
+            printf '%s\n' 'Status: SUCCESS' >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          {
+            printf '%s\n' "Status: FAILED (exit code ${sftp_rc})"
+            printf '\n'
+            printf '%s\n' 'Last SFTP output'
+            tail -n 20 /tmp/sftp_check.log || true
+          } >> "${GITHUB_STEP_SUMMARY}"
+          exit 1
+
+  scripts_governance:
+    name: Scripts governance
+    needs: access_check
+    if: ${{ needs.access_check.outputs.allowed == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Load guardrails definition
+        run: |
+          set -euo pipefail
+
+          url="${GUARDRAILS_DEFINITION_URL}"
+          {
+            printf '%s\n' '### Guardrails policy source'
+            printf '%s\n' "${url}"
+            printf '\n'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if ! curl -fsSL "${url}" -o /tmp/repo_guardrails.definition.json; then
+            printf '%s\n' 'Warning: Unable to fetch guardrails definition. Falling back to workflow defaults.' >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s\n' 'GUARDRAILS_LOADED=false' >> "${GITHUB_ENV}"
+            exit 0
+          fi
+
+          python3 - <<'PY'
+          import json
+          import os
+          import uuid
+
+          path = "/tmp/repo_guardrails.definition.json"
+          with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+          env_path = os.environ.get("GITHUB_ENV")
+          if not env_path:
+            raise SystemExit("GITHUB_ENV not set")
+
+          def put_multiline(key: str, values):
+            vals = [str(v) for v in (values or []) if str(v).strip()]
+            marker = f"EOF_{uuid.uuid4().hex}"
+            with open(env_path, "a", encoding="utf-8") as w:
+              w.write(f"{key}<<{marker}\n")
+              for v in vals:
+                w.write(v + "\n")
+              w.write(f"{marker}\n\n")
+
+          put_multiline("GUARDRAILS_SCRIPTS_ALLOWED_DIRS", data.get("scripts", {}).get("allowed_top_level_dirs"))
+          put_multiline("GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS", data.get("scripts", {}).get("recommended_dirs"))
+          put_multiline("GUARDRAILS_SCRIPTS_REQUIRED_VALIDATE_FILES", data.get("scripts", {}).get("required_validate_files_when_present"))
+
+          with open(env_path, "a", encoding="utf-8") as w:
+            w.write("GUARDRAILS_LOADED=true\n")
+
+          print("Guardrails definition loaded")
+          PY
+
+      - name: Scripts folder checks
+        env:
+          PROFILE_RAW: ${{ github.event.inputs.profile }}
+        run: |
+          set -euo pipefail
+
+          profile="${PROFILE_RAW:-all}"
+          case "${profile}" in
+            all|release|scripts|repo) ;;
+            *)
+              printf '%s\n' "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+              ;;
+          esac
+
+          if [ "${profile}" = 'release' ] || [ "${profile}" = 'repo' ]; then
+            printf '%s\n' "Profile ${profile} selected. Skipping scripts governance." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          if [ ! -d scripts ]; then
+            {
+              printf '%s\n' '### Scripts governance'
+              printf '%s\n' 'Warning: scripts/ directory not present. No scripts governance enforced.'
+              printf '\n'
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          recommended_dirs=("scripts/fix" "scripts/lib" "scripts/release" "scripts/run" "scripts/validate")
+          allowed_dirs=("scripts" "scripts/fix" "scripts/lib" "scripts/release" "scripts/run" "scripts/validate")
+
+          if [ "${GUARDRAILS_LOADED:-false}" = 'true' ]; then
+            if [ -n "${GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS:-}" ]; then
+              mapfile -t recommended_dirs < <(printf '%s\n' "${GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS}" | sed '/^$/d')
+            fi
+            if [ -n "${GUARDRAILS_SCRIPTS_ALLOWED_DIRS:-}" ]; then
+              mapfile -t allowed_dirs < <(printf '%s\n' "${GUARDRAILS_SCRIPTS_ALLOWED_DIRS}" | sed '/^$/d')
+            fi
+          fi
+
+          missing_dirs=()
+          unapproved_dirs=()
+
+          for d in "${recommended_dirs[@]}"; do
+            [ ! -d "${d}" ] && missing_dirs+=("${d}/")
+          done
+
+          while IFS= read -r d; do
+            allowed=false
+            for a in "${allowed_dirs[@]}"; do
+              [ "${d}" = "${a}" ] && allowed=true
+            done
+            [ "${allowed}" = false ] && unapproved_dirs+=("${d}/")
+          done < <(find scripts -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sed 's#^\./##')
+
+          {
+            printf '%s\n' '### Scripts governance'
+            if [ "${#missing_dirs[@]}" -gt 0 ]; then
+              printf '%s\n' 'Missing recommended script directories:'
+              for m in "${missing_dirs[@]}"; do printf '%s\n' "- ${m}"; done
+              printf '\n'
+            fi
+
+            if [ "${#unapproved_dirs[@]}" -gt 0 ]; then
+              printf '%s\n' 'Unapproved script directories detected:'
+              for m in "${unapproved_dirs[@]}"; do printf '%s\n' "- ${m}"; done
+              printf '\n'
+            fi
+
+            printf '%s\n' '| Area | Status | Notes |'
+            printf '%s\n' '|------|--------|-------|'
+            if [ "${#missing_dirs[@]}" -gt 0 ]; then
+              printf '%s\n' '| Recommended directories | Warning | Missing recommended subfolders |'
+            else
+              printf '%s\n' '| Recommended directories | OK | All recommended subfolders present |'
+            fi
+            if [ "${#unapproved_dirs[@]}" -gt 0 ]; then
+              printf '%s\n' '| Directory policy | Warning | Unapproved directories detected |'
+            else
+              printf '%s\n' '| Directory policy | OK | No unapproved directories |'
+            fi
+            printf '%s\n' '| Enforcement mode | Advisory | scripts folder is optional |'
+            printf '\n'
+            printf '%s\n' 'Scripts governance completed in advisory mode.'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  repo_health:
+    name: Repository health
+    needs: access_check
+    if: ${{ needs.access_check.outputs.allowed == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Load guardrails definition
+        run: |
+          set -euo pipefail
+
+          url="${GUARDRAILS_DEFINITION_URL}"
+          {
+            printf '%s\n' '### Guardrails policy source'
+            printf '%s\n' "${url}"
+            printf '\n'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if ! curl -fsSL "${url}" -o /tmp/repo_guardrails.definition.json; then
+            printf '%s\n' 'Warning: Unable to fetch guardrails definition. Falling back to workflow defaults.' >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s\n' 'GUARDRAILS_LOADED=false' >> "${GITHUB_ENV}"
+            exit 0
+          fi
+
+          python3 - <<'PY'
+          import json
+          import os
+          import uuid
+
+          path = "/tmp/repo_guardrails.definition.json"
+          with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+          env_path = os.environ.get("GITHUB_ENV")
+          if not env_path:
+            raise SystemExit("GITHUB_ENV not set")
+
+          def put_multiline(key: str, values):
+            vals = [str(v) for v in (values or []) if str(v).strip()]
+            marker = f"EOF_{uuid.uuid4().hex}"
+            with open(env_path, "a", encoding="utf-8") as w:
+              w.write(f"{key}<<{marker}\n")
+              for v in vals:
+                w.write(v + "\n")
+              w.write(f"{marker}\n\n")
+
+          put_multiline("GUARDRAILS_REQUIRED_FILES", data.get("repo", {}).get("required_files"))
+          put_multiline("GUARDRAILS_OPTIONAL_FILES", data.get("repo", {}).get("optional_files"))
+          put_multiline("GUARDRAILS_REQUIRED_PATHS", data.get("repo", {}).get("required_paths"))
+          put_multiline("GUARDRAILS_DISALLOWED_DIRS", data.get("repo", {}).get("paths", {}).get("disallowed_dirs"))
+
+          with open(env_path, "a", encoding="utf-8") as w:
+            w.write("GUARDRAILS_LOADED=true\n")
+
+          print("Guardrails definition loaded")
+          PY
+
+      - name: Repository health checks
+        env:
+          PROFILE_RAW: ${{ github.event.inputs.profile }}
+        run: |
+          set -euo pipefail
+
+          profile="${PROFILE_RAW:-all}"
+          case "${profile}" in
+            all|release|scripts|repo) ;;
+            *)
+              printf '%s\n' "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+              ;;
+          esac
+
+          if [ "${profile}" = 'release' ] || [ "${profile}" = 'scripts' ]; then
+            printf '%s\n' "Profile ${profile} selected. Skipping repository health checks." >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+
+          required_files=(
+            README.md
+            LICENSE
+            CHANGELOG.md
+            CONTRIBUTING.md
+            CODE_OF_CONDUCT.md
+            TODO.md
+            docs/docs-index.md
+          )
+
+          optional_files=(
+            SECURITY.md
+            GOVERNANCE.md
+            .editorconfig
+            .gitattributes
+            .gitignore
+          )
+
+          required_paths=(
+            .github/workflows
+            scripts
+            docs
+            dev
+          )
+
+          disallowed_dirs=(src)
+
+          if [ "${GUARDRAILS_LOADED:-false}" = 'true' ]; then
+            if [ -n "${GUARDRAILS_REQUIRED_FILES:-}" ]; then
+              mapfile -t required_files < <(printf '%s\n' "${GUARDRAILS_REQUIRED_FILES}" | sed '/^$/d')
+            fi
+            if [ -n "${GUARDRAILS_OPTIONAL_FILES:-}" ]; then
+              mapfile -t optional_files < <(printf '%s\n' "${GUARDRAILS_OPTIONAL_FILES}" | sed '/^$/d')
+            fi
+            if [ -n "${GUARDRAILS_REQUIRED_PATHS:-}" ]; then
+              mapfile -t required_paths < <(printf '%s\n' "${GUARDRAILS_REQUIRED_PATHS}" | sed '/^$/d')
+            fi
+            if [ -n "${GUARDRAILS_DISALLOWED_DIRS:-}" ]; then
+              mapfile -t disallowed_dirs < <(printf '%s\n' "${GUARDRAILS_DISALLOWED_DIRS}" | sed '/^$/d')
+            fi
+          fi
+
+          missing_required=()
+          missing_optional=()
+
+          for f in "${required_files[@]}"; do
+            [ ! -f "${f}" ] && missing_required+=("${f}")
+          done
+
+          for f in "${optional_files[@]}"; do
+            [ ! -f "${f}" ] && missing_optional+=("${f}")
+          done
+
+          for p in "${required_paths[@]}"; do
+            [ ! -d "${p}" ] && missing_required+=("${p}/")
+          done
+
+          for d in "${disallowed_dirs[@]}"; do
+            if [ -d "${d}" ]; then
+              missing_required+=("${d}/ (disallowed)")
+            fi
+          done
+
+          git fetch origin --prune
+
+          dev_paths=()
+          dev_branches=()
+
+          while IFS= read -r b; do
+            name="${b#origin/}"
+            if [ "${name}" = 'dev' ]; then
+              dev_branches+=("${name}")
+            else
+              dev_paths+=("${name}")
+            fi
+          done < <(git branch -r --list 'origin/dev*' | sed 's/^ *//')
+
+          if [ "${#dev_paths[@]}" -eq 0 ]; then
+            missing_required+=("dev/* branch (e.g. dev/01.00.00)")
+          fi
+
+          if [ "${#dev_branches[@]}" -gt 0 ]; then
+            missing_required+=("invalid branch dev (must be dev/<version>)")
+          fi
+
+          content_warnings=()
+
+          if [ -f 'CHANGELOG.md' ] && ! grep -Eq '^# Changelog' CHANGELOG.md; then
+            content_warnings+=("CHANGELOG.md missing '# Changelog' header")
+          fi
+
+          if [ -f 'LICENSE' ] && ! grep -qiE 'GNU GENERAL PUBLIC LICENSE|GPL' LICENSE; then
+            content_warnings+=("LICENSE does not look like a GPL text")
+          fi
+
+          if [ -f 'README.md' ] && ! grep -qiE 'moko|Moko' README.md; then
+            content_warnings+=("README.md missing expected brand keyword")
+          fi
+
+          export PROFILE_RAW="${profile}"
+          export MISSING_REQUIRED="$(printf '%s\n' "${missing_required[@]:-}")"
+          export MISSING_OPTIONAL="$(printf '%s\n' "${missing_optional[@]:-}")"
+          export CONTENT_WARNINGS="$(printf '%s\n' "${content_warnings[@]:-}")"
+
+          report_json="$(python3 - <<'PY'
+          import json
+          import os
+
+          profile = os.environ.get('PROFILE_RAW') or 'all'
+
+          missing_required = os.environ.get('MISSING_REQUIRED', '').splitlines() if os.environ.get('MISSING_REQUIRED') else []
+          missing_optional = os.environ.get('MISSING_OPTIONAL', '').splitlines() if os.environ.get('MISSING_OPTIONAL') else []
+          content_warnings = os.environ.get('CONTENT_WARNINGS', '').splitlines() if os.environ.get('CONTENT_WARNINGS') else []
+
+          out = {
+            'profile': profile,
+            'missing_required': [x for x in missing_required if x],
+            'missing_optional': [x for x in missing_optional if x],
+            'content_warnings': [x for x in content_warnings if x],
+          }
+
+          print(json.dumps(out, indent=2))
+          PY
+          )"
+
+          {
+            printf '%s\n' '### Guardrails repository health'
+            printf '\n'
+            printf '%s\n' '### Guardrails report (JSON)'
+            printf '%s\n' '```json'
+            printf '%s\n' "${report_json}"
+            printf '%s\n' '```'
+            printf '\n'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if [ "${#missing_required[@]}" -gt 0 ]; then
+            {
+              printf '%s\n' '### Missing required repo artifacts'
+              for m in "${missing_required[@]}"; do printf '%s\n' "- ${m}"; done
+              printf '%s\n' 'ERROR: Guardrails failed. Missing required repository artifacts.'
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          if [ "${#missing_optional[@]}" -gt 0 ]; then
+            {
+              printf '%s\n' '### Missing optional repo artifacts'
+              for m in "${missing_optional[@]}"; do printf '%s\n' "- ${m}"; done
+              printf '\n'
+            } >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+          if [ "${#content_warnings[@]}" -gt 0 ]; then
+            {
+              printf '%s\n' '### Repo content warnings'
+              for m in "${content_warnings[@]}"; do printf '%s\n' "- ${m}"; done
+              printf '\n'
+            } >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+          printf '%s\n' 'Repository health guardrails passed.' >> "${GITHUB_STEP_SUMMARY}"
 
 # EOF
