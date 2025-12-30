@@ -110,7 +110,7 @@ jobs:
         if: ${{ steps.perm.outputs.allowed != 'true' }}
         run: |
           set -euo pipefail
-          echo "ERROR: Access denied. Actor must have admin permission to run this workflow." >> "${GITHUB_STEP_SUMMARY}"
+          printf '%s\n' "ERROR: Access denied. Actor must have admin permission to run this workflow." >> "${GITHUB_STEP_SUMMARY}"
           exit 1
 
   release_config:
@@ -135,12 +135,12 @@ jobs:
           set -euo pipefail
 
           url="${GUARDRAILS_DEFINITION_URL}"
-          echo "### Guardrails policy source" >> "${GITHUB_STEP_SUMMARY}"
-          echo "${url}" >> "${GITHUB_STEP_SUMMARY}"
+          printf '%s\n' "### Guardrails policy source" >> "${GITHUB_STEP_SUMMARY}"
+          printf '%s\n' "${url}" >> "${GITHUB_STEP_SUMMARY}"
 
           if ! curl -fsSL "${url}" -o /tmp/repo_guardrails.definition.json; then
-            echo "Warning: Unable to fetch guardrails definition. Falling back to workflow defaults." >> "${GITHUB_STEP_SUMMARY}"
-            echo "GUARDRAILS_LOADED=false" >> "${GITHUB_ENV}"
+            printf '%s\n' "Warning: Unable to fetch guardrails definition. Falling back to workflow defaults." >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s\n' "GUARDRAILS_LOADED=false" >> "${GITHUB_ENV}"
             exit 0
           fi
 
@@ -193,13 +193,13 @@ PY
           case "${profile}" in
             all|release|scripts|repo) ;;
             *)
-              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              printf '%s\n' "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
               exit 1
               ;;
           esac
 
           if [ "${profile}" = "scripts" ] || [ "${profile}" = "repo" ]; then
-            echo "Profile ${profile} selected. Skipping release configuration checks." >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s\n' "Profile ${profile} selected. Skipping release configuration checks." >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
 
@@ -252,19 +252,30 @@ PY
           fi
 
           if [ "${#missing_optional[@]}" -gt 0 ]; then
-            echo "### Missing optional release configuration" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing_optional[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+            {
+              printf '%s\n' "### Missing optional release configuration"
+              for m in "${missing_optional[@]}"; do
+                printf '%s\n' "- ${m}"
+              done
+              printf '\n'
+            } >> "${GITHUB_STEP_SUMMARY}"
           fi
 
           if [ "${#missing[@]}" -gt 0 ]; then
-            echo "### Missing required release configuration" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
-            echo "ERROR: Guardrails failed. Missing required release configuration." >> "${GITHUB_STEP_SUMMARY}"
+            {
+              printf '%s\n' "### Missing required release configuration"
+              for m in "${missing[@]}"; do
+                printf '%s\n' "- ${m}"
+              done
+              printf '%s\n' "ERROR: Guardrails failed. Missing required release configuration."
+            } >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
-          echo "### Guardrails release configuration" >> "${GITHUB_STEP_SUMMARY}"
-          echo "All required release variables present." >> "${GITHUB_STEP_SUMMARY}"
+          {
+            printf '%s\n' "### Guardrails release configuration"
+            printf '%s\n' "All required release variables present."
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Guardrails SFTP connectivity
         env:
@@ -281,13 +292,13 @@ PY
           case "${profile}" in
             all|release|scripts|repo) ;;
             *)
-              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              printf '%s\n' "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
               exit 1
               ;;
           esac
 
           if [ "${profile}" = "scripts" ] || [ "${profile}" = "repo" ]; then
-            echo "Profile ${profile} selected. Skipping SFTP connectivity check." >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s\n' "Profile ${profile} selected. Skipping SFTP connectivity check." >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
 
@@ -299,7 +310,7 @@ PY
           if [ -n "${FTP_PASSWORD:-}" ]; then
             first_line="$(head -n 1 "${key_file}" || true)"
             if printf '%s' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
-              echo "ERROR: FTP_KEY appears to be a PuTTY PPK. Provide an OpenSSH private key." >> "${GITHUB_STEP_SUMMARY}"
+              printf '%s\n' "ERROR: FTP_KEY appears to be a PuTTY PPK. Provide an OpenSSH private key." >> "${GITHUB_STEP_SUMMARY}"
               exit 1
             fi
             ssh-keygen -p -P "${FTP_PASSWORD}" -N "" -f "${key_file}" >/dev/null
@@ -307,26 +318,28 @@ PY
 
           port="${FTP_PORT:-22}"
 
-          echo "### SFTP connectivity test" >> "${GITHUB_STEP_SUMMARY}"
-          echo "Attempting non-destructive SFTP session" >> "${GITHUB_STEP_SUMMARY}"
+          {
+            printf '%s\n' "### SFTP connectivity test"
+            printf '%s\n' "Attempting non-destructive SFTP session"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
           set +e
-          printf 'pwd
-bye
-' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+          printf 'pwd\nbye\n' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
           sftp_rc=$?
           set -e
 
-          echo "### SFTP connectivity result" >> "${GITHUB_STEP_SUMMARY}"
+          printf '%s\n' "### SFTP connectivity result" >> "${GITHUB_STEP_SUMMARY}"
           if [ "${sftp_rc}" -eq 0 ]; then
-            echo "Status: SUCCESS" >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s\n' "Status: SUCCESS" >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
 
-          echo "Status: FAILED (exit code ${sftp_rc})" >> "${GITHUB_STEP_SUMMARY}"
-          echo "" >> "${GITHUB_STEP_SUMMARY}"
-          echo "Last SFTP output" >> "${GITHUB_STEP_SUMMARY}"
-          tail -n 20 /tmp/sftp_check.log >> "${GITHUB_STEP_SUMMARY}" || true
+          {
+            printf '%s\n' "Status: FAILED (exit code ${sftp_rc})"
+            printf '\n'
+            printf '%s\n' "Last SFTP output"
+            tail -n 20 /tmp/sftp_check.log || true
+          } >> "${GITHUB_STEP_SUMMARY}"
           exit 1
 
   scripts_config:
@@ -351,12 +364,12 @@ bye
           set -euo pipefail
 
           url="${GUARDRAILS_DEFINITION_URL}"
-          echo "### Guardrails policy source" >> "${GITHUB_STEP_SUMMARY}"
-          echo "${url}" >> "${GITHUB_STEP_SUMMARY}"
+          printf '%s\n' "### Guardrails policy source" >> "${GITHUB_STEP_SUMMARY}"
+          printf '%s\n' "${url}" >> "${GITHUB_STEP_SUMMARY}"
 
           if ! curl -fsSL "${url}" -o /tmp/repo_guardrails.definition.json; then
-            echo "Warning: Unable to fetch guardrails definition. Falling back to workflow defaults." >> "${GITHUB_STEP_SUMMARY}"
-            echo "GUARDRAILS_LOADED=false" >> "${GITHUB_ENV}"
+            printf '%s\n' "Warning: Unable to fetch guardrails definition. Falling back to workflow defaults." >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s\n' "GUARDRAILS_LOADED=false" >> "${GITHUB_ENV}"
             exit 0
           fi
 
@@ -400,19 +413,21 @@ PY
           case "${profile}" in
             all|release|scripts|repo) ;;
             *)
-              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              printf '%s\n' "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
               exit 1
               ;;
           esac
 
           if [ "${profile}" = "release" ] || [ "${profile}" = "repo" ]; then
-            echo "Profile ${profile} selected. Skipping scripts checks." >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s\n' "Profile ${profile} selected. Skipping scripts checks." >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
 
           if [ ! -d "scripts" ]; then
-            echo "### Scripts folder not present" >> "${GITHUB_STEP_SUMMARY}"
-            echo "Warning: scripts/ directory is optional. No scripts governance enforced." >> "${GITHUB_STEP_SUMMARY}"
+            {
+              printf '%s\n' "### Scripts folder not present"
+              printf '%s\n' "Warning: scripts/ directory is optional. No scripts governance enforced."
+            } >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
 
@@ -444,35 +459,45 @@ PY
           done < <(find scripts -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sed 's#^\./##')
 
           if [ "${#missing_dirs[@]}" -gt 0 ]; then
-            echo "### Scripts governance warnings" >> "${GITHUB_STEP_SUMMARY}"
-            echo "Missing recommended script directories:" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing_dirs[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+            {
+              printf '%s\n' "### Scripts governance warnings"
+              printf '%s\n' "Missing recommended script directories:"
+              for m in "${missing_dirs[@]}"; do
+                printf '%s\n' "- ${m}"
+              done
+              printf '\n'
+            } >> "${GITHUB_STEP_SUMMARY}"
           fi
 
           if [ "${#unapproved_dirs[@]}" -gt 0 ]; then
-            echo "### Scripts governance warnings" >> "${GITHUB_STEP_SUMMARY}"
-            echo "Unapproved script directories detected:" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${unapproved_dirs[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+            {
+              printf '%s\n' "### Scripts governance warnings"
+              printf '%s\n' "Unapproved script directories detected:"
+              for m in "${unapproved_dirs[@]}"; do
+                printf '%s\n' "- ${m}"
+              done
+              printf '\n'
+            } >> "${GITHUB_STEP_SUMMARY}"
           fi
 
           {
-            echo "### Scripts governance summary"
-            echo "| Area | Status | Notes |"
-            echo "|------|--------|-------|"
+            printf '%s\n' "### Scripts governance summary"
+            printf '%s\n' "| Area | Status | Notes |"
+            printf '%s\n' "|------|--------|-------|"
             if [ "${#missing_dirs[@]}" -gt 0 ]; then
-              echo "| Recommended directories | Warning | Missing recommended subfolders |"
+              printf '%s\n' "| Recommended directories | Warning | Missing recommended subfolders |"
             else
-              echo "| Recommended directories | OK | All recommended subfolders present |"
+              printf '%s\n' "| Recommended directories | OK | All recommended subfolders present |"
             fi
             if [ "${#unapproved_dirs[@]}" -gt 0 ]; then
-              echo "| Directory policy | Warning | Unapproved directories detected |"
+              printf '%s\n' "| Directory policy | Warning | Unapproved directories detected |"
             else
-              echo "| Directory policy | OK | No unapproved directories |"
+              printf '%s\n' "| Directory policy | OK | No unapproved directories |"
             fi
-            echo "| Enforcement mode | Advisory | scripts folder is optional |"
+            printf '%s\n' "| Enforcement mode | Advisory | scripts folder is optional |"
+            printf '\n'
+            printf '%s\n' "Scripts governance completed in advisory mode."
           } >> "${GITHUB_STEP_SUMMARY}"
-
-          echo "Scripts governance completed in advisory mode." >> "${GITHUB_STEP_SUMMARY}"
 
   repo_health:
     name: Repository health
@@ -496,12 +521,12 @@ PY
           set -euo pipefail
 
           url="${GUARDRAILS_DEFINITION_URL}"
-          echo "### Guardrails policy source" >> "${GITHUB_STEP_SUMMARY}"
-          echo "${url}" >> "${GITHUB_STEP_SUMMARY}"
+          printf '%s\n' "### Guardrails policy source" >> "${GITHUB_STEP_SUMMARY}"
+          printf '%s\n' "${url}" >> "${GITHUB_STEP_SUMMARY}"
 
           if ! curl -fsSL "${url}" -o /tmp/repo_guardrails.definition.json; then
-            echo "Warning: Unable to fetch guardrails definition. Falling back to workflow defaults." >> "${GITHUB_STEP_SUMMARY}"
-            echo "GUARDRAILS_LOADED=false" >> "${GITHUB_ENV}"
+            printf '%s\n' "Warning: Unable to fetch guardrails definition. Falling back to workflow defaults." >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s\n' "GUARDRAILS_LOADED=false" >> "${GITHUB_ENV}"
             exit 0
           fi
 
@@ -546,13 +571,13 @@ PY
           case "${profile}" in
             all|release|scripts|repo) ;;
             *)
-              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
+              printf '%s\n' "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
               exit 1
               ;;
           esac
 
           if [ "${profile}" = "release" ] || [ "${profile}" = "scripts" ]; then
-            echo "Profile ${profile} selected. Skipping repository health checks." >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s\n' "Profile ${profile} selected. Skipping repository health checks." >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
 
@@ -655,6 +680,7 @@ PY
             content_warnings+=("README.md missing expected brand keyword")
           fi
 
+          export PROFILE_RAW="${profile}"
           export MISSING_REQUIRED="$(printf '%s\n' "${missing_required[@]:-}")"
           export MISSING_OPTIONAL="$(printf '%s\n' "${missing_optional[@]:-}")"
           export CONTENT_WARNINGS="$(printf '%s\n' "${content_warnings[@]:-}")"
@@ -680,45 +706,45 @@ print(json.dumps(out, indent=2))
 PY
 )"
 
-					{
-					  printf '%s\n' "### Guardrails repository health"
-					  printf '\n'
-					  printf '%s\n' "### Guardrails report (JSON)"
-					  printf '%s\n' '```json'
-					  printf '%s\n' "${report_json}"
-					  printf '%s\n' '```'
-					  printf '\n'
-					} >> "${GITHUB_STEP_SUMMARY}"
+          {
+            printf '%s\n' "### Guardrails repository health"
+            printf '\n'
+            printf '%s\n' "### Guardrails report (JSON)"
+            printf '%s\n' '```json'
+            printf '%s\n' "${report_json}"
+            printf '%s\n' '```'
+            printf '\n'
+          } >> "${GITHUB_STEP_SUMMARY}"
 
-					if [ "${#missing_required[@]}" -gt 0 ]; then
-					  {
-					    printf '%s\n' "### Missing required repo artifacts"
-					    for m in "${missing_required[@]}"; do
-					      printf '%s\n' "- ${m}"
-					    done
-					    printf '%s\n' "ERROR: Guardrails failed. Missing required repository artifacts."
-					  } >> "${GITHUB_STEP_SUMMARY}"
-					  exit 1
-					fi
+          if [ "${#missing_required[@]}" -gt 0 ]; then
+            {
+              printf '%s\n' "### Missing required repo artifacts"
+              for m in "${missing_required[@]}"; do
+                printf '%s\n' "- ${m}"
+              done
+              printf '%s\n' "ERROR: Guardrails failed. Missing required repository artifacts."
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
 
-					if [ "${#missing_optional[@]}" -gt 0 ]; then
-					  {
-					    printf '%s\n' "### Missing optional repo artifacts"
-					    for m in "${missing_optional[@]}"; do
-					      printf '%s\n' "- ${m}"
-					    done
-					    printf '\n'
-					  } >> "${GITHUB_STEP_SUMMARY}"
-					fi
+          if [ "${#missing_optional[@]}" -gt 0 ]; then
+            {
+              printf '%s\n' "### Missing optional repo artifacts"
+              for m in "${missing_optional[@]}"; do
+                printf '%s\n' "- ${m}"
+              done
+              printf '\n'
+            } >> "${GITHUB_STEP_SUMMARY}"
+          fi
 
-					if [ "${#content_warnings[@]}" -gt 0 ]; then
-					  {
-					    printf '%s\n' "### Repo content warnings"
-					    for m in "${content_warnings[@]}"; do
-					      printf '%s\n' "- ${m}"
-					    done
-					    printf '\n'
-					  } >> "${GITHUB_STEP_SUMMARY}"
-					fi
+          if [ "${#content_warnings[@]}" -gt 0 ]; then
+            {
+              printf '%s\n' "### Repo content warnings"
+              for m in "${content_warnings[@]}"; do
+                printf '%s\n' "- ${m}"
+              done
+              printf '\n'
+            } >> "${GITHUB_STEP_SUMMARY}"
+          fi
 
-					printf '%s\n' "Repository health guardrails passed." >> "${GITHUB_STEP_SUMMARY}"
+          printf '%s\n' "Repository health guardrails passed." >> "${GITHUB_STEP_SUMMARY}"
