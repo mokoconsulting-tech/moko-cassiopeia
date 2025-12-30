@@ -564,7 +564,8 @@ put_multiline("GUARDRAILS_DISALLOWED_DIRS", data.get("repo", {}).get("paths", {}
 with open(env_path, "a", encoding="utf-8") as w:
   w.write("GUARDRAILS_LOADED=true\n")
 
-print("Guardrails definit
+print("Guardrails definition loaded")
+PY
 
       - name: Repo health checks
         env:
