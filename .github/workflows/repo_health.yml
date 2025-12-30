@@ -59,15 +59,20 @@ permissions:
 env:
   # Global policy variables baked into workflow
   ALLOWED_SFTP_PROTOCOLS: sftp
+
+  # Release policy
   RELEASE_REQUIRED_VARS: FTP_HOST,FTP_USER,FTP_PATH
   RELEASE_OPTIONAL_VARS: FTP_KEY,FTP_PASSWORD,FTP_PROTOCOL,FTP_PORT,FTP_PATH_SUFFIX
 
-  SCRIPTS_RECOMMENDED_DIRS: scripts/fix,scripts/lib,scripts/release,scripts/run,scripts/validate
+  # Scripts governance policy
+  # Note: directories listed without a trailing slash.
+  SCRIPTS_REQUIRED_DIRS: scripts/fix,scripts/lib,scripts/release,scripts/run,scripts/validate
   SCRIPTS_ALLOWED_DIRS: scripts,scripts/fix,scripts/lib,scripts/release,scripts/run,scripts/validate
 
-  REPO_REQUIRED_FILES: README.md,LICENSE,CHANGELOG.md,CONTRIBUTING.md,CODE_OF_CONDUCT.md,docs/docs-index.md
+  # Repo health policy
+  # Files are listed as-is; directories must end with a trailing slash.
+  REPO_REQUIRED_ARTIFACTS: README.md,LICENSE,CHANGELOG.md,CONTRIBUTING.md,CODE_OF_CONDUCT.md,docs/docs-index.md,.github/workflows/,scripts/,docs/,dev/
   REPO_OPTIONAL_FILES: SECURITY.md,GOVERNANCE.md,.editorconfig,.gitattributes,.gitignore
-  REPO_REQUIRED_PATHS: .github/workflows,scripts,docs,dev
   REPO_DISALLOWED_DIRS: src
   REPO_DISALLOWED_FILES: TODO.md,todo.md
 
@@ -96,25 +101,25 @@ jobs:
             const res = await github.rest.repos.getCollaboratorPermissionLevel({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              username: context.actor
+              username: context.actor,
             });
 
-            const permission = (res?.data?.permission || 'unknown').toLowerCase();
-            const allowed = permission === 'admin';
+            const permission = (res?.data?.permission || "unknown").toLowerCase();
+            const allowed = permission === "admin";
 
-            core.setOutput('permission', permission);
-            core.setOutput('allowed', allowed ? 'true' : 'false');
+            core.setOutput("permission", permission);
+            core.setOutput("allowed", allowed ? "true" : "false");
 
             const lines = [];
-            lines.push('### Access control');
-            lines.push('');
+            lines.push("### Access control");
+            lines.push("");
             lines.push(`Actor: ${context.actor}`);
             lines.push(`Permission: ${permission}`);
             lines.push(`Allowed: ${allowed}`);
-            lines.push('');
-            lines.push('Policy: This workflow runs only for users with admin permission on the repository.');
+            lines.push("");
+            lines.push("Policy: This workflow runs only for users with admin permission on the repository.");
 
-            await core.summary.addRaw(lines.join('\n')).write();
+            await core.summary.addRaw(lines.join("\n")).write();
 
       - name: Deny execution when not permitted
         if: ${{ steps.perm.outputs.allowed != 'true' }}
@@ -138,7 +143,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Guardrails release secrets and vars
+      - name: Guardrails release vars
         env:
           PROFILE_RAW: ${{ github.event.inputs.profile }}
           FTP_HOST: ${{ secrets.FTP_HOST }}
@@ -184,7 +189,6 @@ jobs:
           done
 
           proto="${FTP_PROTOCOL:-sftp}"
-
           if [ -n "${FTP_PROTOCOL:-}" ]; then
             ok=false
             for ap in "${allowed_proto[@]}"; do
@@ -224,6 +228,8 @@ jobs:
           FTP_KEY: ${{ secrets.FTP_KEY }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
           FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_PATH: ${{ secrets.FTP_PATH }}
+          FTP_PATH_SUFFIX: ${{ vars.FTP_PATH_SUFFIX }}
         run: |
           set -euo pipefail
 
@@ -241,15 +247,32 @@ jobs:
             exit 0
           fi
 
-          mkdir -p "$HOME/.ssh"
+          port="${FTP_PORT:-22}"
 
-          key_file="$HOME/.ssh/ci_sftp_key"
-          use_key=false
+          target_path="${FTP_PATH}"
+          if [ -n "${FTP_PATH_SUFFIX:-}" ]; then
+            target_path="${target_path%/}/${FTP_PATH_SUFFIX#/}"
+          fi
 
+          sftp_verbose="${SFTP_VERBOSE:-false}"
+          sftp_v_opt=()
+          [ "${sftp_verbose}" = 'true' ] && sftp_v_opt=(-vv)
+
+          {
+            printf '%s\n' '### SFTP connectivity test'
+            printf '%s\n' "Target path: ${target_path}"
+            printf '%s\n' 'Attempting non-destructive SFTP session'
+            printf '\n'
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          sftp_cmds="$(printf 'cd %s\npwd\nbye\n' "${target_path}")"
+
+          set +e
           if [ -n "${FTP_KEY:-}" ]; then
+            mkdir -p "$HOME/.ssh"
+            key_file="$HOME/.ssh/ci_sftp_key"
             printf '%s\n' "${FTP_KEY}" > "${key_file}"
             chmod 600 "${key_file}"
-            use_key=true
 
             if [ -n "${FTP_PASSWORD:-}" ]; then
               first_line="$(head -n 1 "${key_file}" || true)"
@@ -259,33 +282,17 @@ jobs:
               fi
               ssh-keygen -p -P "${FTP_PASSWORD}" -N '' -f "${key_file}" >/dev/null
             fi
-          fi
 
-          port="${FTP_PORT:-22}"
-
-          sftp_verbose="${SFTP_VERBOSE:-false}"
-          sftp_v_opt=()
-          if [ "${sftp_verbose}" = 'true' ]; then
-            sftp_v_opt=(-vv)
-          fi
-
-          {
-            printf '%s\n' '### SFTP connectivity test'
-            printf '%s\n' 'Attempting non-destructive SFTP session'
-            printf '\n'
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-          set +e
-          if [ "${use_key}" = true ]; then
-            printf 'pwd\nbye\n' | sftp "${sftp_v_opt[@]}" -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+            printf '%s' "${sftp_cmds}" | sftp "${sftp_v_opt[@]}" -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+            sftp_rc=$?
           elif [ -n "${FTP_PASSWORD:-}" ]; then
             command -v sshpass >/dev/null 2>&1 || (sudo apt-get update -qq && sudo apt-get install -y sshpass >/dev/null)
-            printf 'pwd\nbye\n' | sshpass -p "${FTP_PASSWORD}" sftp "${sftp_v_opt[@]}" -oBatchMode=no -oStrictHostKeyChecking=no -P "${port}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+            printf '%s' "${sftp_cmds}" | sshpass -p "${FTP_PASSWORD}" sftp "${sftp_v_opt[@]}" -oBatchMode=no -oStrictHostKeyChecking=no -P "${port}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+            sftp_rc=$?
           else
             printf '%s\n' 'ERROR: No FTP_KEY or FTP_PASSWORD provided for SFTP authentication.' >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
-          sftp_rc=$?
           set -e
 
           printf '%s\n' '### SFTP connectivity result' >> "${GITHUB_STEP_SUMMARY}"
@@ -298,7 +305,7 @@ jobs:
             printf '%s\n' "Status: FAILED (exit code ${sftp_rc})"
             printf '\n'
             printf '%s\n' 'Last SFTP output'
-            tail -n 40 /tmp/sftp_check.log || true
+            tail -n 60 /tmp/sftp_check.log || true
           } >> "${GITHUB_STEP_SUMMARY}"
           exit 1
 
@@ -346,28 +353,31 @@ jobs:
             exit 0
           fi
 
-          IFS=',' read -r -a recommended_dirs <<< "${SCRIPTS_RECOMMENDED_DIRS}"
+          IFS=',' read -r -a required_dirs <<< "${SCRIPTS_REQUIRED_DIRS}"
           IFS=',' read -r -a allowed_dirs <<< "${SCRIPTS_ALLOWED_DIRS}"
 
           missing_dirs=()
           unapproved_dirs=()
 
-          for d in "${recommended_dirs[@]}"; do
-            [ ! -d "${d}" ] && missing_dirs+=("${d}/")
+          for d in "${required_dirs[@]}"; do
+            req="${d%/}"
+            [ ! -d "${req}" ] && missing_dirs+=("${req}/")
           done
 
           while IFS= read -r d; do
             allowed=false
             for a in "${allowed_dirs[@]}"; do
-              [ "${d}" = "${a}" ] && allowed=true
+              a_norm="${a%/}"
+              [ "${d%/}" = "${a_norm}" ] && allowed=true
             done
-            [ "${allowed}" = false ] && unapproved_dirs+=("${d}/")
+            [ "${allowed}" = false ] && unapproved_dirs+=("${d%/}/")
           done < <(find scripts -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sed 's#^\./##')
 
           {
             printf '%s\n' '### Scripts governance'
+
             if [ "${#missing_dirs[@]}" -gt 0 ]; then
-              printf '%s\n' 'Missing recommended script directories:'
+              printf '%s\n' 'Missing required script directories:'
               for m in "${missing_dirs[@]}"; do printf '%s\n' "- ${m}"; done
               printf '\n'
             fi
@@ -381,9 +391,9 @@ jobs:
             printf '%s\n' '| Area | Status | Notes |'
             printf '%s\n' '|------|--------|-------|'
             if [ "${#missing_dirs[@]}" -gt 0 ]; then
-              printf '%s\n' '| Recommended directories | Warning | Missing recommended subfolders |'
+              printf '%s\n' '| Required directories | Warning | Missing required subfolders |'
             else
-              printf '%s\n' '| Recommended directories | OK | All recommended subfolders present |'
+              printf '%s\n' '| Required directories | OK | All required subfolders present |'
             fi
             if [ "${#unapproved_dirs[@]}" -gt 0 ]; then
               printf '%s\n' '| Directory policy | Warning | Unapproved directories detected |'
@@ -430,37 +440,34 @@ jobs:
             exit 0
           fi
 
-          IFS=',' read -r -a required_files <<< "${REPO_REQUIRED_FILES}"
+          IFS=',' read -r -a required_artifacts <<< "${REPO_REQUIRED_ARTIFACTS}"
           IFS=',' read -r -a optional_files <<< "${REPO_OPTIONAL_FILES}"
-          IFS=',' read -r -a required_paths <<< "${REPO_REQUIRED_PATHS}"
           IFS=',' read -r -a disallowed_dirs <<< "${REPO_DISALLOWED_DIRS}"
           IFS=',' read -r -a disallowed_files <<< "${REPO_DISALLOWED_FILES}"
 
           missing_required=()
           missing_optional=()
 
-          for f in "${required_files[@]}"; do
-            [ ! -f "${f}" ] && missing_required+=("${f}")
+          for item in "${required_artifacts[@]}"; do
+            if printf '%s' "${item}" | grep -q '/$'; then
+              d="${item%/}"
+              [ ! -d "${d}" ] && missing_required+=("${item}")
+            else
+              [ ! -f "${item}" ] && missing_required+=("${item}")
+            fi
           done
 
           for f in "${optional_files[@]}"; do
             [ ! -f "${f}" ] && missing_optional+=("${f}")
           done
 
-          for p in "${required_paths[@]}"; do
-            [ ! -d "${p}" ] && missing_required+=("${p}/")
-          done
-
           for d in "${disallowed_dirs[@]}"; do
-            if [ -d "${d}" ]; then
-              missing_required+=("${d}/ (disallowed)")
-            fi
+            d_norm="${d%/}"
+            [ -d "${d_norm}" ] && missing_required+=("${d_norm}/ (disallowed)")
           done
 
           for f in "${disallowed_files[@]}"; do
-            if [ -f "${f}" ]; then
-              missing_required+=("${f} (disallowed)")
-            fi
+            [ -f "${f}" ] && missing_required+=("${f} (disallowed)")
           done
 
           git fetch origin --prune
@@ -505,25 +512,25 @@ jobs:
           export CONTENT_WARNINGS="$(printf '%s\n' "${content_warnings[@]:-}")"
 
           report_json="$(python3 - <<'PY'
-          import json
-          import os
+					import json
+					import os
 
-          profile = os.environ.get('PROFILE_RAW') or 'all'
+					profile = os.environ.get('PROFILE_RAW') or 'all'
 
-          missing_required = os.environ.get('MISSING_REQUIRED', '').splitlines() if os.environ.get('MISSING_REQUIRED') else []
-          missing_optional = os.environ.get('MISSING_OPTIONAL', '').splitlines() if os.environ.get('MISSING_OPTIONAL') else []
-          content_warnings = os.environ.get('CONTENT_WARNINGS', '').splitlines() if os.environ.get('CONTENT_WARNINGS') else []
+					missing_required = os.environ.get('MISSING_REQUIRED', '').splitlines() if os.environ.get('MISSING_REQUIRED') else []
+					missing_optional = os.environ.get('MISSING_OPTIONAL', '').splitlines() if os.environ.get('MISSING_OPTIONAL') else []
+					content_warnings = os.environ.get('CONTENT_WARNINGS', '').splitlines() if os.environ.get('CONTENT_WARNINGS') else []
 
-          out = {
-            'profile': profile,
-            'missing_required': [x for x in missing_required if x],
-            'missing_optional': [x for x in missing_optional if x],
-            'content_warnings': [x for x in content_warnings if x],
-          }
+					out = {
+					  'profile': profile,
+					  'missing_required': [x for x in missing_required if x],
+					  'missing_optional': [x for x in missing_optional if x],
+					  'content_warnings': [x for x in content_warnings if x],
+					}
 
-          print(json.dumps(out, indent=2))
-          PY
-          )"
+					print(json.dumps(out, indent=2))
+					PY
+					)"
 
           {
             printf '%s\n' '### Guardrails repository health'
