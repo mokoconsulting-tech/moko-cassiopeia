@@ -193,8 +193,8 @@ jobs:
             exit 0
           fi
 
-          required=("FTP_HOST" "FTP_USER" "FTP_KEY" "FTP_PATH")
-          optional=("FTP_PASSWORD" "FTP_PROTOCOL" "FTP_PORT" "FTP_PATH_SUFFIX")
+          required=("FTP_HOST" "FTP_USER" "FTP_PATH")
+          optional=("FTP_KEY" "FTP_PASSWORD" "FTP_PROTOCOL" "FTP_PORT" "FTP_PATH_SUFFIX")
 
           if [ "${GUARDRAILS_LOADED:-false}" = 'true' ]; then
             if [ -n "${GUARDRAILS_RELEASE_REQUIRED_SECRETS:-}" ]; then
@@ -340,7 +340,7 @@ jobs:
             printf '%s\n' "Status: FAILED (exit code ${sftp_rc})"
             printf '\n'
             printf '%s\n' 'Last SFTP output'
-            tail -n 20 /tmp/sftp_check.log || true
+            tail -n 40 /tmp/sftp_check.log || true
           } >> "${GITHUB_STEP_SUMMARY}"
           exit 1
 
@@ -510,56 +510,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Load guardrails definition
-        run: |
-          set -euo pipefail
-
-          url="${GUARDRAILS_DEFINITION_URL}"
-          {
-            printf '%s\n' '### Guardrails policy source'
-            printf '%s\n' "${url}"
-            printf '\n'
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-          if ! curl -fsSL "${url}" -o /tmp/repo_guardrails.definition.json; then
-            printf '%s\n' 'Warning: Unable to fetch guardrails definition. Falling back to workflow defaults.' >> "${GITHUB_STEP_SUMMARY}"
-            printf '%s\n' 'GUARDRAILS_LOADED=false' >> "${GITHUB_ENV}"
-            exit 0
-          fi
-
-          python3 - <<'PY'
-          import json
-          import os
-          import uuid
-
-          path = "/tmp/repo_guardrails.definition.json"
-          with open(path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-          env_path = os.environ.get("GITHUB_ENV")
-          if not env_path:
-            raise SystemExit("GITHUB_ENV not set")
-
-          def put_multiline(key: str, values):
-            vals = [str(v) for v in (values or []) if str(v).strip()]
-            marker = f"EOF_{uuid.uuid4().hex}"
-            with open(env_path, "a", encoding="utf-8") as w:
-              w.write(f"{key}<<{marker}\n")
-              for v in vals:
-                w.write(v + "\n")
-              w.write(f"{marker}\n\n")
-
-          put_multiline("GUARDRAILS_REQUIRED_FILES", data.get("repo", {}).get("required_files"))
-          put_multiline("GUARDRAILS_OPTIONAL_FILES", data.get("repo", {}).get("optional_files"))
-          put_multiline("GUARDRAILS_REQUIRED_PATHS", data.get("repo", {}).get("required_paths"))
-          put_multiline("GUARDRAILS_DISALLOWED_DIRS", data.get("repo", {}).get("paths", {}).get("disallowed_dirs"))
-
-          with open(env_path, "a", encoding="utf-8") as w:
-            w.write("GUARDRAILS_LOADED=true\n")
-
-          print("Guardrails definition loaded")
-          PY
-
       - name: Repository health checks
         env:
           PROFILE_RAW: ${{ github.event.inputs.profile }}
@@ -580,13 +530,14 @@ jobs:
             exit 0
           fi
 
+          # NOTE: File and path requirements are enforced locally in this script.
+          # Do not source required/optional file lists from external definition files.
           required_files=(
             README.md
             LICENSE
             CHANGELOG.md
             CONTRIBUTING.md
             CODE_OF_CONDUCT.md
-            TODO.md
             docs/docs-index.md
           )
 
@@ -605,22 +556,14 @@ jobs:
             dev
           )
 
-          disallowed_dirs=(src)
+          disallowed_dirs=(
+            src
+          )
 
-          if [ "${GUARDRAILS_LOADED:-false}" = 'true' ]; then
-            if [ -n "${GUARDRAILS_REQUIRED_FILES:-}" ]; then
-              mapfile -t required_files < <(printf '%s\n' "${GUARDRAILS_REQUIRED_FILES}" | sed '/^$/d')
-            fi
-            if [ -n "${GUARDRAILS_OPTIONAL_FILES:-}" ]; then
-              mapfile -t optional_files < <(printf '%s\n' "${GUARDRAILS_OPTIONAL_FILES}" | sed '/^$/d')
-            fi
-            if [ -n "${GUARDRAILS_REQUIRED_PATHS:-}" ]; then
-              mapfile -t required_paths < <(printf '%s\n' "${GUARDRAILS_REQUIRED_PATHS}" | sed '/^$/d')
-            fi
-            if [ -n "${GUARDRAILS_DISALLOWED_DIRS:-}" ]; then
-              mapfile -t disallowed_dirs < <(printf '%s\n' "${GUARDRAILS_DISALLOWED_DIRS}" | sed '/^$/d')
-            fi
-          fi
+          disallowed_files=(
+            TODO.md
+            todo.md
+          )
 
           missing_required=()
           missing_optional=()
@@ -640,6 +583,12 @@ jobs:
           for d in "${disallowed_dirs[@]}"; do
             if [ -d "${d}" ]; then
               missing_required+=("${d}/ (disallowed)")
+            fi
+          done
+
+          for f in "${disallowed_files[@]}"; do
+            if [ -f "${f}" ]; then
+              missing_required+=("${f} (disallowed)")
             fi
           done
 
@@ -741,5 +690,3 @@ jobs:
           fi
 
           printf '%s\n' 'Repository health guardrails passed.' >> "${GITHUB_STEP_SUMMARY}"
-
-# EOF
