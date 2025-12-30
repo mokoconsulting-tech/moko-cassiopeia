@@ -145,37 +145,37 @@ jobs:
           fi
 
           python3 - <<'PY'
-import json
-import os
-import uuid
+          import json
+          import os
+          import uuid
 
-path = "/tmp/repo_guardrails.definition.json"
-with open(path, "r", encoding="utf-8") as f:
-  data = json.load(f)
+          path = "/tmp/repo_guardrails.definition.json"
+          with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-env_path = os.environ.get("GITHUB_ENV")
-if not env_path:
-  raise SystemExit("GITHUB_ENV not set")
+          env_path = os.environ.get("GITHUB_ENV")
+          if not env_path:
+            raise SystemExit("GITHUB_ENV not set")
 
-def put_multiline(key: str, values):
-  vals = [str(v) for v in (values or []) if str(v).strip()]
-  marker = f"EOF_{uuid.uuid4().hex}"
-  with open(env_path, "a", encoding="utf-8") as w:
-    w.write(f"{key}<<{marker}\n")
-    for v in vals:
-      w.write(v + "\n")
-    w.write(f"{marker}\n\n")
+          def put_multiline(key: str, values):
+            vals = [str(v) for v in (values or []) if str(v).strip()]
+            marker = f"EOF_{uuid.uuid4().hex}"
+            with open(env_path, "a", encoding="utf-8") as w:
+              w.write(f"{key}<<{marker}\n")
+              for v in vals:
+                w.write(v + "\n")
+              w.write(f"{marker}\n\n")
 
-put_multiline("GUARDRAILS_RELEASE_REQUIRED_SECRETS", data.get("release", {}).get("required_secrets"))
-put_multiline("GUARDRAILS_RELEASE_OPTIONAL_SECRETS", data.get("release", {}).get("optional_secrets"))
-put_multiline("GUARDRAILS_RELEASE_OPTIONAL_VARS", data.get("release", {}).get("optional_vars"))
-put_multiline("GUARDRAILS_RELEASE_PROTOCOL_ALLOWED", data.get("release", {}).get("protocol", {}).get("allowed"))
+          put_multiline("GUARDRAILS_RELEASE_REQUIRED_SECRETS", data.get("release", {}).get("required_secrets"))
+          put_multiline("GUARDRAILS_RELEASE_OPTIONAL_SECRETS", data.get("release", {}).get("optional_secrets"))
+          put_multiline("GUARDRAILS_RELEASE_OPTIONAL_VARS", data.get("release", {}).get("optional_vars"))
+          put_multiline("GUARDRAILS_RELEASE_PROTOCOL_ALLOWED", data.get("release", {}).get("protocol", {}).get("allowed"))
 
-with open(env_path, "a", encoding="utf-8") as w:
-  w.write("GUARDRAILS_LOADED=true\n")
+          with open(env_path, "a", encoding="utf-8") as w:
+            w.write("GUARDRAILS_LOADED=true\n")
 
-print("Guardrails definition loaded")
-PY
+          print("Guardrails definition loaded")
+          PY
 
       - name: Guardrails release secrets and vars
         env:
@@ -376,36 +376,36 @@ PY
           fi
 
           python3 - <<'PY'
-import json
-import os
-import uuid
+          import json
+          import os
+          import uuid
 
-path = "/tmp/repo_guardrails.definition.json"
-with open(path, "r", encoding="utf-8") as f:
-  data = json.load(f)
+          path = "/tmp/repo_guardrails.definition.json"
+          with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-env_path = os.environ.get("GITHUB_ENV")
-if not env_path:
-  raise SystemExit("GITHUB_ENV not set")
+          env_path = os.environ.get("GITHUB_ENV")
+          if not env_path:
+            raise SystemExit("GITHUB_ENV not set")
 
-def put_multiline(key: str, values):
-  vals = [str(v) for v in (values or []) if str(v).strip()]
-  marker = f"EOF_{uuid.uuid4().hex}"
-  with open(env_path, "a", encoding="utf-8") as w:
-    w.write(f"{key}<<{marker}\n")
-    for v in vals:
-      w.write(v + "\n")
-    w.write(f"{marker}\n\n")
+          def put_multiline(key: str, values):
+            vals = [str(v) for v in (values or []) if str(v).strip()]
+            marker = f"EOF_{uuid.uuid4().hex}"
+            with open(env_path, "a", encoding="utf-8") as w:
+              w.write(f"{key}<<{marker}\n")
+              for v in vals:
+                w.write(v + "\n")
+              w.write(f"{marker}\n\n")
 
-put_multiline("GUARDRAILS_SCRIPTS_ALLOWED_DIRS", data.get("scripts", {}).get("allowed_top_level_dirs"))
-put_multiline("GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS", data.get("scripts", {}).get("recommended_dirs"))
-put_multiline("GUARDRAILS_SCRIPTS_REQUIRED_VALIDATE_FILES", data.get("scripts", {}).get("required_validate_files_when_present"))
+          put_multiline("GUARDRAILS_SCRIPTS_ALLOWED_DIRS", data.get("scripts", {}).get("allowed_top_level_dirs"))
+          put_multiline("GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS", data.get("scripts", {}).get("recommended_dirs"))
+          put_multiline("GUARDRAILS_SCRIPTS_REQUIRED_VALIDATE_FILES", data.get("scripts", {}).get("required_validate_files_when_present"))
 
-with open(env_path, "a", encoding="utf-8") as w:
-  w.write("GUARDRAILS_LOADED=true\n")
+          with open(env_path, "a", encoding="utf-8") as w:
+            w.write("GUARDRAILS_LOADED=true\n")
 
-print("Guardrails definition loaded")
-PY
+          print("Guardrails definition loaded")
+          PY
 
       - name: Scripts folder governance
         env:
@@ -535,37 +535,37 @@ PY
           fi
 
           python3 - <<'PY'
-import json
-import os
-import uuid
+          import json
+          import os
+          import uuid
 
-path = "/tmp/repo_guardrails.definition.json"
-with open(path, "r", encoding="utf-8") as f:
-  data = json.load(f)
+          path = "/tmp/repo_guardrails.definition.json"
+          with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
 
-env_path = os.environ.get("GITHUB_ENV")
-if not env_path:
-  raise SystemExit("GITHUB_ENV not set")
+          env_path = os.environ.get("GITHUB_ENV")
+          if not env_path:
+            raise SystemExit("GITHUB_ENV not set")
 
-def put_multiline(key: str, values):
-  vals = [str(v) for v in (values or []) if str(v).strip()]
-  marker = f"EOF_{uuid.uuid4().hex}"
-  with open(env_path, "a", encoding="utf-8") as w:
-    w.write(f"{key}<<{marker}\n")
-    for v in vals:
-      w.write(v + "\n")
-    w.write(f"{marker}\n\n")
+          def put_multiline(key: str, values):
+            vals = [str(v) for v in (values or []) if str(v).strip()]
+            marker = f"EOF_{uuid.uuid4().hex}"
+            with open(env_path, "a", encoding="utf-8") as w:
+              w.write(f"{key}<<{marker}\n")
+              for v in vals:
+                w.write(v + "\n")
+              w.write(f"{marker}\n\n")
 
-put_multiline("GUARDRAILS_REQUIRED_FILES", data.get("repo", {}).get("required_files"))
-put_multiline("GUARDRAILS_OPTIONAL_FILES", data.get("repo", {}).get("optional_files"))
-put_multiline("GUARDRAILS_REQUIRED_PATHS", data.get("repo", {}).get("required_paths"))
-put_multiline("GUARDRAILS_DISALLOWED_DIRS", data.get("repo", {}).get("paths", {}).get("disallowed_dirs"))
+          put_multiline("GUARDRAILS_REQUIRED_FILES", data.get("repo", {}).get("required_files"))
+          put_multiline("GUARDRAILS_OPTIONAL_FILES", data.get("repo", {}).get("optional_files"))
+          put_multiline("GUARDRAILS_REQUIRED_PATHS", data.get("repo", {}).get("required_paths"))
+          put_multiline("GUARDRAILS_DISALLOWED_DIRS", data.get("repo", {}).get("paths", {}).get("disallowed_dirs"))
 
-with open(env_path, "a", encoding="utf-8") as w:
-  w.write("GUARDRAILS_LOADED=true\n")
+          with open(env_path, "a", encoding="utf-8") as w:
+            w.write("GUARDRAILS_LOADED=true\n")
 
-print("Guardrails definition loaded")
-PY
+          print("Guardrails definition loaded")
+          PY
 
       - name: Repo health checks
         env:
