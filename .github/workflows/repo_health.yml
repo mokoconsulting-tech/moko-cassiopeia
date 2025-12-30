@@ -295,17 +295,14 @@ jobs:
           use_key=false
 
           if [ -n "${FTP_KEY:-}" ]; then
-            printf '%s
-' "${FTP_KEY}" > "${key_file}"
+            printf '%s\n' "${FTP_KEY}" > "${key_file}"
             chmod 600 "${key_file}"
             use_key=true
 
             if [ -n "${FTP_PASSWORD:-}" ]; then
               first_line="$(head -n 1 "${key_file}" || true)"
-              if printf '%s
-' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
-                printf '%s
-' 'ERROR: FTP_KEY appears to be a PuTTY PPK. Provide an OpenSSH private key.' >> "${GITHUB_STEP_SUMMARY}"
+              if printf '%s\n' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
+                printf '%s\n' 'ERROR: FTP_KEY appears to be a PuTTY PPK. Provide an OpenSSH private key.' >> "${GITHUB_STEP_SUMMARY}"
                 exit 1
               fi
               ssh-keygen -p -P "${FTP_PASSWORD}" -N '' -f "${key_file}" >/dev/null
@@ -327,8 +324,7 @@ jobs:
             sudo apt-get update -qq && sudo apt-get install -y sshpass >/dev/null
             printf 'pwd\nbye\n' | sshpass -p "${FTP_PASSWORD}" sftp -vv -oBatchMode=no -oStrictHostKeyChecking=no -P "${port}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
           else
-            printf '%s
-' 'ERROR: No FTP_KEY or FTP_PASSWORD provided for SFTP authentication.' >> "${GITHUB_STEP_SUMMARY}"
+            printf '%s\n' 'ERROR: No FTP_KEY or FTP_PASSWORD provided for SFTP authentication.' >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
           sftp_rc=$?
