@@ -147,6 +147,7 @@ jobs:
           python3 - <<'PY'
 import json
 import os
+import uuid
 
 path = "/tmp/repo_guardrails.definition.json"
 with open(path, "r", encoding="utf-8") as f:
@@ -158,11 +159,12 @@ if not env_path:
 
 def put_multiline(key: str, values):
   vals = [str(v) for v in (values or []) if str(v).strip()]
+  marker = f"EOF_{uuid.uuid4().hex}"
   with open(env_path, "a", encoding="utf-8") as w:
-    w.write(f"{key}<<EOF\n")
+    w.write(f"{key}<<{marker}\n")
     for v in vals:
       w.write(v + "\n")
-    w.write("EOF\n")
+    w.write(f"{marker}\n\n")
 
 put_multiline("GUARDRAILS_RELEASE_REQUIRED_SECRETS", data.get("release", {}).get("required_secrets"))
 put_multiline("GUARDRAILS_RELEASE_OPTIONAL_SECRETS", data.get("release", {}).get("optional_secrets"))
@@ -376,6 +378,7 @@ PY
           python3 - <<'PY'
 import json
 import os
+import uuid
 
 path = "/tmp/repo_guardrails.definition.json"
 with open(path, "r", encoding="utf-8") as f:
@@ -387,11 +390,12 @@ if not env_path:
 
 def put_multiline(key: str, values):
   vals = [str(v) for v in (values or []) if str(v).strip()]
+  marker = f"EOF_{uuid.uuid4().hex}"
   with open(env_path, "a", encoding="utf-8") as w:
-    w.write(f"{key}<<EOF\n")
+    w.write(f"{key}<<{marker}\n")
     for v in vals:
       w.write(v + "\n")
-    w.write("EOF\n")
+    w.write(f"{marker}\n\n")
 
 put_multiline("GUARDRAILS_SCRIPTS_ALLOWED_DIRS", data.get("scripts", {}).get("allowed_top_level_dirs"))
 put_multiline("GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS", data.get("scripts", {}).get("recommended_dirs"))
@@ -533,6 +537,7 @@ PY
           python3 - <<'PY'
 import json
 import os
+import uuid
 
 path = "/tmp/repo_guardrails.definition.json"
 with open(path, "r", encoding="utf-8") as f:
@@ -544,11 +549,12 @@ if not env_path:
 
 def put_multiline(key: str, values):
   vals = [str(v) for v in (values or []) if str(v).strip()]
+  marker = f"EOF_{uuid.uuid4().hex}"
   with open(env_path, "a", encoding="utf-8") as w:
-    w.write(f"{key}<<EOF\n")
+    w.write(f"{key}<<{marker}\n")
     for v in vals:
       w.write(v + "\n")
-    w.write("EOF\n")
+    w.write(f"{marker}\n\n")
 
 put_multiline("GUARDRAILS_REQUIRED_FILES", data.get("repo", {}).get("required_files"))
 put_multiline("GUARDRAILS_OPTIONAL_FILES", data.get("repo", {}).get("optional_files"))
@@ -558,8 +564,7 @@ put_multiline("GUARDRAILS_DISALLOWED_DIRS", data.get("repo", {}).get("paths", {}
 with open(env_path, "a", encoding="utf-8") as w:
   w.write("GUARDRAILS_LOADED=true\n")
 
-print("Guardrails definition loaded")
-PY
+print("Guardrails definit
 
       - name: Repo health checks
         env:
