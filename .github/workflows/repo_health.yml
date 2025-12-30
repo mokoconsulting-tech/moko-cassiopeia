@@ -277,12 +277,10 @@ jobs:
 
           set +e
           if [ "${use_key}" = true ]; then
-            printf 'pwd
-bye\n' | sftp "${sftp_v_opt[@]}" -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+            printf 'pwd\nbye\n' | sftp "${sftp_v_opt[@]}" -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
           elif [ -n "${FTP_PASSWORD:-}" ]; then
             command -v sshpass >/dev/null 2>&1 || (sudo apt-get update -qq && sudo apt-get install -y sshpass >/dev/null)
-            printf 'pwd
-bye\n' | sshpass -p "${FTP_PASSWORD}" sftp "${sftp_v_opt[@]}" -oBatchMode=no -oStrictHostKeyChecking=no -P "${port}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+            printf 'pwd\nbye\n' | sshpass -p "${FTP_PASSWORD}" sftp "${sftp_v_opt[@]}" -oBatchMode=no -oStrictHostKeyChecking=no -P "${port}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
           else
             printf '%s\n' 'ERROR: No FTP_KEY or FTP_PASSWORD provided for SFTP authentication.' >> "${GITHUB_STEP_SUMMARY}"
             exit 1
