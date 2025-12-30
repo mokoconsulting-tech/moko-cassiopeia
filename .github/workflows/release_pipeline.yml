@@ -20,172 +20,456 @@
 #
 # FILE INFORMATION
 # DEFGROUP: GitHub.Workflow
-# INGROUP: MokoStandards.Validation
+# INGROUP: MokoStandards.Release
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
-# PATH: /.github/workflows/repo_health.yml
+# PATH: /.github/workflows/release_pipeline.yml
 # VERSION: 03.05.00
-# BRIEF: Enforces Joomla repository guardrails by validating release configuration, required validation scripts, tooling availability, and core repository health artifacts.
+# BRIEF: Enterprise release pipeline enforcing dev to rc to version to main. Creates prerelease when rc is created. Creates full release when version is created and promotes to main while retaining the version branch.
 # ============================================================================
 
-name: Repo Health
+name: Release Pipeline (dev > rc > version > main)
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_classification:
+        description: "Manual override for classification. auto follows branch policy; rc forces prerelease behavior; stable forces full release behavior."
+        required: true
+        default: auto
+        type: choice
+        options:
+          - auto
+          - rc
+          - stable
+  release:
+    types:
+      - created
+      - prereleased
+      - published
 
 concurrency:
-  group: repo-health-${{ github.repository }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: release-pipeline-${{ github.ref_name }}
+  cancel-in-progress: false
 
 defaults:
   run:
     shell: bash
 
-on:
-  workflow_dispatch:
-    inputs:
-      profile:
-        description: Which configuration profile to validate. release checks SFTP variables used by release pipeline. scripts checks baseline script prerequisites. repo runs repository health only. all runs release, scripts, and repo health.
-        required: true
-        default: all
-        type: choice
-        options:
-          - all
-          - release
-          - scripts
-          - repo
-  pull_request:
-    paths:
-      - .github/workflows/**
-      - scripts/**
-      - docs/**
-      - dev/**
-
 permissions:
   contents: read
-
-jobs:
-  access_check:
-    name: Access control
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: read
-
-    outputs:
-      allowed: ${{ steps.perm.outputs.allowed }}
-      permission: ${{ steps.perm.outputs.permission }}
-
-    steps:
-      - name: Check actor permission admin only
-        id: perm
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const owner = context.repo.owner;
-            const repo = context.repo.repo;
-            const username = context.actor;
-
-            const res = await github.rest.repos.getCollaboratorPermissionLevel({
-              owner,
-              repo,
-              username,
-            });
-
-            const permission = (res?.data?.permission || "unknown").toLowerCase();
-            const allowed = (permission === "admin");
-
-            core.setOutput("permission", permission);
-            core.setOutput("allowed", allowed ? "true" : "false");
-
-            const lines = [];
-            lines.push("### Access control");
-            lines.push("");
-            lines.push(`Actor: ${username}`);
-            lines.push(`Permission: ${permission}`);
-            lines.push(`Allowed: ${allowed}`);
-            lines.push("");
-            lines.push("Policy: This workflow runs only for users with admin permission on the repository.");
-            await core.summary.addRaw(lines.join("\n")).write();
-
-      - name: Deny execution when not permitted
-        if: ${{ steps.perm.outputs.allowed != 'true' }}
-        run: |
-          set -euo pipefail
-          echo "ERROR: Access denied. Actor must have admin permission to run this workflow." >> "${GITHUB_STEP_SUMMARY}"
-          exit 1
-
-  release_config:
-    name: Release configuration
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    needs: [access_check]
-    if: ${{ needs.access_check.outputs.allowed == 'true' }}
-    permissions:
-      contents: read
-
-    steps:
-      $1
-      - name: Load guardrails definition
-        env:
-          GUARDRAILS_DEFINITION_URL: ${{ vars.MOKOSTANDARDS_GUARDRAILS_URL || 'https://raw.githubusercontent.com/mokoconsulting-tech/MokoStandards/main/repo-guardrails.definition.json' }}
+      - name: Report run context (always)
+        if: ${{ always() }}
         run: |
           set -euo pipefail
 
-          url="${GUARDRAILS_DEFINITION_URL}"
-          echo "### Guardrails policy source" >> "${GITHUB_STEP_SUMMARY}"
-          echo "${url}" >> "${GITHUB_STEP_SUMMARY}"
+          {
+            echo "### Run context"
+            echo "```json"
+            printf '{'
+            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
+            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
+            printf '"job":"%s",' "${GITHUB_JOB}"
+            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
+            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
+            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
+            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            printf '"actor":"%s",' "${GITHUB_ACTOR}"
+            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
+            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
+            printf '"sha":"%s",' "${GITHUB_SHA}"
+            printf '"runner_os":"%s",' "${RUNNER_OS}"
+            printf '"runner_name":"%s"' "${RUNNER_NAME}"
+            printf '}
+'
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
-          if ! curl -fsSL "${url}" -o /tmp/repo_guardrails.definition.json; then
-            echo "Warning: Unable to fetch guardrails definition. Falling back to workflow defaults." >> "${GITHUB_STEP_SUMMARY}"
-            echo "GUARDRAILS_LOADED=false" >> "${GITHUB_ENV}"
-            exit 0
+          {
+            echo "### Git snapshot"
+            echo "```"
+            git --version || true
+            git status --porcelain=v1 || true
+            git log -1 --pretty=fuller || true
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if [ "${PERMISSION}" != "admin" ] && [ "${PERMISSION}" != "maintain" ]; then
+            echo "ERROR: Actor ${ACTOR} lacks required role (admin or maintain)." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
           fi
 
-          python3 - <<'PY'
-import json
-import os
-
-path = "/tmp/repo_guardrails.definition.json"
-with open(path, "r", encoding="utf-8") as f:
-  data = json.load(f)
-
-env_path = os.environ.get("GITHUB_ENV")
-if not env_path:
-  raise SystemExit("GITHUB_ENV not set")
-
-def put_multiline(key: str, values):
-  vals = [str(v) for v in (values or []) if str(v).strip()]
-  with open(env_path, "a", encoding="utf-8") as w:
-    w.write(f"{key}<<EOF
-")
-    for v in vals:
-      w.write(v + "
-")
-    w.write("EOF
-")
-
-put_multiline("GUARDRAILS_REQUIRED_FILES", data.get("repo", {}).get("required_files"))
-put_multiline("GUARDRAILS_OPTIONAL_FILES", data.get("repo", {}).get("optional_files"))
-put_multiline("GUARDRAILS_REQUIRED_PATHS", data.get("repo", {}).get("required_paths"))
-put_multiline("GUARDRAILS_DISALLOWED_DIRS", data.get("repo", {}).get("paths", {}).get("disallowed_dirs"))
-
-put_multiline("GUARDRAILS_RELEASE_REQUIRED_SECRETS", data.get("release", {}).get("required_secrets"))
-put_multiline("GUARDRAILS_RELEASE_OPTIONAL_SECRETS", data.get("release", {}).get("optional_secrets"))
-put_multiline("GUARDRAILS_RELEASE_OPTIONAL_VARS", data.get("release", {}).get("optional_vars"))
-put_multiline("GUARDRAILS_RELEASE_PROTOCOL_ALLOWED", data.get("release", {}).get("protocol", {}).get("allowed"))
-
-put_multiline("GUARDRAILS_SCRIPTS_ALLOWED_DIRS", data.get("scripts", {}).get("allowed_top_level_dirs"))
-put_multiline("GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS", data.get("scripts", {}).get("recommended_dirs"))
-put_multiline("GUARDRAILS_SCRIPTS_REQUIRED_VALIDATE_FILES", data.get("scripts", {}).get("required_validate_files_when_present"))
-
-with open(env_path, "a", encoding="utf-8") as w:
-  w.write("GUARDRAILS_LOADED=true
-")
-
-print("Guardrails definition loaded")
-PY
-
-      - name: Guardrails release secrets and vars
+      - name: Validate trigger and extract metadata
+        id: meta
         env:
-          PROFILE_RAW: "${{ github.event.inputs.profile }}"
+          RELEASE_CLASSIFICATION: "${{ github.event.inputs.release_classification }}"
+          RELEASE_PRERELEASE: "${{ github.event.release.prerelease }}"
+        run: |
+          set -euxo pipefail
+
+          EVENT_NAME="${GITHUB_EVENT_NAME}"
+          REF_NAME="${GITHUB_REF_NAME}"
+
+          VERSION=""
+          SOURCE_BRANCH=""
+          SOURCE_PREFIX=""
+          TARGET_BRANCH=""
+          PROMOTED_BRANCH=""
+          CHANNEL=""
+          RELEASE_MODE="none"
+
+          OVERRIDE="${RELEASE_CLASSIFICATION:-auto}"
+          if [ -z "${OVERRIDE}" ]; then
+            OVERRIDE="auto"
+          fi
+
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            echo "${REF_NAME}" | grep -E '^(dev|rc)/[0-9]+[.][0-9]+[.][0-9]+$'
+
+            SOURCE_BRANCH="${REF_NAME}"
+            SOURCE_PREFIX="${REF_NAME%%/*}"
+            VERSION="${REF_NAME#*/}"
+
+            if [ "${SOURCE_PREFIX}" = "dev" ]; then
+              TARGET_BRANCH="rc/${VERSION}"
+              PROMOTED_BRANCH="rc/${VERSION}"
+              CHANNEL="rc"
+              RELEASE_MODE="prerelease"
+            else
+              TARGET_BRANCH="version/${VERSION}"
+              PROMOTED_BRANCH="version/${VERSION}"
+              CHANNEL="stable"
+              RELEASE_MODE="stable"
+            fi
+
+            if [ "${OVERRIDE}" = "rc" ]; then
+              CHANNEL="rc"
+              RELEASE_MODE="prerelease"
+            elif [ "${OVERRIDE}" = "stable" ]; then
+              CHANNEL="stable"
+              RELEASE_MODE="stable"
+            else
+              OVERRIDE="auto"
+            fi
+
+          elif [ "${EVENT_NAME}" = "release" ]; then
+            TAG_NAME="${REF_NAME}"
+            VERSION="${TAG_NAME#v}"
+            VERSION="${VERSION%-rc}"
+            echo "${VERSION}" | grep -E '^[0-9]+[.][0-9]+[.][0-9]+$'
+
+            if [ "${RELEASE_PRERELEASE:-false}" = "true" ]; then
+              CHANNEL="rc"
+              RELEASE_MODE="prerelease"
+            else
+              CHANNEL="stable"
+              RELEASE_MODE="stable"
+            fi
+
+            OVERRIDE="auto"
+
+          else
+            echo "ERROR: Unsupported trigger ${EVENT_NAME}" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          TODAY_UTC="$(date -u +%Y-%m-%d)"
+
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "source_branch=${SOURCE_BRANCH}" >> "${GITHUB_OUTPUT}"
+          echo "source_prefix=${SOURCE_PREFIX}" >> "${GITHUB_OUTPUT}"
+          echo "target_branch=${TARGET_BRANCH}" >> "${GITHUB_OUTPUT}"
+          echo "promoted_branch=${PROMOTED_BRANCH}" >> "${GITHUB_OUTPUT}"
+          echo "today_utc=${TODAY_UTC}" >> "${GITHUB_OUTPUT}"
+          echo "channel=${CHANNEL}" >> "${GITHUB_OUTPUT}"
+          echo "release_mode=${RELEASE_MODE}" >> "${GITHUB_OUTPUT}"
+          echo "override=${OVERRIDE}" >> "${GITHUB_OUTPUT}"
+
+          {
+            echo "### Guard report"
+            echo "```json"
+            echo "{"
+            echo "  \"repository\": \"${GITHUB_REPOSITORY}\","
+            echo "  \"workflow\": \"${GITHUB_WORKFLOW}\","
+            echo "  \"job\": \"${GITHUB_JOB}\","
+            echo "  \"run_id\": ${GITHUB_RUN_ID},"
+            echo "  \"run_number\": ${GITHUB_RUN_NUMBER},"
+            echo "  \"run_attempt\": ${GITHUB_RUN_ATTEMPT},"
+            echo "  \"run_url\": \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\","
+            echo "  \"actor\": \"${GITHUB_ACTOR}\","
+            echo "  \"sha\": \"${GITHUB_SHA}\","
+            echo "  \"event\": \"${EVENT_NAME}\","
+            echo "  \"ref\": \"${REF_NAME}\","
+            echo "  \"version\": \"${VERSION}\","
+            echo "  \"source_branch\": \"${SOURCE_BRANCH}\","
+            echo "  \"target_branch\": \"${TARGET_BRANCH}\","
+            echo "  \"promoted_branch\": \"${PROMOTED_BRANCH}\","
+            echo "  \"channel\": \"${CHANNEL}\","
+            echo "  \"release_mode\": \"${RELEASE_MODE}\","
+            echo "  \"override\": \"${OVERRIDE}\","
+            echo "  \"today_utc\": \"${TODAY_UTC}\""
+            echo "}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  promote_branch:
+    name: 01 Promote branch and delete source
+    runs-on: ubuntu-latest
+    needs: guard
+
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout source branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.guard.outputs.source_branch }}
+          fetch-depth: 0
+
+      - name: Configure Git identity
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      - name: Enforce promotion preconditions
+        run: |
+          set -euxo pipefail
+
+          SRC="${{ needs.guard.outputs.source_branch }}"
+          DST="${{ needs.guard.outputs.target_branch }}"
+
+          git fetch origin --prune
+
+          if [ -z "${SRC}" ] || [ -z "${DST}" ]; then
+            echo "ERROR: guard did not emit SRC or DST" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          if ! git show-ref --verify --quiet "refs/remotes/origin/${SRC}"; then
+            echo "ERROR: origin/${SRC} not found" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          if git show-ref --verify --quiet "refs/remotes/origin/${DST}"; then
+            echo "ERROR: origin/${DST} already exists" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+      - name: Promote and delete source
+        run: |
+          set -euxo pipefail
+
+          SRC="${{ needs.guard.outputs.source_branch }}"
+          DST="${{ needs.guard.outputs.target_branch }}"
+
+          git checkout -B "${DST}" "origin/${SRC}"
+          git push origin "${DST}"
+          git push origin --delete "${SRC}"
+
+          $1
+      - name: Report run context (always)
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo "### Run context"
+            echo "```json"
+            printf '{'
+            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
+            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
+            printf '"job":"%s",' "${GITHUB_JOB}"
+            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
+            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
+            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
+            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            printf '"actor":"%s",' "${GITHUB_ACTOR}"
+            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
+            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
+            printf '"sha":"%s"' "${GITHUB_SHA}"
+            printf '}
+'
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          {
+            echo "### Git snapshot"
+            echo "```"
+            git status --porcelain=v1 || true
+            git log -1 --pretty=fuller || true
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  normalize_dates:
+    name: 02 Normalize dates on promoted branch
+    runs-on: ubuntu-latest
+    needs:
+      - guard
+      - promote_branch
+
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout promoted branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.guard.outputs.promoted_branch }}
+          fetch-depth: 0
+
+      - name: Configure Git identity
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      - name: Validate repo prerequisites
+        run: |
+          set -euxo pipefail
+          test -d src || (echo "ERROR: src directory missing" && exit 1)
+          test -f CHANGELOG.md || (echo "ERROR: CHANGELOG.md missing" && exit 1)
+
+          VERSION="${{ needs.guard.outputs.version }}"
+
+          if ! grep -F "## [${VERSION}] " CHANGELOG.md >/dev/null; then
+            echo "ERROR: CHANGELOG.md missing heading for version [${VERSION}]" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+      - name: Normalize dates using repository script only
+        run: |
+          set -euxo pipefail
+
+          TODAY="${{ needs.guard.outputs.today_utc }}"
+          VERSION="${{ needs.guard.outputs.version }}"
+
+          {
+            echo "### Date normalization (repo script only)"
+            echo "```json"
+            echo "{\"today_utc\":\"${TODAY}\",\"version\":\"${VERSION}\"}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          CANDIDATES=(
+            "scripts/release/update_dates.sh"
+            "scripts/release/update_dates"
+            "scripts/update_dates.sh"
+          )
+
+          SCRIPT=""
+          for c in "${CANDIDATES[@]}"; do
+            if [ -f "${c}" ]; then
+              SCRIPT="${c}"
+              break
+            fi
+          done
+
+          if [ -z "${SCRIPT}" ]; then
+            FOUND="$(find . -maxdepth 3 -type f \( -name 'update_dates.sh' -o -name 'update-dates.sh' \) 2>/dev/null | head -n 5 || true)"
+            {
+              echo "ERROR: Date normalization script not found in approved locations."
+              echo "Approved locations:"
+              printf '%s\n' "${CANDIDATES[@]}"
+              echo "Discovered candidates (first 5):"
+              echo "${FOUND:-<none>}"
+              echo "Required action: add scripts/release/update_dates.sh (preferred) to the repo."
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          echo "Using date script: ${SCRIPT} (expected under scripts/release/)" >> "${GITHUB_STEP_SUMMARY}"
+
+          chmod +x "${SCRIPT}"
+          "${SCRIPT}" "${TODAY}" "${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
+
+          {
+            echo "### Date normalization diffstat"
+            echo "```"
+            git diff --stat || true
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Commit normalized dates (if changed)
+        run: |
+          set -euxo pipefail
+          if git diff --quiet; then
+            echo "No date changes to commit" >> "${GITHUB_STEP_SUMMARY}"
+            exit 0
+          fi
+          git add -A
+          git commit -m "chore(release): normalize dates" || true
+          $1
+
+      - name: Report run context (always)
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo "### Run context"
+            echo "```json"
+            printf '{'
+            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
+            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
+            printf '"job":"%s",' "${GITHUB_JOB}"
+            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
+            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
+            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
+            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            printf '"actor":"%s",' "${GITHUB_ACTOR}"
+            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
+            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
+            printf '"sha":"%s"' "${GITHUB_SHA}"
+            printf '}
+'
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          {
+            echo "### Git snapshot"
+            echo "```"
+            git status --porcelain=v1 || true
+            git log -1 --pretty=fuller || true
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  build_and_release:
+    name: 03 Build ZIP, upload to SFTP, create GitHub release
+    runs-on: ubuntu-latest
+    needs:
+      - guard
+      - normalize_dates
+
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - name: Checkout promoted branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.guard.outputs.promoted_branch }}
+          fetch-depth: 0
+
+      - name: Configure Git identity
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      - name: Validate required secrets and variables
+        env:
           FTP_HOST: "${{ secrets.FTP_HOST }}"
           FTP_USER: "${{ secrets.FTP_USER }}"
           FTP_KEY: "${{ secrets.FTP_KEY }}"
@@ -194,514 +478,590 @@ PY
           FTP_PROTOCOL: "${{ secrets.FTP_PROTOCOL }}"
           FTP_PORT: "${{ secrets.FTP_PORT }}"
           FTP_PATH_SUFFIX: "${{ vars.FTP_PATH_SUFFIX }}"
+          CHANNEL: "${{ needs.guard.outputs.channel }}"
         run: |
           set -euo pipefail
 
-          profile="${PROFILE_RAW:-all}"
-          case "${profile}" in
-            all|release|scripts|repo) ;;
-            *)
-              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
-              exit 1
-              ;;
-          esac
-
-          if [ "${profile}" = "scripts" ] || [ "${profile}" = "repo" ]; then
-            echo "Profile ${profile} selected. Skipping release configuration checks." >> "${GITHUB_STEP_SUMMARY}"
-            exit 0
-          fi
-
-          required=("FTP_HOST" "FTP_USER" "FTP_KEY" "FTP_PATH")
-          optional=("FTP_PASSWORD" "FTP_PROTOCOL" "FTP_PORT" "FTP_PATH_SUFFIX")
-
           missing=()
-          missing_optional=()
 
-          for k in "${required[@]}"; do
-            v="${!k:-}"
-            [ -z "${v}" ] && missing+=("${k}")
-          done
-
-          for k in "${optional[@]}"; do
-            v="${!k:-}"
-            [ -z "${v}" ] && missing_optional+=("${k}")
-          done
+          [ -n "${FTP_HOST:-}" ] || missing+=("FTP_HOST")
+          [ -n "${FTP_USER:-}" ] || missing+=("FTP_USER")
+          [ -n "${FTP_KEY:-}" ] || missing+=("FTP_KEY")
+          [ -n "${FTP_PATH:-}" ] || missing+=("FTP_PATH")
 
           proto="${FTP_PROTOCOL:-sftp}"
           if [ -n "${FTP_PROTOCOL:-}" ] && [ "${proto}" != "sftp" ]; then
             missing+=("FTP_PROTOCOL_INVALID")
           fi
 
-          if [ "${#missing_optional[@]}" -gt 0 ]; then
-            echo "### Missing optional release configuration" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing_optional[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+          first_line="$(printf '%s' "${FTP_KEY:-}" | head -n 1 || true)"
+          if [ -n "${FTP_KEY:-}" ]; then
+            if printf '%s' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
+              key_format="ppk"
+            elif printf '%s' "${first_line}" | grep -q '^-----BEGIN '; then
+              key_format="openssh"
+            else
+              key_format="unknown"
+              missing+=("FTP_KEY_FORMAT")
+            fi
+          else
+            key_format="missing"
           fi
 
+          {
+            echo "### Configuration guardrails"
+            echo "```json"
+            printf '{"status":"%s","missing":[' "$( [ "${#missing[@]}" -gt 0 ] && echo fail || echo ok )"
+            sep=""
+            for m in "${missing[@]}"; do
+              printf '%s"%s"' "${sep}" "${m}"
+              sep=",";
+            done
+            printf '],"key_format":"%s","channel":"%s"}\n' "${key_format}" "${CHANNEL}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
           if [ "${#missing[@]}" -gt 0 ]; then
-            echo "### Missing required release configuration" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
-            echo "ERROR: Guardrails failed. Missing required release configuration." >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
-          echo "### Guardrails release configuration" >> "${GITHUB_STEP_SUMMARY}"
-          echo "All required release variables present." >> "${GITHUB_STEP_SUMMARY}"
+      - name: Run repository validation scripts (workflow-controlled)
+        run: |
+          set -euxo pipefail
 
-      - name: Guardrails SFTP connectivity
+          required_scripts=(
+            "scripts/validate/validate_manifest.sh"
+            "scripts/validate/validate_xml_wellformed.sh"
+          )
+
+          optional_scripts=(
+            "scripts/validate/validate_changelog.sh"
+            "scripts/validate/validate_language_structure.sh"
+            "scripts/validate/validate_license_headers.sh"
+            "scripts/validate/validate_no_secrets.sh"
+            "scripts/validate/validate_paths.sh"
+            "scripts/validate/validate_php_syntax.sh"
+            "scripts/validate/validate_tabs.sh"
+            "scripts/validate/validate_version_alignment.sh"
+          )
+
+          missing=()
+          for s in "${required_scripts[@]}"; do
+            if [ ! -f "${s}" ]; then
+              missing+=("${s}")
+            fi
+          done
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            {
+              echo "### Script guardrails"
+              echo "```json"
+              printf '{"status":"fail","missing_required_scripts":['
+              sep=""
+              for m in "${missing[@]}"; do
+                printf '%s"%s"' "${sep}" "${m}"
+                sep=",";
+              done
+              printf ']}\n'
+              echo "```"
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          ran=()
+          skipped=()
+
+          for s in "${required_scripts[@]}" "${optional_scripts[@]}"; do
+            if [ -f "${s}" ]; then
+              chmod +x "${s}"
+              "${s}" >> "${GITHUB_STEP_SUMMARY}"
+              ran+=("${s}")
+            else
+              skipped+=("${s}")
+            fi
+          done
+
+          {
+            echo "### Validation inventory"
+            echo "```json"
+            printf '{'
+            printf '"required_count":%s,' "${#required_scripts[@]}"
+            printf '"optional_count":%s,' "${#optional_scripts[@]}"
+            printf '"ran_count":%s,' "${#ran[@]}"
+            printf '"skipped_optional_count":%s,' "${#skipped[@]}"
+
+            printf '"required":['
+            sep=""
+            for s in "${required_scripts[@]}"; do
+              printf '%s"%s"' "${sep}" "${s}"
+              sep=",";
+            done
+
+            printf '],"optional":['
+            sep=""
+            for s in "${optional_scripts[@]}"; do
+              printf '%s"%s"' "${sep}" "${s}"
+              sep=",";
+            done
+
+            printf '],"ran":['
+            sep=""
+            for s in "${ran[@]}"; do
+              printf '%s"%s"' "${sep}" "${s}"
+              sep=",";
+            done
+
+            printf '],"skipped_optional":['
+            sep=""
+            for s in "${skipped[@]}"; do
+              printf '%s"%s"' "${sep}" "${s}"
+              sep=",";
+            done
+
+            printf ']}
+'
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Build Joomla ZIP (extension type aware)
+        id: build
+        run: |
+          set -euxo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          REPO_NAME="${{ github.event.repository.name }}"
+          CHANNEL="${{ needs.guard.outputs.channel }}"
+
+          test -d src || (echo "ERROR: src directory missing" && exit 1)
+
+          DIST_DIR="${GITHUB_WORKSPACE}/dist"
+          mkdir -p "${DIST_DIR}"
+
+          MANIFEST=""
+          if [ -f "src/templateDetails.xml" ]; then
+            MANIFEST="src/templateDetails.xml"
+          elif find src -maxdepth 4 -type f -name 'templateDetails.xml' | head -n 1 | grep -q .; then
+            MANIFEST="$(find src -maxdepth 4 -type f -name 'templateDetails.xml' | head -n 1)"
+          elif find src -maxdepth 4 -type f -name 'pkg_*.xml' | head -n 1 | grep -q .; then
+            MANIFEST="$(find src -maxdepth 4 -type f -name 'pkg_*.xml' | head -n 1)"
+          elif find src -maxdepth 4 -type f -name 'com_*.xml' | head -n 1 | grep -q .; then
+            MANIFEST="$(find src -maxdepth 4 -type f -name 'com_*.xml' | head -n 1)"
+          elif find src -maxdepth 4 -type f -name 'mod_*.xml' | head -n 1 | grep -q .; then
+            MANIFEST="$(find src -maxdepth 4 -type f -name 'mod_*.xml' | head -n 1)"
+          elif find src -maxdepth 6 -type f -name 'plg_*.xml' | head -n 1 | grep -q .; then
+            MANIFEST="$(find src -maxdepth 6 -type f -name 'plg_*.xml' | head -n 1)"
+          else
+            MANIFEST="$(grep -Rsl --include='*.xml' '<extension' src | head -n 1 || true)"
+          fi
+
+          if [ -z "${MANIFEST}" ]; then
+            echo "ERROR: No Joomla manifest XML found under src" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          EXT_TYPE="$(grep -Eo 'type="[^"]+"' "${MANIFEST}" | head -n 1 | cut -d '"' -f2 || true)"
+          if [ -z "${EXT_TYPE}" ]; then
+            EXT_TYPE="unknown"
+          fi
+
+          ROOT="$(dirname "${MANIFEST}")"
+
+          ZIP="${REPO_NAME}-${VERSION}-${CHANNEL}-${EXT_TYPE}.zip"
+
+          (cd "${ROOT}" && zip -r -X "${DIST_DIR}/${ZIP}" . \
+            -x "**/.git/**" \
+            -x "**/.github/**" \
+            -x "**/.DS_Store" \
+            -x "**/__MACOSX/**")
+
+          echo "zip_name=${ZIP}" >> "${GITHUB_OUTPUT}"
+          echo "dist_dir=${DIST_DIR}" >> "${GITHUB_OUTPUT}"
+          echo "root=${ROOT}" >> "${GITHUB_OUTPUT}"
+          echo "manifest=${MANIFEST}" >> "${GITHUB_OUTPUT}"
+          echo "ext_type=${EXT_TYPE}" >> "${GITHUB_OUTPUT}"
+
+          ZIP_BYTES="$(stat -c%s "${DIST_DIR}/${ZIP}")"
+
+          {
+            echo "### Build report"
+            echo "```json"
+            echo "{\"repository\":\"${GITHUB_REPOSITORY}\",\"workflow\":\"${GITHUB_WORKFLOW}\",\"job\":\"${GITHUB_JOB}\",\"run_id\":${GITHUB_RUN_ID},\"run_number\":${GITHUB_RUN_NUMBER},\"run_attempt\":${GITHUB_RUN_ATTEMPT},\"run_url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\",\"actor\":\"${GITHUB_ACTOR}\",\"sha\":\"${GITHUB_SHA}\",\"root\":\"${ROOT}\",\"manifest\":\"${MANIFEST}\",\"extension_type\":\"${EXT_TYPE}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES}}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: ZIP inventory (audit)
+        run: |
+          set -euxo pipefail
+
+          DIST_DIR="${{ steps.build.outputs.dist_dir }}"
+          ZIP_NAME="${{ steps.build.outputs.zip_name }}"
+
+          {
+            echo "### ZIP inventory"
+            echo "```"
+            ls -la "${DIST_DIR}" || true
+            echo ""
+            echo "ZIP file list (first 200):"
+            unzip -l "${DIST_DIR}/${ZIP_NAME}" | head -n 200 || true
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Upload ZIP to SFTP (key-only, overwrite, verbose)
         env:
-          PROFILE_RAW: "${{ github.event.inputs.profile }}"
           FTP_HOST: "${{ secrets.FTP_HOST }}"
           FTP_USER: "${{ secrets.FTP_USER }}"
           FTP_KEY: "${{ secrets.FTP_KEY }}"
           FTP_PASSWORD: "${{ secrets.FTP_PASSWORD }}"
+          FTP_PATH: "${{ secrets.FTP_PATH }}"
+          FTP_PROTOCOL: "${{ secrets.FTP_PROTOCOL }}"
           FTP_PORT: "${{ secrets.FTP_PORT }}"
+          FTP_PATH_SUFFIX: "${{ vars.FTP_PATH_SUFFIX }}"
+          CHANNEL: "${{ needs.guard.outputs.channel }}"
         run: |
           set -euo pipefail
 
-          profile="${PROFILE_RAW:-all}"
-          case "${profile}" in
-            all|release|scripts|repo) ;;
-            *)
-              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
-              exit 1
-              ;;
-          esac
-
-          if [ "${profile}" = "scripts" ] || [ "${profile}" = "repo" ]; then
-            echo "Profile ${profile} selected. Skipping SFTP connectivity check." >> "${GITHUB_STEP_SUMMARY}"
-            exit 0
-          fi
-
-          mkdir -p "$HOME/.ssh"
-          key_file="$HOME/.ssh/ci_sftp_key"
-          printf '%s' "${FTP_KEY}" > "${key_file}"
-          printf '\n' >> "${key_file}"
-          chmod 600 "${key_file}"
-
-          if [ -n "${FTP_PASSWORD:-}" ]; then
-            first_line="$(head -n 1 "${key_file}" || true)"
-            if printf '%s' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
-              echo "ERROR: FTP_KEY appears to be a PuTTY PPK. Provide an OpenSSH private key." >> "${GITHUB_STEP_SUMMARY}"
-              exit 1
-            fi
-            ssh-keygen -p -P "${FTP_PASSWORD}" -N "" -f "${key_file}" >/dev/null
-          fi
-
-          port="${FTP_PORT:-22}"
-
-          echo "### SFTP connectivity test" >> "${GITHUB_STEP_SUMMARY}"
-          echo "Attempting non-destructive SFTP session" >> "${GITHUB_STEP_SUMMARY}"
-
-          set +e
-          printf 'pwd
-bye
-' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
-          sftp_rc=$?
-          set -e
-
-          echo "### SFTP connectivity result" >> "${GITHUB_STEP_SUMMARY}"
-          if [ "${sftp_rc}" -eq 0 ]; then
-            echo "Status: SUCCESS" >> "${GITHUB_STEP_SUMMARY}"
-            exit 0
-          fi
-
-          echo "Status: FAILED (exit code ${sftp_rc})" >> "${GITHUB_STEP_SUMMARY}"
-          echo "" >> "${GITHUB_STEP_SUMMARY}"
-          echo "Last SFTP output" >> "${GITHUB_STEP_SUMMARY}"
-          tail -n 20 /tmp/sftp_check.log >> "${GITHUB_STEP_SUMMARY}" || true
-          exit 1
-
-  scripts_config:
-    name: Scripts and tooling
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [access_check]
-    if: ${{ needs.access_check.outputs.allowed == 'true' }}
-    permissions:
-      contents: read
-
-    steps:
-      $1
-      - name: Load guardrails definition
-        env:
-          GUARDRAILS_DEFINITION_URL: ${{ vars.MOKOSTANDARDS_GUARDRAILS_URL || 'https://raw.githubusercontent.com/mokoconsulting-tech/MokoStandards/main/repo-guardrails.definition.json' }}
-        run: |
-          set -euo pipefail
-
-          url="${GUARDRAILS_DEFINITION_URL}"
-          echo "### Guardrails policy source" >> "${GITHUB_STEP_SUMMARY}"
-          echo "${url}" >> "${GITHUB_STEP_SUMMARY}"
-
-          if ! curl -fsSL "${url}" -o /tmp/repo_guardrails.definition.json; then
-            echo "Warning: Unable to fetch guardrails definition. Falling back to workflow defaults." >> "${GITHUB_STEP_SUMMARY}"
-            echo "GUARDRAILS_LOADED=false" >> "${GITHUB_ENV}"
-            exit 0
-          fi
-
-          python3 - <<'PY'
-import json
-import os
-
-path = "/tmp/repo_guardrails.definition.json"
-with open(path, "r", encoding="utf-8") as f:
-  data = json.load(f)
-
-env_path = os.environ.get("GITHUB_ENV")
-if not env_path:
-    raise SystemExit("GITHUB_ENV not set")
-
-def put_multiline(key: str, values):
-    vals = [str(v) for v in (values or []) if str(v).strip()]
-    with open(env_path, "a", encoding="utf-8") as w:
-        w.write(f"{key}<<EOF\n")
-        for v in vals:
-            w.write(f"{v}\n")
-        w.write("EOF\n")
-
-put_multiline("GUARDRAILS_REQUIRED_FILES", data.get("repo", {}).get("required_files"))
-put_multiline("GUARDRAILS_OPTIONAL_FILES", data.get("repo", {}).get("optional_files"))
-put_multiline("GUARDRAILS_REQUIRED_PATHS", data.get("repo", {}).get("required_paths"))
-put_multiline("GUARDRAILS_DISALLOWED_DIRS", data.get("repo", {}).get("paths", {}).get("disallowed_dirs"))
-
-put_multiline("GUARDRAILS_RELEASE_REQUIRED_SECRETS", data.get("release", {}).get("required_secrets"))
-put_multiline("GUARDRAILS_RELEASE_OPTIONAL_SECRETS", data.get("release", {}).get("optional_secrets"))
-put_multiline("GUARDRAILS_RELEASE_OPTIONAL_VARS", data.get("release", {}).get("optional_vars"))
-put_multiline("GUARDRAILS_RELEASE_PROTOCOL_ALLOWED", data.get("release", {}).get("protocol", {}).get("allowed"))
-
-put_multiline("GUARDRAILS_SCRIPTS_ALLOWED_DIRS", data.get("scripts", {}).get("allowed_top_level_dirs"))
-put_multiline("GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS", data.get("scripts", {}).get("recommended_dirs"))
-put_multiline("GUARDRAILS_SCRIPTS_REQUIRED_VALIDATE_FILES", data.get("scripts", {}).get("required_validate_files_when_present"))
-
-with open(env_path, "a", encoding="utf-8") as w:
-  w.write("GUARDRAILS_LOADED=true\n")
-
-print("Guardrails definition loaded")
-PY
-
-      - name: Guardrails scripts folder governance
-        env:
-          PROFILE_RAW: "${{ github.event.inputs.profile }}"
-        run: |
-          set -euo pipefail
-
-          profile="${PROFILE_RAW:-all}"
-          case "${profile}" in
-            all|release|scripts|repo) ;;
-            *)
-              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
-              exit 1
-              ;;
-          esac
-
-          if [ "${profile}" = "release" ] || [ "${profile}" = "repo" ]; then
-            echo "Profile ${profile} selected. Skipping scripts checks." >> "${GITHUB_STEP_SUMMARY}"
-            exit 0
-          fi
-
-          # scripts/ is OPTIONAL and informational only
-          if [ ! -d "scripts" ]; then
-            echo "### Scripts folder not present" >> "${GITHUB_STEP_SUMMARY}"
-            echo "Warning: scripts/ directory is optional. No scripts governance enforced." >> "${GITHUB_STEP_SUMMARY}"
-            exit 0
-          fi
-
-          required_script_dirs=(
-            "scripts/fix"
-            "scripts/lib"
-            "scripts/release"
-            "scripts/run"
-            "scripts/validate"
-          )
-
-          optional_script_dirs=(
-            "scripts/config"
-            "scripts/tools"
-            "scripts/docs"
-          )
-
-          allowed_script_dirs=(
-            "scripts"
-            "scripts/fix"
-            "scripts/lib"
-            "scripts/release"
-            "scripts/run"
-            "scripts/validate"
-            "scripts/config"
-            "scripts/tools"
-            "scripts/docs"
-          )
-
-          missing_dirs=()
-          unapproved_dirs=()
-
-          for d in "${required_script_dirs[@]}"; do
-            [ ! -d "${d}" ] && missing_dirs+=("${d}/")
-          done
-
-          while IFS= read -r d; do
-            allowed=false
-            for a in "${allowed_script_dirs[@]}"; do
-              [ "${d}" = "${a}" ] && allowed=true
-            done
-            [ "${allowed}" = false ] && unapproved_dirs+=("${d}/")
-          done < <(find scripts -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sed 's#^\./##')
-
-          if [ "${#missing_dirs[@]}" -gt 0 ]; then
-            echo "### Scripts governance warnings" >> "${GITHUB_STEP_SUMMARY}"
-            echo "Missing recommended script directories:" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing_dirs[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
-          fi
-
-          if [ "${#unapproved_dirs[@]}" -gt 0 ]; then
-            echo "### Scripts governance warnings" >> "${GITHUB_STEP_SUMMARY}"
-            echo "Unapproved script directories detected:" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${unapproved_dirs[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
-          fi
-
-          {
-            echo "### Scripts governance summary"
-            echo "| Area | Status | Notes |"
-            echo "|------|--------|-------|"
-            if [ "${#missing_dirs[@]}" -gt 0 ]; then
-              echo "| Recommended directories | Warning | Missing recommended subfolders |"
-            else
-              echo "| Recommended directories | OK | All recommended subfolders present |"
-            fi
-            if [ "${#unapproved_dirs[@]}" -gt 0 ]; then
-              echo "| Directory policy | Warning | Unapproved directories detected |"
-            else
-              echo "| Directory policy | OK | No unapproved directories |"
-            fi
-            echo "| Enforcement mode | Advisory | scripts folder is optional |"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-          echo "Scripts governance completed in advisory mode." >> "${GITHUB_STEP_SUMMARY}"
-
-
-  repo_health:
-    name: Repository health
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    needs: [access_check]
-    if: ${{ needs.access_check.outputs.allowed == 'true' }}
-    permissions:
-      contents: read
-
-    steps:
-      $1
-      - name: Load guardrails definition
-        env:
-          GUARDRAILS_DEFINITION_URL: ${{ vars.MOKOSTANDARDS_GUARDRAILS_URL || 'https://raw.githubusercontent.com/mokoconsulting-tech/MokoStandards/main/repo-guardrails.definition.json' }}
-        run: |
-          set -euo pipefail
-
-          url="${GUARDRAILS_DEFINITION_URL}"
-          echo "### Guardrails policy source" >> "${GITHUB_STEP_SUMMARY}"
-          echo "${url}" >> "${GITHUB_STEP_SUMMARY}"
-
-          if ! curl -fsSL "${url}" -o /tmp/repo_guardrails.definition.json; then
-            echo "Warning: Unable to fetch guardrails definition. Falling back to workflow defaults." >> "${GITHUB_STEP_SUMMARY}"
-            echo "GUARDRAILS_LOADED=false" >> "${GITHUB_ENV}"
-            exit 0
-          fi
-
-          python3 - <<'PY'
-import json
-import os
-
-path = "/tmp/repo_guardrails.definition.json"
-with open(path, "r", encoding="utf-8") as f:
-  data = json.load(f)
-
-env_path = os.environ.get("GITHUB_ENV")
-if not env_path:
-  raise SystemExit("GITHUB_ENV not set")
-
-def put_multiline(key: str, values):
-    vals = [str(v) for v in (values or []) if str(v).strip()]
-    with open(env_path, "a", encoding="utf-8") as w:
-        w.write(f"{key}<<EOF\n")
-        for v in vals:
-            w.write(f"{v}\n")
-        w.write("EOF\n")
-
-put_multiline("GUARDRAILS_REQUIRED_FILES", data.get("repo", {}).get("required_files"))
-put_multiline("GUARDRAILS_OPTIONAL_FILES", data.get("repo", {}).get("optional_files"))
-put_multiline("GUARDRAILS_REQUIRED_PATHS", data.get("repo", {}).get("required_paths"))
-put_multiline("GUARDRAILS_DISALLOWED_DIRS", data.get("repo", {}).get("paths", {}).get("disallowed_dirs"))
-
-put_multiline("GUARDRAILS_RELEASE_REQUIRED_SECRETS", data.get("release", {}).get("required_secrets"))
-put_multiline("GUARDRAILS_RELEASE_OPTIONAL_SECRETS", data.get("release", {}).get("optional_secrets"))
-put_multiline("GUARDRAILS_RELEASE_OPTIONAL_VARS", data.get("release", {}).get("optional_vars"))
-put_multiline("GUARDRAILS_RELEASE_PROTOCOL_ALLOWED", data.get("release", {}).get("protocol", {}).get("allowed"))
-
-put_multiline("GUARDRAILS_SCRIPTS_ALLOWED_DIRS", data.get("scripts", {}).get("allowed_top_level_dirs"))
-put_multiline("GUARDRAILS_SCRIPTS_RECOMMENDED_DIRS", data.get("scripts", {}).get("recommended_dirs"))
-put_multiline("GUARDRAILS_SCRIPTS_REQUIRED_VALIDATE_FILES", data.get("scripts", {}).get("required_validate_files_when_present"))
-
-with open(env_path, "a", encoding="utf-8") as w:
-  w.write("GUARDRAILS_LOADED=true\n")
-
-print("Guardrails definition loaded")
-PY
-
-      - name: Repo health checks
-        env:
-          PROFILE_RAW: "${{ github.event.inputs.profile }}"
-        run: |
-          set -euo pipefail
-
-          profile="${PROFILE_RAW:-all}"
-          case "${profile}" in
-            all|release|scripts|repo) ;;
-            *)
-              echo "ERROR: Unknown profile: ${profile}" >> "${GITHUB_STEP_SUMMARY}"
-              exit 1
-              ;;
-          esac
-
-          if [ "${profile}" = "release" ] || [ "${profile}" = "scripts" ]; then
-            echo "Profile ${profile} selected. Skipping repository health checks." >> "${GITHUB_STEP_SUMMARY}"
-            exit 0
-          fi
-
-          required_files=(
-            "README.md"
-            "LICENSE"
-            "CHANGELOG.md"
-            "CONTRIBUTING.md"
-            "CODE_OF_CONDUCT.md"
-            "TODO.md"
-            "docs/docs-index.md"
-          )
-
-          optional_files=(
-            "SECURITY.md"
-            "GOVERNANCE.md"
-            ".editorconfig"
-            ".gitattributes"
-            ".gitignore"
-          )
-
-          required_paths=(
-            ".github/workflows"
-            "scripts"
-            "docs"
-            "dev"
-          )
-
-          missing_required=()
-          missing_optional=()
-
-          for f in "${required_files[@]}"; do
-            [ ! -f "${f}" ] && missing_required+=("${f}")
-          done
-
-          for f in "${optional_files[@]}"; do
-            [ ! -f "${f}" ] && missing_optional+=("${f}")
-          done
-
-          for p in "${required_paths[@]}"; do
-            [ ! -d "${p}" ] && missing_required+=("${p}/")
-          done
-
-          if [ -d "src" ]; then
-            missing_required+=("src/ (disallowed, use dev/ only)")
-          fi
-
-          git fetch origin --prune
-
-          dev_paths=()
-          dev_branches=()
-
-          while IFS= read -r b; do
-            name="${b#origin/}"
-            if [ "${name}" = "dev" ]; then
-              dev_branches+=("${name}")
-            else
-              dev_paths+=("${name}")
-            fi
-          done < <(git branch -r --list "origin/dev*" | sed 's/^ *//')
-
-          if [ "${#dev_paths[@]}" -eq 0 ]; then
-            missing_required+=("dev/* branch (e.g. dev/01.00.00)")
-          fi
-
-          if [ "${#dev_branches[@]}" -gt 0 ]; then
-            missing_required+=("invalid branch dev (must be dev/<version>)")
-          fi
-
-          content_warnings=()
-
-          if [ -f "CHANGELOG.md" ] && ! grep -Eq '^# Changelog' CHANGELOG.md; then
-            content_warnings+=("CHANGELOG.md missing '# Changelog' header")
-          fi
-
-          if [ -f "LICENSE" ] && ! grep -qiE 'GNU GENERAL PUBLIC LICENSE|GPL' LICENSE; then
-            content_warnings+=("LICENSE does not look like a GPL text")
-          fi
-
-          if [ -f "README.md" ] && ! grep -qiE 'moko|Moko' README.md; then
-            content_warnings+=("README.md missing expected brand keyword")
-          fi
-
-          export MISSING_REQUIRED="$(printf '%s\n' "${missing_required[@]:-}")"
-					export MISSING_OPTIONAL="$(printf '%s\n' "${missing_optional[@]:-}")"
-					export CONTENT_WARNINGS="$(printf '%s\n' "${content_warnings[@]:-}")"
-
-          report_json="$(python3 - <<'PY'
-import json
-import os
-
-profile = os.environ.get("PROFILE_RAW") or "all"
-required_files = ["README.md","LICENSE","CHANGELOG.md","CONTRIBUTING.md","CODE_OF_CONDUCT.md","TODO.md","docs/docs-index.md"]
-optional_files = ["SECURITY.md","GOVERNANCE.md",".editorconfig",".gitattributes",".gitignore"]
-required_paths = [".github/workflows","scripts","docs","dev"]
-
-missing_required = os.environ.get("MISSING_REQUIRED", "").splitlines() if os.environ.get("MISSING_REQUIRED") else []
-missing_optional = os.environ.get("MISSING_OPTIONAL", "").splitlines() if os.environ.get("MISSING_OPTIONAL") else []
-content_warnings = os.environ.get("CONTENT_WARNINGS", "").splitlines() if os.environ.get("CONTENT_WARNINGS") else []
-
-out = {
-  "profile": profile,
-  "checked": {
-    "required_files": required_files,
-    "optional_files": optional_files,
-    "required_paths": required_paths,
-  },
-  "missing_required": [x for x in missing_required if x],
-  "missing_optional": [x for x in missing_optional if x],
-  "content_warnings": [x for x in content_warnings if x],
-}
-
-print(json.dumps(out, indent=2))
-PY
-)"
-
-					{
-					  printf "### Guardrails repository health\n\n"
-					  printf "### Guardrails report (JSON)\n"
-					  printf "```json\n"
-					  printf "%s\n" "${report_json}"
-					  printf "```\n"
-					} >> "${GITHUB_STEP_SUMMARY}"
-
-          if [ "${#missing_required[@]}" -gt 0 ]; then
-            echo "### Missing required repo artifacts" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing_required[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
-            echo "ERROR: Guardrails failed. Missing required repository artifacts." >> "${GITHUB_STEP_SUMMARY}"
+          ZIP="${{ steps.build.outputs.zip_name }}"
+
+          : "${FTP_HOST:?Missing secret FTP_HOST}"
+          : "${FTP_USER:?Missing secret FTP_USER}"
+          : "${FTP_KEY:?Missing secret FTP_KEY}"
+          : "${FTP_PATH:?Missing secret FTP_PATH}"
+
+          PROTOCOL="${FTP_PROTOCOL:-sftp}"
+          if [ "${PROTOCOL}" != "sftp" ]; then
+            echo "ERROR: Only SFTP permitted" >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
 
-          if [ "${#missing_optional[@]}" -gt 0 ]; then
-            echo "### Missing optional repo artifacts" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${missing_optional[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+          PORT="${FTP_PORT:-}"
+          if [ -n "${PORT}" ]; then
+            HOSTPORT="${FTP_HOST}:${PORT}"
+          else
+            HOSTPORT="${FTP_HOST}"
           fi
 
-          if [ "${#content_warnings[@]}" -gt 0 ]; then
-            echo "### Repo content warnings" >> "${GITHUB_STEP_SUMMARY}"
-            for m in "${content_warnings[@]}"; do echo "- ${m}" >> "${GITHUB_STEP_SUMMARY}"; done
+          SUFFIX="${FTP_PATH_SUFFIX:-}"
+          if [ -n "${SUFFIX}" ]; then
+            REMOTE_PATH="${FTP_PATH%/}/${SUFFIX%/}/${CHANNEL}"
+          else
+            REMOTE_PATH="${FTP_PATH%/}/${CHANNEL}"
+          fi
+          {
+            echo "### Deployment intent"
+            echo "```json"
+            printf '{'
+            printf '"protocol":"sftp",'
+            printf '"host":"%s",' "${FTP_HOST}"
+            printf '"port":"%s",' "${PORT:-default}"
+            printf '"remote_path":"%s",' "${REMOTE_PATH}"
+            printf '"overwrite":true,'
+            printf '"key_only":true'
+            printf '}
+'
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          echo "SFTP target: sftp://${HOSTPORT}${REMOTE_PATH}" >> "${GITHUB_STEP_SUMMARY}"
+
+          sudo apt-get update -y
+          sudo apt-get install -y lftp openssh-client putty-tools
+
+          mkdir -p ~/.ssh
+
+          if printf '%s' "${FTP_KEY}" | head -n 1 | grep -q '^PuTTY-User-Key-File-'; then
+            printf '%s' "${FTP_KEY}" > ~/.ssh/key.ppk
+            chmod 600 ~/.ssh/key.ppk
+
+            if grep -Eq '^Encryption: *none[[:space:]]*$' ~/.ssh/key.ppk; then
+              PPK_PASSPHRASE=""
+            else
+              if [ -z "${FTP_PASSWORD:-}" ]; then
+                echo "ERROR: Encrypted PPK detected but FTP_PASSWORD not provided" >> "${GITHUB_STEP_SUMMARY}"
+                exit 1
+              fi
+              PPK_PASSPHRASE="${FTP_PASSWORD:-}"
+            fi
+
+            if [ -n "${PPK_PASSPHRASE}" ]; then
+              puttygen ~/.ssh/key.ppk -O private-openssh --passphrase "${PPK_PASSPHRASE}" -o ~/.ssh/id_rsa
+            else
+              puttygen ~/.ssh/key.ppk -O private-openssh -o ~/.ssh/id_rsa
+            fi
+
+            if [ ! -s ~/.ssh/id_rsa ]; then
+              echo "ERROR: PPK conversion failed" >> "${GITHUB_STEP_SUMMARY}"
+              exit 1
+            fi
+
+            chmod 600 ~/.ssh/id_rsa
+            rm -f ~/.ssh/key.ppk
+          else
+            printf '%s' "${FTP_KEY}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
           fi
 
-          echo "Repository health guardrails passed." >> "${GITHUB_STEP_SUMMARY}"
-\n
+          ssh-keyscan -H "${FTP_HOST}" >> ~/.ssh/known_hosts
+
+          lftp -d -e "\
+            set sftp:auto-confirm yes; \
+            set cmd:trace yes; \
+            set net:timeout 30; \
+            set net:max-retries 3; \
+            set net:reconnect-interval-base 5; \
+            set sftp:connect-program 'ssh -a -x -i ~/.ssh/id_rsa -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o ChallengeResponseAuthentication=no -o PubkeyAuthentication=yes'; \
+            open -u '${FTP_USER}', sftp://${HOSTPORT}; \
+            mkdir -p '${REMOTE_PATH}'; \
+            cd '${REMOTE_PATH}'; \
+            put -E '${{ steps.build.outputs.dist_dir }}/${ZIP}'; \
+            ls; \
+            bye"
+
+          ZIP_BYTES="$(stat -c%s "${{ steps.build.outputs.dist_dir }}/${ZIP}")"
+          {
+            echo "### SFTP upload report"
+            echo "```json"
+            echo "{\"protocol\":\"sftp\",\"host\":\"${FTP_HOST}\",\"port\":\"${PORT:-default}\",\"remote_path\":\"${REMOTE_PATH}\",\"zip\":\"${ZIP}\",\"zip_bytes\":${ZIP_BYTES},\"overwrite\":true,\"key_only\":true}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Create Git tag
+        id: tag
+        run: |
+          set -euxo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          MODE="${{ needs.guard.outputs.release_mode }}"
+
+          if [ "${MODE}" = "prerelease" ]; then
+            TAG="v${VERSION}-rc"
+          else
+            TAG="v${VERSION}"
+          fi
+
+          git fetch --tags
+          if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+            echo "Tag ${TAG} already exists" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            git tag -a "${TAG}" -m "${MODE} ${VERSION}"
+            git push origin "refs/tags/${TAG}"
+          fi
+
+          echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
+
+      - name: Generate release notes from CHANGELOG.md
+        run: |
+          set -euxo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          ZIP_ASSET="${{ steps.build.outputs.zip_name }}"
+
+          awk "/^## \[${VERSION}\]/{flag=1;next}/^## \[/ {flag=0}flag" CHANGELOG.md > RELEASE_NOTES.md || true
+
+          if [ ! -s RELEASE_NOTES.md ]; then
+            echo "ERROR: Release notes extraction failed for ${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          {
+            echo ""
+            echo "Assets:"
+            echo "- ${ZIP_ASSET}"
+          } >> RELEASE_NOTES.md
+
+      - name: Create GitHub release and attach ZIP
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ needs.guard.outputs.release_mode }} ${{ needs.guard.outputs.version }}
+          prerelease: ${{ needs.guard.outputs.release_mode == 'prerelease' }}
+          body_path: RELEASE_NOTES.md
+          files: |
+            dist/*.zip
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            dist/*.zip
+
+      $1
+
+      - name: Report run context (always)
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo "### Run context"
+            echo "```json"
+            printf '{'
+            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
+            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
+            printf '"job":"%s",' "${GITHUB_JOB}"
+            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
+            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
+            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
+            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            printf '"actor":"%s",' "${GITHUB_ACTOR}"
+            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
+            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
+            printf '"sha":"%s"' "${GITHUB_SHA}"
+            printf '}
+'
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          {
+            echo "### Git snapshot"
+            echo "```"
+            git status --porcelain=v1 || true
+            git log -1 --pretty=fuller || true
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  push_version_to_main:
+    name: 04 Promote version branch to main (stable only, keep version branch)
+    runs-on: ubuntu-latest
+    needs:
+      - guard
+      - build_and_release
+
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.guard.outputs.release_mode == 'stable' }}
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure Git identity
+        run: |
+          set -euxo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+
+      - name: Create PR from version branch to main
+        env:
+          GH_TOKEN: "${{ github.token }}"
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ needs.guard.outputs.version }}"
+          HEAD="${{ needs.guard.outputs.promoted_branch }}"
+
+          gh pr create \
+            --base main \
+            --head "${HEAD}" \
+            --title "Release ${VERSION} to main" \
+            --body "Automated PR created by release pipeline. Version branch is retained by policy." \
+            || true
+
+      - name: Attempt to merge PR (best-effort)
+        env:
+          GH_TOKEN: "${{ github.token }}"
+        run: |
+          set -euo pipefail
+
+          HEAD="${{ needs.guard.outputs.promoted_branch }}"
+          PR_NUMBER="$(gh pr list --head "${HEAD}" --base main --json number --jq '.[0].number' || true)"
+
+          if [ -z "${PR_NUMBER}" ] || [ "${PR_NUMBER}" = "null" ]; then
+            echo "ERROR: PR not found for head ${HEAD}" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          gh pr merge "${PR_NUMBER}" --merge --delete-branch=false \
+            || echo "PR merge blocked by branch protection or policy" >> "${GITHUB_STEP_SUMMARY}"
+
+          $1
+
+      - name: Report run context (always)
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo "### Run context"
+            echo "```json"
+            printf '{'
+            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
+            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
+            printf '"job":"%s",' "${GITHUB_JOB}"
+            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
+            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
+            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
+            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            printf '"actor":"%s",' "${GITHUB_ACTOR}"
+            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
+            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
+            printf '"sha":"%s"' "${GITHUB_SHA}"
+            printf '}
+'
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          {
+            echo "### Git snapshot"
+            echo "```"
+            git status --porcelain=v1 || true
+            git log -1 --pretty=fuller || true
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+  release_event_report:
+    name: 99 Release event report (GitHub UI created release)
+    runs-on: ubuntu-latest
+    needs: guard
+
+    if: ${{ github.event_name == 'release' }}
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      $1
+
+      - name: Report run context (always)
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo "### Run context"
+            echo "```json"
+            printf '{'
+            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
+            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
+            printf '"job":"%s",' "${GITHUB_JOB}"
+            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
+            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
+            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
+            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            printf '"actor":"%s",' "${GITHUB_ACTOR}"
+            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
+            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
+            printf '"sha":"%s"' "${GITHUB_SHA}"
+            printf '}
+'
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          {
+            echo "### Git snapshot"
+            echo "```"
+            git status --porcelain=v1 || true
+            git log -1 --pretty=fuller || true
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
