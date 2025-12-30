@@ -290,17 +290,26 @@ jobs:
           fi
 
           mkdir -p "$HOME/.ssh"
-          key_file="$HOME/.ssh/ci_sftp_key"
-          printf '%s\n' "${FTP_KEY}" > "${key_file}"
-          chmod 600 "${key_file}"
 
-          if [ -n "${FTP_PASSWORD:-}" ]; then
-            first_line="$(head -n 1 "${key_file}" || true)"
-            if printf '%s\n' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
-              printf '%s\n' 'ERROR: FTP_KEY appears to be a PuTTY PPK. Provide an OpenSSH private key.' >> "${GITHUB_STEP_SUMMARY}"
-              exit 1
+          key_file="$HOME/.ssh/ci_sftp_key"
+          use_key=false
+
+          if [ -n "${FTP_KEY:-}" ]; then
+            printf '%s
+' "${FTP_KEY}" > "${key_file}"
+            chmod 600 "${key_file}"
+            use_key=true
+
+            if [ -n "${FTP_PASSWORD:-}" ]; then
+              first_line="$(head -n 1 "${key_file}" || true)"
+              if printf '%s
+' "${first_line}" | grep -q '^PuTTY-User-Key-File-'; then
+                printf '%s
+' 'ERROR: FTP_KEY appears to be a PuTTY PPK. Provide an OpenSSH private key.' >> "${GITHUB_STEP_SUMMARY}"
+                exit 1
+              fi
+              ssh-keygen -p -P "${FTP_PASSWORD}" -N '' -f "${key_file}" >/dev/null
             fi
-            ssh-keygen -p -P "${FTP_PASSWORD}" -N '' -f "${key_file}" >/dev/null
           fi
 
           port="${FTP_PORT:-22}"
@@ -312,7 +321,16 @@ jobs:
           } >> "${GITHUB_STEP_SUMMARY}"
 
           set +e
-          printf 'pwd\nbye\n' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+          if [ "${use_key}" = true ]; then
+            printf 'pwd\nbye\n' | sftp -vv -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+          elif [ -n "${FTP_PASSWORD:-}" ]; then
+            sudo apt-get update -qq && sudo apt-get install -y sshpass >/dev/null
+            printf 'pwd\nbye\n' | sshpass -p "${FTP_PASSWORD}" sftp -vv -oBatchMode=no -oStrictHostKeyChecking=no -P "${port}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+          else
+            printf '%s
+' 'ERROR: No FTP_KEY or FTP_PASSWORD provided for SFTP authentication.' >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
           sftp_rc=$?
           set -e
 
