@@ -312,9 +312,7 @@ jobs:
           } >> "${GITHUB_STEP_SUMMARY}"
 
           set +e
-          printf 'pwd
-bye
-' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+          printf 'pwd\nbye\n' | sftp -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
           sftp_rc=$?
           set -e
 
