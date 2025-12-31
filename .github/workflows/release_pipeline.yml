@@ -25,6 +25,7 @@
 # PATH: /.github/workflows/release_pipeline.yml
 # VERSION: 03.05.00
 # BRIEF: Enterprise release pipeline enforcing dev to rc to version to main. Creates prerelease when rc is created. Creates full release when version is created and promotes to main while retaining the version branch.
+# NOTE:
 # ============================================================================
 
 name: Release Pipeline (dev > rc > version > main)
@@ -55,56 +56,70 @@ defaults:
   run:
     shell: bash
 
+# Default permissions are minimized; jobs elevate as needed.
 permissions:
   contents: read
-      - name: Report run context (always)
-        if: ${{ always() }}
-        run: |
-          set -euo pipefail
 
-          {
-            echo "### Run context"
-            echo "```json"
-            printf '{'
-            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
-            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
-            printf '"job":"%s",' "${GITHUB_JOB}"
-            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
-            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
-            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
-            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            printf '"actor":"%s",' "${GITHUB_ACTOR}"
-            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
-            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
-            printf '"sha":"%s",' "${GITHUB_SHA}"
-            printf '"runner_os":"%s",' "${RUNNER_OS}"
-            printf '"runner_name":"%s"' "${RUNNER_NAME}"
-            printf '}
-'
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
+jobs:
+  guard:
+    name: 00 Guardrails and metadata
+    runs-on: ubuntu-latest
 
-          {
-            echo "### Git snapshot"
-            echo "```"
-            git --version || true
-            git status --porcelain=v1 || true
-            git log -1 --pretty=fuller || true
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      source_branch: ${{ steps.meta.outputs.source_branch }}
+      source_prefix: ${{ steps.meta.outputs.source_prefix }}
+      target_branch: ${{ steps.meta.outputs.target_branch }}
+      promoted_branch: ${{ steps.meta.outputs.promoted_branch }}
+      today_utc: ${{ steps.meta.outputs.today_utc }}
+      channel: ${{ steps.meta.outputs.channel }}
+      release_mode: ${{ steps.meta.outputs.release_mode }}
+      override: ${{ steps.meta.outputs.override }}
 
-          if [ "${PERMISSION}" != "admin" ] && [ "${PERMISSION}" != "maintain" ]; then
-            echo "ERROR: Actor ${ACTOR} lacks required role (admin or maintain)." >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
+    permissions:
+      contents: read
+      actions: read
+      # Required for permissions check via REST API
+      pull-requests: read
+
+    steps:
+      - name: Checkout (best effort)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Actor authorization (admin or maintain)
+        id: auth
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const username = context.actor;
+
+            const res = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner,
+              repo,
+              username,
+            });
+
+            const perm = (res?.data?.permission || '').toLowerCase();
+            const allowed = (perm === 'admin' || perm === 'maintain');
+
+            core.setOutput('permission', perm || 'unknown');
+            core.setOutput('allowed', allowed ? 'true' : 'false');
+
+            if (!allowed) {
+              core.setFailed(`Actor ${username} lacks required role (admin or maintain). Detected permission: ${perm || 'unknown'}.`);
+            }
 
       - name: Validate trigger and extract metadata
         id: meta
         env:
-          RELEASE_CLASSIFICATION: "${{ github.event.inputs.release_classification }}"
-          RELEASE_PRERELEASE: "${{ github.event.release.prerelease }}"
+          RELEASE_CLASSIFICATION: ${{ github.event.inputs.release_classification }}
+          RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
         run: |
-          set -euxo pipefail
+          set -euo pipefail
 
           EVENT_NAME="${GITHUB_EVENT_NAME}"
           REF_NAME="${GITHUB_REF_NAME}"
@@ -123,7 +138,7 @@ permissions:
           fi
 
           if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
-            echo "${REF_NAME}" | grep -E '^(dev|rc)/[0-9]+[.][0-9]+[.][0-9]+$'
+            echo "${REF_NAME}" | grep -E '^(dev|rc)/[0-9]+[.][0-9]+[.][0-9]+$' >/dev/null
 
             SOURCE_BRANCH="${REF_NAME}"
             SOURCE_PREFIX="${REF_NAME%%/*}"
@@ -153,9 +168,10 @@ permissions:
 
           elif [ "${EVENT_NAME}" = "release" ]; then
             TAG_NAME="${REF_NAME}"
+
             VERSION="${TAG_NAME#v}"
             VERSION="${VERSION%-rc}"
-            echo "${VERSION}" | grep -E '^[0-9]+[.][0-9]+[.][0-9]+$'
+            echo "${VERSION}" | grep -E '^[0-9]+[.][0-9]+[.][0-9]+$' >/dev/null
 
             if [ "${RELEASE_PRERELEASE:-false}" = "true" ]; then
               CHANNEL="rc"
@@ -196,6 +212,7 @@ permissions:
             echo "  \"run_attempt\": ${GITHUB_RUN_ATTEMPT},"
             echo "  \"run_url\": \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\","
             echo "  \"actor\": \"${GITHUB_ACTOR}\","
+            echo "  \"actor_permission\": \"${{ steps.auth.outputs.permission }}\","
             echo "  \"sha\": \"${GITHUB_SHA}\","
             echo "  \"event\": \"${EVENT_NAME}\","
             echo "  \"ref\": \"${REF_NAME}\","
@@ -208,6 +225,41 @@ permissions:
             echo "  \"override\": \"${OVERRIDE}\","
             echo "  \"today_utc\": \"${TODAY_UTC}\""
             echo "}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Report run context (always)
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+
+          {
+            echo "### Run context"
+            echo "```json"
+            printf '{'
+            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
+            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
+            printf '"job":"%s",' "${GITHUB_JOB}"
+            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
+            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
+            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
+            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            printf '"actor":"%s",' "${GITHUB_ACTOR}"
+            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
+            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
+            printf '"sha":"%s",' "${GITHUB_SHA}"
+            printf '"runner_os":"%s",' "${RUNNER_OS}"
+            printf '"runner_name":"%s"' "${RUNNER_NAME}"
+            printf '}\n'
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          {
+            echo "### Git snapshot"
+            echo "```"
+            git --version || true
+            git status --porcelain=v1 || true
+            git log -1 --pretty=fuller || true
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -230,14 +282,14 @@ permissions:
 
       - name: Configure Git identity
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Enforce promotion preconditions
         run: |
-          set -euxo pipefail
+          set -euo pipefail
 
           SRC="${{ needs.guard.outputs.source_branch }}"
           DST="${{ needs.guard.outputs.target_branch }}"
@@ -261,7 +313,7 @@ permissions:
 
       - name: Promote and delete source
         run: |
-          set -euxo pipefail
+          set -euo pipefail
 
           SRC="${{ needs.guard.outputs.source_branch }}"
           DST="${{ needs.guard.outputs.target_branch }}"
@@ -270,12 +322,17 @@ permissions:
           git push origin "${DST}"
           git push origin --delete "${SRC}"
 
-          $1
+          {
+            echo "### Promotion report"
+            echo "```json"
+            echo "{\"source\":\"${SRC}\",\"target\":\"${DST}\",\"status\":\"ok\"}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
       - name: Report run context (always)
         if: ${{ always() }}
         run: |
           set -euo pipefail
-
           {
             echo "### Run context"
             echo "```json"
@@ -291,16 +348,7 @@ permissions:
             printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
             printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
             printf '"sha":"%s"' "${GITHUB_SHA}"
-            printf '}
-'
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-          {
-            echo "### Git snapshot"
-            echo "```"
-            git status --porcelain=v1 || true
-            git log -1 --pretty=fuller || true
+            printf '}\n'
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -325,14 +373,14 @@ permissions:
 
       - name: Configure Git identity
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Validate repo prerequisites
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           test -d src || (echo "ERROR: src directory missing" && exit 1)
           test -f CHANGELOG.md || (echo "ERROR: CHANGELOG.md missing" && exit 1)
 
@@ -345,7 +393,7 @@ permissions:
 
       - name: Normalize dates using repository script only
         run: |
-          set -euxo pipefail
+          set -euo pipefail
 
           TODAY="${{ needs.guard.outputs.today_utc }}"
           VERSION="${{ needs.guard.outputs.version }}"
@@ -384,7 +432,7 @@ permissions:
             exit 1
           fi
 
-          echo "Using date script: ${SCRIPT} (expected under scripts/release/)" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Using date script: ${SCRIPT}" >> "${GITHUB_STEP_SUMMARY}"
 
           chmod +x "${SCRIPT}"
           "${SCRIPT}" "${TODAY}" "${VERSION}" >> "${GITHUB_STEP_SUMMARY}"
@@ -398,40 +446,19 @@ permissions:
 
       - name: Commit normalized dates (if changed)
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           if git diff --quiet; then
             echo "No date changes to commit" >> "${GITHUB_STEP_SUMMARY}"
             exit 0
           fi
           git add -A
           git commit -m "chore(release): normalize dates" || true
-          $1
+          git push origin "HEAD:${{ needs.guard.outputs.promoted_branch }}"
 
       - name: Report run context (always)
         if: ${{ always() }}
         run: |
           set -euo pipefail
-
-          {
-            echo "### Run context"
-            echo "```json"
-            printf '{'
-            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
-            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
-            printf '"job":"%s",' "${GITHUB_JOB}"
-            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
-            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
-            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
-            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            printf '"actor":"%s",' "${GITHUB_ACTOR}"
-            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
-            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
-            printf '"sha":"%s"' "${GITHUB_SHA}"
-            printf '}
-'
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
           {
             echo "### Git snapshot"
             echo "```"
@@ -463,22 +490,22 @@ permissions:
 
       - name: Configure Git identity
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Validate required secrets and variables
         env:
-          FTP_HOST: "${{ secrets.FTP_HOST }}"
-          FTP_USER: "${{ secrets.FTP_USER }}"
-          FTP_KEY: "${{ secrets.FTP_KEY }}"
-          FTP_PASSWORD: "${{ secrets.FTP_PASSWORD }}"
-          FTP_PATH: "${{ secrets.FTP_PATH }}"
-          FTP_PROTOCOL: "${{ secrets.FTP_PROTOCOL }}"
-          FTP_PORT: "${{ secrets.FTP_PORT }}"
-          FTP_PATH_SUFFIX: "${{ vars.FTP_PATH_SUFFIX }}"
-          CHANNEL: "${{ needs.guard.outputs.channel }}"
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_KEY: ${{ secrets.FTP_KEY }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PATH: ${{ secrets.FTP_PATH }}
+          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_PATH_SUFFIX: ${{ vars.FTP_PATH_SUFFIX }}
+          CHANNEL: ${{ needs.guard.outputs.channel }}
         run: |
           set -euo pipefail
 
@@ -515,7 +542,7 @@ permissions:
             sep=""
             for m in "${missing[@]}"; do
               printf '%s"%s"' "${sep}" "${m}"
-              sep=",";
+              sep=","
             done
             printf '],"key_format":"%s","channel":"%s"}\n' "${key_format}" "${CHANNEL}"
             echo "```"
@@ -527,7 +554,7 @@ permissions:
 
       - name: Run repository validation scripts (workflow-controlled)
         run: |
-          set -euxo pipefail
+          set -euo pipefail
 
           required_scripts=(
             "scripts/validate/validate_manifest.sh"
@@ -560,7 +587,7 @@ permissions:
               sep=""
               for m in "${missing[@]}"; do
                 printf '%s"%s"' "${sep}" "${m}"
-                sep=",";
+                sep=","
               done
               printf ']}\n'
               echo "```"
@@ -594,39 +621,38 @@ permissions:
             sep=""
             for s in "${required_scripts[@]}"; do
               printf '%s"%s"' "${sep}" "${s}"
-              sep=",";
+              sep=","
             done
 
             printf '],"optional":['
             sep=""
             for s in "${optional_scripts[@]}"; do
               printf '%s"%s"' "${sep}" "${s}"
-              sep=",";
+              sep=","
             done
 
             printf '],"ran":['
             sep=""
             for s in "${ran[@]}"; do
               printf '%s"%s"' "${sep}" "${s}"
-              sep=",";
+              sep=","
             done
 
             printf '],"skipped_optional":['
             sep=""
             for s in "${skipped[@]}"; do
               printf '%s"%s"' "${sep}" "${s}"
-              sep=",";
+              sep=","
             done
 
-            printf ']}
-'
+            printf ']}\n'
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Build Joomla ZIP (extension type aware)
+      - name: Build Joomla ZIP (extension type aware, src-only archive)
         id: build
         run: |
-          set -euxo pipefail
+          set -euo pipefail
 
           VERSION="${{ needs.guard.outputs.version }}"
           REPO_NAME="${{ github.event.repository.name }}"
@@ -637,6 +663,7 @@ permissions:
           DIST_DIR="${GITHUB_WORKSPACE}/dist"
           mkdir -p "${DIST_DIR}"
 
+          # Detect manifest inside src for type naming only.
           MANIFEST=""
           if [ -f "src/templateDetails.xml" ]; then
             MANIFEST="src/templateDetails.xml"
@@ -664,19 +691,18 @@ permissions:
             EXT_TYPE="unknown"
           fi
 
-          ROOT="$(dirname "${MANIFEST}")"
-
+          # Policy: archive must include ONLY the src directory tree (no repo root files).
           ZIP="${REPO_NAME}-${VERSION}-${CHANNEL}-${EXT_TYPE}.zip"
 
-          (cd "${ROOT}" && zip -r -X "${DIST_DIR}/${ZIP}" . \
-            -x "**/.git/**" \
-            -x "**/.github/**" \
-            -x "**/.DS_Store" \
-            -x "**/__MACOSX/**")
+          zip -r -X "${DIST_DIR}/${ZIP}" src \
+            -x "src/**/.git/**" \
+            -x "src/**/.github/**" \
+            -x "src/**/.DS_Store" \
+            -x "src/**/__MACOSX/**"
 
           echo "zip_name=${ZIP}" >> "${GITHUB_OUTPUT}"
           echo "dist_dir=${DIST_DIR}" >> "${GITHUB_OUTPUT}"
-          echo "root=${ROOT}" >> "${GITHUB_OUTPUT}"
+          echo "root=src" >> "${GITHUB_OUTPUT}"
           echo "manifest=${MANIFEST}" >> "${GITHUB_OUTPUT}"
           echo "ext_type=${EXT_TYPE}" >> "${GITHUB_OUTPUT}"
 
@@ -685,13 +711,13 @@ permissions:
           {
             echo "### Build report"
             echo "```json"
-            echo "{\"repository\":\"${GITHUB_REPOSITORY}\",\"workflow\":\"${GITHUB_WORKFLOW}\",\"job\":\"${GITHUB_JOB}\",\"run_id\":${GITHUB_RUN_ID},\"run_number\":${GITHUB_RUN_NUMBER},\"run_attempt\":${GITHUB_RUN_ATTEMPT},\"run_url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\",\"actor\":\"${GITHUB_ACTOR}\",\"sha\":\"${GITHUB_SHA}\",\"root\":\"${ROOT}\",\"manifest\":\"${MANIFEST}\",\"extension_type\":\"${EXT_TYPE}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES}}"
+            echo "{\"repository\":\"${GITHUB_REPOSITORY}\",\"workflow\":\"${GITHUB_WORKFLOW}\",\"job\":\"${GITHUB_JOB}\",\"run_id\":${GITHUB_RUN_ID},\"run_number\":${GITHUB_RUN_NUMBER},\"run_attempt\":${GITHUB_RUN_ATTEMPT},\"run_url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\",\"actor\":\"${GITHUB_ACTOR}\",\"sha\":\"${GITHUB_SHA}\",\"root\":\"src\",\"manifest\":\"${MANIFEST}\",\"extension_type\":\"${EXT_TYPE}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES},\"archive_policy\":\"src_only\"}"
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: ZIP inventory (audit)
         run: |
-          set -euxo pipefail
+          set -euo pipefail
 
           DIST_DIR="${{ steps.build.outputs.dist_dir }}"
           ZIP_NAME="${{ steps.build.outputs.zip_name }}"
@@ -706,25 +732,27 @@ permissions:
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Upload ZIP to SFTP (key-only, overwrite, verbose)
+      - name: Upload ZIP to SFTP (key-preferred, password-fallback, overwrite, verified, classified)
+        id: sftp
         env:
-          FTP_HOST: "${{ secrets.FTP_HOST }}"
-          FTP_USER: "${{ secrets.FTP_USER }}"
-          FTP_KEY: "${{ secrets.FTP_KEY }}"
-          FTP_PASSWORD: "${{ secrets.FTP_PASSWORD }}"
-          FTP_PATH: "${{ secrets.FTP_PATH }}"
-          FTP_PROTOCOL: "${{ secrets.FTP_PROTOCOL }}"
-          FTP_PORT: "${{ secrets.FTP_PORT }}"
-          FTP_PATH_SUFFIX: "${{ vars.FTP_PATH_SUFFIX }}"
-          CHANNEL: "${{ needs.guard.outputs.channel }}"
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_KEY: ${{ secrets.FTP_KEY }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PATH: ${{ secrets.FTP_PATH }}
+          FTP_PROTOCOL: ${{ secrets.FTP_PROTOCOL }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+          FTP_PATH_SUFFIX: ${{ vars.FTP_PATH_SUFFIX }}
+          CHANNEL: ${{ needs.guard.outputs.channel }}
+          DEPLOY_DRY_RUN: ${{ vars.DEPLOY_DRY_RUN }}
         run: |
           set -euo pipefail
 
           ZIP="${{ steps.build.outputs.zip_name }}"
+          DIST_DIR="${{ steps.build.outputs.dist_dir }}"
 
           : "${FTP_HOST:?Missing secret FTP_HOST}"
           : "${FTP_USER:?Missing secret FTP_USER}"
-          : "${FTP_KEY:?Missing secret FTP_KEY}"
           : "${FTP_PATH:?Missing secret FTP_PATH}"
 
           PROTOCOL="${FTP_PROTOCOL:-sftp}"
@@ -746,88 +774,234 @@ permissions:
           else
             REMOTE_PATH="${FTP_PATH%/}/${CHANNEL}"
           fi
+
+          # Guardrails: remote path safety.
+          if [ -z "${REMOTE_PATH}" ] || [ "${REMOTE_PATH}" = "/" ]; then
+            echo "ERROR: Unsafe REMOTE_PATH resolved (${REMOTE_PATH:-<empty>})" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+          if printf '%s' "${REMOTE_PATH}" | awk -F/ '{print NF-1}' | grep -Eq '^[01]$'; then
+            echo "ERROR: Remote path lacks depth guardrail: ${REMOTE_PATH}" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          AUTH_MODE=""
+          if [ -n "${FTP_KEY:-}" ]; then
+            AUTH_MODE="key"
+          else
+            AUTH_MODE="password"
+          fi
+
+          # Credential precedence: key wins when both are present.
+          PASSWORD_PRESENT="$( [ -n "${FTP_PASSWORD:-}" ] && echo true || echo false )"
+          KEY_PRESENT="$( [ -n "${FTP_KEY:-}" ] && echo true || echo false )"
+
+          if [ "${AUTH_MODE}" = "password" ] && [ -z "${FTP_PASSWORD:-}" ]; then
+            echo "ERROR: FTP_PASSWORD required when FTP_KEY is not provided" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          DRY_RUN="${DEPLOY_DRY_RUN:-false}"
+          if [ "${DRY_RUN}" != "true" ]; then
+            DRY_RUN="false"
+          fi
+
           {
             echo "### Deployment intent"
             echo "```json"
             printf '{'
             printf '"protocol":"sftp",'
+            printf '"auth_mode":"%s",' "${AUTH_MODE}"
             printf '"host":"%s",' "${FTP_HOST}"
             printf '"port":"%s",' "${PORT:-default}"
             printf '"remote_path":"%s",' "${REMOTE_PATH}"
-            printf '"overwrite":true,'
-            printf '"key_only":true'
+            printf '"overwrite_policy":"same_filename_only",'
+            printf '"cleanup_policy":"disabled",'
+            printf '"dry_run":%s,' "${DRY_RUN}"
+            printf '"zip":"%s",' "${ZIP}"
+            printf '"credential_presence":{'
+            printf '"FTP_KEY":"%s",' "$( [ "${KEY_PRESENT}" = "true" ] && echo present || echo missing )"
+            printf '"FTP_PASSWORD":"%s"' "$( [ "${PASSWORD_PRESENT}" = "true" ] && echo present || echo missing )"
+            printf '}'
             printf '}
 '
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-          echo "SFTP target: sftp://${HOSTPORT}${REMOTE_PATH}" >> "${GITHUB_STEP_SUMMARY}"
+          if [ "${KEY_PRESENT}" = "true" ] && [ "${PASSWORD_PRESENT}" = "true" ]; then
+            echo "Password provided but ignored because key auth is in use." >> "${GITHUB_STEP_SUMMARY}"
+          fi
 
           sudo apt-get update -y
           sudo apt-get install -y lftp openssh-client putty-tools
 
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
 
-          if printf '%s' "${FTP_KEY}" | head -n 1 | grep -q '^PuTTY-User-Key-File-'; then
-            printf '%s' "${FTP_KEY}" > ~/.ssh/key.ppk
-            chmod 600 ~/.ssh/key.ppk
+          if [ "${AUTH_MODE}" = "key" ]; then
+            if printf '%s' "${FTP_KEY}" | head -n 1 | grep -q '^PuTTY-User-Key-File-'; then
+              printf '%s' "${FTP_KEY}" > ~/.ssh/key.ppk
+              chmod 600 ~/.ssh/key.ppk
 
-            if grep -Eq '^Encryption: *none[[:space:]]*$' ~/.ssh/key.ppk; then
-              PPK_PASSPHRASE=""
-            else
-              if [ -z "${FTP_PASSWORD:-}" ]; then
-                echo "ERROR: Encrypted PPK detected but FTP_PASSWORD not provided" >> "${GITHUB_STEP_SUMMARY}"
-                exit 1
+              if grep -Eq '^Encryption: *none[[:space:]]*$' ~/.ssh/key.ppk; then
+                PPK_PASSPHRASE=""
+              else
+                if [ -z "${FTP_PASSWORD:-}" ]; then
+                  echo "ERROR: Encrypted PPK detected but FTP_PASSWORD not provided" >> "${GITHUB_STEP_SUMMARY}"
+                  exit 1
+                fi
+                PPK_PASSPHRASE="${FTP_PASSWORD}"
               fi
-              PPK_PASSPHRASE="${FTP_PASSWORD:-}"
-            fi
 
-            if [ -n "${PPK_PASSPHRASE}" ]; then
-              puttygen ~/.ssh/key.ppk -O private-openssh --passphrase "${PPK_PASSPHRASE}" -o ~/.ssh/id_rsa
+              if [ -n "${PPK_PASSPHRASE}" ]; then
+                puttygen ~/.ssh/key.ppk -O private-openssh --passphrase "${PPK_PASSPHRASE}" -o ~/.ssh/id_rsa
+              else
+                puttygen ~/.ssh/key.ppk -O private-openssh -o ~/.ssh/id_rsa
+              fi
+
+              rm -f ~/.ssh/key.ppk
+              chmod 600 ~/.ssh/id_rsa
             else
-              puttygen ~/.ssh/key.ppk -O private-openssh -o ~/.ssh/id_rsa
+              printf '%s' "${FTP_KEY}" > ~/.ssh/id_rsa
+              chmod 600 ~/.ssh/id_rsa
             fi
-
-            if [ ! -s ~/.ssh/id_rsa ]; then
-              echo "ERROR: PPK conversion failed" >> "${GITHUB_STEP_SUMMARY}"
-              exit 1
-            fi
-
-            chmod 600 ~/.ssh/id_rsa
-            rm -f ~/.ssh/key.ppk
-          else
-            printf '%s' "${FTP_KEY}" > ~/.ssh/id_rsa
-            chmod 600 ~/.ssh/id_rsa
           fi
 
           ssh-keyscan -H "${FTP_HOST}" >> ~/.ssh/known_hosts
 
+          if [ "${AUTH_MODE}" = "key" ]; then
+            CONNECT="set sftp:connect-program 'ssh -a -x -i ~/.ssh/id_rsa -o PubkeyAuthentication=yes -o PasswordAuthentication=no'"
+            OPEN="open -u '${FTP_USER}', sftp://${HOSTPORT}"
+          else
+            CONNECT="set sftp:connect-program 'ssh -a -x -o PubkeyAuthentication=no -o PasswordAuthentication=yes'"
+            OPEN="open -u '${FTP_USER}','${FTP_PASSWORD}', sftp://${HOSTPORT}"
+          fi
+
+          ZIP_BYTES_LOCAL="$(stat -c%s "${DIST_DIR}/${ZIP}")"
+
+          # Preflight: remote collision detection and directory validation.
+          set +e
+          preflight_log="$(mktemp)"
           lftp -d -e "\
             set sftp:auto-confirm yes; \
             set cmd:trace yes; \
             set net:timeout 30; \
             set net:max-retries 3; \
             set net:reconnect-interval-base 5; \
-            set sftp:connect-program 'ssh -a -x -i ~/.ssh/id_rsa -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no -o ChallengeResponseAuthentication=no -o PubkeyAuthentication=yes'; \
-            open -u '${FTP_USER}', sftp://${HOSTPORT}; \
+            ${CONNECT}; \
+            ${OPEN}; \
             mkdir -p '${REMOTE_PATH}'; \
             cd '${REMOTE_PATH}'; \
-            put -E '${{ steps.build.outputs.dist_dir }}/${ZIP}'; \
-            ls; \
-            bye"
+            ls -la; \
+            bye" >"${preflight_log}" 2>&1
+          preflight_rc=$?
+          set -e
 
-          ZIP_BYTES="$(stat -c%s "${{ steps.build.outputs.dist_dir }}/${ZIP}")"
+          if [ "${preflight_rc}" -ne 0 ]; then
+            cat "${preflight_log}" >> "${GITHUB_STEP_SUMMARY}" || true
+            exit "${preflight_rc}"
+          fi
+
+          if grep -F " ${ZIP}" "${preflight_log}" >/dev/null 2>&1; then
+            echo "Remote file already exists and will be overwritten (same filename policy): ${ZIP}" >> "${GITHUB_STEP_SUMMARY}"
+          else
+            echo "Remote file not present, proceeding with first publish: ${ZIP}" >> "${GITHUB_STEP_SUMMARY}"
+          fi
+
+          if [ "${DRY_RUN}" = "true" ]; then
+            {
+              echo "### Dry run"
+              echo "Dry run enabled. Upload skipped."
+            } >> "${GITHUB_STEP_SUMMARY}"
+            echo "auth_mode=${AUTH_MODE}" >> "${GITHUB_OUTPUT}"
+            echo "remote_path=${REMOTE_PATH}" >> "${GITHUB_OUTPUT}"
+            echo "host=${FTP_HOST}" >> "${GITHUB_OUTPUT}"
+            echo "port=${PORT:-default}" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          # Upload + verify with failure classification.
+          set +e
+          upload_log="$(mktemp)"
+          lftp -d -e "\
+            set sftp:auto-confirm yes; \
+            set cmd:trace yes; \
+            set net:timeout 30; \
+            set net:max-retries 3; \
+            set net:reconnect-interval-base 5; \
+            ${CONNECT}; \
+            ${OPEN}; \
+            cd '${REMOTE_PATH}'; \
+            put -E '${DIST_DIR}/${ZIP}'; \
+            ls -l; \
+            bye" >"${upload_log}" 2>&1
+          rc=$?
+          set -e
+
+          failure_class="none"
+          if [ "${rc}" -ne 0 ]; then
+            if grep -Ei 'auth|authentication|login failed' "${upload_log}" >/dev/null 2>&1; then
+              failure_class="auth_failure"
+            elif grep -Ei 'name or service not known|temporary failure in name resolution|no such host' "${upload_log}" >/dev/null 2>&1; then
+              failure_class="dns_failure"
+            elif grep -Ei 'connection timed out|timeout' "${upload_log}" >/dev/null 2>&1; then
+              failure_class="timeout"
+            elif grep -Ei 'no route to host|network is unreachable|connection refused' "${upload_log}" >/dev/null 2>&1; then
+              failure_class="network_failure"
+            elif grep -Ei 'permission denied' "${upload_log}" >/dev/null 2>&1; then
+              failure_class="permission_denied"
+            else
+              failure_class="unknown"
+            fi
+          fi
+
+          # Always attach upload log to summary (bounded by job log limits, but critical for audit).
+          {
+            echo "### SFTP session log"
+            echo "```"
+            tail -n 400 "${upload_log}" || true
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}" || true
+
+          if [ "${rc}" -ne 0 ]; then
+            {
+              echo "### SFTP failure classification"
+              echo "```json"
+              echo "{\"status\":\"fail\",\"class\":\"${failure_class}\",\"exit_code\":${rc}}"
+              echo "```"
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit "${rc}"
+          fi
+
+          # Verification: ensure ZIP appears in directory listing.
+          if ! grep -F " ${ZIP}" "${upload_log}" >/dev/null 2>&1; then
+            echo "ERROR: Upload completed but verification failed. ZIP not visible in remote listing." >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          ZIP_BYTES_REMOTE="unknown"
+          # Best-effort size extraction from ls -l output (platform dependent).
+          ZIP_BYTES_REMOTE="$(awk -v z="${ZIP}" '$NF==z {print $(NF-4)}' "${upload_log}" | tail -n 1 || true)"
+          if [ -z "${ZIP_BYTES_REMOTE}" ]; then
+            ZIP_BYTES_REMOTE="unknown"
+          fi
+
           {
             echo "### SFTP upload report"
             echo "```json"
-            echo "{\"protocol\":\"sftp\",\"host\":\"${FTP_HOST}\",\"port\":\"${PORT:-default}\",\"remote_path\":\"${REMOTE_PATH}\",\"zip\":\"${ZIP}\",\"zip_bytes\":${ZIP_BYTES},\"overwrite\":true,\"key_only\":true}"
+            echo "{\"status\":\"ok\",\"protocol\":\"sftp\",\"auth_mode\":\"${AUTH_MODE}\",\"host\":\"${FTP_HOST}\",\"port\":\"${PORT:-default}\",\"remote_path\":\"${REMOTE_PATH}\",\"zip\":\"${ZIP}\",\"zip_bytes_local\":${ZIP_BYTES_LOCAL},\"zip_bytes_remote\":\"${ZIP_BYTES_REMOTE}\",\"overwrite\":true,\"cleanup_policy\":\"disabled\"}"
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
+
+          echo "auth_mode=${AUTH_MODE}" >> "${GITHUB_OUTPUT}"
+          echo "remote_path=${REMOTE_PATH}" >> "${GITHUB_OUTPUT}"
+          echo "host=${FTP_HOST}" >> "${GITHUB_OUTPUT}"
+          echo "port=${PORT:-default}" >> "${GITHUB_OUTPUT}"
 
       - name: Create Git tag
         id: tag
         run: |
-          set -euxo pipefail
+          set -euo pipefail
 
           VERSION="${{ needs.guard.outputs.version }}"
           MODE="${{ needs.guard.outputs.release_mode }}"
@@ -850,7 +1024,7 @@ permissions:
 
       - name: Generate release notes from CHANGELOG.md
         run: |
-          set -euxo pipefail
+          set -euo pipefail
 
           VERSION="${{ needs.guard.outputs.version }}"
           ZIP_ASSET="${{ steps.build.outputs.zip_name }}"
@@ -866,6 +1040,12 @@ permissions:
             echo ""
             echo "Assets:"
             echo "- ${ZIP_ASSET}"
+            echo ""
+            echo "Deployment metadata:"
+            echo "- auth_mode: ${{ steps.sftp.outputs.auth_mode || 'unknown' }}"
+            echo "- remote_path: ${{ steps.sftp.outputs.remote_path || 'unknown' }}"
+            echo "- host: ${{ steps.sftp.outputs.host || 'unknown' }}"
+            echo "- port: ${{ steps.sftp.outputs.port || 'unknown' }}"
           } >> RELEASE_NOTES.md
 
       - name: Create GitHub release and attach ZIP
@@ -884,33 +1064,10 @@ permissions:
           subject-path: |
             dist/*.zip
 
-      $1
-
       - name: Report run context (always)
         if: ${{ always() }}
         run: |
           set -euo pipefail
-
-          {
-            echo "### Run context"
-            echo "```json"
-            printf '{'
-            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
-            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
-            printf '"job":"%s",' "${GITHUB_JOB}"
-            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
-            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
-            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
-            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            printf '"actor":"%s",' "${GITHUB_ACTOR}"
-            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
-            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
-            printf '"sha":"%s"' "${GITHUB_SHA}"
-            printf '}
-'
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
           {
             echo "### Git snapshot"
             echo "```"
@@ -941,14 +1098,14 @@ permissions:
 
       - name: Configure Git identity
         run: |
-          set -euxo pipefail
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git config --global --add safe.directory "${GITHUB_WORKSPACE}"
 
       - name: Create PR from version branch to main
         env:
-          GH_TOKEN: "${{ github.token }}"
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
@@ -962,9 +1119,9 @@ permissions:
             --body "Automated PR created by release pipeline. Version branch is retained by policy." \
             || true
 
-      - name: Attempt to merge PR (best-effort)
+      - name: Attempt to merge PR (best effort)
         env:
-          GH_TOKEN: "${{ github.token }}"
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
 
@@ -979,38 +1136,14 @@ permissions:
           gh pr merge "${PR_NUMBER}" --merge --delete-branch=false \
             || echo "PR merge blocked by branch protection or policy" >> "${GITHUB_STEP_SUMMARY}"
 
-          $1
-
       - name: Report run context (always)
         if: ${{ always() }}
         run: |
           set -euo pipefail
-
           {
-            echo "### Run context"
+            echo "### Main promotion report"
             echo "```json"
-            printf '{'
-            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
-            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
-            printf '"job":"%s",' "${GITHUB_JOB}"
-            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
-            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
-            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
-            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            printf '"actor":"%s",' "${GITHUB_ACTOR}"
-            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
-            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
-            printf '"sha":"%s"' "${GITHUB_SHA}"
-            printf '}
-'
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-          {
-            echo "### Git snapshot"
-            echo "```"
-            git status --porcelain=v1 || true
-            git log -1 --pretty=fuller || true
+            echo "{\"head\":\"${{ needs.guard.outputs.promoted_branch }}\",\"base\":\"main\",\"release_mode\":\"${{ needs.guard.outputs.release_mode }}\"}"
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -1029,35 +1162,31 @@ permissions:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
-          fetch-depth: 0
+          fetch-depth: 1
 
-      $1
+      - name: Release event telemetry
+        run: |
+          set -euo pipefail
+
+          {
+            echo "### Release event telemetry"
+            echo "```json"
+            echo "{"
+            echo "  \"repository\": \"${GITHUB_REPOSITORY}\","
+            echo "  \"event\": \"${GITHUB_EVENT_NAME}\","
+            echo "  \"ref_name\": \"${GITHUB_REF_NAME}\","
+            echo "  \"sha\": \"${GITHUB_SHA}\","
+            echo "  \"channel\": \"${{ needs.guard.outputs.channel }}\","
+            echo "  \"release_mode\": \"${{ needs.guard.outputs.release_mode }}\","
+            echo "  \"version\": \"${{ needs.guard.outputs.version }}\""
+            echo "}"
+            echo "```"
+          } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Report run context (always)
         if: ${{ always() }}
         run: |
           set -euo pipefail
-
-          {
-            echo "### Run context"
-            echo "```json"
-            printf '{'
-            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
-            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
-            printf '"job":"%s",' "${GITHUB_JOB}"
-            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
-            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
-            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
-            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            printf '"actor":"%s",' "${GITHUB_ACTOR}"
-            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
-            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
-            printf '"sha":"%s"' "${GITHUB_SHA}"
-            printf '}
-'
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
           {
             echo "### Git snapshot"
             echo "```"
