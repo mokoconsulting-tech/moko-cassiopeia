@@ -23,7 +23,7 @@
 # INGROUP: GitHub.Actions.ContinuousIntegration
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/ci.yml
-# VERSION: 03.05.00
+# VERSION: 01.00.00
 # BRIEF: Continuous integration governance workflow for standards enforcement.
 # NOTE: Runs on every push. Auto-normalizes YAML tabs to two spaces before validation.
 # ============================================================================
@@ -35,8 +35,8 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      auto_fix_tabs:
-        description: "Run scripts/fix_tabs.sh before validation (does not commit changes)"
+      auto_fix/tabs:
+        description: "Run scripts/fix/tabs.sh before validation (does not commit changes)"
         required: false
         default: false
         type: boolean
@@ -65,7 +65,7 @@ jobs:
           fetch-depth: 0
 
       - name: Auto-fix YAML tabs when YAML changes detected
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.auto_fix_tabs }}
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.auto_fix/tabs }}
         run: |
           set -euo pipefail
 
@@ -96,50 +96,50 @@ jobs:
           fi
 
           if [ -n "$CHANGED_YAML" ]; then
-            echo "YAML changes detected. Running fix_tabs.sh"
-            if [ -x "./scripts/fix_tabs.sh" ]; then
-              ./scripts/fix_tabs.sh
+            echo "YAML changes detected. Running fix/tabs.sh"
+            if [ -x "./scripts/fix/tabs.sh" ]; then
+              ./scripts/fix/tabs.sh
             else
-              echo "fix_tabs.sh not present, skipping"
+              echo "fix/tabs.sh not present, skipping"
             fi
           else
-            echo "No YAML changes detected. Skipping fix_tabs.sh"
+            echo "No YAML changes detected. Skipping fix/tabs.sh"
           fi
 
       - name: Validate YAML tabs usage
         run: |
           set -euo pipefail
-          if [ -x "./scripts/validate_tabs.sh" ]; then
-            ./scripts/validate_tabs.sh
+          if [ -x "./scripts/validate/tabs.sh" ]; then
+            ./scripts/validate/tabs.sh
           else
-            echo "validate_tabs.sh not present, skipping"
+            echo "validate/tabs.sh not present, skipping"
           fi
 
       - name: Validate file paths
         run: |
           set -euo pipefail
-          if [ -x "./scripts/validate_paths.sh" ]; then
-            ./scripts/validate_paths.sh
+          if [ -x "./scripts/validate/paths.sh" ]; then
+            ./scripts/validate/paths.sh
           else
-            echo "validate_paths.sh not present, skipping"
+            echo "validate/paths.sh not present, skipping"
           fi
 
       - name: Validate CHANGELOG governance
         run: |
           set -euo pipefail
-          if [ -x "./scripts/validate_changelog.sh" ]; then
-            ./scripts/validate_changelog.sh
+          if [ -x "./scripts/validate/changelog.sh" ]; then
+            ./scripts/validate/changelog.sh
           else
-            echo "validate_changelog.sh not present, skipping"
+            echo "validate/changelog.sh not present, skipping"
           fi
 
       - name: Validate Joomla manifests
         run: |
           set -euo pipefail
-          if [ -x "./scripts/validate_manifest.sh" ]; then
-            ./scripts/validate_manifest.sh
+          if [ -x "./scripts/validate/manifest.sh" ]; then
+            ./scripts/validate/manifest.sh
           else
-            echo "validate_manifest.sh not present, skipping"
+            echo "validate/manifest.sh not present, skipping"
           fi
 
       - name: Continuous integration completion

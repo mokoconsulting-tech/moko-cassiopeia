@@ -23,7 +23,7 @@
 # INGROUP: MokoStandards.Release
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/release_pipeline.yml
-# VERSION: 03.05.00
+# VERSION: 01.00.00
 # BRIEF: Enterprise release pipeline enforcing dev to rc to version to main. Creates prerelease when rc is created. Creates full release when version is created and promotes to main while retaining the version branch.
 # NOTE:
 # ============================================================================
@@ -199,10 +199,10 @@ jobs:
             echo "  \"repository\": \"${GITHUB_REPOSITORY}\","
             echo "  \"workflow\": \"${GITHUB_WORKFLOW}\","
             echo "  \"job\": \"${GITHUB_JOB}\","
-            echo "  \"run_id\": ${GITHUB_RUN_ID},"
-            echo "  \"run_number\": ${GITHUB_RUN_NUMBER},"
-            echo "  \"run_attempt\": ${GITHUB_RUN_ATTEMPT},"
-            echo "  \"run_url\": \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\","
+            echo "  \"run/id\": ${GITHUB_run/ID},"
+            echo "  \"run/number\": ${GITHUB_run/NUMBER},"
+            echo "  \"run/attempt\": ${GITHUB_run/ATTEMPT},"
+            echo "  \"run/url\": \"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_run/ID}\","
             echo "  \"actor\": \"${GITHUB_ACTOR}\","
             echo "  \"actor_permission\": \"${{ steps.auth.outputs.permission }}\","
             echo "  \"sha\": \"${GITHUB_SHA}\","
@@ -232,10 +232,10 @@ jobs:
             printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
             printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
             printf '"job":"%s",' "${GITHUB_JOB}"
-            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
-            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
-            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
-            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            printf '"run/id":%s,' "${GITHUB_run/ID}"
+            printf '"run/number":%s,' "${GITHUB_run/NUMBER}"
+            printf '"run/attempt":%s,' "${GITHUB_run/ATTEMPT}"
+            printf '"run/url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_run/ID}"
             printf '"actor":"%s",' "${GITHUB_ACTOR}"
             printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
             printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
@@ -697,7 +697,7 @@ jobs:
           {
             echo "### Build report"
             echo "```json"
-            echo "{\"repository\":\"${GITHUB_REPOSITORY}\",\"workflow\":\"${GITHUB_WORKFLOW}\",\"job\":\"${GITHUB_JOB}\",\"run_id\":${GITHUB_RUN_ID},\"run_number\":${GITHUB_RUN_NUMBER},\"run_attempt\":${GITHUB_RUN_ATTEMPT},\"run_url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\",\"actor\":\"${GITHUB_ACTOR}\",\"sha\":\"${GITHUB_SHA}\",\"archive_policy\":\"src_only\",\"manifest\":\"${MANIFEST}\",\"extension_type\":\"${EXT_TYPE}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES}}"
+            echo "{\"repository\":\"${GITHUB_REPOSITORY}\",\"workflow\":\"${GITHUB_WORKFLOW}\",\"job\":\"${GITHUB_JOB}\",\"run/id\":${GITHUB_run/ID},\"run/number\":${GITHUB_run/NUMBER},\"run/attempt\":${GITHUB_run/ATTEMPT},\"run/url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_run/ID}\",\"actor\":\"${GITHUB_ACTOR}\",\"sha\":\"${GITHUB_SHA}\",\"archive_policy\":\"src_only\",\"manifest\":\"${MANIFEST}\",\"extension_type\":\"${EXT_TYPE}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES}}"
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 

@@ -1,5 +1,4 @@
-#!/usr/bin/env bash
-#
+# ============================================================================
 # Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
 #
 # This file is part of a Moko Consulting project.
@@ -20,60 +19,53 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 # FILE INFORMATION
-# DEFGROUP: MokoStandards
-# INGROUP: Scripts.Validation
+# DEFGROUP: Scripts.Validate
+# INGROUP: MokoStandards.Release
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
-# PATH: /scripts/paths.sh
-# VERSION: 03.05.00
-# BRIEF: Detect Windows-style path separators in repository text files for CI enforcement.
-#
+# PATH: /scripts/validate/paths.sh
+# VERSION: 01.00.00
+# BRIEF: Detects Windows-style path literals in source content under src.
+# NOTE:
+# ============================================================================
 
 set -euo pipefail
 
-ROOT_DIR="$(git rev-parse --show-toplevel)"
-EXIT_CODE=0
+SRC_DIR="${SRC_DIR:-src}"
 
-echo "Scanning repository for Windows-style path separators (\\)"
+json_escape() {
+  python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$1"
+}
 
-# Exclude common binary and vendor paths
-EXCLUDES=(
-   ".git"
-   "node_modules"
-   "vendor"
-   "dist"
-   "build"
-)
+[ -d "${SRC_DIR}" ] || {
+  printf '{"status":"fail","error":%s}
+' "$(json_escape "src directory missing")"
+  exit 1
+}
 
-EXCLUDE_ARGS=()
-for path in "${EXCLUDES[@]}"; do
-   EXCLUDE_ARGS+=("--exclude-dir=${path}")
-done
+# Target patterns:
+# - drive letter paths like C:\foo\bar
+# - escaped backslashes in string literals
+regex='[A-Za-z]:\\|\\'
 
-# Only scan likely-text files to reduce false positives from binaries.
-# This list is intentionally broad for standards repos.
-INCLUDE_GLOBS=(
-   "*.md" "*.txt" "*.yml" "*.yaml" "*.json" "*.xml" "*.ini" "*.cfg"
-   "*.sh" "*.bash" "*.ps1" "*.php" "*.js" "*.ts" "*.css" "*.scss"
-   "*.html" "*.htm" "*.vue" "*.java" "*.go" "*.py" "*.rb" "*.c" "*.h" "*.cpp" "*.hpp"
-)
+set +e
+hits=$(grep -RInE --exclude-dir=vendor --exclude-dir=node_modules --exclude-dir=dist "${regex}" "${SRC_DIR}" 2>/dev/null)
+set -e
 
-GREP_INCLUDE_ARGS=()
-for g in "${INCLUDE_GLOBS[@]}"; do
-   GREP_INCLUDE_ARGS+=("--include=${g}")
-done
-
-# Search for backslashes. This is a governance check for repo docs and automation scripts.
-# Note: This does not try to interpret programming-language string escapes.
-MATCHES=$(grep -RIn "\\\\" "${ROOT_DIR}" "${EXCLUDE_ARGS[@]}" "${GREP_INCLUDE_ARGS[@]}" || true)
-
-if [ -n "${MATCHES}" ]; then
-   echo "Windows-style path separators detected in the following files:"
-   echo "${MATCHES}"
-   echo ""
-   echo "CI policy violation: use forward slashes (/) in repository content unless required by runtime logic"
-   EXIT_CODE=1
-else
-   echo "No Windows-style path separators found"
+if [ -n "${hits}" ]; then
+  {
+	 echo '{"status":"fail","error":"windows_path_literal_detected","hits":['
+	 echo "${hits}" | head -n 50 | python3 - <<'PY'
+import json,sys
+lines=[l.rstrip('
+') for l in sys.stdin.readlines() if l.strip()]
+print("
+".join([json.dumps({"hit":l})+"," for l in lines]).rstrip(','))
+PY
+	 echo ']}'
+  }
+  exit 1
 fi
 
-exit "${EXIT_CODE}"
+printf '{"status":"ok","src_dir":%s}
+' "$(json_escape "${SRC_DIR}")"
+echo "paths: ok"

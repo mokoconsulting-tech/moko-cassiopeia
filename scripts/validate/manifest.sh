@@ -19,92 +19,191 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 # FILE INFORMATION
-# DEFGROUP: Shell.Script
-# INGROUP: MokoStandards.Validation
+# DEFGROUP: Scripts.Validate
+# INGROUP: MokoStandards.Release
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
-# PATH: /scripts/validate_manifest.sh
-# VERSION: 03.05.00
-# BRIEF: Validate Joomla extension manifest governance before packaging.
-# NOTE: Enforces: manifest discovery, extension type presence, version and creationDate presence, XML wellformedness when xmllint is available.
+# PATH: /scripts/validate/manifest.sh
+# VERSION: 01.00.00
+# BRIEF: Validates presence and basic structure of a Joomla manifest under src. Enforces exactly one primary manifest candidate and required fields by extension type.
+# NOTE:
 # ============================================================================
 
 set -euo pipefail
 
-# Purpose:
-# - Locate the primary Joomla manifest under /src.
-# - Validate that it contains a <extension ... type="..."> root.
-# - Validate required fields exist: <version>, <creationDate>, <name>.
-# - Validate XML is wellformed when xmllint is available.
-#
-# Usage:
-#   ./scripts/validate_manifest.sh
-
-log_json() {
-  # shellcheck disable=SC2059
-  printf '%s\n' "$1"
-}
+log() { printf '%s\n' "$*"; }
 
 fail() {
-  local msg="$1"
-  echo "ERROR: ${msg}" >&2
+  log "ERROR: $*" >&2
   exit 1
 }
 
-[ -d "src" ] || fail "src directory missing"
+SRC_DIR="${SRC_DIR:-src}"
 
-# Discovery priority order.
-manifest=""
-if [ -f "src/templateDetails.xml" ]; then
-  manifest="src/templateDetails.xml"
-elif find src -maxdepth 4 -type f -name 'templateDetails.xml' | head -n 1 | grep -q .; then
-  manifest="$(find src -maxdepth 4 -type f -name 'templateDetails.xml' | head -n 1)"
-elif find src -maxdepth 4 -type f -name 'pkg_*.xml' | head -n 1 | grep -q .; then
-  manifest="$(find src -maxdepth 4 -type f -name 'pkg_*.xml' | head -n 1)"
-elif find src -maxdepth 4 -type f -name 'com_*.xml' | head -n 1 | grep -q .; then
-  manifest="$(find src -maxdepth 4 -type f -name 'com_*.xml' | head -n 1)"
-elif find src -maxdepth 4 -type f -name 'mod_*.xml' | head -n 1 | grep -q .; then
-  manifest="$(find src -maxdepth 4 -type f -name 'mod_*.xml' | head -n 1)"
-elif find src -maxdepth 6 -type f -name 'plg_*.xml' | head -n 1 | grep -q .; then
-  manifest="$(find src -maxdepth 6 -type f -name 'plg_*.xml' | head -n 1)"
-else
-  manifest="$(grep -Rsl --include='*.xml' '<extension' src | head -n 1 || true)"
+if [ ! -d "${SRC_DIR}" ]; then
+  fail "${SRC_DIR} directory missing"
 fi
 
-[ -n "${manifest}" ] || fail "No Joomla manifest XML found under src"
-[ -f "${manifest}" ] || fail "Manifest not found on disk: ${manifest}"
+# Candidate discovery policy: prefer explicit known names, otherwise fall back to extension-root manifests.
+# Goal: choose ONE manifest deterministically.
+manifest_candidates=()
 
-# Validate root tag presence.
-if ! grep -Eq '<extension[^>]*>' "${manifest}"; then
-  fail "Manifest does not contain <extension ...> root: ${manifest}"
+# Template
+if [ -f "${SRC_DIR}/templateDetails.xml" ]; then
+  manifest_candidates+=("${SRC_DIR}/templateDetails.xml")
 fi
 
-ext_type="$(grep -Eo 'type="[^"]+"' "${manifest}" | head -n 1 | cut -d '"' -f2 || true)"
-[ -n "${ext_type}" ] || fail "Manifest missing required attribute type= on <extension>: ${manifest}"
+# Package
+while IFS= read -r f; do
+  [ -n "${f}" ] && manifest_candidates+=("${f}")
+done < <(find "${SRC_DIR}" -maxdepth 4 -type f -name 'pkg_*.xml' 2>/dev/null | sort || true)
 
-# Required fields checks.
-name_val="$(grep -Eo '<name>[^<]+' "${manifest}" | head -n 1 | sed 's/<name>//' || true)"
-version_val="$(grep -Eo '<version>[^<]+' "${manifest}" | head -n 1 | sed 's/<version>//' || true)"
-date_val="$(grep -Eo '<creationDate>[^<]+' "${manifest}" | head -n 1 | sed 's/<creationDate>//' || true)"
+# Component
+while IFS= read -r f; do
+  [ -n "${f}" ] && manifest_candidates+=("${f}")
+done < <(find "${SRC_DIR}" -maxdepth 4 -type f -name 'com_*.xml' 2>/dev/null | sort || true)
 
-[ -n "${name_val}" ] || fail "Manifest missing <name>: ${manifest}"
-[ -n "${version_val}" ] || fail "Manifest missing <version>: ${manifest}"
-[ -n "${date_val}" ] || fail "Manifest missing <creationDate>: ${manifest}"
+# Module
+while IFS= read -r f; do
+  [ -n "${f}" ] && manifest_candidates+=("${f}")
+done < <(find "${SRC_DIR}" -maxdepth 4 -type f -name 'mod_*.xml' 2>/dev/null | sort || true)
 
-# Basic version format guardrail (00.00.00 style).
-if ! printf '%s' "${version_val}" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-  fail "Manifest <version> is not semantic (x.y.z): ${version_val}"
+# Plugin
+while IFS= read -r f; do
+  [ -n "${f}" ] && manifest_candidates+=("${f}")
+done < <(find "${SRC_DIR}" -maxdepth 6 -type f -name 'plg_*.xml' 2>/dev/null | sort || true)
+
+# Fallback: any XML containing <extension ...>
+if [ "${#manifest_candidates[@]}" -eq 0 ]; then
+  while IFS= read -r f; do
+    [ -n "${f}" ] && manifest_candidates+=("${f}")
+  done < <(grep -Rsl --include='*.xml' '<extension' "${SRC_DIR}" 2>/dev/null | sort || true)
 fi
 
-# Basic date format guardrail (YYYY-MM-DD).
-if ! printf '%s' "${date_val}" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2}$'; then
-  fail "Manifest <creationDate> is not YYYY-MM-DD: ${date_val}"
+if [ "${#manifest_candidates[@]}" -eq 0 ]; then
+  fail "No Joomla manifest XML found under ${SRC_DIR}"
 fi
 
-# XML wellformedness when available.
-if command -v xmllint >/dev/null 2>&1; then
-  xmllint --noout "${manifest}" || fail "xmllint reported invalid XML: ${manifest}"
-else
-  echo "WARN: xmllint not available, skipping strict wellformedness check" >&2
+# De-duplicate while preserving order.
+unique_candidates=()
+for c in "${manifest_candidates[@]}"; do
+  seen=false
+  for u in "${unique_candidates[@]}"; do
+    if [ "${u}" = "${c}" ]; then
+      seen=true
+      break
+    fi
+  done
+  if [ "${seen}" = "false" ]; then
+    unique_candidates+=("${c}")
+  fi
+done
+manifest_candidates=("${unique_candidates[@]}")
+
+# Enforce single primary manifest.
+if [ "${#manifest_candidates[@]}" -gt 1 ]; then
+  {
+    log "ERROR: Multiple manifest candidates detected. Resolve to exactly one primary manifest." >&2
+    log "Candidates:" >&2
+    for c in "${manifest_candidates[@]}"; do
+      log "- ${c}" >&2
+    done
+  }
+  exit 1
 fi
 
-log_json "{\"status\":\"ok\",\"manifest\":\"${manifest}\",\"type\":\"${ext_type}\",\"name\":\"${name_val}\",\"version\":\"${version_val}\",\"creationDate\":\"${date_val}\"}"
+MANIFEST="${manifest_candidates[0]}"
+
+if [ ! -s "${MANIFEST}" ]; then
+  fail "Manifest is empty: ${MANIFEST}"
+fi
+
+# Parse with python for portability (xmllint not guaranteed).
+python3 - <<'PY' "${MANIFEST}" || exit 1
+import sys
+import json
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+manifest_path = Path(sys.argv[1])
+
+def fail(msg, **ctx):
+  payload = {"status":"fail","error":msg, **ctx}
+  print(json.dumps(payload, ensure_ascii=False))
+  sys.exit(1)
+
+try:
+  tree = ET.parse(manifest_path)
+  root = tree.getroot()
+except Exception as e:
+  fail("XML parse failed", manifest=str(manifest_path), detail=str(e))
+
+if root.tag != "extension":
+  fail("Root element must be <extension>", manifest=str(manifest_path), root=str(root.tag))
+
+ext_type = (root.attrib.get("type") or "").strip().lower() or "unknown"
+allowed_types = {"template","component","module","plugin","package","library","file","files"}
+
+# Minimal required fields across most extension types.
+name_el = root.find("name")
+version_el = root.find("version")
+
+name = (name_el.text or "").strip() if name_el is not None else ""
+version = (version_el.text or "").strip() if version_el is not None else ""
+
+missing = []
+if not name:
+  missing.append("name")
+if not version:
+  missing.append("version")
+
+if ext_type not in allowed_types and ext_type != "unknown":
+  fail("Unsupported extension type", manifest=str(manifest_path), ext_type=ext_type)
+
+# Type-specific expectations.
+warnings = []
+
+if ext_type == "plugin":
+  group = (root.attrib.get("group") or "").strip()
+  if not group:
+    missing.append("plugin.group")
+
+  files_el = root.find("files")
+  if files_el is None:
+    missing.append("files")
+
+elif ext_type in {"component","module","template"}:
+  files_el = root.find("files")
+  if files_el is None:
+    missing.append("files")
+
+elif ext_type == "package":
+  files_el = root.find("files")
+  if files_el is None:
+    missing.append("files")
+  else:
+    # Package should reference at least one child manifest.
+    file_nodes = files_el.findall("file")
+    if not file_nodes:
+      warnings.append("package.files has no <file> entries")
+
+# Optional but commonly expected.
+method = (root.attrib.get("method") or "").strip().lower()
+if method and method not in {"upgrade","install"}:
+  warnings.append(f"unexpected extension method={method}")
+
+# Provide a stable, machine-readable report.
+if missing:
+  fail("Missing required fields", manifest=str(manifest_path), ext_type=ext_type, missing=missing, warnings=warnings)
+
+print(json.dumps({
+  "status": "ok",
+  "manifest": str(manifest_path),
+  "ext_type": ext_type,
+  "name": name,
+  "version": version,
+  "warnings": warnings,
+}, ensure_ascii=False))
+PY
+
+# Human-friendly summary (kept short for CI logs).
+log "manifest: ok (${MANIFEST})"

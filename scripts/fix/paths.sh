@@ -21,8 +21,8 @@
 # DEFGROUP: MokoStandards
 # INGROUP: Generic.Script
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
-# PATH: /scripts/fix_paths.sh
-# VERSION: 03.05.00
+# PATH: /scripts/fix/paths.sh
+# VERSION: 01.00.00
 # BRIEF: Replace Windows-style path separators with POSIX separators in text files.#
 # Purpose:
 # - Normalize path separators in text files to forward slashes (/).
@@ -31,7 +31,7 @@
 # - Preserves file contents aside from path separator normalization.
 #
 # Usage:
-#   ./scripts/fix_paths.sh
+#   ./scripts/fix/paths.sh
 # =============================================================================
 
 set -euo pipefail

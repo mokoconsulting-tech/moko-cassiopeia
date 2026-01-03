@@ -23,8 +23,8 @@
 # DEFGROUP: MokoStandards
 # INGROUP: GitHub.Actions.Utilities
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
-# PATH: /scripts/fix_tabs.sh
-# VERSION: 03.05.00
+# PATH: /scripts/fix/tabs.sh
+# VERSION: 01.00.00
 # BRIEF: Utility script to replace tab characters with two spaces in YAML files.
 # NOTE: Intended for local developer use. Not executed automatically in CI.
 # ============================================================================
@@ -35,8 +35,8 @@ log() {
   printf '%s\n' "$*"
 }
 
-log "[fix_tabs] Scope: *.yml, *.yaml"
-log "[fix_tabs] Action: replace tab characters with two spaces"
+log "[fix/tabs] Scope: *.yml, *.yaml"
+log "[fix/tabs] Action: replace tab characters with two spaces"
 
 changed=0
 
@@ -48,7 +48,7 @@ else
 fi
 
 if [ -z "${files}" ]; then
-  log "[fix_tabs] No YAML files found. Nothing to fix."
+  log "[fix/tabs] No YAML files found. Nothing to fix."
   exit 0
 fi
 
@@ -57,17 +57,17 @@ while IFS= read -r f; do
   [ -f "$f" ] || continue
 
   if LC_ALL=C grep -q $'\t' -- "$f"; then
-    log "[fix_tabs] Fixing tabs in: $f"
+    log "[fix/tabs] Fixing tabs in: $f"
     # Replace literal tab characters with exactly two spaces
     sed -i 's/\t/  /g' "$f"
     changed=1
   else
-    log "[fix_tabs] Clean: $f"
+    log "[fix/tabs] Clean: $f"
   fi
 done <<< "${files}"
 
 if [ "$changed" -eq 1 ]; then
-  log "[fix_tabs] Completed with modifications"
+  log "[fix/tabs] Completed with modifications"
 else
-  log "[fix_tabs] No changes required"
+  log "[fix/tabs] No changes required"
 fi

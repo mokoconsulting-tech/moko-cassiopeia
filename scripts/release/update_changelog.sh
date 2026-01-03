@@ -23,7 +23,7 @@
 # INGROUP: Generic.Script
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /scripts/update_changelog.sh
-# VERSION: 03.05.00
+# VERSION: 01.00.00
 # BRIEF: Insert a versioned CHANGELOG.md entry immediately after the main Changelog heading
 # Purpose:
 # - Apply the MokoWaaS-Brand CHANGELOG template entry for a given version.
@@ -55,7 +55,7 @@ require_cmd() {
 	command -v "$1" >/dev/null 2>&1 || die "Missing required command: $1"
 }
 
-validate_version() {
+validate/version() {
 	local v="$1"
 	[[ "$v" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{2}$ ]] || die "Invalid version '$v'. Expected NN.NN.NN (example 03.01.00)."
 }
@@ -68,7 +68,7 @@ main() {
 
 	[[ $# -eq 1 ]] || die "Usage: $0 <VERSION>"
 	local version="$1"
-	validate_version "$version"
+	validate/version "$version"
 
 	[[ -f "$CHANGELOG_FILE" ]] || die "Missing $CHANGELOG_FILE in repo root."
 

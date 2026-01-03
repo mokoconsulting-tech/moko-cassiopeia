@@ -24,7 +24,7 @@
 # INGROUP: Date.Normalization
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /scripts/release/update_dates.sh
-# VERSION: 03.05.00
+# VERSION: 01.00.00
 # BRIEF: Normalize release dates across manifests and CHANGELOG using a single authoritative UTC date.
 # NOTE: Repo-controlled script only. CI-fatal on malformed inputs. Outputs a JSON report to stdout.
 

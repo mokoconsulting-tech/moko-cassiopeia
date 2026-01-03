@@ -20,7 +20,7 @@
 # INGROUP: GitHub.Versioning.Branching
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/version_branch.yml
-# VERSION: 03.05.00
+# VERSION: 01.00.00
 # BRIEF: Create a dev/<version> branch and align versions across governed files
 # NOTE: Enterprise gates: required artifacts, namespace defense, deterministic reporting, control character guard
 
@@ -256,9 +256,9 @@ jobs:
           source "$CI_HELPERS"
           moko_init "Branch namespace collision defense"
 
-          PREFIX_TOP="${BRANCH_PREFIX%%/*}"
-          if git ls-remote --exit-code --heads origin "${PREFIX_TOP}" >/dev/null 2>&1; then
-            echo "[FATAL] Branch namespace collision detected: '${PREFIX_TOP}' exists on origin." >&2
+          PREfix/TOP="${BRANCH_PREFIX%%/*}"
+          if git ls-remote --exit-code --heads origin "${PREfix/TOP}" >/dev/null 2>&1; then
+            echo "[FATAL] Branch namespace collision detected: '${PREfix/TOP}' exists on origin." >&2
             exit 2
           fi
 

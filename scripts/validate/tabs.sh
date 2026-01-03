@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 # ============================================================================
 # Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
 #
@@ -20,69 +19,47 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 # FILE INFORMATION
-# DEFGROUP: MokoStandards
-# INGROUP: GitHub.Actions.CI
+# DEFGROUP: Scripts.Validate
+# INGROUP: MokoStandards.Release
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
-# PATH: /scripts/tabs.sh
-# VERSION: 03.05.00
-# BRIEF: CI validator that blocks tab characters in YAML files and enforces two-space indentation policy.
-# NOTE: YAML is indentation sensitive; tabs are noncompliant. This validator fails the job when any tab is detected.
+# PATH: /scripts/validate/tabs.sh
+# VERSION: 01.00.00
+# BRIEF: Detects tab characters in text files under src and fails if any are present.
+# NOTE:
 # ============================================================================
 
 set -euo pipefail
 
-log() {
-  printf '%s\n' "$*"
+SRC_DIR="${SRC_DIR:-src}"
+
+json_escape() {
+	python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$1"
 }
 
-fail=0
+[ -d "${SRC_DIR}" ] || {
+	printf '{"status":"fail","error":%s}
+' "$(json_escape "src directory missing")"
+	exit 1
+}
 
-log "[tabs] Scope: *.yml, *.yaml"
-log "[tabs] Policy: tab characters are noncompliant; replace with two spaces"
+python3 - <<'PY' "${SRC_DIR}"
+import json
+import sys
+from pathlib import Path
 
-# Find YAML files tracked in git first. If not in a git repo, fall back to filesystem search.
-yaml_files=""
-if command -v git >/dev/null 2>&1 && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  yaml_files="$(git ls-files '*.yml' '*.yaml' 2>/dev/null || true)"
-else
-  yaml_files="$(find . -type f \( -name '*.yml' -o -name '*.yaml' \) -print 2>/dev/null || true)"
-fi
+src = Path(sys.argv[1])
+exclude_dirs = {'vendor','node_modules','dist','.git','build','tmp'}
 
-if [ -z "${yaml_files}" ]; then
-  log "[tabs] No YAML files found. Status: PASS"
-  exit 0
-fi
+hits = []
+scanned = 0
 
-log "[tabs] YAML files discovered: $(printf '%s\n' "${yaml_files}" | wc -l | tr -d ' ')"
-
-while IFS= read -r f; do
-  [ -n "$f" ] || continue
-
-  # Skip deleted paths in edge cases
-  [ -f "$f" ] || continue
-
-  # Detect literal tab characters and report with line numbers.
-  if LC_ALL=C grep -n $'\t' -- "$f" >/dev/null 2>&1; then
-	 log "[tabs] FAIL: tab detected in: $f"
-
-	 # Emit an actionable audit trail: line number plus the exact line content.
-	 # Use sed to avoid grep prefix repetition and keep the output deterministic.
-	 LC_ALL=C grep -n $'\t' -- "$f" | while IFS= read -r hit; do
-		log "  ${hit}"
-	 done
-
-	 log "[tabs] Remediation: replace each tab with exactly two spaces"
-	 log "[tabs] Example: sed -i 's/\\t/  /g' \"$f\""
-
-	 fail=1
-  else
-	 log "[tabs] PASS: $f"
-  fi
-done <<< "${yaml_files}"
-
-if [ "$fail" -ne 0 ]; then
-  log "[tabs] Status: FAIL"
-  exit 1
-fi
-
-log "[tabs] Status: PASS"
+for p in src.rglob('*'):
+	if not p.is_file():
+		continue
+	if any(part in exclude_dirs for part in p.parts):
+		continue
+	try:
+		data = p.read_bytes()
+	except Exception:
+		continue
+	if b'
