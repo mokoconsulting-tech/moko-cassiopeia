@@ -314,7 +314,11 @@ jobs:
 
           git checkout -B "${DST}" "origin/${SRC}"
           git push origin "${DST}"
-          git push origin --delete "${SRC}"
+
+          # Skip deletion of main branch as GitHub does not allow deleting the default branch
+          if [ "${SRC}" != "main" ]; then
+            git push origin --delete "${SRC}"
+          fi
 
           {
             echo "### Promotion report"
