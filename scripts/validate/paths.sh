@@ -1,71 +1,26 @@
-# ============================================================================
-# Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
-#
-# This file is part of a Moko Consulting project.
-#
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
-#
-# FILE INFORMATION
-# DEFGROUP: Scripts.Validate
-# INGROUP: MokoStandards.Release
-# REPO: https://github.com/mokoconsulting-tech/MokoStandards
-# PATH: /scripts/validate/paths.sh
-# VERSION: 01.00.00
-# BRIEF: Detects Windows-style path literals in source content under src.
-# NOTE:
-# ============================================================================
-
+#!/usr/bin/env bash
 set -euo pipefail
 
-SRC_DIR="${SRC_DIR:-src}"
+# Detect Windows-style path literals (backslashes) in repository files.
+# Uses git ls-files -z and searches file contents for a literal backslash.
 
-json_escape() {
-  python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$1"
-}
+hits=()
+while IFS= read -r -d '' f; do
+  # Skip common binary files by mime-type
+  if file --brief --mime-type "$f" | grep -qE '^(application|audio|image|video)/'; then
+    continue
+  fi
+  if grep -F $'\\' -- "$f" >/dev/null 2>&1; then
+    hits+=("$f")
+  fi
+done < <(git ls-files -z)
 
-[ -d "${SRC_DIR}" ] || {
-  printf '{"status":"fail","error":%s}
-' "$(json_escape "src directory missing")"
-  exit 1
-}
-
-# Target patterns:
-# - drive letter paths like C:\foo\bar
-# - escaped backslashes in string literals
-regex='[A-Za-z]:\\|\\'
-
-set +e
-hits=$(grep -RInE --exclude-dir=vendor --exclude-dir=node_modules --exclude-dir=dist "${regex}" "${SRC_DIR}" 2>/dev/null)
-set -e
-
-if [ -n "${hits}" ]; then
-  {
-	 echo '{"status":"fail","error":"windows_path_literal_detected","hits":['
-	 echo "${hits}" | head -n 50 | python3 - <<'PY'
-import json,sys
-lines=[l.rstrip('
-') for l in sys.stdin.readlines() if l.strip()]
-print("
-".join([json.dumps({"hit":l})+"," for l in lines]).rstrip(','))
-PY
-	 echo ']}'
-  }
-  exit 1
+if [ "${#hits[@]}" -gt 0 ]; then
+  echo "ERROR: windows_path_literal_detected"
+  for h in "${hits[@]}"; do
+    echo " - ${h}"
+  done
+  exit 2
 fi
 
-printf '{"status":"ok","src_dir":%s}
-' "$(json_escape "${SRC_DIR}")"
 echo "paths: ok"
