@@ -25,96 +25,94 @@
 # FILE INFORMATION
 # ============================================================================
 # DEFGROUP: Script.Library
-# INGROUP: RepoHealth
+# INGROUP: Logging
 # REPO: https://github.com/mokoconsulting-tech
-# PATH: /scripts/lib/find_files.sh
+# PATH: /scripts/lib/logging.sh
 # VERSION: 01.00.00
-# BRIEF: Find files by glob patterns with standard ignore rules for CI checks
-# NOTE:
+# BRIEF: Enhanced logging utilities with structured output support
+# NOTE: Provides colored output, log levels, and structured logging
 # ============================================================================
 
 set -eu
 
-# Shared utilities
-. "$(dirname "$0")/common.sh"
-
-# ----------------------------------------------------------------------------
-# Purpose:
-# - Provide a consistent, reusable file discovery primitive for repo scripts.
-# - Support multiple glob patterns.
-# - Apply standard ignore rules to reduce noise (vendor, node_modules, .git).
-# - Output one path per line, relative to repo root.
-#
-# Usage:
-#   ./scripts/lib/find_files.sh <glob> [<glob> ...]
-#
-# Examples:
-#   ./scripts/lib/find_files.sh "*.yml" "*.yaml"
-#   ./scripts/lib/find_files.sh "src/**/*.php" "tests/**/*.php"
-# ----------------------------------------------------------------------------
-
-ROOT="$(script_root)"
-
-if [ "${1:-}" = "" ]; then
-	die "Usage: $0 <glob> [<glob> ...]"
+# Resolve script directory properly - works when sourced
+if [ -n "${SCRIPT_DIR:-}" ]; then
+	# Already set by caller
+	SCRIPT_LIB_DIR="${SCRIPT_DIR}/lib"
+else
+	# Determine from this file's location
+	SCRIPT_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 fi
 
-require_cmd find
-require_cmd sed
+# Shared utilities
+. "${SCRIPT_LIB_DIR}/common.sh"
 
-# Standard excludes (pragmatic defaults for CI)
-# Note: Keep these broad to avoid scanning generated or third-party content.
-EXCLUDES='
-	-path "*/.git/*" -o
-	-path "*/.github/*/node_modules/*" -o
-	-path "*/node_modules/*" -o
-	-path "*/vendor/*" -o
-	-path "*/dist/*" -o
-	-path "*/build/*" -o
-	-path "*/cache/*" -o
-	-path "*/tmp/*" -o
-	-path "*/.tmp/*" -o
-	-path "*/.cache/*"
-'
+# ----------------------------------------------------------------------------
+# Color codes (if terminal supports it)
+# ----------------------------------------------------------------------------
 
-# Convert a glob (bash-like) to a find -path pattern.
-# - Supports ** for "any directories" by translating to *
-# - Ensures leading */ so patterns apply anywhere under repo root
-glob_to_find_path() {
-	g="$1"
-
-	# normalize path separators for WSL/CI compatibility
-	g="$(normalize_path "$g")"
-
-	# translate ** to * (find -path uses shell glob semantics)
-	g="$(printf '%s' "$g" | sed 's|\*\*|*|g')"
-
-	case "$g" in
-		/*) printf '%s\n' "$g" ;;
-		*)  printf '%s\n' "*/$g" ;;
-	esac
+# Check if we're in a terminal and colors are supported
+use_colors() {
+	[ -t 1 ] && [ "${CI:-false}" != "true" ]
 }
 
-# Build a single find invocation that ORs all patterns.
-# Shell portability note: avoid arrays; build an expression string.
-PAT_EXPR=""
-for GLOB in "$@"; do
-	P="$(glob_to_find_path "$GLOB")"
-	if [ -z "$PAT_EXPR" ]; then
-		PAT_EXPR="-path \"$P\""
-	else
-		PAT_EXPR="$PAT_EXPR -o -path \"$P\""
+if use_colors; then
+	COLOR_RESET='\033[0m'
+	COLOR_RED='\033[0;31m'
+	COLOR_YELLOW='\033[0;33m'
+	COLOR_GREEN='\033[0;32m'
+	COLOR_BLUE='\033[0;34m'
+	COLOR_CYAN='\033[0;36m'
+else
+	COLOR_RESET=''
+	COLOR_RED=''
+	COLOR_YELLOW=''
+	COLOR_GREEN=''
+	COLOR_BLUE=''
+	COLOR_CYAN=''
+fi
+
+# ----------------------------------------------------------------------------
+# Enhanced logging functions
+# ----------------------------------------------------------------------------
+
+log_debug() {
+	if [ "${DEBUG:-false}" = "true" ]; then
+		printf '%b[DEBUG]%b %s\n' "${COLOR_CYAN}" "${COLOR_RESET}" "$*"
 	fi
-done
+}
 
-# Execute find and emit relative paths.
-# - Use eval to apply the constructed predicate string safely as a single expression.
-# - We scope to files only.
-# - We prune excluded directories.
-cd "$ROOT"
+log_success() {
+	printf '%b[SUCCESS]%b %s\n' "${COLOR_GREEN}" "${COLOR_RESET}" "$*"
+}
 
-# shellcheck disable=SC2086
-eval "find . \\( $EXCLUDES \\) -prune -o -type f \\( $PAT_EXPR \\) -print" \
-	| sed 's|^\./||' \
-	| sed '/^$/d' \
-	| sort -u
+log_step() {
+	printf '%b[STEP]%b %s\n' "${COLOR_BLUE}" "${COLOR_RESET}" "$*"
+}
+
+# ----------------------------------------------------------------------------
+# Structured logging
+# ----------------------------------------------------------------------------
+
+# Log a key-value pair
+log_kv() {
+	local key="$1"
+	local value="$2"
+	printf '  %b%s:%b %s\n' "${COLOR_BLUE}" "${key}" "${COLOR_RESET}" "${value}"
+}
+
+# Log a list item
+log_item() {
+	printf '  %b•%b %s\n' "${COLOR_GREEN}" "${COLOR_RESET}" "$*"
+}
+
+# Log a separator line
+log_separator() {
+	printf '%s\n' "========================================="
+}
+
+# Log a section header
+log_section() {
+	printf '\n%b=== %s ===%b\n' "${COLOR_BLUE}" "$*" "${COLOR_RESET}"
+}
+

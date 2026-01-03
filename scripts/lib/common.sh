@@ -103,6 +103,33 @@ normalize_path() {
 }
 
 # ----------------------------------------------------------------------------
+# JSON utilities
+# ----------------------------------------------------------------------------
+
+json_escape() {
+	require_cmd python3
+	python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$1"
+}
+
+json_output() {
+	local status="$1"
+	shift
+	require_cmd python3
+	python3 - <<PY "$status" "$@"
+import json
+import sys
+status = sys.argv[1]
+pairs = sys.argv[2:]
+data = {"status": status}
+for pair in pairs:
+	if "=" in pair:
+		k, v = pair.split("=", 1)
+		data[k] = v
+print(json.dumps(data, ensure_ascii=False))
+PY
+}
+
+# ----------------------------------------------------------------------------
 # Guardrails
 # ----------------------------------------------------------------------------
 
