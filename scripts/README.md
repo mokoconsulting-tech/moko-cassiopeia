@@ -255,6 +255,18 @@ WARN: ✗ tabs (warnings/issues found - run with -v for details)
 
 ## Best Practices
 
+### Enterprise Standards
+
+For comprehensive enterprise-grade scripting standards, see
+[ENTERPRISE.md](./ENTERPRISE.md).
+
+Key highlights:
+- **Error Handling**: Fail fast with clear, actionable messages
+- **Security**: Input validation, no hardcoded secrets
+- **Logging**: Structured output with timestamps
+- **Portability**: Cross-platform compatibility
+- **Documentation**: Usage functions and inline comments
+
 ### Writing New Scripts
 
 1. **Use the library functions**:
@@ -312,6 +324,51 @@ Run smoke tests:
 Scripts are automatically executed in GitHub Actions workflows:
 - `.github/workflows/ci.yml` - Continuous integration
 - `.github/workflows/repo_health.yml` - Repository health checks
+
+## Enterprise Features
+
+The scripts in this repository follow enterprise-grade standards:
+
+### Dependency Checking
+
+Scripts validate required dependencies at startup using `check_dependencies`:
+
+```bash
+check_dependencies python3 git sed
+```
+
+### Timestamp Logging
+
+All major operations include timestamps for audit trails:
+
+```bash
+log_info "Start time: $(log_timestamp)"
+```
+
+### Usage Documentation
+
+All user-facing scripts include comprehensive help:
+
+```bash
+./scripts/run/validate_all.sh --help
+./scripts/fix/versions.sh --help
+```
+
+### Standardized Exit Codes
+
+- `0` - Success
+- `1` - Fatal error
+- `2` - Invalid arguments
+
+### Enhanced Error Messages
+
+Clear, actionable error messages with context:
+
+```bash
+die "Required file not found: ${CONFIG_FILE}. Run setup first."
+```
+
+See [ENTERPRISE.md](./ENTERPRISE.md) for complete standards documentation.
 
 ## Version History
 

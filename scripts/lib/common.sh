@@ -136,3 +136,37 @@ PY
 fail_if_root() {
 	[ "$(id -u)" -eq 0 ] && die "Script must not run as root"
 }
+
+# ----------------------------------------------------------------------------
+# Enterprise features
+# ----------------------------------------------------------------------------
+
+# Check for required dependencies at script start
+check_dependencies() {
+	local missing=0
+	for cmd in "$@"; do
+		if ! command -v "$cmd" >/dev/null 2>&1; then
+			log_error "Required command not found: $cmd"
+			missing=$((missing + 1))
+		fi
+	done
+	[ "$missing" -eq 0 ] || die "Missing $missing required command(s)"
+}
+
+# Timeout wrapper for long-running commands
+run_with_timeout() {
+	local timeout="$1"
+	shift
+	if command -v timeout >/dev/null 2>&1; then
+		timeout "$timeout" "$@"
+	else
+		"$@"
+	fi
+}
+
+# Add script execution timestamp
+log_timestamp() {
+	if command -v date >/dev/null 2>&1; then
+		printf '%s\n' "$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+	fi
+}

@@ -40,15 +40,62 @@ SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 . "${SCRIPT_DIR}/lib/logging.sh"
 
 # ----------------------------------------------------------------------------
+# Usage
+# ----------------------------------------------------------------------------
+
+usage() {
+cat <<-USAGE
+Usage: $0 [OPTIONS]
+
+Run all validation scripts and report results.
+
+Options:
+  -v, --verbose    Show detailed output from validation scripts
+  -h, --help       Show this help message
+
+Examples:
+  $0              # Run all validations in quiet mode
+  $0 -v           # Run with verbose output
+  $0 --help       # Show usage information
+
+Exit codes:
+  0 - All required checks passed
+  1 - One or more required checks failed
+  2 - Invalid arguments
+
+USAGE
+exit 0
+}
+
+# ----------------------------------------------------------------------------
 # Configuration
 # ----------------------------------------------------------------------------
 
 VERBOSE="${1:-}"
-if [ "${VERBOSE}" = "-v" ] || [ "${VERBOSE}" = "--verbose" ]; then
-	VERBOSE="true"
-else
-	VERBOSE="false"
-fi
+
+# Parse arguments
+case "${VERBOSE}" in
+	-h|--help)
+		usage
+		;;
+	-v|--verbose)
+		VERBOSE="true"
+		;;
+	"")
+		VERBOSE="false"
+		;;
+	*)
+		log_error "Invalid argument: ${VERBOSE}"
+		echo ""
+		usage
+		exit 2
+		;;
+esac
+
+# Check dependencies
+check_dependencies python3
+
+log_info "Start time: $(log_timestamp)"
 
 REQUIRED_CHECKS=(
 	"manifest"
@@ -155,6 +202,8 @@ log_kv "Optional checks passed" "${optional_passed}/${#OPTIONAL_CHECKS[@]}"
 log_kv "Optional checks with issues" "${optional_failed}"
 
 log_separator
+
+log_info "End time: $(log_timestamp)"
 
 if [ "${required_failed}" -gt 0 ]; then
 	log_error "FAILED: ${required_failed} required check(s) failed"

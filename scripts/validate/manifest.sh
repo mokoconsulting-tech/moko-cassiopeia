@@ -1,4 +1,38 @@
 #!/usr/bin/env bash
+
+# ============================================================================
+# Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+#
+# This file is part of a Moko Consulting project.
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program (./LICENSE.md).
+# ============================================================================
+
+# ============================================================================
+# FILE INFORMATION
+# ============================================================================
+# DEFGROUP: Script.Validate
+# INGROUP: Joomla.Manifest
+# REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
+# PATH: /scripts/validate/manifest.sh
+# VERSION: 01.00.00
+# BRIEF: Validates Joomla manifest XML structure and required fields
+# NOTE: Ensures extension manifest compliance
+# ============================================================================
+
 set -euo pipefail
 
 log() { printf '%s\n' "$*"; }

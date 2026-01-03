@@ -35,11 +35,41 @@
 
 set -euo pipefail
 
+# ----------------------------------------------------------------------------
+# Usage
+# ----------------------------------------------------------------------------
+
+usage() {
+cat <<-USAGE
+Usage: $0 [OPTIONS]
+
+Run basic smoke tests to verify repository structure and manifest validity.
+
+Options:
+  -h, --help    Show this help message
+
+Examples:
+  $0              # Run all smoke tests
+  $0 --help       # Show usage information
+
+USAGE
+exit 0
+}
+
+# Parse arguments
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+	usage
+fi
+
 # Source common utilities
 SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 . "${SCRIPT_DIR}/lib/common.sh"
 
+# Check dependencies
+check_dependencies python3
+
 log_info "Running smoke tests for Moko-Cassiopeia repository"
+log_info "Start time: $(log_timestamp)"
 
 # ----------------------------------------------------------------------------
 # Test: Repository structure
@@ -143,4 +173,5 @@ log_info "Smoke tests completed successfully"
 log_info "Extension: ${NAME}"
 log_info "Version: ${VERSION}"
 log_info "Type: ${TYPE}"
+log_info "End time: $(log_timestamp)"
 log_info "========================================="

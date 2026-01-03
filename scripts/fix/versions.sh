@@ -54,8 +54,19 @@ Arguments:
 Examples:
   $0 3.5.0
   $0 1.2.3
+
+Exit codes:
+  0 - Version updated successfully
+  1 - Invalid version format or update failed
+  2 - Invalid arguments
+
+Files updated:
+  - Joomla manifest XML (<version> tag)
+  - package.json (if present)
+  - README.md (VERSION: references, if present)
+
 USAGE
-exit 1
+exit 0
 }
 
 validate_version() {
@@ -69,12 +80,21 @@ fi
 # Main
 # ----------------------------------------------------------------------------
 
+# Parse arguments
+if [ "${1:-}" = "-h" ] || [ "${1:-}" = "--help" ]; then
+	usage
+fi
+
 [ $# -eq 1 ] || usage
 
 VERSION="$1"
 validate_version "${VERSION}"
 
+# Check dependencies
+check_dependencies python3
+
 log_info "Updating version to: ${VERSION}"
+log_info "Start time: $(log_timestamp)"
 
 # Source Joomla manifest utilities
 . "${SCRIPT_DIR}/lib/joomla_manifest.sh"
@@ -149,6 +169,7 @@ fi
 
 log_info "========================================="
 log_info "Version update completed: ${VERSION}"
+log_info "End time: $(log_timestamp)"
 log_info "Files updated:"
 log_info "  - ${MANIFEST}"
 [ -f "package.json" ] && log_info "  - package.json"
