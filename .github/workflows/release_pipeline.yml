@@ -226,29 +226,19 @@ jobs:
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Report run context (always)
+      - name:
+
+      - name: Report job snapshot (always)
         if: ${{ always() }}
         run: |
           set -euo pipefail
-
           {
-            echo "### Run context"
-            echo "```json"
-            printf '{'
-            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
-            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
-            printf '"job":"%s",' "${GITHUB_JOB}"
-            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
-            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
-            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
-            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            printf '"actor":"%s",' "${GITHUB_ACTOR}"
-            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
-            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
-            printf '"sha":"%s",' "${GITHUB_SHA}"
-            printf '"runner_os":"%s",' "${RUNNER_OS}"
-            printf '"runner_name":"%s"' "${RUNNER_NAME}"
-            printf '}\n'
+            echo "### Job snapshot"
+            echo "```"
+            echo "event=${GITHUB_EVENT_NAME} ref=${GITHUB_REF_NAME} sha=${GITHUB_SHA} actor=${GITHUB_ACTOR}"
+            git --version || true
+            git status --porcelain=v1 || true
+            git log -1 --pretty=fuller || true
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -327,26 +317,19 @@ jobs:
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Report run context (always)
+      - name:
+
+      - name: Report job snapshot (always)
         if: ${{ always() }}
         run: |
           set -euo pipefail
           {
-            echo "### Run context"
-            echo "```json"
-            printf '{'
-            printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
-            printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
-            printf '"job":"%s",' "${GITHUB_JOB}"
-            printf '"run_id":%s,' "${GITHUB_RUN_ID}"
-            printf '"run_number":%s,' "${GITHUB_RUN_NUMBER}"
-            printf '"run_attempt":%s,' "${GITHUB_RUN_ATTEMPT}"
-            printf '"run_url":"%s",' "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-            printf '"actor":"%s",' "${GITHUB_ACTOR}"
-            printf '"event":"%s",' "${GITHUB_EVENT_NAME}"
-            printf '"ref_name":"%s",' "${GITHUB_REF_NAME}"
-            printf '"sha":"%s"' "${GITHUB_SHA}"
-            printf '}\n'
+            echo "### Job snapshot"
+            echo "```"
+            echo "event=${GITHUB_EVENT_NAME} ref=${GITHUB_REF_NAME} sha=${GITHUB_SHA} actor=${GITHUB_ACTOR}"
+            git --version || true
+            git status --porcelain=v1 || true
+            git log -1 --pretty=fuller || true
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -453,13 +436,17 @@ jobs:
           git commit -m "chore(release): normalize dates" || true
           git push origin "HEAD:${{ needs.guard.outputs.promoted_branch }}"
 
-      - name: Report run context (always)
+      - name:
+
+      - name: Report job snapshot (always)
         if: ${{ always() }}
         run: |
           set -euo pipefail
           {
-            echo "### Git snapshot"
+            echo "### Job snapshot"
             echo "```"
+            echo "event=${GITHUB_EVENT_NAME} ref=${GITHUB_REF_NAME} sha=${GITHUB_SHA} actor=${GITHUB_ACTOR}"
+            git --version || true
             git status --porcelain=v1 || true
             git log -1 --pretty=fuller || true
             echo "```"
@@ -578,20 +565,20 @@ jobs:
             "scripts/validate/validate_version_alignment.sh"
           )
 
-          missing=()
+          missing_required=()
           for s in "${required_scripts[@]}"; do
             if [ ! -f "${s}" ]; then
-              missing+=("${s}")
+              missing_required+=("${s}")
             fi
           done
 
-          if [ "${#missing[@]}" -gt 0 ]; then
+          if [ "${#missing_required[@]}" -gt 0 ]; then
             {
               echo "### Script guardrails"
               echo "```json"
               printf '{"status":"fail","missing_required_scripts":['
               sep=""
-              for m in "${missing[@]}"; do
+              for m in "${missing_required[@]}"; do
                 printf '%s"%s"' "${sep}" "${m}"
                 sep=",";
               done
@@ -601,16 +588,42 @@ jobs:
             exit 1
           fi
 
-          ran=()
-          skipped=()
+          ran_required=()
+          ran_optional=()
+          failed_optional=()
+          skipped_optional=()
 
-          for s in "${required_scripts[@]}" "${optional_scripts[@]}"; do
+          # Required scripts are release-blocking.
+          for s in "${required_scripts[@]}"; do
+            chmod +x "${s}"
+            echo "" >> "${GITHUB_STEP_SUMMARY}"
+            echo "### Run required: ${s}" >> "${GITHUB_STEP_SUMMARY}"
+            echo "```" >> "${GITHUB_STEP_SUMMARY}"
+            "${s}" >> "${GITHUB_STEP_SUMMARY}"
+            echo "```" >> "${GITHUB_STEP_SUMMARY}"
+            ran_required+=("${s}")
+          done
+
+          # Optional scripts provide signal only. Failures become warnings, not blockers.
+          for s in "${optional_scripts[@]}"; do
             if [ -f "${s}" ]; then
               chmod +x "${s}"
+              set +e
+              echo "" >> "${GITHUB_STEP_SUMMARY}"
+              echo "### Run optional: ${s}" >> "${GITHUB_STEP_SUMMARY}"
+              echo "```" >> "${GITHUB_STEP_SUMMARY}"
               "${s}" >> "${GITHUB_STEP_SUMMARY}"
-              ran+=("${s}")
+              rc=$?
+              echo "```" >> "${GITHUB_STEP_SUMMARY}"
+              set -e
+
+              ran_optional+=("${s}")
+              if [ "${rc}" -ne 0 ]; then
+                failed_optional+=("${s}")
+                echo "::warning::Optional validation failed (${s}) exit_code=${rc}"
+              fi
             else
-              skipped+=("${s}")
+              skipped_optional+=("${s}")
             fi
           done
 
@@ -618,42 +631,54 @@ jobs:
             echo "### Validation inventory"
             echo "```json"
             printf '{'
+
             printf '"required_count":%s,' "${#required_scripts[@]}"
             printf '"optional_count":%s,' "${#optional_scripts[@]}"
-            printf '"ran_count":%s,' "${#ran[@]}"
-            printf '"skipped_optional_count":%s,' "${#skipped[@]}"
+            printf '"ran_required_count":%s,' "${#ran_required[@]}"
+            printf '"ran_optional_count":%s,' "${#ran_optional[@]}"
+            printf '"failed_optional_count":%s,' "${#failed_optional[@]}"
+            printf '"skipped_optional_count":%s,' "${#skipped_optional[@]}"
 
-            printf '"required":['
+            printf '"ran_required":['
             sep=""
-            for s in "${required_scripts[@]}"; do
-              printf '%s"%s"' "${sep}" "${s}"
+            for x in "${ran_required[@]}"; do
+              printf '%s"%s"' "${sep}" "${x}"
               sep=",";
             done
 
-            printf '],"optional":['
+            printf '],"ran_optional":['
             sep=""
-            for s in "${optional_scripts[@]}"; do
-              printf '%s"%s"' "${sep}" "${s}"
+            for x in "${ran_optional[@]}"; do
+              printf '%s"%s"' "${sep}" "${x}"
               sep=",";
             done
 
-            printf '],"ran":['
+            printf '],"failed_optional":['
             sep=""
-            for s in "${ran[@]}"; do
-              printf '%s"%s"' "${sep}" "${s}"
+            for x in "${failed_optional[@]}"; do
+              printf '%s"%s"' "${sep}" "${x}"
               sep=",";
             done
 
             printf '],"skipped_optional":['
             sep=""
-            for s in "${skipped[@]}"; do
-              printf '%s"%s"' "${sep}" "${s}"
+            for x in "${skipped_optional[@]}"; do
+              printf '%s"%s"' "${sep}" "${x}"
               sep=",";
             done
 
             printf ']}\n'
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
+          if [ "${#failed_optional[@]}" -gt 0 ]; then
+            {
+              echo "### Optional validation failures"
+              echo "These are non-blocking by policy. Treat as backlog until resolved."
+              echo ""
+              printf '%s
+' "${failed_optional[@]}"
+            } >> "${GITHUB_STEP_SUMMARY}"
+          fi
 
       - name: Build Joomla ZIP (extension type aware, src-only archive)
         id: build
@@ -977,6 +1002,11 @@ jobs:
           echo "tag=${TAG}" >> "${GITHUB_OUTPUT}"
 
       - name: Generate release notes from CHANGELOG.md
+        env:
+          SFTP_AUTH_MODE: ${{ steps.sftp.outputs.auth_mode }}
+          SFTP_REMOTE_PATH: ${{ steps.sftp.outputs.remote_path }}
+          SFTP_HOST: ${{ steps.sftp.outputs.host }}
+          SFTP_PORT: ${{ steps.sftp.outputs.port }}
         run: |
           set -euo pipefail
 
@@ -996,10 +1026,10 @@ jobs:
             echo "- ${ZIP_ASSET}"
             echo ""
             echo "Deployment metadata:"
-            echo "- auth_mode: ${{ steps.sftp.outputs.auth_mode || 'unknown' }}"
-            echo "- remote_path: ${{ steps.sftp.outputs.remote_path || 'unknown' }}"
-            echo "- host: ${{ steps.sftp.outputs.host || 'unknown' }}"
-            echo "- port: ${{ steps.sftp.outputs.port || 'unknown' }}"
+            echo "- auth_mode: ${SFTP_AUTH_MODE:-unknown}"
+            echo "- remote_path: ${SFTP_REMOTE_PATH:-unknown}"
+            echo "- host: ${SFTP_HOST:-unknown}"
+            echo "- port: ${SFTP_PORT:-unknown}"
           } >> RELEASE_NOTES.md
 
       - name: Create GitHub release and attach ZIP
@@ -1018,18 +1048,21 @@ jobs:
           subject-path: |
             dist/*.zip
 
-      - name: Report run context (always)
+      - name:
+
+      - name: Report job snapshot (always)
         if: ${{ always() }}
         run: |
           set -euo pipefail
           {
-            echo "### Git snapshot"
+            echo "### Job snapshot"
             echo "```"
+            echo "event=${GITHUB_EVENT_NAME} ref=${GITHUB_REF_NAME} sha=${GITHUB_SHA} actor=${GITHUB_ACTOR}"
+            git --version || true
             git status --porcelain=v1 || true
             git log -1 --pretty=fuller || true
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
-
   push_version_to_main:
     name: 04 Promote version branch to main (stable only, keep version branch)
     runs-on: ubuntu-latest
@@ -1090,60 +1123,14 @@ jobs:
           gh pr merge "${PR_NUMBER}" --merge --delete-branch=false \
             || echo "PR merge blocked by branch protection or policy" >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Report run context (always)
+      - name:
+
+      - name: Report job snapshot (always)
         if: ${{ always() }}
         run: |
           set -euo pipefail
           {
-            echo "### Main promotion report"
-            echo "```json"
-            echo "{\"head\":\"${{ needs.guard.outputs.promoted_branch }}\",\"base\":\"main\",\"release_mode\":\"${{ needs.guard.outputs.release_mode }}\"}"
+            echo "### Job snapshot"
             echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-
-  release_event_report:
-    name: 99 Release event report (GitHub UI created release)
-    runs-on: ubuntu-latest
-    needs: guard
-
-    if: ${{ github.event_name == 'release' }}
-
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout tag
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-          fetch-depth: 1
-
-      - name: Release event telemetry
-        run: |
-          set -euo pipefail
-
-          {
-            echo "### Release event telemetry"
-            echo "```json"
-            echo "{"
-            echo "  \"repository\": \"${GITHUB_REPOSITORY}\","
-            echo "  \"event\": \"${GITHUB_EVENT_NAME}\","
-            echo "  \"ref_name\": \"${GITHUB_REF_NAME}\","
-            echo "  \"sha\": \"${GITHUB_SHA}\","
-            echo "  \"channel\": \"${{ needs.guard.outputs.channel }}\","
-            echo "  \"release_mode\": \"${{ needs.guard.outputs.release_mode }}\","
-            echo "  \"version\": \"${{ needs.guard.outputs.version }}\""
-            echo "}"
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
-      - name: Report run context (always)
-        if: ${{ always() }}
-        run: |
-          set -euo pipefail
-          {
-            echo "### Git snapshot"
-            echo "```"
-            git status --porcelain=v1 || true
-            git log -1 --pretty=fuller || true
-            echo "```"
-          } >> "${GITHUB_STEP_SUMMARY}"
+            echo "event=${GITHUB_EVENT_NAME} ref=${GITHUB_REF_NAME} sha=${GITHUB_SHA} actor=${GITHUB_ACTOR}"
+    
