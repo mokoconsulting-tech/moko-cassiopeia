@@ -51,7 +51,7 @@ jobs:
       REPORT_ONLY: ${{ github.event.inputs.report_only }}
       COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
       BASE_BRANCH: ${{ github.ref_name }}
-      BRANCH_PREFIX: dev/
+      BRANCH_PREFIX: `dev/`
       ERROR_LOG: /tmp/version_branch_errors.log
       CI_HELPERS: /tmp/moko_ci_helpers.sh
       REPORT_PATH: /tmp/version-bump-report.json
