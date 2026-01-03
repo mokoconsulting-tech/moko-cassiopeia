@@ -546,19 +546,19 @@ jobs:
           set -euo pipefail
 
           required_scripts=(
-            "scripts/validate/validate_manifest.sh"
-            "scripts/validate/validate_xml_wellformed.sh"
+            "scripts/validate/manifest.sh"
+            "scripts/validate/xml_wellformed.sh"
           )
 
           optional_scripts=(
-            "scripts/validate/validate_changelog.sh"
-            "scripts/validate/validate_language_structure.sh"
-            "scripts/validate/validate_license_headers.sh"
-            "scripts/validate/validate_no_secrets.sh"
-            "scripts/validate/validate_paths.sh"
-            "scripts/validate/validate_php_syntax.sh"
-            "scripts/validate/validate_tabs.sh"
-            "scripts/validate/validate_version_alignment.sh"
+            "scripts/validate/changelog.sh"
+            "scripts/validate/language_structure.sh"
+            "scripts/validate/license_headers.sh"
+            "scripts/validate/no_secrets.sh"
+            "scripts/validate/paths.sh"
+            "scripts/validate/php_syntax.sh"
+            "scripts/validate/tabs.sh"
+            "scripts/validate/version_alignment.sh"
           )
 
           missing=()

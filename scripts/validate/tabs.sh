@@ -23,7 +23,7 @@
 # DEFGROUP: MokoStandards
 # INGROUP: GitHub.Actions.CI
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
-# PATH: /scripts/validate_tabs.sh
+# PATH: /scripts/tabs.sh
 # VERSION: 03.05.00
 # BRIEF: CI validator that blocks tab characters in YAML files and enforces two-space indentation policy.
 # NOTE: YAML is indentation sensitive; tabs are noncompliant. This validator fails the job when any tab is detected.
@@ -37,8 +37,8 @@ log() {
 
 fail=0
 
-log "[validate_tabs] Scope: *.yml, *.yaml"
-log "[validate_tabs] Policy: tab characters are noncompliant; replace with two spaces"
+log "[tabs] Scope: *.yml, *.yaml"
+log "[tabs] Policy: tab characters are noncompliant; replace with two spaces"
 
 # Find YAML files tracked in git first. If not in a git repo, fall back to filesystem search.
 yaml_files=""
@@ -49,11 +49,11 @@ else
 fi
 
 if [ -z "${yaml_files}" ]; then
-  log "[validate_tabs] No YAML files found. Status: PASS"
+  log "[tabs] No YAML files found. Status: PASS"
   exit 0
 fi
 
-log "[validate_tabs] YAML files discovered: $(printf '%s\n' "${yaml_files}" | wc -l | tr -d ' ')"
+log "[tabs] YAML files discovered: $(printf '%s\n' "${yaml_files}" | wc -l | tr -d ' ')"
 
 while IFS= read -r f; do
   [ -n "$f" ] || continue
@@ -63,7 +63,7 @@ while IFS= read -r f; do
 
   # Detect literal tab characters and report with line numbers.
   if LC_ALL=C grep -n $'\t' -- "$f" >/dev/null 2>&1; then
-	 log "[validate_tabs] FAIL: tab detected in: $f"
+	 log "[tabs] FAIL: tab detected in: $f"
 
 	 # Emit an actionable audit trail: line number plus the exact line content.
 	 # Use sed to avoid grep prefix repetition and keep the output deterministic.
@@ -71,18 +71,18 @@ while IFS= read -r f; do
 		log "  ${hit}"
 	 done
 
-	 log "[validate_tabs] Remediation: replace each tab with exactly two spaces"
-	 log "[validate_tabs] Example: sed -i 's/\\t/  /g' \"$f\""
+	 log "[tabs] Remediation: replace each tab with exactly two spaces"
+	 log "[tabs] Example: sed -i 's/\\t/  /g' \"$f\""
 
 	 fail=1
   else
-	 log "[validate_tabs] PASS: $f"
+	 log "[tabs] PASS: $f"
   fi
 done <<< "${yaml_files}"
 
 if [ "$fail" -ne 0 ]; then
-  log "[validate_tabs] Status: FAIL"
+  log "[tabs] Status: FAIL"
   exit 1
 fi
 
-log "[validate_tabs] Status: PASS"
+log "[tabs] Status: PASS"
