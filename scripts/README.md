@@ -225,10 +225,12 @@ Runs all validation scripts and provides a comprehensive report:
 - Executes all optional validation checks
 - Provides colored output with pass/fail indicators
 - Returns summary with counts
+- Supports verbose mode for detailed output
 
 Usage:
 ```bash
-./scripts/run/validate_all.sh
+./scripts/run/validate_all.sh        # Standard mode
+./scripts/run/validate_all.sh -v     # Verbose mode (shows all output)
 ```
 
 Example output:
@@ -243,7 +245,7 @@ INFO: Running all validation checks...
 === Optional Checks ===
 [SUCCESS] ✓ no_secrets
 [SUCCESS] ✓ php_syntax
-WARN: ✗ tabs (warnings/issues found)
+WARN: ✗ tabs (warnings/issues found - run with -v for details)
 
 === Validation Summary ===
   Required checks passed: 2/2

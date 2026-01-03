@@ -132,13 +132,19 @@ fi
 
 # Update README.md version references
 if [ -f "README.md" ]; then
-# Look for version references in format VERSION: XX.XX.XX
-if grep -q 'VERSION: [0-9]' README.md; then
-# Convert to zero-padded format if needed
-PADDED_VERSION="$(printf '%s' "${VERSION}" | awk -F. '{printf "%02d.%02d.%02d", $1, $2, $3}')"
-sed_inplace "s|VERSION: [0-9]{2}\.[0-9]{2}\.[0-9]{2}|VERSION: ${PADDED_VERSION}|g" README.md
-log_info "✓ Updated README.md version references"
-fi
+	# Look for version references in format VERSION: XX.XX.XX
+	if grep -q 'VERSION: [0-9]' README.md; then
+		# Validate version format has 3 components
+		component_count=$(echo "${VERSION}" | awk -F. '{print NF}')
+		if [ "${component_count}" -eq 3 ]; then
+			# Convert to zero-padded format
+			PADDED_VERSION="$(printf '%s' "${VERSION}" | awk -F. '{printf "%02d.%02d.%02d", $1, $2, $3}')"
+			sed_inplace "s|VERSION: [0-9]{2}\.[0-9]{2}\.[0-9]{2}|VERSION: ${PADDED_VERSION}|g" README.md
+			log_info "✓ Updated README.md version references"
+		else
+			log_warn "Version format invalid for padding, skipping README.md update"
+		fi
+	fi
 fi
 
 log_info "========================================="
