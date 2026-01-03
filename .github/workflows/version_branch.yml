@@ -230,9 +230,15 @@ jobs:
           source "$CI_HELPERS"
           moko_init "Branch namespace collision defense"
 
-          PREfix/TOP="${BRANCH_PREFIX%%/*}"
-          if git ls-remote --exit-code --heads origin "${PREfix/TOP}" >/dev/null 2>&1; then
-            echo "[FATAL] Branch namespace collision detected: '${PREfix/TOP}' exists on origin." >&2
+          # Skip collision check for the static 'dev/' prefix
+          if [[ "${BRANCH_PREFIX}" == "dev/" ]]; then
+            echo "[INFO] Skipping collision check for static prefix 'dev/'" >&2
+            exit 0
+          fi
+
+          PREFIX_TOP="${BRANCH_PREFIX%%/*}"
+          if git ls-remote --exit-code --heads origin "${PREFIX_TOP}" >/dev/null 2>&1; then
+            echo "[FATAL] Branch namespace collision detected: '${PREFIX_TOP}' exists on origin." >&2
             exit 2
           fi
 
