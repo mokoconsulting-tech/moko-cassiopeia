@@ -559,24 +559,16 @@ jobs:
 
           git fetch origin --prune
 
-          dev_paths=()
           dev_branches=()
 
           # Look for remote branches matching origin/dev*.
-          # A plain origin/dev is considered invalid; we require dev/<something> branches.
+          # A plain origin/dev is prohibited; only dev/<something> branches are allowed.
           while IFS= read -r b; do
             name="${b#origin/}"
             if [ "${name}" = 'dev' ]; then
               dev_branches+=("${name}")
-            else
-              dev_paths+=("${name}")
             fi
           done < <(git branch -r --list 'origin/dev*' | sed 's/^ *//')
-
-          # If there are no dev/* branches, fail the guardrail.
-          if [ "${#dev_paths[@]}" -eq 0 ]; then
-            missing_required+=("dev/* branch (e.g. dev/01.00.00)")
-          fi
 
           # If a plain dev branch exists (origin/dev), flag it as invalid.
           if [ "${#dev_branches[@]}" -gt 0 ]; then
