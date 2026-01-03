@@ -71,6 +71,20 @@ log_error() {
 
 die() {
 	log_error "$*"
+	if [ "${VERBOSE_ERRORS:-true}" = "true" ]; then
+		echo "" >&2
+		echo "Stack trace (last 10 commands):" >&2
+		if [ -n "${BASH_VERSION:-}" ]; then
+			history | tail -10 >&2 2>/dev/null || true
+		fi
+		echo "" >&2
+		echo "Environment:" >&2
+		echo "  PWD: $(pwd)" >&2
+		echo "  USER: ${USER:-unknown}" >&2
+		echo "  SHELL: ${SHELL:-unknown}" >&2
+		echo "  CI: ${CI:-false}" >&2
+		echo "" >&2
+	fi
 	exit 1
 }
 
@@ -135,4 +149,85 @@ PY
 
 fail_if_root() {
 	[ "$(id -u)" -eq 0 ] && die "Script must not run as root"
+}
+
+# ----------------------------------------------------------------------------
+# Enterprise features
+# ----------------------------------------------------------------------------
+
+# Check for required dependencies at script start
+check_dependencies() {
+	local missing=0
+	local missing_cmds=()
+	
+	for cmd in "$@"; do
+		if ! command -v "$cmd" >/dev/null 2>&1; then
+			log_error "Required command not found: $cmd"
+			missing=$((missing + 1))
+			missing_cmds+=("$cmd")
+		fi
+	done
+	
+	if [ "$missing" -gt 0 ]; then
+		echo "" >&2
+		echo "Missing required dependencies:" >&2
+		for cmd in "${missing_cmds[@]}"; do
+			echo "  - $cmd" >&2
+		done
+		echo "" >&2
+		echo "Installation guides:" >&2
+		for cmd in "${missing_cmds[@]}"; do
+			case "$cmd" in
+				python3)
+					echo "  python3: apt-get install python3 (Debian/Ubuntu) or brew install python3 (macOS)" >&2
+					;;
+				git)
+					echo "  git: apt-get install git (Debian/Ubuntu) or brew install git (macOS)" >&2
+					;;
+				php)
+					echo "  php: apt-get install php-cli (Debian/Ubuntu) or brew install php (macOS)" >&2
+					;;
+				xmllint)
+					echo "  xmllint: apt-get install libxml2-utils (Debian/Ubuntu) or brew install libxml2 (macOS)" >&2
+					;;
+				*)
+					echo "  $cmd: Please install via your system package manager" >&2
+					;;
+			esac
+		done
+		echo "" >&2
+		die "Missing $missing required command(s)"
+	fi
+}
+
+# Timeout wrapper for long-running commands
+run_with_timeout() {
+	local timeout="$1"
+	shift
+	if command -v timeout >/dev/null 2>&1; then
+		timeout "$timeout" "$@"
+	else
+		"$@"
+	fi
+}
+
+# Add script execution timestamp
+log_timestamp() {
+	if command -v date >/dev/null 2>&1; then
+		printf '%s\n' "$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+	fi
+}
+
+# Calculate and log execution duration
+log_duration() {
+	local start="$1"
+	local end="$2"
+	local duration=$((end - start))
+	if [ "$duration" -ge 60 ]; then
+		local minutes=$((duration / 60))
+		local seconds=$((duration % 60))
+		printf '%dm %ds\n' "$minutes" "$seconds"
+	else
+		printf '%ds\n' "$duration"
+	fi
 }

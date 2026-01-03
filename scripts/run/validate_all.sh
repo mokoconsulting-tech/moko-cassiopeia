@@ -40,15 +40,64 @@ SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 . "${SCRIPT_DIR}/lib/logging.sh"
 
 # ----------------------------------------------------------------------------
+# Usage
+# ----------------------------------------------------------------------------
+
+usage() {
+cat <<-USAGE
+Usage: $0 [OPTIONS]
+
+Run all validation scripts and report results.
+
+Options:
+  -v, --verbose    Show detailed output from validation scripts
+  -h, --help       Show this help message
+
+Examples:
+  $0              # Run all validations in quiet mode
+  $0 -v           # Run with verbose output
+  $0 --help       # Show usage information
+
+Exit codes:
+  0 - All required checks passed
+  1 - One or more required checks failed
+  2 - Invalid arguments
+
+USAGE
+exit 0
+}
+
+# ----------------------------------------------------------------------------
 # Configuration
 # ----------------------------------------------------------------------------
 
 VERBOSE="${1:-}"
-if [ "${VERBOSE}" = "-v" ] || [ "${VERBOSE}" = "--verbose" ]; then
-	VERBOSE="true"
-else
-	VERBOSE="false"
-fi
+
+# Parse arguments
+case "${VERBOSE}" in
+	-h|--help)
+		usage
+		;;
+	-v|--verbose)
+		VERBOSE="true"
+		;;
+	"")
+		VERBOSE="false"
+		;;
+	*)
+		log_error "Invalid argument: ${VERBOSE}"
+		echo ""
+		usage
+		exit 2
+		;;
+esac
+
+# Check dependencies
+check_dependencies python3
+
+START_TIME=$(date +%s)
+
+log_info "Start time: $(log_timestamp)"
 
 REQUIRED_CHECKS=(
 	"manifest"
@@ -90,22 +139,20 @@ for check in "${REQUIRED_CHECKS[@]}"; do
 	fi
 	
 	log_step "Running: ${check}"
-	if [ "${VERBOSE}" = "true" ]; then
-		if "${script}"; then
-			log_success "✓ ${check}"
-			required_passed=$((required_passed + 1))
-		else
-			log_error "✗ ${check} (FAILED)"
-			required_failed=$((required_failed + 1))
-		fi
+	# Always capture output for better error reporting
+	output=""
+	if output=$("${script}" 2>&1); then
+		log_success "✓ ${check}"
+		required_passed=$((required_passed + 1))
+		[ "${VERBOSE}" = "true" ] && echo "$output"
 	else
-		if "${script}" >/dev/null 2>&1; then
-			log_success "✓ ${check}"
-			required_passed=$((required_passed + 1))
-		else
-			log_error "✗ ${check} (FAILED - run with -v for details)"
-			required_failed=$((required_failed + 1))
-		fi
+		log_error "✗ ${check} (FAILED)"
+		required_failed=$((required_failed + 1))
+		# Show error output for required checks regardless of verbose flag
+		echo "" >&2
+		echo "Error output:" >&2
+		echo "$output" >&2
+		echo "" >&2
 	fi
 done
 
@@ -121,21 +168,27 @@ for check in "${OPTIONAL_CHECKS[@]}"; do
 	fi
 	
 	log_step "Running: ${check}"
-	if [ "${VERBOSE}" = "true" ]; then
-		if "${script}"; then
-			log_success "✓ ${check}"
-			optional_passed=$((optional_passed + 1))
-		else
-			log_warn "✗ ${check} (warnings/issues found)"
-			optional_failed=$((optional_failed + 1))
-		fi
+	# Capture output for better error reporting
+	output=""
+	if output=$("${script}" 2>&1); then
+		log_success "✓ ${check}"
+		optional_passed=$((optional_passed + 1))
+		[ "${VERBOSE}" = "true" ] && echo "$output"
 	else
-		if "${script}" >/dev/null 2>&1; then
-			log_success "✓ ${check}"
-			optional_passed=$((optional_passed + 1))
+		log_warn "✗ ${check} (warnings/issues found)"
+		optional_failed=$((optional_failed + 1))
+		# Show brief error summary for optional checks, full output in verbose
+		if [ "${VERBOSE}" = "true" ]; then
+			echo "" >&2
+			echo "Error output:" >&2
+			echo "$output" >&2
+			echo "" >&2
 		else
-			log_warn "✗ ${check} (warnings/issues found - run with -v for details)"
-			optional_failed=$((optional_failed + 1))
+			# Show first few lines of error
+			echo "" >&2
+			echo "Error summary (run with -v for full details):" >&2
+			echo "$output" | head -5 >&2
+			echo "" >&2
 		fi
 	fi
 done
@@ -155,6 +208,10 @@ log_kv "Optional checks passed" "${optional_passed}/${#OPTIONAL_CHECKS[@]}"
 log_kv "Optional checks with issues" "${optional_failed}"
 
 log_separator
+
+log_info "End time: $(log_timestamp)"
+END_TIME=$(date +%s)
+log_info "Duration: $(log_duration "$START_TIME" "$END_TIME")"
 
 if [ "${required_failed}" -gt 0 ]; then
 	log_error "FAILED: ${required_failed} required check(s) failed"
