@@ -72,7 +72,7 @@ env:
   # Repo health policy
   # Files are listed as-is; directories must end with a trailing slash.
   REPO_REQUIRED_ARTIFACTS: README.md,LICENSE,CHANGELOG.md,CONTRIBUTING.md,CODE_OF_CONDUCT.md,.github/workflows/,src/
-  REPO_OPTIONAL_FILES: SECURITY.md,GOVERNANCE.md,.editorconfig,.gitattributes,.gitignore,README.md,docs/,dev/
+  REPO_OPTIONAL_FILES: SECURITY.md,GOVERNANCE.md,.editorconfig,.gitattributes,.gitignore,README.md,docs/
   REPO_DISALLOWED_DIRS:
   REPO_DISALLOWED_FILES: TODO.md,todo.md
 
@@ -555,8 +555,14 @@ jobs:
             fi
           done
 
+          # Optional entries: handle files and directories (trailing slash indicates dir)
           for f in "${optional_files[@]}"; do
-            [ ! -f "${f}" ] && missing_optional+=("${f}")
+            if printf '%s' "${f}" | grep -q '/$'; then
+              d="${f%/}"
+              [ ! -d "${d}" ] && missing_optional+=("${f}")
+            else
+              [ ! -f "${f}" ] && missing_optional+=("${f}")
+            fi
           done
 
           for d in "${disallowed_dirs[@]}"; do
@@ -573,6 +579,8 @@ jobs:
           dev_paths=()
           dev_branches=()
 
+          # Look for remote branches matching origin/dev*.
+          # A plain origin/dev is considered invalid; we require dev/<something> branches.
           while IFS= read -r b; do
             name="${b#origin/}"
             if [ "${name}" = 'dev' ]; then
@@ -582,10 +590,12 @@ jobs:
             fi
           done < <(git branch -r --list 'origin/dev*' | sed 's/^ *//')
 
+          # If there are no dev/* branches, fail the guardrail.
           if [ "${#dev_paths[@]}" -eq 0 ]; then
             missing_required+=("dev/* branch (e.g. dev/01.00.00)")
           fi
 
+          # If a plain dev branch exists (origin/dev), flag it as invalid.
           if [ "${#dev_branches[@]}" -gt 0 ]; then
             missing_required+=("invalid branch dev (must be dev/<version>)")
           fi
