@@ -219,6 +219,38 @@ INFO: Smoke tests completed successfully
 INFO: =========================================
 ```
 
+### `validate_all.sh`
+Runs all validation scripts and provides a comprehensive report:
+- Executes all required validation checks
+- Executes all optional validation checks
+- Provides colored output with pass/fail indicators
+- Returns summary with counts
+
+Usage:
+```bash
+./scripts/run/validate_all.sh
+```
+
+Example output:
+```
+=== Repository Validation Suite ===
+INFO: Running all validation checks...
+
+=== Required Checks ===
+[SUCCESS] ✓ manifest
+[SUCCESS] ✓ xml_wellformed
+
+=== Optional Checks ===
+[SUCCESS] ✓ no_secrets
+[SUCCESS] ✓ php_syntax
+WARN: ✗ tabs (warnings/issues found)
+
+=== Validation Summary ===
+  Required checks passed: 2/2
+  Optional checks passed: 2/8
+[SUCCESS] SUCCESS: All required checks passed
+```
+
 ## Best Practices
 
 ### Writing New Scripts
@@ -256,7 +288,12 @@ INFO: =========================================
 
 ### Testing Scripts Locally
 
-Run validation scripts before committing:
+Run all validation scripts:
+```bash
+./scripts/run/validate_all.sh
+```
+
+Run individual validation scripts:
 ```bash
 ./scripts/validate/manifest.sh
 ./scripts/validate/php_syntax.sh

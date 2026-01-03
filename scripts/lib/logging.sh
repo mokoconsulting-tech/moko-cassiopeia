@@ -35,8 +35,14 @@
 
 set -eu
 
-# Resolve script directory properly
-SCRIPT_LIB_DIR="$(cd "$(dirname "$0")" && pwd)"
+# Resolve script directory properly - works when sourced
+if [ -n "${SCRIPT_DIR:-}" ]; then
+	# Already set by caller
+	SCRIPT_LIB_DIR="${SCRIPT_DIR}/lib"
+else
+	# Determine from this file's location
+	SCRIPT_LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+fi
 
 # Shared utilities
 . "${SCRIPT_LIB_DIR}/common.sh"
