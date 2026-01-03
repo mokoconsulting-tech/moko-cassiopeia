@@ -71,6 +71,20 @@ log_error() {
 
 die() {
 	log_error "$*"
+	if [ "${VERBOSE_ERRORS:-true}" = "true" ]; then
+		echo "" >&2
+		echo "Stack trace (last 10 commands):" >&2
+		if [ -n "${BASH_VERSION:-}" ]; then
+			history | tail -10 >&2 2>/dev/null || true
+		fi
+		echo "" >&2
+		echo "Environment:" >&2
+		echo "  PWD: $(pwd)" >&2
+		echo "  USER: ${USER:-unknown}" >&2
+		echo "  SHELL: ${SHELL:-unknown}" >&2
+		echo "  CI: ${CI:-false}" >&2
+		echo "" >&2
+	fi
 	exit 1
 }
 
@@ -144,13 +158,46 @@ fail_if_root() {
 # Check for required dependencies at script start
 check_dependencies() {
 	local missing=0
+	local missing_cmds=()
+	
 	for cmd in "$@"; do
 		if ! command -v "$cmd" >/dev/null 2>&1; then
 			log_error "Required command not found: $cmd"
 			missing=$((missing + 1))
+			missing_cmds+=("$cmd")
 		fi
 	done
-	[ "$missing" -eq 0 ] || die "Missing $missing required command(s)"
+	
+	if [ "$missing" -gt 0 ]; then
+		echo "" >&2
+		echo "Missing required dependencies:" >&2
+		for cmd in "${missing_cmds[@]}"; do
+			echo "  - $cmd" >&2
+		done
+		echo "" >&2
+		echo "Installation guides:" >&2
+		for cmd in "${missing_cmds[@]}"; do
+			case "$cmd" in
+				python3)
+					echo "  python3: apt-get install python3 (Debian/Ubuntu) or brew install python3 (macOS)" >&2
+					;;
+				git)
+					echo "  git: apt-get install git (Debian/Ubuntu) or brew install git (macOS)" >&2
+					;;
+				php)
+					echo "  php: apt-get install php-cli (Debian/Ubuntu) or brew install php (macOS)" >&2
+					;;
+				xmllint)
+					echo "  xmllint: apt-get install libxml2-utils (Debian/Ubuntu) or brew install libxml2 (macOS)" >&2
+					;;
+				*)
+					echo "  $cmd: Please install via your system package manager" >&2
+					;;
+			esac
+		done
+		echo "" >&2
+		die "Missing $missing required command(s)"
+	fi
 }
 
 # Timeout wrapper for long-running commands

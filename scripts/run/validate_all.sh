@@ -139,22 +139,20 @@ for check in "${REQUIRED_CHECKS[@]}"; do
 	fi
 	
 	log_step "Running: ${check}"
-	if [ "${VERBOSE}" = "true" ]; then
-		if "${script}"; then
-			log_success "✓ ${check}"
-			required_passed=$((required_passed + 1))
-		else
-			log_error "✗ ${check} (FAILED)"
-			required_failed=$((required_failed + 1))
-		fi
+	# Always capture output for better error reporting
+	output=""
+	if output=$("${script}" 2>&1); then
+		log_success "✓ ${check}"
+		required_passed=$((required_passed + 1))
+		[ "${VERBOSE}" = "true" ] && echo "$output"
 	else
-		if "${script}" >/dev/null 2>&1; then
-			log_success "✓ ${check}"
-			required_passed=$((required_passed + 1))
-		else
-			log_error "✗ ${check} (FAILED - run with -v for details)"
-			required_failed=$((required_failed + 1))
-		fi
+		log_error "✗ ${check} (FAILED)"
+		required_failed=$((required_failed + 1))
+		# Show error output for required checks regardless of verbose flag
+		echo "" >&2
+		echo "Error output:" >&2
+		echo "$output" >&2
+		echo "" >&2
 	fi
 done
 
@@ -170,21 +168,27 @@ for check in "${OPTIONAL_CHECKS[@]}"; do
 	fi
 	
 	log_step "Running: ${check}"
-	if [ "${VERBOSE}" = "true" ]; then
-		if "${script}"; then
-			log_success "✓ ${check}"
-			optional_passed=$((optional_passed + 1))
-		else
-			log_warn "✗ ${check} (warnings/issues found)"
-			optional_failed=$((optional_failed + 1))
-		fi
+	# Capture output for better error reporting
+	output=""
+	if output=$("${script}" 2>&1); then
+		log_success "✓ ${check}"
+		optional_passed=$((optional_passed + 1))
+		[ "${VERBOSE}" = "true" ] && echo "$output"
 	else
-		if "${script}" >/dev/null 2>&1; then
-			log_success "✓ ${check}"
-			optional_passed=$((optional_passed + 1))
+		log_warn "✗ ${check} (warnings/issues found)"
+		optional_failed=$((optional_failed + 1))
+		# Show brief error summary for optional checks, full output in verbose
+		if [ "${VERBOSE}" = "true" ]; then
+			echo "" >&2
+			echo "Error output:" >&2
+			echo "$output" >&2
+			echo "" >&2
 		else
-			log_warn "✗ ${check} (warnings/issues found - run with -v for details)"
-			optional_failed=$((optional_failed + 1))
+			# Show first few lines of error
+			echo "" >&2
+			echo "Error summary (run with -v for full details):" >&2
+			echo "$output" | head -5 >&2
+			echo "" >&2
 		fi
 	fi
 done

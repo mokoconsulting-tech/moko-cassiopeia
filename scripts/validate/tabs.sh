@@ -48,15 +48,39 @@ if [ -z "${files}" ]; then
 fi
 
 bad=0
+bad_files=()
+bad_lines=()
+
 while IFS= read -r f; do
-  if grep -n $'\t' -- "$f" >/dev/null 2>&1; then
-    echo "TAB found in $f"
+  # Find lines with tabs and store them
+  if tab_lines=$(grep -n $'\t' -- "$f" 2>/dev/null); then
+    echo "TAB found in $f" >&2
+    echo "  Lines with tabs:" >&2
+    echo "$tab_lines" | head -5 | sed 's/^/    /' >&2
+    if [ "$(echo "$tab_lines" | wc -l)" -gt 5 ]; then
+      echo "    ... and $(($(echo "$tab_lines" | wc -l) - 5)) more" >&2
+    fi
+    echo "" >&2
     bad=1
+    bad_files+=("$f")
   fi
 done <<< "${files}"
 
 if [ "${bad}" -ne 0 ]; then
+  echo "" >&2
   echo "ERROR: Tabs found in repository files" >&2
+  echo "" >&2
+  echo "YAML specification forbids tab characters." >&2
+  echo "Found tabs in ${#bad_files[@]} file(s):" >&2
+  for f in "${bad_files[@]}"; do
+    echo "  - $f" >&2
+  done
+  echo "" >&2
+  echo "To fix:" >&2
+  echo "  1. Run: ./scripts/fix/tabs.sh" >&2
+  echo "  2. Or manually replace tabs with spaces in your editor" >&2
+  echo "  3. Configure your editor to use spaces (not tabs) for YAML files" >&2
+  echo "" >&2
   exit 2
 fi
 

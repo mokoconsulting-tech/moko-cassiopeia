@@ -150,16 +150,29 @@ log_info "Checking PHP syntax..."
 
 if command -v php >/dev/null 2>&1; then
 php_errors=0
+failed_files=()
 while IFS= read -r -d '' f; do
-if ! php -l "$f" >/dev/null 2>&1; then
+if ! php_output=$(php -l "$f" 2>&1); then
 log_error "PHP syntax error in: $f"
+echo "  Error details:" >&2
+echo "$php_output" | sed 's/^/    /' >&2
+echo "" >&2
 php_errors=$((php_errors + 1))
+failed_files+=("$f")
 fi
 done < <(find src -type f -name '*.php' -print0 2>/dev/null)
 
 if [ "${php_errors}" -eq 0 ]; then
 log_info "✓ PHP syntax validation passed"
 else
+echo "Summary of PHP syntax errors:" >&2
+echo "  Total errors: ${php_errors}" >&2
+echo "  Failed files:" >&2
+for f in "${failed_files[@]}"; do
+echo "    - $f" >&2
+done
+echo "" >&2
+echo "To fix: Run 'php -l <filename>' on each failed file for detailed error messages." >&2
 die "Found ${php_errors} PHP syntax errors"
 fi
 else

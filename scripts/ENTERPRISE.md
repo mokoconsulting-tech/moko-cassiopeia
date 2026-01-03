@@ -184,13 +184,46 @@ Error messages must be:
 - **Clear**: Explain what went wrong
 - **Actionable**: Tell user how to fix it
 - **Contextual**: Include relevant details
+- **Verbose**: Provide comprehensive information by default
 
 ```bash
 # Bad
 die "Error"
 
-# Good
-die "Required file not found: ${CONFIG_FILE}. Run setup first."
+# Good - Verbose with context and solutions
+die "Required file not found: ${CONFIG_FILE}
+    
+    Current directory: $(pwd)
+    Expected location: ./config/${CONFIG_FILE}
+    
+    To fix:
+      1. Run setup script: ./scripts/setup.sh
+      2. Or create the file manually: touch config/${CONFIG_FILE}
+    "
+```
+
+### Error Output
+
+- Always show full error output for failed operations
+- Include line numbers and file paths
+- Show error summaries with troubleshooting steps
+- Provide installation guides for missing dependencies
+
+Example verbose error from validation:
+```
+ERROR: PHP syntax validation failed
+Files checked: 90
+Files with errors: 2
+
+Failed files and errors:
+  File: src/test.php
+  Error: Parse error: syntax error, unexpected '}' in src/test.php on line 42
+
+  File: src/helper.php  
+  Error: Parse error: syntax error, unexpected T_STRING in src/helper.php on line 15
+
+To fix: Review and correct the syntax errors in the files listed above.
+Run 'php -l <filename>' on individual files for detailed error messages.
 ```
 
 ### Validation

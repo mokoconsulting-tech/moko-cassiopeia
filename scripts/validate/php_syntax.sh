@@ -59,25 +59,44 @@ fi
 failed=0
 checked=0
 failed_files=()
+failed_errors=()
 
 while IFS= read -r -d '' f; do
 	checked=$((checked+1))
 	
+	# Capture actual error output
+	error_output=""
+	
 	# Use timeout if available to prevent hangs
 	if command -v timeout >/dev/null 2>&1; then
-		if ! timeout "${TIMEOUT}" php -l "$f" >/dev/null 2>&1; then
+		if ! error_output=$(timeout "${TIMEOUT}" php -l "$f" 2>&1); then
 			failed=1
 			failed_files+=("$f")
+			failed_errors+=("$error_output")
 		fi
 	else
-		if ! php -l "$f" >/dev/null 2>&1; then
+		if ! error_output=$(php -l "$f" 2>&1); then
 			failed=1
 			failed_files+=("$f")
+			failed_errors+=("$error_output")
 		fi
 	fi
 done < <(find "${SRC_DIR}" -type f -name '*.php' -print0)
 
 if [ "${failed}" -ne 0 ]; then
+	echo "ERROR: PHP syntax validation failed" >&2
+	echo "Files checked: ${checked}" >&2
+	echo "Files with errors: ${#failed_files[@]}" >&2
+	echo "" >&2
+	echo "Failed files and errors:" >&2
+	for i in "${!failed_files[@]}"; do
+		echo "  File: ${failed_files[$i]}" >&2
+		echo "  Error: ${failed_errors[$i]}" >&2
+		echo "" >&2
+	done
+	echo "" >&2
+	echo "To fix: Review and correct the syntax errors in the files listed above." >&2
+	echo "Run 'php -l <filename>' on individual files for detailed error messages." >&2
 	{
 		printf '{"status":"fail","error":"php_lint_failed","files_checked":%s,"failed_count":%s,"failed_files":[' "${checked}" "${#failed_files[@]}"
 		for i in "${!failed_files[@]}"; do

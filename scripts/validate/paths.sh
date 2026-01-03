@@ -39,21 +39,39 @@ set -euo pipefail
 # Uses git ls-files -z and searches file contents for a literal backslash.
 
 hits=()
+hit_lines=()
+
 while IFS= read -r -d '' f; do
   # Skip common binary files by mime-type
   if file --brief --mime-type "$f" | grep -qE '^(application|audio|image|video)/'; then
     continue
   fi
-  if grep -F $'\\' -- "$f" >/dev/null 2>&1; then
+  # Find lines with backslashes and collect details
+  if backslash_lines=$(grep -n -F $'\\' -- "$f" 2>/dev/null); then
     hits+=("$f")
+    hit_lines+=("$backslash_lines")
   fi
 done < <(git ls-files -z)
 
 if [ "${#hits[@]}" -gt 0 ]; then
-  echo "ERROR: windows_path_literal_detected"
-  for h in "${hits[@]}"; do
-    echo " - ${h}"
+  echo "ERROR: Windows-style path literals detected" >&2
+  echo "" >&2
+  echo "Found backslashes in ${#hits[@]} file(s):" >&2
+  for i in "${!hits[@]}"; do
+    echo "" >&2
+    echo "  File: ${hits[$i]}" >&2
+    echo "  Lines with backslashes:" >&2
+    echo "${hit_lines[$i]}" | head -5 | sed 's/^/    /' >&2
+    if [ "$(echo "${hit_lines[$i]}" | wc -l)" -gt 5 ]; then
+      echo "    ... and $(($(echo "${hit_lines[$i]}" | wc -l) - 5)) more" >&2
+    fi
   done
+  echo "" >&2
+  echo "To fix:" >&2
+  echo "  1. Run: ./scripts/fix/paths.sh" >&2
+  echo "  2. Or manually replace backslashes (\\) with forward slashes (/)" >&2
+  echo "  3. Ensure paths use POSIX separators for cross-platform compatibility" >&2
+  echo "" >&2
   exit 2
 fi
 

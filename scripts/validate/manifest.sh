@@ -92,7 +92,23 @@ if [ "${#manifest_candidates[@]}" -eq 0 ]; then
 fi
 
 if [ "${#manifest_candidates[@]}" -eq 0 ]; then
-  fail "No Joomla manifest XML found under ${SRC_DIR}"
+  {
+    echo "ERROR: No Joomla manifest XML found under ${SRC_DIR}" >&2
+    echo "" >&2
+    echo "Expected manifest file patterns:" >&2
+    echo "  - Template: ${SRC_DIR}/templateDetails.xml" >&2
+    echo "  - Package: ${SRC_DIR}/**/pkg_*.xml" >&2
+    echo "  - Component: ${SRC_DIR}/**/com_*.xml" >&2
+    echo "  - Module: ${SRC_DIR}/**/mod_*.xml" >&2
+    echo "  - Plugin: ${SRC_DIR}/**/plg_*.xml" >&2
+    echo "" >&2
+    echo "Troubleshooting:" >&2
+    echo "  1. Verify the source directory exists: ls -la ${SRC_DIR}" >&2
+    echo "  2. Check for XML files: find ${SRC_DIR} -name '*.xml'" >&2
+    echo "  3. Ensure manifest contains <extension> root element" >&2
+    echo "" >&2
+  } >&2
+  fail "No manifest found"
 fi
 
 # De-duplicate while preserving order.
@@ -115,11 +131,21 @@ manifest_candidates=("${unique_candidates[@]}")
 if [ "${#manifest_candidates[@]}" -gt 1 ]; then
   {
     log "ERROR: Multiple manifest candidates detected. Resolve to exactly one primary manifest." >&2
-    log "Candidates:" >&2
+    log "" >&2
+    log "Found ${#manifest_candidates[@]} candidates:" >&2
     for c in "${manifest_candidates[@]}"; do
-      log "- ${c}" >&2
+      log "  - ${c}" >&2
     done
-  }
+    log "" >&2
+    log "Resolution options:" >&2
+    log "  1. Remove redundant manifest files" >&2
+    log "  2. Move extra manifests outside ${SRC_DIR}" >&2
+    log "  3. Rename non-primary manifests to not match patterns (templateDetails.xml, pkg_*.xml, etc.)" >&2
+    log "" >&2
+    log "For package extensions, only the top-level package manifest should be in ${SRC_DIR}." >&2
+    log "Child extension manifests should be in subdirectories." >&2
+    log "" >&2
+  } >&2
   exit 1
 fi
 
