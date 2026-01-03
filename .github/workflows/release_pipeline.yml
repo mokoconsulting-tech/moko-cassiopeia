@@ -100,22 +100,54 @@ jobs:
           fi
 
           if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
-            echo "${REF_NAME}" | grep -E '^(dev|rc)/[0-9]+[.][0-9]+[.][0-9]+$' >/dev/null
-
-            SOURCE_BRANCH="${REF_NAME}"
-            SOURCE_PREFIX="${REF_NAME%%/*}"
-            VERSION="${REF_NAME#*/}"
-
-            if [ "${SOURCE_PREFIX}" = "dev" ]; then
-              TARGET_BRANCH="rc/${VERSION}"
-              PROMOTED_BRANCH="rc/${VERSION}"
-              CHANNEL="rc"
-              RELEASE_MODE="prerelease"
-            else
+            # Check if REF_NAME is main or matches version pattern
+            if [ "${REF_NAME}" = "main" ]; then
+              # Infer version from manifest when on main branch
+              SCRIPT_LIB_DIR="${GITHUB_WORKSPACE}/scripts/lib"
+              if [ ! -f "${SCRIPT_LIB_DIR}/joomla_manifest.sh" ]; then
+                echo "ERROR: Cannot find joomla_manifest.sh library" >> "${GITHUB_STEP_SUMMARY}"
+                exit 1
+              fi
+              
+              # Source the library functions
+              . "${SCRIPT_LIB_DIR}/joomla_manifest.sh"
+              
+              # Find and extract version from manifest
+              MANIFEST="$(find_manifest "${GITHUB_WORKSPACE}/src")"
+              VERSION="$(get_manifest_version "${MANIFEST}")"
+              
+              if [ -z "${VERSION}" ]; then
+                echo "ERROR: Failed to extract version from manifest: ${MANIFEST}" >> "${GITHUB_STEP_SUMMARY}"
+                exit 1
+              fi
+              
+              echo "Inferred version ${VERSION} from manifest on main branch" >> "${GITHUB_STEP_SUMMARY}"
+              
+              SOURCE_BRANCH="${REF_NAME}"
+              SOURCE_PREFIX="main"
               TARGET_BRANCH="version/${VERSION}"
               PROMOTED_BRANCH="version/${VERSION}"
               CHANNEL="stable"
               RELEASE_MODE="stable"
+            else
+              # Extract version from branch name (dev/XX.XX.XX or rc/XX.XX.XX)
+              echo "${REF_NAME}" | grep -E '^(dev|rc)/[0-9]+[.][0-9]+[.][0-9]+$' >/dev/null
+
+              SOURCE_BRANCH="${REF_NAME}"
+              SOURCE_PREFIX="${REF_NAME%%/*}"
+              VERSION="${REF_NAME#*/}"
+
+              if [ "${SOURCE_PREFIX}" = "dev" ]; then
+                TARGET_BRANCH="rc/${VERSION}"
+                PROMOTED_BRANCH="rc/${VERSION}"
+                CHANNEL="rc"
+                RELEASE_MODE="prerelease"
+              else
+                TARGET_BRANCH="version/${VERSION}"
+                PROMOTED_BRANCH="version/${VERSION}"
+                CHANNEL="stable"
+                RELEASE_MODE="stable"
+              fi
             fi
 
             if [ "${OVERRIDE}" = "rc" ]; then
