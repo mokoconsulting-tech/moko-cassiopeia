@@ -4,8 +4,9 @@ set -euo pipefail
 # Detect TAB characters in source files tracked by Git. Uses careful
 # handling of filenames and avoids heredoc pitfalls.
 
-# Limit file globs as appropriate for the repo
-files=$(git ls-files '*.php' '*.js' '*.py' || true)
+# Check only YAML/YML files where tabs are not allowed by the YAML specification.
+# Note: Other file types (PHP, JS, etc.) allow tabs per .editorconfig.
+files=$(git ls-files '*.yml' '*.yaml' || true)
 
 if [ -z "${files}" ]; then
   echo "No files to check"
