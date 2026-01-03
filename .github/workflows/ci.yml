@@ -81,13 +81,13 @@ jobs:
           set -euo pipefail
           echo "Scanning for suspicious variable assignments (slash in LHS)..."
           # Find lines that look like an assignment and contain a slash before '=' (ignore comments)
-          # Limit to repository and scripts directories to reduce false positives.
-          matches="$(grep -R --line-number -E '^[[:space:]]*[^#[:space:]][^=]*\/[^=]*=' . || true)"
+          # Limit search to relevant directories to reduce false positives.
+          matches="$(grep -R --line-number --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=vendor -E '^[[:space:]]*[^#[:space:]][^=]*\/[^=]*=' . || true)"
           if [ -n "${matches:-}" ]; then
             echo "ERROR: Suspicious assignments detected (slash in LHS). Review and fix these lines:"
             echo "${matches}"
             echo ""
-            echo "Example of a problematic line: PREfix/TOP=\"${BRANCH_PREFIX%%/*}\""
+            echo 'Example of a problematic line: PREfix/TOP="${BRANCH_PREFIX%%/*}"'
             exit 1
           fi
           echo "No suspicious variable assignments found."
@@ -124,7 +124,7 @@ jobs:
 
       - name: Optional validations
         run: |
-          set -euo pipefail || true
+          set +e
 
           optional_scripts=(
             "scripts/validate/changelog.sh"
