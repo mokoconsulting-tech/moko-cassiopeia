@@ -1,29 +1,3 @@
-#
-# Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
-#
-# This file is part of a Moko Consulting project.
-#
-# SPDX-License-Identifier: GPL-3.0-or-later
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# FILE INFORMATION
-# DEFGROUP: MokoStandards.Joomla
-# INGROUP: GitHub.Versioning.Branching
-# REPO: https://github.com/mokoconsulting-tech/MokoStandards
-# PATH: /.github/workflows/version_branch.yml
-# VERSION: 01.00.00
-# BRIEF: Create a dev/<version> branch and align versions across governed files
-# NOTE: Enterprise gates: required artifacts, namespace defense, deterministic reporting, control character guard
-
 name: Create version branch and bump versions
 
 on:
