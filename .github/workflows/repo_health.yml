@@ -21,20 +21,6 @@ on:
           - release
           - scripts
           - repo
-  pull_request:
-    paths:
-      - .github/workflows/**
-      - scripts/**
-      - docs/**
-      - dev/**
-  push:
-    branches:
-      - main
-    paths:
-      - .github/workflows/**
-      - scripts/**
-      - docs/**
-      - dev/**
 
 permissions:
   contents: read
