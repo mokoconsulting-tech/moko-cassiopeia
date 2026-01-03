@@ -29,7 +29,7 @@ on:
   workflow_dispatch:
     inputs:
       profile:
-        description: Which configuration profile to validate. release checks SFTP variables used by release pipeline. scripts checks baseline script prerequisites. repo runs repository health only. all runs release, scripts, and repo health.
+        description: Which configuration profile to validate. release checks SFTP variables used by release pipeline. scripts checks baseline script prerequisites. repo runs repository health only. al[...]
         required: true
         default: all
         type: choice
@@ -72,7 +72,7 @@ env:
   # Repo health policy
   # Files are listed as-is; directories must end with a trailing slash.
   REPO_REQUIRED_ARTIFACTS: README.md,LICENSE,CHANGELOG.md,CONTRIBUTING.md,CODE_OF_CONDUCT.md,.github/workflows/,src/
-  REPO_OPTIONAL_FILES: SECURITY.md,GOVERNANCE.md,.editorconfig,.gitattributes,.gitignore,README.md,docs/,dev/
+  REPO_OPTIONAL_FILES: SECURITY.md,GOVERNANCE.md,.editorconfig,.gitattributes,.gitignore,README.md,docs/
   REPO_DISALLOWED_DIRS:
   REPO_DISALLOWED_FILES: TODO.md,todo.md
 
@@ -81,6 +81,13 @@ env:
 
   # Operational toggles
   SFTP_VERBOSE: "false"
+
+  # File / directory variables (moved to top-level env)
+  DOCS_INDEX: docs/docs-index.md
+  SCRIPT_DIR: scripts
+  WORKFLOWS_DIR: .github/workflows
+  SHELLCHECK_PATTERN: '*.sh'
+  SPDX_FILE_GLOBS: '*.sh,*.php,*.js,*.ts,*.css,*.xml,*.yml,*.yaml'
 
 jobs:
   access_check:
@@ -417,7 +424,7 @@ jobs:
             exit 0
           fi
 
-          if [ ! -d scripts ]; then
+          if [ ! -d "${SCRIPT_DIR}" ]; then
             {
               printf '%s\n' '### Scripts governance'
               printf '%s\n' 'Status: OK (advisory)'
@@ -445,7 +452,7 @@ jobs:
               [ "${d%/}" = "${a_norm}" ] && allowed=true
             done
             [ "${allowed}" = false ] && unapproved_dirs+=("${d%/}/")
-          done < <(find scripts -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sed 's#^\./##')
+          done < <(find "${SCRIPT_DIR}" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | sed 's#^\./##')
 
           {
             printf '%s\n' '### Scripts governance'
@@ -548,8 +555,14 @@ jobs:
             fi
           done
 
+          # Optional entries: handle files and directories (trailing slash indicates dir)
           for f in "${optional_files[@]}"; do
-            [ ! -f "${f}" ] && missing_optional+=("${f}")
+            if printf '%s' "${f}" | grep -q '/$'; then
+              d="${f%/}"
+              [ ! -d "${d}" ] && missing_optional+=("${f}")
+            else
+              [ ! -f "${f}" ] && missing_optional+=("${f}")
+            fi
           done
 
           for d in "${disallowed_dirs[@]}"; do
@@ -566,6 +579,8 @@ jobs:
           dev_paths=()
           dev_branches=()
 
+          # Look for remote branches matching origin/dev*.
+          # A plain origin/dev is considered invalid; we require dev/<something> branches.
           while IFS= read -r b; do
             name="${b#origin/}"
             if [ "${name}" = 'dev' ]; then
@@ -575,10 +590,12 @@ jobs:
             fi
           done < <(git branch -r --list 'origin/dev*' | sed 's/^ *//')
 
+          # If there are no dev/* branches, fail the guardrail.
           if [ "${#dev_paths[@]}" -eq 0 ]; then
             missing_required+=("dev/* branch (e.g. dev/01.00.00)")
           fi
 
+          # If a plain dev branch exists (origin/dev), flag it as invalid.
           if [ "${#dev_branches[@]}" -gt 0 ]; then
             missing_required+=("invalid branch dev (must be dev/<version>)")
           fi
@@ -682,8 +699,8 @@ jobs:
             fi
 
             # Workflow pinning advisory: flag uses @main/@master
-            if ls .github/workflows/*.yml >/dev/null 2>&1; then
-              bad_refs="$(grep -RIn --include='*.yml' --include='*.yaml' -E '^[[:space:]]*uses:[[:space:]]*[^#]+@(main|master)\b' .github/workflows 2>/dev/null || true)"
+            if ls "${WORKFLOWS_DIR}"/*.yml >/dev/null 2>&1 || ls "${WORKFLOWS_DIR}"/*.yaml >/dev/null 2>&1; then
+              bad_refs="$(grep -RIn --include='*.yml' --include='*.yaml' -E '^[[:space:]]*uses:[[:space:]]*[^#]+@(main|master)\b' "${WORKFLOWS_DIR}" 2>/dev/null || true)"
               if [ -n "${bad_refs}" ]; then
                 extended_findings+=("Workflows reference actions @main/@master (pin versions): see log excerpt")
                 {
@@ -698,12 +715,12 @@ jobs:
             fi
 
             # Docs index link integrity (docs/docs-index.md)
-            if [ -f 'docs/docs-index.md' ]; then
+            if [ -f "${DOCS_INDEX}" ]; then
               missing_links="$(python3 - <<'PY'
               import os
               import re
 
-              idx = 'docs/docs-index.md'
+              idx = os.environ.get('DOCS_INDEX', 'docs/docs-index.md')
               base = os.getcwd()
 
               bad = []
@@ -742,7 +759,7 @@ jobs:
             fi
 
             # ShellCheck advisory
-            if [ -d 'scripts' ]; then
+            if [ -d "${SCRIPT_DIR}" ]; then
               if ! command -v shellcheck >/dev/null 2>&1; then
                 sudo apt-get update -qq
                 sudo apt-get install -y shellcheck >/dev/null
@@ -755,7 +772,7 @@ jobs:
                 if [ -n "${out_one}" ]; then
                   sc_out="${sc_out}${out_one}\n"
                 fi
-              done < <(find scripts -type f -name '*.sh' 2>/dev/null | sort)
+              done < <(find "${SCRIPT_DIR}" -type f -name "${SHELLCHECK_PATTERN}" 2>/dev/null | sort)
 
               if [ -n "${sc_out}" ]; then
                 extended_findings+=("ShellCheck warnings detected (advisory)")
@@ -772,12 +789,16 @@ jobs:
 
             # SPDX header advisory for common source types
             spdx_missing=()
+            IFS=',' read -r -a spdx_globs <<< "${SPDX_FILE_GLOBS}"
+            spdx_args=()
+            for g in "${spdx_globs[@]}"; do spdx_args+=("${g}"); done
+
             while IFS= read -r f; do
               [ -z "${f}" ] && continue
               if ! head -n 40 "${f}" | grep -q 'SPDX-License-Identifier:'; then
                 spdx_missing+=("${f}")
               fi
-            done < <(git ls-files '*.sh' '*.php' '*.js' '*.ts' '*.css' '*.xml' '*.yml' '*.yaml' 2>/dev/null || true)
+            done < <(git ls-files "${spdx_args[@]}" 2>/dev/null || true)
 
             if [ "${#spdx_missing[@]}" -gt 0 ]; then
               extended_findings+=("SPDX header missing in some tracked files (advisory)")
@@ -791,7 +812,7 @@ jobs:
 
             # Git hygiene advisory: branches older than 180 days (remote)
             stale_cutoff_days=180
-            stale_branches="$(git for-each-ref --format='%(refname:short) %(committerdate:unix)' refs/remotes/origin 2>/dev/null | awk -v now="$(date +%s)" -v days="${stale_cutoff_days}" '{if (now-$2 > days*86400) print $1}' | sed 's#^origin/##' | grep -v '^HEAD$' | head -n 50 || true)"
+            stale_branches="$(git for-each-ref --format='%(refname:short) %(committerdate:unix)' refs/remotes/origin 2>/dev/null | awk -v now="$(date +%s)" -v days="${stale_cutoff_days}" '{if (now-$2 [...]
             if [ -n "${stale_branches}" ]; then
               extended_findings+=("Stale remote branches detected (advisory)")
               {
