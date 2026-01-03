@@ -22,8 +22,8 @@
 # INGROUP: MokoStandards.CI
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/ci.yml
-# VERSION: 01.00.00
-# BRIEF: Continuous integration workflow enforcing repository standards.
+# VERSION: 01.00.01
+# BRIEF: Continuous integration workflow enforcing repository standards. Defensive improvements.
 # NOTE:
 
 name: Continuous Integration
@@ -44,6 +44,10 @@ on:
 
 permissions:
   contents: read
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   ci:
@@ -66,27 +70,82 @@ jobs:
 
       - name: Verify script executability
         run: |
-          chmod +x scripts/**/*.sh || true
+          # Make all shell scripts executable (best-effort)
+          set -euo pipefail
+          find . -type f -name '*.sh' -print0 | xargs -0 chmod +x || true
+
+      - name: Lint for invalid bash variable assignments (detect LHS with '/')
+        # This step is defensive: it looks for assignments where the LHS contains a slash,
+        # which would result in "No such file or directory" when executed in bash.
+        run: |
+          set -euo pipefail
+          echo "Scanning for suspicious variable assignments (slash in LHS)..."
+          # Find lines that look like an assignment and contain a slash before '=' (ignore comments)
+          # Limit to repository and scripts directories to reduce false positives.
+          matches="$(grep -R --line-number -E '^[[:space:]]*[^#[:space:]][^=]*\/[^=]*=' . || true)"
+          if [ -n "${matches:-}" ]; then
+            echo "ERROR: Suspicious assignments detected (slash in LHS). Review and fix these lines:"
+            echo "${matches}"
+            echo ""
+            echo "Example of a problematic line: PREfix/TOP=\"${BRANCH_PREFIX%%/*}\""
+            exit 1
+          fi
+          echo "No suspicious variable assignments found."
 
       - name: Required validations
         run: |
-          set -e
+          set -euo pipefail
 
-          scripts/validate/manifest.sh
-          scripts/validate/xml_wellformed.sh
+          # Ensure required validation scripts exist, then run them.
+          required_scripts=(
+            "scripts/validate/manifest.sh"
+            "scripts/validate/xml_wellformed.sh"
+          )
+
+          missing=()
+          for s in "${required_scripts[@]}"; do
+            if [ ! -f "${s}" ]; then
+              missing+=("${s}")
+            fi
+          done
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "Required validation scripts missing:"
+            for m in "${missing[@]}"; do
+              echo " - ${m}"
+            done
+            exit 1
+          fi
+
+          for s in "${required_scripts[@]}"; do
+            chmod +x "${s}"
+            "${s}"
+          done
 
       - name: Optional validations
         run: |
-          set +e
+          set -euo pipefail || true
 
-          scripts/validate/changelog.sh
-          scripts/validate/language_structure.sh
-          scripts/validate/license_headers.sh
-          scripts/validate/no_secrets.sh
-          scripts/validate/paths.sh
-          scripts/validate/php_syntax.sh
-          scripts/validate/tabs.sh
-          scripts/validate/version_alignment.sh
+          optional_scripts=(
+            "scripts/validate/changelog.sh"
+            "scripts/validate/language_structure.sh"
+            "scripts/validate/license_headers.sh"
+            "scripts/validate/no_secrets.sh"
+            "scripts/validate/paths.sh"
+            "scripts/validate/php_syntax.sh"
+            "scripts/validate/tabs.sh"
+            "scripts/validate/version_alignment.sh"
+          )
+
+          for s in "${optional_scripts[@]}"; do
+            if [ -f "${s}" ]; then
+              chmod +x "${s}"
+              echo "Running optional validation: ${s}"
+              "${s}" || echo "Optional validation failed: ${s}"
+            else
+              echo "Skipping missing optional script: ${s}"
+            fi
+          done
 
       - name: CI summary
         if: always()
