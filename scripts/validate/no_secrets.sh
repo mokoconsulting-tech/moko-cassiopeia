@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -euo pipefail
 
 SRC_DIR="${SRC_DIR:-src}"
