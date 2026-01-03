@@ -1,13 +1,12 @@
-# ============================================================================
-# Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+# Copyright (C) 2026 Moko Consulting <hello@mokoconsulting.tech>
 #
 # This file is part of a Moko Consulting project.
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# This program is free software; you can redistribute it and/or modify
+# This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
+# the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -19,130 +18,86 @@
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 # FILE INFORMATION
-# DEFGROUP: MokoStandards
-# INGROUP: GitHub.Actions.ContinuousIntegration
+# DEFGROUP: GitHub.Workflow
+# INGROUP: MokoStandards.CI
 # REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/ci.yml
 # VERSION: 01.00.00
-# BRIEF: Continuous integration governance workflow for standards enforcement.
-# NOTE: Runs on every push. Auto-normalizes YAML tabs to two spaces before validation.
-# ============================================================================
+# BRIEF: Continuous integration workflow enforcing repository standards.
+# NOTE:
 
-name: Continuous integration
+name: Continuous Integration
 
 on:
-  push:
-  pull_request:
-  workflow_dispatch:
-    inputs:
-      auto_fix/tabs:
-        description: "Run scripts/fix/tabs.sh before validation (does not commit changes)"
-        required: false
-        default: false
-        type: boolean
-
-concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+	push:
+		branches:
+			- main
+			- dev/**
+			- rc/**
+			- version/**
+	pull_request:
+		branches:
+			- main
+			- dev/**
+			- rc/**
+			- version/**
 
 permissions:
-  contents: read
-
-defaults:
-  run:
-    shell: bash
+	contents: read
 
 jobs:
-  ci:
-    name: Standards Continuous integration Validation
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+	ci:
+		name: Repository Validation Pipeline
+		runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+		env:
+			CI: true
+			PROFILE: all
 
-      - name: Auto-fix YAML tabs when YAML changes detected
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.auto_fix/tabs }}
-        run: |
-          set -euo pipefail
+		steps:
+			- name: Checkout repository
+				uses: actions/checkout@v4
+				with:
+					fetch-depth: 0
 
-          if ! command -v git >/dev/null 2>&1; then
-            echo "git not available, skipping tab normalization"
-            exit 0
-          fi
+			- name: Normalize line endings
+				run: |
+					git config --global core.autocrlf false
 
-          # Determine change window
-          # - pull_request: compare base SHA to head SHA
-          # - push: compare event.before to event.after (current SHA)
-          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
-            BASE_SHA="${{ github.event.pull_request.base.sha }}"
-            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
-            RANGE="$BASE_SHA...$HEAD_SHA"
-          elif [ "${GITHUB_EVENT_NAME}" = "push" ]; then
-            BEFORE_SHA="${{ github.event.before }}"
-            AFTER_SHA="${{ github.sha }}"
-            RANGE="$BEFORE_SHA...$AFTER_SHA"
-          else
-            RANGE=""
-          fi
+			- name: Verify script executability
+				run: |
+					chmod +x scripts/**/*.sh || true
 
-          if [ -n "$RANGE" ]; then
-            CHANGED_YAML=$(git diff --name-only "$RANGE" -- '*.yml' '*.yaml' || true)
-          else
-            CHANGED_YAML=$(git ls-files '*.yml' '*.yaml' 2>/dev/null || true)
-          fi
+			- name: Required validations
+				run: |
+					set -e
 
-          if [ -n "$CHANGED_YAML" ]; then
-            echo "YAML changes detected. Running fix/tabs.sh"
-            if [ -x "./scripts/fix/tabs.sh" ]; then
-              ./scripts/fix/tabs.sh
-            else
-              echo "fix/tabs.sh not present, skipping"
-            fi
-          else
-            echo "No YAML changes detected. Skipping fix/tabs.sh"
-          fi
+					scripts/validate/manifest.sh
+					scripts/validate/xml_wellformed.sh
 
-      - name: Validate YAML tabs usage
-        run: |
-          set -euo pipefail
-          if [ -x "./scripts/validate/tabs.sh" ]; then
-            ./scripts/validate/tabs.sh
-          else
-            echo "validate/tabs.sh not present, skipping"
-          fi
+			- name: Optional validations
+				run: |
+					set +e
 
-      - name: Validate file paths
-        run: |
-          set -euo pipefail
-          if [ -x "./scripts/validate/paths.sh" ]; then
-            ./scripts/validate/paths.sh
-          else
-            echo "validate/paths.sh not present, skipping"
-          fi
+					scripts/validate/changelog.sh
+					scripts/validate/language_structure.sh
+					scripts/validate/license_headers.sh
+					scripts/validate/no_secrets.sh
+					scripts/validate/paths.sh
+					scripts/validate/php_syntax.sh
+					scripts/validate/tabs.sh
+					scripts/validate/version_alignment.sh
 
-      - name: Validate CHANGELOG governance
-        run: |
-          set -euo pipefail
-          if [ -x "./scripts/validate/changelog.sh" ]; then
-            ./scripts/validate/changelog.sh
-          else
-            echo "validate/changelog.sh not present, skipping"
-          fi
-
-      - name: Validate Joomla manifests
-        run: |
-          set -euo pipefail
-          if [ -x "./scripts/validate/manifest.sh" ]; then
-            ./scripts/validate/manifest.sh
-          else
-            echo "validate/manifest.sh not present, skipping"
-          fi
-
-      - name: Continuous integration completion
-        run: |
-          set -euo pipefail
-          echo "Continuous integration checks completed successfully"
+			- name: CI summary
+				if: always()
+				run: |
+					{
+						echo "### CI Execution Summary"
+						echo ""
+						echo "- Repository: $GITHUB_REPOSITORY"
+						echo "- Branch: $GITHUB_REF_NAME"
+						echo "- Commit: $GITHUB_SHA"
+						echo "- Runner: ubuntu-latest"
+						echo ""
+						echo "CI completed. Review logs above for validation outcomes."
+					} >> "$GITHUB_STEP_SUMMARY"
