@@ -170,3 +170,17 @@ log_timestamp() {
 		printf '%s\n' "$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 	fi
 }
+
+# Calculate and log execution duration
+log_duration() {
+	local start="$1"
+	local end="$2"
+	local duration=$((end - start))
+	if [ "$duration" -ge 60 ]; then
+		local minutes=$((duration / 60))
+		local seconds=$((duration % 60))
+		printf '%dm %ds\n' "$minutes" "$seconds"
+	else
+		printf '%ds\n' "$duration"
+	fi
+}

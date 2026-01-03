@@ -95,6 +95,8 @@ esac
 # Check dependencies
 check_dependencies python3
 
+START_TIME=$(date +%s)
+
 log_info "Start time: $(log_timestamp)"
 
 REQUIRED_CHECKS=(
@@ -204,6 +206,8 @@ log_kv "Optional checks with issues" "${optional_failed}"
 log_separator
 
 log_info "End time: $(log_timestamp)"
+END_TIME=$(date +%s)
+log_info "Duration: $(log_duration "$START_TIME" "$END_TIME")"
 
 if [ "${required_failed}" -gt 0 ]; then
 	log_error "FAILED: ${required_failed} required check(s) failed"

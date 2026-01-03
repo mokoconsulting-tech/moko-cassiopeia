@@ -68,6 +68,8 @@ SCRIPT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 # Check dependencies
 check_dependencies python3
 
+START_TIME=$(date +%s)
+
 log_info "Running smoke tests for Moko-Cassiopeia repository"
 log_info "Start time: $(log_timestamp)"
 
@@ -174,4 +176,6 @@ log_info "Extension: ${NAME}"
 log_info "Version: ${VERSION}"
 log_info "Type: ${TYPE}"
 log_info "End time: $(log_timestamp)"
+END_TIME=$(date +%s)
+log_info "Duration: $(log_duration "$START_TIME" "$END_TIME")"
 log_info "========================================="

@@ -35,6 +35,9 @@
 
 set -euo pipefail
 
+# Input validation
+SRC_DIR="${SRC_DIR:-src}"
+
 log() { printf '%s\n' "$*"; }
 
 fail() {
@@ -42,10 +45,14 @@ fail() {
   exit 1
 }
 
-SRC_DIR="${SRC_DIR:-src}"
-
+# Validate SRC_DIR
 if [ ! -d "${SRC_DIR}" ]; then
-  fail "${SRC_DIR} directory missing"
+  fail "${SRC_DIR} directory missing. Set SRC_DIR environment variable or ensure 'src' directory exists."
+fi
+
+# Validate required dependencies
+if ! command -v python3 >/dev/null 2>&1; then
+  fail "python3 is required but not found. Please install Python 3."
 fi
 
 # Candidate discovery policy: prefer explicit known names, otherwise fall back to extension-root manifests.

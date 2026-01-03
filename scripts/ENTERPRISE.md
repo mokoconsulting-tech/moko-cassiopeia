@@ -388,6 +388,22 @@ Scripts should validate their own requirements:
 [ -n "${VERSION}" ] || die "VERSION must be set"
 ```
 
+### Script Health Checking
+
+Use the script health checker to validate all scripts follow standards:
+
+```bash
+./scripts/run/script_health.sh        # Check all scripts
+./scripts/run/script_health.sh -v     # Verbose mode with details
+```
+
+The health checker validates:
+- Copyright headers present
+- SPDX license identifiers
+- FILE INFORMATION sections
+- Error handling (set -euo pipefail)
+- Executable permissions
+
 ### Integration Testing
 
 Run validation suite before commits:
@@ -503,14 +519,22 @@ Before committing new or modified scripts:
 - [ ] Uses `set -euo pipefail`
 - [ ] Has usage/help function (if user-facing)
 - [ ] Validates all inputs
-- [ ] Checks dependencies
-- [ ] Uses structured logging
-- [ ] Returns appropriate exit codes
+- [ ] Checks dependencies with `check_dependencies`
+- [ ] Uses structured logging (`log_info`, `log_error`, etc.)
+- [ ] Includes timestamps for audit trails
+- [ ] Returns appropriate exit codes (0=success, 1=error, 2=invalid args)
 - [ ] Includes inline comments for complex logic
 - [ ] Documented in scripts/README.md
 - [ ] Tested locally
+- [ ] Passes `./scripts/run/script_health.sh`
+- [ ] Passes all validation checks (`./scripts/run/validate_all.sh`)
 - [ ] Passes `shellcheck` (if available)
-- [ ] Passes all validation checks
+
+Quick validation command:
+```bash
+# Run all checks
+./scripts/run/script_health.sh && ./scripts/run/validate_all.sh
+```
 
 ## Version History
 

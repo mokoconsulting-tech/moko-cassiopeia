@@ -35,6 +35,8 @@
 
 set -euo pipefail
 
+# Validation timeout (seconds) - prevents hanging on problematic files
+TIMEOUT="${VALIDATION_TIMEOUT:-30}"
 SRC_DIR="${SRC_DIR:-src}"
 
 json_escape() {
@@ -56,17 +58,34 @@ fi
 
 failed=0
 checked=0
+failed_files=()
 
 while IFS= read -r -d '' f; do
 	checked=$((checked+1))
-	if ! php -l "$f" >/dev/null; then
-		failed=1
+	
+	# Use timeout if available to prevent hangs
+	if command -v timeout >/dev/null 2>&1; then
+		if ! timeout "${TIMEOUT}" php -l "$f" >/dev/null 2>&1; then
+			failed=1
+			failed_files+=("$f")
+		fi
+	else
+		if ! php -l "$f" >/dev/null 2>&1; then
+			failed=1
+			failed_files+=("$f")
+		fi
 	fi
 done < <(find "${SRC_DIR}" -type f -name '*.php' -print0)
 
 if [ "${failed}" -ne 0 ]; then
-	printf '{"status":"fail","error":"php_lint_failed","files_checked":%s}
-' "${checked}"
+	{
+		printf '{"status":"fail","error":"php_lint_failed","files_checked":%s,"failed_count":%s,"failed_files":[' "${checked}" "${#failed_files[@]}"
+		for i in "${!failed_files[@]}"; do
+			printf '%s' "$(json_escape "${failed_files[$i]}")"
+			[ "$i" -lt $((${#failed_files[@]} - 1)) ] && printf ','
+		done
+		printf ']}\n'
+	}
 	exit 1
 fi
 

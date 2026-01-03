@@ -253,6 +253,32 @@ WARN: ✗ tabs (warnings/issues found - run with -v for details)
 [SUCCESS] SUCCESS: All required checks passed
 ```
 
+### `script_health.sh`
+Validates that all scripts follow enterprise standards:
+- Checks for copyright headers
+- Validates SPDX license identifiers
+- Ensures FILE INFORMATION sections are present
+- Verifies error handling (set -euo pipefail)
+- Checks executable permissions
+
+Usage:
+```bash
+./scripts/run/script_health.sh       # Standard mode
+./scripts/run/script_health.sh -v    # Verbose mode (shows details)
+```
+
+Example output:
+```
+=== Script Health Summary ===
+  Total scripts checked: 21
+  Missing copyright: 0
+  Missing SPDX identifier: 0
+  Missing FILE INFORMATION: 0
+  Missing error handling: 0
+  Not executable: 0
+[SUCCESS] SUCCESS: All scripts follow enterprise standards
+```
+
 ## Best Practices
 
 ### Enterprise Standards
