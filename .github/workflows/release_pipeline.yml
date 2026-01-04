@@ -657,19 +657,10 @@ else:
           DIST_DIR="${GITHUB_WORKSPACE}/dist"
           mkdir -p "${DIST_DIR}"
 
-          # Detect platform and extension type using Python utility
-          PLATFORM_INFO=$(python3 -c "
-import sys
-sys.path.insert(0, '${GITHUB_WORKSPACE}/scripts/lib')
-import extension_utils
-ext_info = extension_utils.get_extension_info('${GITHUB_WORKSPACE}/src')
-if ext_info:
-    print(f'{ext_info.platform.value}|{ext_info.extension_type}')
-else:
-    sys.exit(1)
-          ")
+          # Detect platform and extension type using dedicated script
+          PLATFORM_INFO=$(python3 "${GITHUB_WORKSPACE}/scripts/release/detect_platform.py" "${GITHUB_WORKSPACE}/src")
           
-          if [ $? -ne 0 ]; then
+          if [ $? -ne 0 ] || [ -z "${PLATFORM_INFO}" ]; then
             echo "ERROR: Could not detect extension platform and type" >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi

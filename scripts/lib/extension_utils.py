@@ -123,7 +123,7 @@ def detect_dolibarr_manifest(src_dir: Union[str, Path]) -> Optional[Path]:
     """
     src_path = Path(src_dir)
     
-    # Dolibarr module descriptors follow pattern: core/modules/modMyModule.class.php
+    # Dolibarr module descriptors follow pattern: core/modules/mod*.class.php
     descriptor_patterns = [
         "core/modules/mod*.class.php",
         "*/modules/mod*.class.php",
@@ -218,8 +218,13 @@ def parse_dolibarr_descriptor(descriptor_path: Path) -> Optional[ExtensionInfo]:
     try:
         content = descriptor_path.read_text(encoding="utf-8")
         
-        # Extract module name from class name
+        # Extract module name from class name (try multiple patterns)
+        # Pattern 1: class ModMyModule
         name_match = re.search(r'class\s+(Mod\w+)', content)
+        if not name_match:
+            # Pattern 2: class mod_mymodule (lowercase)
+            name_match = re.search(r'class\s+(mod_\w+)', content, re.IGNORECASE)
+        
         name = name_match.group(1) if name_match else "unknown"
         
         # Extract version
