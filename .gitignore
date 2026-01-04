@@ -33,7 +33,11 @@ System Volume Information/
 *.lnk
 Icon?
 .idea/
-.vscode/
+# .vscode/ - Allow specific VS Code config files
+.vscode/*
+!.vscode/tasks.json
+!.vscode/settings.json.example
+!.vscode/extensions.json
 *.code-workspace
 *.sublime-project
 *.sublime-workspace
