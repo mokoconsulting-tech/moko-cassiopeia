@@ -46,6 +46,7 @@ jobs:
 
           scripts/validate/manifest.sh
           scripts/validate/xml_wellformed.sh
+          scripts/validate/workflows.sh
 
       - name: Optional validations
         run: |
@@ -59,6 +60,7 @@ jobs:
           scripts/validate/php_syntax.sh
           scripts/validate/tabs.sh
           scripts/validate/version_alignment.sh
+          scripts/validate/version_hierarchy.sh
 
       - name: CI summary
         if: always()
