@@ -62,6 +62,9 @@ EXCLUDE_PATTERNS = {
     # Documentation (optional, can be included)
     # Build artifacts
     "dist", "build", ".phpunit.cache",
+    # Development tool caches and artifacts
+    ".phpstan.cache", ".psalm", ".rector",
+    "phpmd-cache", ".php-cs-fixer.cache", ".phplint-cache",
     # OS files
     ".DS_Store", "Thumbs.db",
     # Logs
@@ -78,10 +81,11 @@ EXCLUDE_PATTERNS = {
     "composer.json", "composer.lock",
     "package.json", "package-lock.json",
     "phpunit.xml", "phpstan.neon", "phpcs.xml",
-    "codeception.yml",
+    "codeception.yml", "psalm.xml", ".php-cs-fixer.php",
     # Others
     "README.md", "CHANGELOG.md", "CONTRIBUTING.md",
     "CODE_OF_CONDUCT.md", "SECURITY.md", "GOVERNANCE.md",
+    "Makefile",
 }
 
 
