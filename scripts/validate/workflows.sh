@@ -52,7 +52,12 @@ validate_yaml_syntax() {
   
   python3 - "$file" <<'PYEOF'
 import sys
-import yaml
+
+try:
+    import yaml
+except ModuleNotFoundError:
+    print("WARNING: PyYAML module not installed. Install with: pip3 install pyyaml")
+    sys.exit(0)
 
 file_path = sys.argv[1]
 

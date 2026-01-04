@@ -85,7 +85,7 @@ validate_prefix() {
 
 validate_version() {
   local v="$1"
-  if ! printf '%s' "$v" | grep -Eq '^[0-9]{2}\.[0-9]{2}\.[0-9]{2}$'; then
+  if [[ ! "$v" =~ ^[0-9]{2}\.[0-9]{2}\.[0-9]{2}$ ]]; then
     die "Invalid version format: $v (expected NN.NN.NN)"
   fi
 }
