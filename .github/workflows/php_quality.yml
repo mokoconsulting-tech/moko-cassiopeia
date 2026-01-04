@@ -50,8 +50,8 @@ jobs:
 
       - name: Install PHP_CodeSniffer
         run: |
-          composer global require squizlabs/php_codesniffer
-          composer global require phpcompatibility/php-compatibility
+          composer global require "squizlabs/php_codesniffer:^3.0"
+          composer global require "phpcompatibility/php-compatibility:^9.0"
           
           # Register PHPCompatibility standard
           phpcs --config-set installed_paths ~/.composer/vendor/phpcompatibility/php-compatibility
@@ -151,8 +151,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          composer global require squizlabs/php_codesniffer
-          composer global require phpcompatibility/php-compatibility
+          composer global require "squizlabs/php_codesniffer:^3.0"
+          composer global require "phpcompatibility/php-compatibility:^9.0"
           phpcs --config-set installed_paths ~/.composer/vendor/phpcompatibility/php-compatibility
 
       - name: Check PHP 8.0+ Compatibility

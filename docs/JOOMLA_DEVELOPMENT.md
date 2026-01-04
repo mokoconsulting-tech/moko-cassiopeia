@@ -233,9 +233,9 @@ phpcbf --standard=phpcs.xml
 
 1. Install tools:
 ```bash
-composer global require squizlabs/php_codesniffer
+composer global require "squizlabs/php_codesniffer:^3.0"
 composer global require phpstan/phpstan
-composer global require phpcompatibility/php-compatibility
+composer global require "phpcompatibility/php-compatibility:^9.0"
 ```
 
 2. Configure PHPCompatibility:
@@ -323,7 +323,7 @@ After deployment to Joomla:
 
 **Issue: PHP_CodeSniffer not found**
 ```bash
-composer global require squizlabs/php_codesniffer
+composer global require "squizlabs/php_codesniffer:^3.0"
 export PATH="$PATH:$HOME/.composer/vendor/bin"
 ```
 

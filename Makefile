@@ -24,9 +24,9 @@ help:
 install:
 	@echo "Installing development dependencies..."
 	@command -v composer >/dev/null 2>&1 || { echo "Error: composer not found. Please install composer first."; exit 1; }
-	composer global require squizlabs/php_codesniffer
+	composer global require "squizlabs/php_codesniffer:^3.0"
 	composer global require phpstan/phpstan
-	composer global require phpcompatibility/php-compatibility
+	composer global require "phpcompatibility/php-compatibility:^9.0"
 	composer global require codeception/codeception
 	phpcs --config-set installed_paths ~/.composer/vendor/phpcompatibility/php-compatibility
 	@echo "✓ Dependencies installed"
