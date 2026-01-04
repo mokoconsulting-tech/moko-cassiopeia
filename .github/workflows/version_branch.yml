@@ -28,6 +28,15 @@ on:
         options:
           - "true"
           - "false"
+      branch_prefix:
+        description: "Branch prefix for version (version/ for stable, rc/ for release candidate, dev/ for development)"
+        required: false
+        default: "dev/"
+        type: choice
+        options:
+          - "dev/"
+          - "rc/"
+          - "version/"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.repository }}-${{ github.event.inputs.new_version }}
@@ -51,7 +60,7 @@ jobs:
       REPORT_ONLY: ${{ github.event.inputs.report_only }}
       COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
       BASE_BRANCH: ${{ github.ref_name }}
-      BRANCH_PREFIX: 'dev/'
+      BRANCH_PREFIX: ${{ github.event.inputs.branch_prefix || 'dev/' }}
       ERROR_LOG: /tmp/version_branch_errors.log
       CI_HELPERS: /tmp/moko_ci_helpers.sh
       REPORT_PATH: /tmp/version-bump-report.json
@@ -124,10 +133,16 @@ jobs:
           [[ -n "${NEW_VERSION}" ]] || { echo "[ERROR] new_version missing" >&2; exit 2; }
           [[ "${NEW_VERSION}" =~ ^[0-9]{2}[.][0-9]{2}[.][0-9]{2}$ ]] || { echo "[ERROR] Invalid version format: ${NEW_VERSION}" >&2; exit 2; }
 
-          if [[ "${BRANCH_PREFIX}" != "dev/" ]]; then
-            echo "[FATAL] BRANCH_PREFIX is locked by policy. Expected 'dev/' but got '${BRANCH_PREFIX}'." >&2
-            exit 2
-          fi
+          # Validate BRANCH_PREFIX is one of the allowed values
+          case "${BRANCH_PREFIX}" in
+            "dev/"|"rc/"|"version/")
+              echo "[INFO] ✓ Branch prefix '${BRANCH_PREFIX}' is valid"
+              ;;
+            *)
+              echo "[FATAL] BRANCH_PREFIX must be one of: dev/, rc/, version/ (got: '${BRANCH_PREFIX}')" >&2
+              exit 2
+              ;;
+          esac
 
           if ! moko_bool "${REPORT_ONLY}" && [[ "${COMMIT_CHANGES}" != "true" ]]; then
             echo "[FATAL] commit_changes must be 'true' when report_only is 'false' to ensure the branch is auditable." >&2
@@ -230,11 +245,13 @@ jobs:
           source "$CI_HELPERS"
           moko_init "Branch namespace collision defense"
 
-          # Skip collision check for the static 'dev/' prefix
-          if [[ "${BRANCH_PREFIX}" == "dev/" ]]; then
-            echo "[INFO] Skipping collision check for static prefix 'dev/'" >&2
-            exit 0
-          fi
+          # Skip collision check for known static prefixes
+          case "${BRANCH_PREFIX}" in
+            "dev/"|"rc/"|"version/")
+              echo "[INFO] Skipping collision check for known prefix '${BRANCH_PREFIX}'" >&2
+              exit 0
+              ;;
+          esac
 
           PREFIX_TOP="${BRANCH_PREFIX%%/*}"
           if git ls-remote --exit-code --heads origin "${PREFIX_TOP}" >/dev/null 2>&1; then
@@ -269,6 +286,63 @@ jobs:
 
           git checkout -B "${BRANCH_NAME}" "origin/${BASE_BRANCH}"
           echo "BRANCH_NAME=${BRANCH_NAME}" >> "$GITHUB_ENV"
+
+      - name: Validate version hierarchy (prevent creating in lower priority branches)
+        if: ${{ env.REPORT_ONLY != 'true' }}
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Validate version hierarchy"
+
+          # Version hierarchy (highest to lowest priority):
+          # 1. version/X.Y.Z - production/stable versions
+          # 2. rc/X.Y.Z      - release candidate versions
+          # 3. dev/X.Y.Z     - development versions
+          #
+          # Rule: If a version exists in a higher priority branch, 
+          # do not allow creating it in a lower priority branch
+
+          BRANCH_NAME="${BRANCH_PREFIX}${NEW_VERSION}"
+          
+          echo "[INFO] Checking version hierarchy for: ${NEW_VERSION}"
+          echo "[INFO] Current branch prefix: ${BRANCH_PREFIX}"
+
+          # Determine current priority level
+          case "${BRANCH_PREFIX}" in
+            "version/")
+              echo "[INFO] Creating stable version branch - no hierarchy checks needed"
+              ;;
+            "rc/")
+              echo "[INFO] Creating RC branch - checking if version exists in stable"
+              if git ls-remote --exit-code --heads origin "version/${NEW_VERSION}" >/dev/null 2>&1; then
+                echo "[FATAL] Version ${NEW_VERSION} already exists in stable branch: version/${NEW_VERSION}" >&2
+                echo "[FATAL] Cannot create RC version for a version that already exists in stable" >&2
+                exit 2
+              fi
+              echo "[INFO] ✓ No conflict with stable versions"
+              ;;
+            "dev/")
+              echo "[INFO] Creating dev branch - checking if version exists in stable or RC"
+              
+              # Check stable versions
+              if git ls-remote --exit-code --heads origin "version/${NEW_VERSION}" >/dev/null 2>&1; then
+                echo "[FATAL] Version ${NEW_VERSION} already exists in stable branch: version/${NEW_VERSION}" >&2
+                echo "[FATAL] Cannot create dev version for a version that already exists in stable" >&2
+                exit 2
+              fi
+              
+              # Check RC versions
+              if git ls-remote --exit-code --heads origin "rc/${NEW_VERSION}" >/dev/null 2>&1; then
+                echo "[FATAL] Version ${NEW_VERSION} already exists in RC branch: rc/${NEW_VERSION}" >&2
+                echo "[FATAL] Cannot create dev version for a version that already exists in RC" >&2
+                exit 2
+              fi
+              
+              echo "[INFO] ✓ No conflict with stable or RC versions"
+              ;;
+            *)
+              echo "[WARN] Unknown branch prefix: ${BRANCH_PREFIX}, skipping hierarchy check"
+              ;;
+          esac
 
       - name: Enforce update feed files absent (update.xml, updates.xml)
         if: ${{ env.REPORT_ONLY != 'true' }}
