@@ -104,8 +104,8 @@ jobs:
 
       - name: Install PHPStan
         run: |
-          composer global require phpstan/phpstan
-          composer global require phpstan/extension-installer
+          composer global require phpstan/phpstan "^1.0"
+          composer global require phpstan/extension-installer "^1.0"
 
       - name: Run PHPStan
         run: |
