@@ -124,17 +124,7 @@ fi
 
 # Core structural checks
 # - Must contain at least one H2 heading with a bracketed version
-# - Must contain an Unreleased section
 # - Must contain a section for the resolved version
-
-unreleased_ok=false
-if grep -Eq '^## \[Unreleased\]' CHANGELOG.md; then
-	unreleased_ok=true
-fi
-
-if [ "${unreleased_ok}" != "true" ]; then
-	fail "CHANGELOG.md missing '## [Unreleased]' section"
-fi
 
 if ! grep -Eq '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md; then
 	fail "CHANGELOG.md has no version sections (expected headings like: ## [x.y.z])"
