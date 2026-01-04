@@ -43,6 +43,7 @@ upgrade-friendly.
 	-   [Table of Contents](#table-of-contents)
 	-   [Dark Mode Toggle](#dark-mode-toggle)
 	-   [Soft Offline Mode](#soft-offline-mode)
+-   [Development](#development)
 -   [Changelog](#changelog)
 -   [Roadmap](#roadmap)
 
@@ -129,6 +130,44 @@ If upgrading from a prior version, Joomla will safely overwrite files
 	offline/maintenance mode.
 -   Useful for compliance, legal, or policy content.
 
+## Development
+
+For developers and contributors working on the moko-cassiopeia template:
+
+### Joomla Development Workflows
+
+Comprehensive Joomla-aware development tools and workflows are available:
+
+- **Extension Packaging** - Create distributable ZIP packages
+- **PHP Quality Checks** - PHPStan and PHP_CodeSniffer with Joomla standards
+- **Automated Testing** - Codeception framework with multiple Joomla versions
+- **CI/CD Pipelines** - GitHub Actions for testing and deployment
+
+See the [Joomla Development Guide](./docs/JOOMLA_DEVELOPMENT.md) for:
+- Setup instructions for local development
+- Running tests and quality checks
+- Creating release packages
+- Deployment workflows
+- CI/CD pipeline details
+
+### Quick Start for Developers
+
+```bash
+# Validate code
+./scripts/validate/php_syntax.sh
+./scripts/validate/manifest.sh
+
+# Create distribution package
+./scripts/release/package_extension.sh dist 3.5.0
+
+# Run tests (requires Codeception)
+codecept run
+
+# Check code quality (requires PHPStan/PHPCS)
+phpstan analyse --configuration=phpstan.neon
+phpcs --standard=phpcs.xml
+```
+
 ## Changelog
 
 See the [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
@@ -138,7 +177,7 @@ See the [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
 ## Metadata
 
 * Maintainer: Moko Consulting Engineering
-* Repository: [https: //github.com/mokoconsulting-tech/moko-cassiopeoa](https: //github.com/mokoconsulting-tech/moko-cassiopeoa)
+* Repository: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
 * File: README.md
 * Version: 3.0
 * Classification: Public Open Source Standards
