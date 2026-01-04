@@ -152,7 +152,7 @@ make quality
 make package
 
 # Install Git hooks (optional but recommended)
-./scripts/git/install-hooks.sh
+python3 ./scripts/git/install-hooks.py
 ```
 
 **New to the project?** See [Quick Start Guide](./docs/QUICK_START.md) for a 5-minute walkthrough.
@@ -168,15 +168,23 @@ make package
 ### Available Tools
 
 - **Makefile**: Run `make help` to see all available commands
+- **Python Scripts**: All automation scripts are now Python-based for cross-platform compatibility
 - **Pre-commit Hooks**: Automatic validation before commits
 - **VS Code Tasks**: Pre-configured development tasks
 - **GitHub Actions**: Automated CI/CD pipelines
+
+### Cross-Platform Support
+
+All scripts are now written in Python for maximum cross-platform compatibility:
+- **Joomla Extension Support**: Full support for Joomla 4.x and 5.x templates, components, modules, and plugins
+- **Dolibarr Module Support**: Automatic detection and packaging of Dolibarr modules
+- **Platform Detection**: Scripts automatically detect whether you're working with Joomla or Dolibarr extensions
 
 ### Joomla Development Workflows
 
 Comprehensive Joomla-aware development tools and workflows are available:
 
-- **Extension Packaging** - Create distributable ZIP packages
+- **Extension Packaging** - Create distributable ZIP packages for Joomla or Dolibarr
 - **PHP Quality Checks** - PHPStan and PHP_CodeSniffer with Joomla standards
 - **Automated Testing** - Codeception framework with multiple Joomla versions
 - **CI/CD Pipelines** - GitHub Actions with caching for faster builds
