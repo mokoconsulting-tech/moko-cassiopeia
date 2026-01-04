@@ -180,7 +180,7 @@ unreleased_idx = find_idx(lambda ln: norm(ln) == "## [unreleased]")
 version_idx = find_idx(lambda ln: ln.lstrip().startswith(f"## [{version}]"))
 
 def version_header() -> list:
-    return ["\\n", f"## [{version}] {stamp}\\n", "\\n"]
+    return ["\n", f"## [{version}] {stamp}\n", "\n"]
 
 if unreleased_idx is None:
     print(f"INFO: No [Unreleased] section found in {changelog_path}")
@@ -196,7 +196,7 @@ if unreleased_idx is None:
                     while insert_at < len(lines) and lines[insert_at].strip() == "":
                         insert_at += 1
                     break
-            entry = version_header() + ["- No changes recorded.\\n", "\\n"]
+            entry = version_header() + ["- No changes recorded.\n", "\n"]
             lines[insert_at:insert_at] = entry
             changelog_path.write_text("".join(lines), encoding="utf-8")
             print(f"SUCCESS: Created version section [{version}]")
@@ -242,14 +242,14 @@ if unreleased_body:
         while insert_at < len(lines) and lines[insert_at].strip() == "":
             insert_at += 1
         
-        moved = ["\\n"] + [ln + "\\n" for ln in unreleased_body.split("\\n") if ln != ""] + ["\\n"]
+        moved = ["\n"] + [ln + "\n" for ln in unreleased_body.split("\n") if ln != ""] + ["\n"]
         lines[insert_at:insert_at] = moved
-        print(f"INFO: Moved {len([ln for ln in unreleased_body.split('\\n') if ln])} lines to [{version}]")
+        print(f"INFO: Moved {len([ln for ln in unreleased_body.split('\n') if ln])} lines to [{version}]")
     else:
-        line_count = len([ln for ln in unreleased_body.split('\\n') if ln])
+        line_count = len([ln for ln in unreleased_body.split('\n') if ln])
         print(f"DRY-RUN: Would move {line_count} lines to [{version}]")
         print(f"DRY-RUN: Content preview:")
-        for line in unreleased_body.split('\\n')[:5]:
+        for line in unreleased_body.split('\n')[:5]:
             if line:
                 print(f"  {line}")
 
@@ -264,7 +264,7 @@ if not keep_unreleased:
                 if is_h2(lines[j]):
                     u_end = j
                     break
-            lines[u_start:u_end] = ["\\n"]
+            lines[u_start:u_end] = ["\n"]
             print(f"INFO: Emptied [Unreleased] section")
         else:
             print(f"DRY-RUN: Would empty [Unreleased] section")
