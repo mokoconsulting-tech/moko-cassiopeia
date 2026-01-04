@@ -1,0 +1,77 @@
+<?xml version="1.0"?>
+<ruleset name="Joomla Coding Standards">
+    <description>Joomla coding standards for Moko-Cassiopeia</description>
+
+    <!-- Show progress and sniff names -->
+    <arg value="ps"/>
+    
+    <!-- Use colors in output -->
+    <arg name="colors"/>
+    
+    <!-- Check PHP files only -->
+    <arg name="extensions" value="php"/>
+    
+    <!-- Exclude patterns -->
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/tests/_output/*</exclude-pattern>
+    <exclude-pattern>*/cache/*</exclude-pattern>
+    <exclude-pattern>*/tmp/*</exclude-pattern>
+    <exclude-pattern>*/.git/*</exclude-pattern>
+    
+    <!-- Include src directory -->
+    <file>src</file>
+    
+    <!-- Use Joomla coding standard as base -->
+    <!-- When Joomla standard is installed, uncomment: -->
+    <!-- <rule ref="Joomla"/> -->
+    
+    <!-- PSR-12 as fallback base standard -->
+    <rule ref="PSR12">
+        <!-- Allow long lines in some cases -->
+        <exclude name="Generic.Files.LineLength"/>
+    </rule>
+    
+    <!-- Additional rules for PHP compatibility -->
+    <rule ref="PHPCompatibility"/>
+    
+    <!-- Set minimum PHP version for compatibility checks -->
+    <config name="testVersion" value="8.0-"/>
+    
+    <!-- Check for deprecated PHP functions -->
+    <rule ref="Generic.PHP.DeprecatedFunctions"/>
+    
+    <!-- Enforce proper file naming -->
+    <rule ref="Generic.Files.ByteOrderMark"/>
+    <rule ref="Generic.Files.LineEndings">
+        <properties>
+            <property name="eolChar" value="\n"/>
+        </properties>
+    </rule>
+    
+    <!-- Code structure -->
+    <rule ref="Generic.Classes.DuplicateClassName"/>
+    <rule ref="Generic.CodeAnalysis.EmptyStatement"/>
+    <rule ref="Generic.CodeAnalysis.UnconditionalIfStatement"/>
+    <rule ref="Generic.CodeAnalysis.UnnecessaryFinalModifier"/>
+    <rule ref="Generic.CodeAnalysis.UselessOverridingMethod"/>
+    
+    <!-- Naming conventions -->
+    <rule ref="Generic.NamingConventions.UpperCaseConstantName"/>
+    
+    <!-- Security -->
+    <rule ref="Generic.PHP.BacktickOperator"/>
+    
+    <!-- Formatting -->
+    <rule ref="Generic.Formatting.DisallowMultipleStatements"/>
+    <rule ref="Generic.Formatting.SpaceAfterCast"/>
+    
+    <!-- White space -->
+    <rule ref="Generic.WhiteSpace.DisallowTabIndent"/>
+    <rule ref="Generic.WhiteSpace.ScopeIndent">
+        <properties>
+            <property name="indent" value="4"/>
+            <property name="tabIndent" value="true"/>
+        </properties>
+    </rule>
+</ruleset>

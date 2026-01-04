@@ -211,6 +211,37 @@ Example:
 ./scripts/release/update_dates.sh 2025-01-15 03.05.00
 ```
 
+### `package_extension.sh`
+Package the Joomla template as a distributable ZIP file.
+
+Usage:
+```bash
+./scripts/release/package_extension.sh [output_dir] [version]
+```
+
+Parameters:
+- `output_dir` (optional): Output directory for ZIP file (default: `dist`)
+- `version` (optional): Version string (default: extracted from manifest)
+
+Examples:
+```bash
+# Package with defaults (dist directory, auto-detect version)
+./scripts/release/package_extension.sh
+
+# Package to specific directory with version
+./scripts/release/package_extension.sh /tmp/packages 3.5.0
+
+# Package to dist with specific version
+./scripts/release/package_extension.sh dist 3.5.0
+```
+
+Features:
+- Automatically detects extension type from manifest
+- Excludes development files (node_modules, vendor, tests, etc.)
+- Validates manifest before packaging
+- Creates properly structured Joomla installation package
+- Outputs JSON status for automation
+
 ## Run Scripts (`run/`)
 
 Execution and testing scripts.

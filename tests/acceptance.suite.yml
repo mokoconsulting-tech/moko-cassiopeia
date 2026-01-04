@@ -1,0 +1,14 @@
+# Codeception Test Suite Configuration
+
+actor: AcceptanceTester
+modules:
+    enabled:
+        - WebDriver:
+            url: http://localhost
+            browser: chrome
+            window_size: 1920x1080
+            capabilities:
+                chromeOptions:
+                    args: ["--headless", "--disable-gpu", "--no-sandbox"]
+        - \Tests\Support\AcceptanceHelper
+step_decorators: ~
