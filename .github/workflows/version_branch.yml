@@ -300,8 +300,6 @@ jobs:
           #
           # Rule: If a version exists in a higher priority branch, 
           # do not allow creating it in a lower priority branch
-
-          BRANCH_NAME="${BRANCH_PREFIX}${NEW_VERSION}"
           
           echo "[INFO] Checking version hierarchy for: ${NEW_VERSION}"
           echo "[INFO] Current branch prefix: ${BRANCH_PREFIX}"
