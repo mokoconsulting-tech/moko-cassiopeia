@@ -48,6 +48,37 @@ Contributors are expected to:
 * Have a working understanding of Joomla template structure.
 * Be familiar with Git and GitHub pull request workflows.
 * Review repository governance documents prior to submitting changes.
+* Set up the development environment using the provided tools.
+
+### Quick Setup
+
+For first-time contributors:
+
+```bash
+# Clone the repository
+git clone https://github.com/mokoconsulting-tech/moko-cassiopeia.git
+cd moko-cassiopeia
+
+# Run development setup
+make dev-setup
+
+# Install Git hooks (optional but recommended)
+./scripts/git/install-hooks.sh
+```
+
+See [docs/QUICK_START.md](./docs/QUICK_START.md) for detailed setup instructions.
+
+## Development Tools
+
+The repository provides several tools to streamline development:
+
+* **Makefile**: Common development tasks (`make help` to see all commands)
+* **Pre-commit Hooks**: Automatic local validation before commits
+* **VS Code Tasks**: Pre-configured tasks for common operations
+* **Validation Scripts**: Located in `scripts/validate/`
+* **CI/CD Workflows**: Automated testing and deployment
+
+Run `make validate-required` before submitting PRs to catch common issues early.
 
 ## Contribution Workflow
 

@@ -56,23 +56,46 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
+
+      - name: Cache Joomla Downloads
+        uses: actions/cache@v4
+        with:
+          path: /tmp/joomla-cache
+          key: joomla-${{ matrix.joomla-version }}
+          restore-keys: |
+            joomla-${{ matrix.joomla-version }}
 
       - name: Download Joomla ${{ matrix.joomla-version }}
         run: |
           mkdir -p /tmp/joomla
-          cd /tmp/joomla
+          mkdir -p /tmp/joomla-cache
           
-          # Download appropriate Joomla version
+          # Define ZIP file based on version
           if [ "${{ matrix.joomla-version }}" = "4.4" ]; then
-            wget -q https://downloads.joomla.org/cms/joomla4/4-4-9/Joomla_4-4-9-Stable-Full_Package.zip
-            unzip -q Joomla_4-4-9-Stable-Full_Package.zip
+            ZIP_FILE="Joomla_4-4-9-Stable-Full_Package.zip"
+            ZIP_URL="https://downloads.joomla.org/cms/joomla4/4-4-9/${ZIP_FILE}"
           elif [ "${{ matrix.joomla-version }}" = "5.0" ]; then
-            wget -q https://downloads.joomla.org/cms/joomla5/5-0-3/Joomla_5-0-3-Stable-Full_Package.zip
-            unzip -q Joomla_5-0-3-Stable-Full_Package.zip
+            ZIP_FILE="Joomla_5-0-3-Stable-Full_Package.zip"
+            ZIP_URL="https://downloads.joomla.org/cms/joomla5/5-0-3/${ZIP_FILE}"
           else
-            wget -q https://downloads.joomla.org/cms/joomla5/5-1-4/Joomla_5-1-4-Stable-Full_Package.zip
-            unzip -q Joomla_5-1-4-Stable-Full_Package.zip
+            ZIP_FILE="Joomla_5-1-4-Stable-Full_Package.zip"
+            ZIP_URL="https://downloads.joomla.org/cms/joomla5/5-1-4/${ZIP_FILE}"
           fi
+          
+          # Use cached ZIP if available, otherwise download
+          if [ -f "/tmp/joomla-cache/${ZIP_FILE}" ]; then
+            echo "Using cached Joomla package: ${ZIP_FILE}"
+            cp "/tmp/joomla-cache/${ZIP_FILE}" "/tmp/joomla/"
+          else
+            echo "Downloading Joomla package: ${ZIP_FILE}"
+            wget -q "${ZIP_URL}" -O "/tmp/joomla/${ZIP_FILE}"
+            cp "/tmp/joomla/${ZIP_FILE}" "/tmp/joomla-cache/"
+          fi
+          
+          cd /tmp/joomla
+          unzip -q "${ZIP_FILE}"
 
       - name: Configure Joomla
         run: |
@@ -210,6 +233,16 @@ jobs:
           extensions: mbstring, xml, ctype, json, zip, mysqli, pdo, pdo_mysql
           coverage: xdebug
           tools: composer:v2
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.composer
+          key: ${{ runner.os }}-composer-codeception-8.1-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-codeception-8.1-
+            ${{ runner.os }}-composer-codeception-
+            ${{ runner.os }}-composer-
 
       - name: Install Codeception
         run: |

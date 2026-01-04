@@ -33,7 +33,11 @@ System Volume Information/
 *.lnk
 Icon?
 .idea/
-.vscode/
+# .vscode/ - Allow specific VS Code config files
+.vscode/*
+!.vscode/tasks.json
+!.vscode/settings.json.example
+!.vscode/extensions.json
 *.code-workspace
 *.sublime-project
 *.sublime-workspace
@@ -788,6 +792,36 @@ composer.lock
 package-lock.json
 .phpunit.result.cache
 codeception.phar
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+*.cover
+.hypothesis/
 
 # ============================================================
 # Keep-empty folders helper
