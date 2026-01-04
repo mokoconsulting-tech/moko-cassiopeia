@@ -179,8 +179,42 @@ list-scripts:
 	@echo "Available fix scripts:"
 	@find scripts/fix -type f -name "*.sh" -exec basename {} \; | sort
 	@echo ""
-	@echo "Available run scripts:"
+	@echo "Available run scripts (bash):"
 	@find scripts/run -type f -name "*.sh" -exec basename {} \; | sort
+	@echo ""
+	@echo "Available run scripts (python):"
+	@find scripts/run -type f -name "*.py" -exec basename {} \; | sort
+
+## scaffold: Create new Joomla extension scaffolding
+scaffold:
+	@echo "Create new Joomla extension scaffolding"
+	@echo ""
+	@echo "Usage: make scaffold TYPE=<type> NAME=<name> AUTHOR=<author> DESC=<description>"
+	@echo ""
+	@echo "Types: component, module, plugin, template, package"
+	@echo ""
+	@echo "Example:"
+	@echo "  make scaffold TYPE=module NAME='My Module' AUTHOR='John Doe' DESC='Module description'"
+
+## scaffold-component: Create a component
+scaffold-component:
+	@python3 scripts/run/scaffold_extension.py component "$(NAME)" "$(DESC)" "$(AUTHOR)"
+
+## scaffold-module: Create a module
+scaffold-module:
+	@python3 scripts/run/scaffold_extension.py module "$(NAME)" "$(DESC)" "$(AUTHOR)" --client $(CLIENT)
+
+## scaffold-plugin: Create a plugin
+scaffold-plugin:
+	@python3 scripts/run/scaffold_extension.py plugin "$(NAME)" "$(DESC)" "$(AUTHOR)" --group $(GROUP)
+
+## scaffold-template: Create a template
+scaffold-template:
+	@python3 scripts/run/scaffold_extension.py template "$(NAME)" "$(DESC)" "$(AUTHOR)"
+
+## scaffold-package: Create a package
+scaffold-package:
+	@python3 scripts/run/scaffold_extension.py package "$(NAME)" "$(DESC)" "$(AUTHOR)"
 
 ## docs: Open documentation
 docs:
