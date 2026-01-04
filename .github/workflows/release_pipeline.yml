@@ -103,21 +103,20 @@ jobs:
             # Check if REF_NAME is main or matches version pattern
             if [ "${REF_NAME}" = "main" ]; then
               # Infer version from manifest when on main branch
-              SCRIPT_LIB_DIR="${GITHUB_WORKSPACE}/scripts/lib"
-              if [ ! -f "${SCRIPT_LIB_DIR}/joomla_manifest.sh" ]; then
-                echo "ERROR: Cannot find joomla_manifest.sh library" >> "${GITHUB_STEP_SUMMARY}"
-                exit 1
-              fi
-              
-              # Source the library functions
-              . "${SCRIPT_LIB_DIR}/joomla_manifest.sh"
-              
-              # Find and extract version from manifest
-              MANIFEST="$(find_manifest "${GITHUB_WORKSPACE}/src")"
-              VERSION="$(get_manifest_version "${MANIFEST}")"
+              # Use Python library for cross-platform compatibility
+              VERSION=$(python3 -c "
+import sys
+sys.path.insert(0, '${GITHUB_WORKSPACE}/scripts/lib')
+import extension_utils
+ext_info = extension_utils.get_extension_info('${GITHUB_WORKSPACE}/src')
+if ext_info:
+    print(ext_info.version)
+else:
+    sys.exit(1)
+              ")
               
               if [ -z "${VERSION}" ]; then
-                echo "ERROR: Failed to extract version from manifest: ${MANIFEST}" >> "${GITHUB_STEP_SUMMARY}"
+                echo "ERROR: Failed to extract version from manifest" >> "${GITHUB_STEP_SUMMARY}"
                 exit 1
               fi
               
@@ -552,19 +551,19 @@ jobs:
           set -euo pipefail
 
           required_scripts=(
-            "scripts/validate/manifest.sh"
-            "scripts/validate/xml_wellformed.sh"
+            "scripts/validate/manifest.py"
+            "scripts/validate/xml_wellformed.py"
           )
 
           optional_scripts=(
-            "scripts/validate/changelog.sh"
-            "scripts/validate/language_structure.sh"
-            "scripts/validate/license_headers.sh"
-            "scripts/validate/no_secrets.sh"
-            "scripts/validate/paths.sh"
-            "scripts/validate/php_syntax.sh"
-            "scripts/validate/tabs.sh"
-            "scripts/validate/version_alignment.sh"
+            "scripts/validate/changelog.py"
+            "scripts/validate/language_structure.py"
+            "scripts/validate/license_headers.py"
+            "scripts/validate/no_secrets.py"
+            "scripts/validate/paths.py"
+            "scripts/validate/php_syntax.py"
+            "scripts/validate/tabs.py"
+            "scripts/validate/version_alignment.py"
           )
 
           missing=()
@@ -596,7 +595,7 @@ jobs:
           for s in "${required_scripts[@]}" "${optional_scripts[@]}"; do
             if [ -f "${s}" ]; then
               chmod +x "${s}"
-              "${s}" >> "${GITHUB_STEP_SUMMARY}"
+              python3 "${s}" >> "${GITHUB_STEP_SUMMARY}"
               ran+=("${s}")
             else
               skipped+=("${s}")

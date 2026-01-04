@@ -34,14 +34,14 @@ install:
 ## validate: Run all validation scripts
 validate:
 	@echo "Running validation scripts..."
-	@./scripts/run/validate_all.sh
+	@python3 ./scripts/run/validate_all.py
 
 ## validate-required: Run only required validation scripts
 validate-required:
 	@echo "Running required validations..."
-	@./scripts/validate/manifest.sh
-	@./scripts/validate/xml_wellformed.sh
-	@./scripts/validate/workflows.sh
+	@python3 ./scripts/validate/manifest.py
+	@python3 ./scripts/validate/xml_wellformed.py
+	@python3 ./scripts/validate/workflows.py
 	@echo "✓ Required validations passed"
 
 ## test: Run all tests
@@ -96,18 +96,18 @@ phpcompat:
 ## package: Create distribution package
 package:
 	@echo "Creating distribution package..."
-	@./scripts/release/package_extension.sh dist $(VERSION)
+	@python3 ./scripts/release/package_extension.py dist $(VERSION)
 	@echo "✓ Package created: dist/moko-cassiopeia-$(VERSION)-*.zip"
 
 ## smoke-test: Run smoke tests
 smoke-test:
 	@echo "Running smoke tests..."
-	@./scripts/run/smoke_test.sh
+	@python3 ./scripts/run/smoke_test.py
 
 ## script-health: Check script health
 script-health:
 	@echo "Checking script health..."
-	@./scripts/run/script_health.sh
+	@python3 ./scripts/run/script_health.py
 
 ## version-check: Display current version information
 version-check:
@@ -119,7 +119,7 @@ version-check:
 ## fix-permissions: Fix script executable permissions
 fix-permissions:
 	@echo "Fixing script permissions..."
-	@find scripts -type f -name "*.sh" -exec chmod +x {} \;
+	@find scripts -type f -name "*.py" -exec chmod +x {} \;
 	@echo "✓ Permissions fixed"
 
 ## clean: Remove generated files and caches
@@ -174,13 +174,10 @@ watch:
 ## list-scripts: List all available scripts
 list-scripts:
 	@echo "Available validation scripts:"
-	@find scripts/validate -type f -name "*.sh" -exec basename {} \; | sort
+	@find scripts/validate -type f -name "*.py" -exec basename {} \; | sort
 	@echo ""
 	@echo "Available fix scripts:"
-	@find scripts/fix -type f -name "*.sh" -exec basename {} \; | sort
-	@echo ""
-	@echo "Available run scripts (bash):"
-	@find scripts/run -type f -name "*.sh" -exec basename {} \; | sort
+	@find scripts/fix -type f -name "*.py" -exec basename {} \; | sort
 	@echo ""
 	@echo "Available run scripts (python):"
 	@find scripts/run -type f -name "*.py" -exec basename {} \; | sort
