@@ -134,10 +134,12 @@ def detect_dolibarr_manifest(src_dir: Union[str, Path]) -> Optional[Path]:
         matches = list(src_path.glob(pattern))
         if matches:
             # Verify it's actually a Dolibarr module descriptor
+            # Look for extends DolibarrModules pattern
             for match in matches:
                 try:
                     content = match.read_text(encoding="utf-8")
-                    if "extends DolibarrModules" in content or "class Mod" in content:
+                    # Check for Dolibarr module inheritance pattern
+                    if re.search(r'extends\s+DolibarrModules', content):
                         return match
                 except Exception:
                     continue
@@ -218,14 +220,14 @@ def parse_dolibarr_descriptor(descriptor_path: Path) -> Optional[ExtensionInfo]:
     try:
         content = descriptor_path.read_text(encoding="utf-8")
         
-        # Extract module name from class name (try multiple patterns)
-        # Pattern 1: class ModMyModule
-        name_match = re.search(r'class\s+(Mod\w+)', content)
-        if not name_match:
-            # Pattern 2: class mod_mymodule (lowercase)
-            name_match = re.search(r'class\s+(mod_\w+)', content, re.IGNORECASE)
+        # Extract module name from class that extends DolibarrModules
+        # Pattern: class ModMyModule extends DolibarrModules
+        class_match = re.search(r'class\s+(\w+)\s+extends\s+DolibarrModules', content)
+        if not class_match:
+            # Fallback: try to find any class definition
+            class_match = re.search(r'class\s+(\w+)', content)
         
-        name = name_match.group(1) if name_match else "unknown"
+        name = class_match.group(1) if class_match else "unknown"
         
         # Extract version
         version_match = re.search(r'\$this->version\s*=\s*[\'"]([^\'"]+)[\'"]', content)

@@ -26,7 +26,6 @@ install:
 	@command -v composer >/dev/null 2>&1 || { echo "Error: composer not found. Please install composer first."; exit 1; }
 	composer global require "squizlabs/php_codesniffer:^3.0" --with-all-dependencies
 	composer global require "phpstan/phpstan:^1.0" --with-all-dependencies
-	composer global require "phpstan/extension-installer:^1.0" --with-all-dependencies
 	composer global require "phpcompatibility/php-compatibility:^9.0" --with-all-dependencies
 	composer global require "codeception/codeception" --with-all-dependencies
 	composer global require "vimeo/psalm:^5.0" --with-all-dependencies
