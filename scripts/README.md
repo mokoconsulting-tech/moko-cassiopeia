@@ -121,6 +121,28 @@ Validates Joomla language directory structure and INI files.
 ### `changelog.sh`
 Validates CHANGELOG.md structure and version entries.
 
+### `version_hierarchy.sh`
+Validates version hierarchy across branch prefixes:
+- Checks for version conflicts across dev/, rc/, and version/ branches
+- Ensures no version exists in multiple priority levels simultaneously
+- Reports any violations of the hierarchy rules
+
+Usage:
+```bash
+./scripts/validate/version_hierarchy.sh
+```
+
+### `workflows.sh`
+Validates GitHub Actions workflow files:
+- Checks YAML syntax using Python's yaml module
+- Ensures no tab characters are present
+- Validates required workflow structure (name, on, jobs)
+
+Usage:
+```bash
+./scripts/validate/workflows.sh
+```
+
 ## Fix Scripts (`fix/`)
 
 These scripts automatically fix common issues detected by validation scripts.
@@ -278,6 +300,65 @@ Example output:
   Not executable: 0
 [SUCCESS] SUCCESS: All scripts follow enterprise standards
 ```
+
+### `list_versions.sh`
+Lists all version branches organized by prefix:
+- Displays dev/, rc/, and version/ branches
+- Shows versions sorted in ascending order
+- Provides a summary count of each branch type
+
+Usage:
+```bash
+./scripts/run/list_versions.sh
+```
+
+Example output:
+```
+========================================
+Version Branches Summary
+========================================
+
+📦 Stable Versions (version/)
+----------------------------------------
+  ✓ version/03.00.00
+  ✓ version/03.01.00
+
+🔧 Release Candidates (rc/)
+----------------------------------------
+  ➜ rc/03.02.00
+
+🚧 Development Versions (dev/)
+----------------------------------------
+  ⚡ dev/03.05.00
+  ⚡ dev/04.00.00
+
+========================================
+Total: 2 stable, 1 RC, 2 dev
+========================================
+```
+
+### `check_version.sh`
+Checks if a version can be created in a specific branch prefix:
+- Validates against version hierarchy rules
+- Checks for existing branches
+- Reports conflicts with higher priority branches
+
+Usage:
+```bash
+./scripts/run/check_version.sh <BRANCH_PREFIX> <VERSION>
+```
+
+Examples:
+```bash
+./scripts/run/check_version.sh dev/ 03.05.00
+./scripts/run/check_version.sh rc/ 03.01.00
+./scripts/run/check_version.sh version/ 02.00.00
+```
+
+Exit codes:
+- 0: Version can be created (no conflicts)
+- 1: Version cannot be created (conflicts found)
+- 2: Invalid arguments
 
 ## Best Practices
 
