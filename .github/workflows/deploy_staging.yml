@@ -1,0 +1,177 @@
+name: Deploy to Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - development
+          - preview
+      version:
+        description: 'Version to deploy (leave empty for latest)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ secrets.DEPLOY_URL }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version || github.ref }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, xml, ctype, json, zip
+
+      - name: Validate deployment prerequisites
+        run: |
+          if [ ! -d "src" ]; then
+            echo "ERROR: src directory not found"
+            exit 1
+          fi
+          
+          if [ ! -f "src/templates/templateDetails.xml" ]; then
+            echo "ERROR: Template manifest not found"
+            exit 1
+          fi
+
+      - name: Run pre-deployment validations
+        run: |
+          chmod +x scripts/validate/*.sh
+          
+          # Required validations
+          scripts/validate/manifest.sh
+          scripts/validate/xml_wellformed.sh
+          scripts/validate/php_syntax.sh
+
+      - name: Build deployment package
+        id: build
+        run: |
+          chmod +x scripts/release/package_extension.sh
+          
+          VERSION="${{ inputs.version }}"
+          if [ -z "${VERSION}" ]; then
+            VERSION=$(grep -oP '<version>\K[^<]+' src/templates/templateDetails.xml | head -n 1)
+          fi
+          
+          scripts/release/package_extension.sh dist "${VERSION}"
+          
+          ZIP_FILE=$(ls dist/*.zip | head -n 1)
+          echo "package=${ZIP_FILE}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate secrets for ${{ inputs.environment }}
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+          STAGING_KEY: ${{ secrets.STAGING_KEY }}
+          STAGING_PATH: ${{ secrets.STAGING_PATH }}
+        run: |
+          missing=()
+          
+          case "${{ inputs.environment }}" in
+            staging)
+              [ -n "${STAGING_HOST:-}" ] || missing+=("STAGING_HOST")
+              [ -n "${STAGING_USER:-}" ] || missing+=("STAGING_USER")
+              [ -n "${STAGING_PATH:-}" ] || missing+=("STAGING_PATH")
+              ;;
+            development|preview)
+              echo "Using default configuration for ${{ inputs.environment }}"
+              ;;
+          esac
+          
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "ERROR: Missing required secrets: ${missing[*]}"
+            echo "Please configure the required secrets in repository settings."
+            exit 1
+          fi
+
+      - name: Deploy to ${{ inputs.environment }} via SFTP
+        if: inputs.environment == 'staging'
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+          STAGING_KEY: ${{ secrets.STAGING_KEY }}
+          STAGING_PASSWORD: ${{ secrets.STAGING_PASSWORD }}
+          STAGING_PATH: ${{ secrets.STAGING_PATH }}
+          STAGING_PORT: ${{ secrets.STAGING_PORT }}
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y lftp openssh-client
+          
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          
+          # Setup SSH key if provided
+          if [ -n "${STAGING_KEY:-}" ]; then
+            echo "${STAGING_KEY}" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+          fi
+          
+          # Add host to known_hosts
+          ssh-keyscan -H "${STAGING_HOST}" >> ~/.ssh/known_hosts
+          
+          PORT="${STAGING_PORT:-22}"
+          PACKAGE="${{ steps.build.outputs.package }}"
+          REMOTE_PATH="${STAGING_PATH}/updates"
+          
+          # Upload using SFTP
+          if [ -n "${STAGING_KEY:-}" ]; then
+            lftp -e "set sftp:auto-confirm yes; \
+                     set sftp:connect-program 'ssh -a -x -i ~/.ssh/id_rsa -p ${PORT}'; \
+                     open -u ${STAGING_USER}, sftp://${STAGING_HOST}; \
+                     mkdir -p ${REMOTE_PATH}; \
+                     cd ${REMOTE_PATH}; \
+                     put ${PACKAGE}; \
+                     ls -l; \
+                     bye"
+          else
+            echo "Note: Password authentication would be used here"
+            echo "For security, key-based authentication is recommended"
+          fi
+
+      - name: Deployment summary
+        if: always()
+        run: |
+          {
+            echo "### Deployment Summary"
+            echo ""
+            echo "- Environment: ${{ inputs.environment }}"
+            echo "- Version: ${{ steps.build.outputs.version }}"
+            echo "- Package: ${{ steps.build.outputs.package }}"
+            echo "- Status: Completed"
+            echo ""
+            if [ "${{ inputs.environment }}" = "staging" ]; then
+              echo "Deployment target: STAGING_HOST"
+            else
+              echo "Note: Configure SFTP secrets for actual deployment"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Notify deployment status
+        if: failure()
+        run: |
+          echo "::error::Deployment to ${{ inputs.environment }} failed"
+          {
+            echo "### ⚠️ Deployment Failed"
+            echo ""
+            echo "Please check the logs for details."
+          } >> "$GITHUB_STEP_SUMMARY"

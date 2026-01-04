@@ -1,0 +1,8 @@
+# Codeception Test Suite Configuration
+
+actor: UnitTester
+modules:
+    enabled:
+        - Asserts
+        - \Tests\Support\UnitHelper
+step_decorators: ~

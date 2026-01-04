@@ -778,6 +778,18 @@ replit.md
 
 
 # ============================================================
+# Testing & Build artifacts
+# ============================================================
+/tests/_output/*
+/dist/*
+/vendor/*
+/node_modules/*
+composer.lock
+package-lock.json
+.phpunit.result.cache
+codeception.phar
+
+# ============================================================
 # Keep-empty folders helper
 # ============================================================
 !.gitkeep

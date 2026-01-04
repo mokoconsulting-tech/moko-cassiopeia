@@ -1,0 +1,37 @@
+parameters:
+    level: 5
+    paths:
+        - src
+    
+    # Exclude paths
+    excludePaths:
+        - src/vendor/*
+        - src/node_modules/*
+        - src/cache/*
+        - src/tmp/*
+    
+    # Scan files
+    scanFiles:
+        - src/templates/index.php
+        - src/templates/component.php
+        - src/templates/error.php
+        - src/templates/offline.php
+    
+    # Report unmatched ignored errors
+    reportUnmatchedIgnoredErrors: false
+    
+    # Check function name case
+    checkFunctionNameCase: true
+    
+    # Check internal classes
+    checkInternalClassCaseSensitivity: true
+    
+    # Treat PHP version
+    phpVersion: 80000
+    
+    # Ignore errors - adjust as needed
+    ignoreErrors:
+        # Allow dynamic properties which are common in Joomla
+        - '#Access to an undefined property#'
+        # Allow some reflection usage
+        - '#Call to an undefined static method#'
