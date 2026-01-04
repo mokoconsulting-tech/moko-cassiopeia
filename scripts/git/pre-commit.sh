@@ -133,11 +133,12 @@ YAML_FILES=$(echo "$STAGED_FILES" | grep -E '\.(yml|yaml)$' || true)
 if [ -n "$YAML_FILES" ]; then
     while IFS= read -r file; do
         if [ -f "$file" ]; then
-            if python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+            # Use printf to safely pass the file path, avoiding injection
+            if python3 -c "import sys, yaml; yaml.safe_load(open(sys.argv[1]))" "$file" 2>/dev/null; then
                 log_success "YAML valid: $file"
             else
                 log_error "YAML invalid: $file"
-                python3 -c "import yaml; yaml.safe_load(open('$file'))" || true
+                python3 -c "import sys, yaml; yaml.safe_load(open(sys.argv[1]))" "$file" || true
                 FAILURES=$((FAILURES + 1))
             fi
         fi
@@ -210,11 +211,12 @@ if [ "$SKIP_QUALITY" = false ] && command -v phpcs >/dev/null 2>&1; then
     PHP_FILES=$(echo "$STAGED_FILES" | grep '\.php$' || true)
     
     if [ -n "$PHP_FILES" ]; then
-        if echo "$PHP_FILES" | xargs phpcs --standard=phpcs.xml -q 2>/dev/null; then
+        # Use process substitution to avoid issues with filenames containing spaces
+        if echo "$PHP_FILES" | tr '\n' '\0' | xargs -0 phpcs --standard=phpcs.xml -q 2>/dev/null; then
             log_success "PHPCS passed"
         else
             log_warning "PHPCS found issues (non-blocking)"
-            echo "$PHP_FILES" | xargs phpcs --standard=phpcs.xml --report=summary || true
+            echo "$PHP_FILES" | tr '\n' '\0' | xargs -0 phpcs --standard=phpcs.xml --report=summary || true
         fi
     else
         echo "  No PHP files to check"

@@ -348,5 +348,5 @@ make help                  # Show all commands
 ---
 
 **Document Version:** 1.0.0  
-**Last Updated:** 2026-01-04  
+**Last Updated:** 2025-01-04  
 **Get Started:** Run `make dev-setup` now!

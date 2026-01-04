@@ -468,5 +468,5 @@ phpcs --standard=phpcs.xml --report=source src/
 ---
 
 **Document Version:** 1.0.0  
-**Last Updated:** 2026-01-04  
+**Last Updated:** 2025-01-04  
 **Maintained by:** Moko Consulting Engineering
