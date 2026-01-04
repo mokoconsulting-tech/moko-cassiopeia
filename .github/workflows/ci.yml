@@ -36,31 +36,36 @@ jobs:
         run: |
           git config --global core.autocrlf false
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
       - name: Verify script executability
         run: |
-          chmod +x scripts/**/*.sh || true
+          chmod +x scripts/**/*.py || true
 
       - name: Required validations
         run: |
           set -e
 
-          scripts/validate/manifest.sh
-          scripts/validate/xml_wellformed.sh
-          scripts/validate/workflows.sh
+          python3 scripts/validate/manifest.py
+          python3 scripts/validate/xml_wellformed.py
+          python3 scripts/validate/workflows.py
 
       - name: Optional validations
         run: |
           set +e
 
-          scripts/validate/changelog.sh
-          scripts/validate/language_structure.sh
-          scripts/validate/license_headers.sh
-          scripts/validate/no_secrets.sh
-          scripts/validate/paths.sh
-          scripts/validate/php_syntax.sh
-          scripts/validate/tabs.sh
-          scripts/validate/version_alignment.sh
-          scripts/validate/version_hierarchy.sh
+          python3 scripts/validate/changelog.py || echo "changelog validation not yet converted"
+          python3 scripts/validate/language_structure.py || echo "language_structure validation not yet converted"
+          python3 scripts/validate/license_headers.py || echo "license_headers validation not yet converted"
+          python3 scripts/validate/no_secrets.py
+          python3 scripts/validate/paths.py
+          python3 scripts/validate/php_syntax.py
+          python3 scripts/validate/tabs.py
+          python3 scripts/validate/version_alignment.py || echo "version_alignment validation not yet converted"
+          python3 scripts/validate/version_hierarchy.py || echo "version_hierarchy validation not yet converted"
 
       - name: CI summary
         if: always()

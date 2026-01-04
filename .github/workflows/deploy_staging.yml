@@ -53,26 +53,31 @@ jobs:
             exit 1
           fi
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
       - name: Run pre-deployment validations
         run: |
-          chmod +x scripts/validate/*.sh
+          chmod +x scripts/validate/*.py
           
           # Required validations
-          scripts/validate/manifest.sh
-          scripts/validate/xml_wellformed.sh
-          scripts/validate/php_syntax.sh
+          python3 scripts/validate/manifest.py
+          python3 scripts/validate/xml_wellformed.py
+          python3 scripts/validate/php_syntax.py
 
       - name: Build deployment package
         id: build
         run: |
-          chmod +x scripts/release/package_extension.sh
+          chmod +x scripts/release/package_extension.py
           
           VERSION="${{ inputs.version }}"
           if [ -z "${VERSION}" ]; then
             VERSION=$(grep -oP '<version>\K[^<]+' src/templates/templateDetails.xml | head -n 1)
           fi
           
-          scripts/release/package_extension.sh dist "${VERSION}"
+          python3 scripts/release/package_extension.py dist "${VERSION}"
           
           ZIP_FILE=$(ls dist/*.zip | head -n 1)
           echo "package=${ZIP_FILE}" >> "$GITHUB_OUTPUT"
