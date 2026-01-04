@@ -45,7 +45,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "lib"))
 
 try:
     import common
-    import joomla_manifest
+    import extension_utils
 except ImportError:
     print("ERROR: Cannot import required libraries", file=sys.stderr)
     sys.exit(1)
@@ -121,7 +121,7 @@ def create_package(
     exclude_patterns: Set[str] = None
 ) -> Path:
     """
-    Create a distributable ZIP package for a Joomla extension.
+    Create a distributable ZIP package for a Joomla or Dolibarr extension.
     
     Args:
         src_dir: Source directory containing extension files
@@ -137,13 +137,15 @@ def create_package(
     if not src_path.is_dir():
         common.die(f"Source directory not found: {src_dir}")
     
-    # Find and parse manifest
-    manifest_path = joomla_manifest.find_manifest(src_dir)
-    manifest_info = joomla_manifest.parse_manifest(manifest_path)
+    # Detect extension platform and get info
+    ext_info = extension_utils.get_extension_info(src_dir)
+    
+    if not ext_info:
+        common.die(f"No Joomla or Dolibarr extension found in {src_dir}")
     
     # Determine version
     if not version:
-        version = manifest_info.version
+        version = ext_info.version
     
     # Determine repo name
     if not repo_name:
@@ -163,7 +165,8 @@ def create_package(
     
     # Generate ZIP filename
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    zip_filename = f"{repo_name}-{version}-{manifest_info.extension_type}.zip"
+    platform_suffix = f"{ext_info.platform.value}-{ext_info.extension_type}"
+    zip_filename = f"{repo_name}-{version}-{platform_suffix}.zip"
     zip_path = output_path / zip_filename
     
     # Remove existing ZIP if present
@@ -171,8 +174,9 @@ def create_package(
         zip_path.unlink()
     
     common.log_section("Creating Extension Package")
-    common.log_kv("Extension", manifest_info.name)
-    common.log_kv("Type", manifest_info.extension_type)
+    common.log_kv("Platform", ext_info.platform.value.upper())
+    common.log_kv("Extension", ext_info.name)
+    common.log_kv("Type", ext_info.extension_type)
     common.log_kv("Version", version)
     common.log_kv("Source", src_dir)
     common.log_kv("Output", str(zip_path))
@@ -207,8 +211,9 @@ def create_package(
     # Output JSON for machine consumption
     result = {
         "status": "ok",
-        "extension": manifest_info.name,
-        "ext_type": manifest_info.extension_type,
+        "platform": ext_info.platform.value,
+        "extension": ext_info.name,
+        "ext_type": ext_info.extension_type,
         "version": version,
         "package": str(zip_path),
         "files": file_count,
@@ -224,7 +229,7 @@ def create_package(
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Package Joomla extension as distributable ZIP",
+        description="Package Joomla or Dolibarr extension as distributable ZIP",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -239,6 +244,8 @@ Examples:
   
   # Package with custom source
   %(prog)s --src-dir my-extension dist 1.0.0
+
+Supports both Joomla and Dolibarr extensions with automatic platform detection.
 """
     )
     
