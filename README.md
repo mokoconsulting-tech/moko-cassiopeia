@@ -207,6 +207,6 @@ See the [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
 
 ## Revision History
 
-| Version | Date       | Author 													| Description 													|
-| ------- | ---------- | -----------------------------_-- | ------------------------------------- |
-| 3.0     | 2025-12-09 | Jonathan Miller (@jmiller-moko) 	| Added Metadata and Revision History  	|
+| Version | Date       | Author                           | Description                           |
+| ------- | ---------- | -------------------------------- | ------------------------------------- |
+| 3.0     | 2025-12-09 | Jonathan Miller (@jmiller-moko)  | Added Metadata and Revision History   |
