@@ -1,6 +1,12 @@
-# .github-private Migration Checklist
+# Centralized CI/CD Migration Checklist
 
-This checklist guides the migration of CI/CD workflows from individual repositories to a centralized `.github-private` repository.
+This checklist guides the migration of CI/CD workflows from individual repositories to centralized repositories using a dual-repository architecture.
+
+## Architecture Overview
+
+**Two Centralized Repositories:**
+1. **`MokoStandards`** (Public) - Community workflows, quality checks, testing
+2. **`.github-private`** (Private) - Sensitive workflows, deployments, proprietary logic
 
 ## Phase 1: Planning and Preparation
 
@@ -8,13 +14,16 @@ This checklist guides the migration of CI/CD workflows from individual repositor
 - [x] Create CI_MIGRATION_PLAN.md
 - [x] Create REUSABLE_WORKFLOWS.md  
 - [x] Create migration checklist
+- [x] Define dual-repository architecture (MokoStandards + .github-private)
 - [ ] Review and approve migration plan with team
 - [ ] Identify workflow owners and stakeholders
 - [ ] Schedule migration windows
 
 ### Repository Inventory
 - [x] List all workflows in current repository
-- [x] Identify workflows to centralize
+- [x] Identify workflows to centralize (categorized by sensitivity)
+- [x] Identify public workflows for MokoStandards
+- [x] Identify sensitive workflows for .github-private
 - [x] Identify workflows to keep local
 - [x] Document workflow dependencies
 - [x] List all secrets used by workflows
@@ -22,16 +31,26 @@ This checklist guides the migration of CI/CD workflows from individual repositor
 
 ### Risk Assessment
 - [ ] Identify critical workflows that cannot have downtime
-- [ ] Create rollback procedures
+- [ ] Create rollback procedures for both repositories
 - [ ] Set up monitoring for workflow failures
 - [ ] Communicate migration plan to team
+- [ ] Plan staged rollout strategy
 
-## Phase 2: .github-private Repository Setup
+## Phase 2: Centralized Repository Setup
 
-### Repository Creation
+### MokoStandards Repository Creation (Public)
+- [ ] Create `MokoStandards` repository in organization
+- [ ] Set repository to Public
+- [ ] Initialize with README explaining public standards
+- [ ] Add LICENSE file (appropriate for public repository)
+- [ ] Create initial branch structure (main, develop)
+- [ ] Enable GitHub Pages for documentation
+- [ ] Set up community contribution guidelines
+
+### .github-private Repository Creation (Private)
 - [ ] Create `.github-private` repository in organization
 - [ ] Set repository to Private
-- [ ] Initialize with README
+- [ ] Initialize with README explaining private workflows
 - [ ] Add LICENSE file
 - [ ] Create initial branch structure (main, develop)
 

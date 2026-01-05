@@ -1,42 +1,120 @@
-# Reusable Workflow Templates for .github-private
+# Reusable Workflow Templates for Centralized Repositories
 
-This directory contains example templates for reusable workflows that will be moved to the `.github-private` repository.
+This document contains example templates for reusable workflows that will be distributed across two centralized repositories based on sensitivity.
 
-## Structure
+## Dual Repository Architecture
 
+### `MokoStandards` (Public Repository)
+- **Purpose**: Public, community-accessible workflows and standards
+- **Content**: Quality checks, testing workflows, public CI/CD templates
+- **Visibility**: Public (open source)
+- **Target Audience**: Internal teams and external community
+
+### `.github-private` (Private Repository)
+- **Purpose**: Sensitive, proprietary workflows and deployment logic
+- **Content**: Deployment workflows, release pipelines, credential handling
+- **Visibility**: Private (organization only)
+- **Target Audience**: Internal teams only
+
+## Repository Structures
+
+**`MokoStandards` (Public):**
+```
+MokoStandards/
+├── .github/
+│   └── workflows/
+│       ├── reusable-php-quality.yml
+│       ├── reusable-joomla-testing.yml
+│       ├── reusable-dolibarr-testing.yml
+│       └── reusable-security-scan.yml
+├── scripts/
+│   └── shared/
+│       ├── extension_utils.py
+│       └── common.py
+└── docs/
+    ├── STANDARDS.md
+    └── USAGE.md
+```
+
+**`.github-private` (Private):**
 ```
 .github-private/
 ├── .github/
 │   └── workflows/
-│       ├── reusable-php-quality.yml
 │       ├── reusable-release-pipeline.yml
-│       ├── reusable-joomla-testing.yml
-│       └── reusable-deploy-staging.yml
-└── docs/
+│       ├── reusable-deploy-staging.yml
+│       └── reusable-deploy-production.yml
+├── scripts/
+│   └── deployment/
+└. docs/
     └── USAGE.md
 ```
 
 ## Usage in Main Repositories
 
-### Basic Pattern
+### Basic Patterns
+
+**Pattern 1: Calling Public Workflow from `MokoStandards`**
 
 ```yaml
-name: Workflow Name
+name: Quality Checks
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  job-name:
-    uses: mokoconsulting-tech/.github-private/.github/workflows/reusable-workflow-name.yml@main
+  quality:
+    uses: mokoconsulting-tech/MokoStandards/.github/workflows/reusable-php-quality.yml@v1
     with:
-      # Input parameters
-      parameter-name: value
+      php-versions: '["8.0", "8.1", "8.2", "8.3"]'
     secrets: inherit
 ```
 
-### Example: PHP Quality Check
+**Pattern 2: Calling Private Workflow from `.github-private`**
+
+```yaml
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    uses: mokoconsulting-tech/.github-private/.github/workflows/reusable-deploy.yml@main
+    with:
+      environment: staging
+    secrets: inherit
+```
+
+**Pattern 3: Combining Both (Public Quality + Private Deployment)**
+
+```yaml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  quality:
+    uses: mokoconsulting-tech/MokoStandards/.github/workflows/reusable-php-quality.yml@v1
+    with:
+      php-versions: '["8.0", "8.1", "8.2", "8.3"]'
+    secrets: inherit
+
+  deploy:
+    needs: quality
+    if: success()
+    uses: mokoconsulting-tech/.github-private/.github/workflows/reusable-deploy.yml@main
+    with:
+      environment: staging
+    secrets: inherit
+```
+
+## Complete Workflow Examples by Repository
+
+### Example 1: PHP Quality Check (MokoStandards - Public)
 
 **In main repository** (`.github/workflows/php_quality.yml`):
 ```yaml

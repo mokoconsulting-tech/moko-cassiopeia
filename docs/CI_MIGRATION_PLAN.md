@@ -1,13 +1,31 @@
-# CI/CD Migration to .github-private Repository
+# CI/CD Migration to Centralized Repositories
 
 ## Purpose
 
-This document outlines the plan and preparation steps for migrating CI/CD workflows to a centralized `.github-private` repository. This approach provides:
+This document outlines the plan and preparation steps for migrating CI/CD workflows to centralized repositories. The organization uses a **dual-repository architecture**:
 
-- **Security**: Keep sensitive CI/CD logic and configurations private
+### Repository Architecture
+
+**`.github-private`** (Private & Secure Centralization)
+- **Purpose**: Sensitive/proprietary workflows and deployment logic
+- **Visibility**: Private (organization members only)
+- **Content**: Deployment workflows, release pipelines, sensitive scripts
+- **Use Case**: Production deployments, security-sensitive operations
+
+**`MokoStandards`** (Public Centralization)
+- **Purpose**: Public/shareable workflows and best practices
+- **Visibility**: Public (community accessible)
+- **Content**: Quality checks, testing workflows, public templates
+- **Use Case**: Open-source projects, community contributions, standardization
+
+This dual approach provides:
+
+- **Security**: Keep sensitive CI/CD logic and configurations private in `.github-private`
+- **Community**: Share public workflows and standards via `MokoStandards`
 - **Reusability**: Share common workflows across multiple repositories
-- **Maintainability**: Centralize CI/CD updates in one location
+- **Maintainability**: Centralize CI/CD updates in one location per type
 - **Organization**: Separate CI/CD infrastructure from application code
+- **Flexibility**: Choose appropriate repository based on workflow sensitivity
 
 ## Current State
 
@@ -35,37 +53,73 @@ This document outlines the plan and preparation steps for migrating CI/CD workfl
 - Repository-specific configuration files
 - Application scripts that are part of the product
 
-**Files to Move to .github-private:**
-- Complex workflow definitions
-- Shared workflow templates
-- Sensitive deployment scripts
-- Organization-wide CI/CD tooling
+**Files to Move to Centralized Repositories:**
+
+**To `.github-private` (Private):**
+- Deployment workflows (deploy_staging.yml, production deployments)
+- Release pipelines with sensitive logic (release_pipeline.yml)
+- Workflows containing proprietary business logic
+- Scripts with deployment credentials handling
+
+**To `MokoStandards` (Public):**
+- Quality check workflows (php_quality.yml)
+- Testing workflows (joomla_testing.yml)
+- Public CI/CD templates and examples
+- Shared utility scripts (extension_utils.py, common.py)
 
 ### Phase 2: Structure Setup
 
-Create `.github-private` repository with structure:
+Create both centralized repositories with appropriate structure:
+
+**`.github-private` Repository Structure:**
 ```
 .github-private/
 ├── .github/
 │   └── workflows/
-│       ├── reusable-php-quality.yml
-│       ├── reusable-release-pipeline.yml
-│       ├── reusable-joomla-testing.yml
-│       └── reusable-deploy-staging.yml
+│       ├── reusable-release-pipeline.yml     (sensitive)
+│       ├── reusable-deploy-staging.yml       (sensitive)
+│       └── reusable-deploy-production.yml    (sensitive)
+├── scripts/
+│   ├── deployment/
+│   │   ├── deploy.sh
+│   │   └── rollback.sh
+│   └── release/
+│       └── publish.py
+└── docs/
+    ├── WORKFLOWS.md
+    └── DEPLOYMENT.md
+```
+
+**`MokoStandards` Repository Structure:**
+```
+MokoStandards/
+├── .github/
+│   └── workflows/
+│       ├── reusable-php-quality.yml          (public)
+│       ├── reusable-joomla-testing.yml       (public)
+│       ├── reusable-dolibarr-testing.yml     (public)
+│       └── reusable-security-scan.yml        (public)
 ├── scripts/
 │   ├── shared/
 │   │   ├── extension_utils.py
-│   │   └── deployment/
+│   │   ├── common.py
+│   │   └── validators/
 │   └── templates/
+│       ├── workflow-templates/
+│       └── action-templates/
 └── docs/
-    └── WORKFLOWS.md
+    ├── STANDARDS.md
+    ├── WORKFLOWS.md
+    └── CONTRIBUTING.md
 ```
 
 ### Phase 3: Conversion
 
 **Main Repository Workflows (Simplified Callers):**
 
-Example `php_quality.yml`:
+**Example 1: Public Quality Workflow** (calls `MokoStandards`)
+
+`php_quality.yml`:
 ```yaml
 name: PHP Code Quality
 
@@ -77,15 +131,40 @@ on:
 
 jobs:
   quality:
-    uses: mokoconsulting-tech/.github-private/.github/workflows/reusable-php-quality.yml@main
+    uses: mokoconsulting-tech/MokoStandards/.github/workflows/reusable-php-quality.yml@v1
     with:
       php-versions: '["8.0", "8.1", "8.2", "8.3"]'
     secrets: inherit
 ```
 
-**Centralized Reusable Workflow:**
+**Example 2: Private Deployment Workflow** (calls `.github-private`)
 
-Located in `.github-private/.github/workflows/reusable-php-quality.yml`:
+`deploy.yml`:
+```yaml
+name: Deploy to Staging
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: choice
+        options: [staging, production]
+
+jobs:
+  deploy:
+    uses: mokoconsulting-tech/.github-private/.github/workflows/reusable-deploy.yml@main
+    with:
+      environment: ${{ inputs.environment }}
+      platform: 'joomla'
+    secrets: inherit
+```
+
+**Centralized Reusable Workflow Examples:**
+
+**In `MokoStandards` (Public):**
+
+Located in `MokoStandards/.github/workflows/reusable-php-quality.yml`:
 ```yaml
 name: Reusable PHP Quality Workflow
 
@@ -101,25 +180,59 @@ jobs:
   # Full implementation here
 ```
 
+**In `.github-private` (Private):**
+
+Located in `.github-private/.github/workflows/reusable-deploy.yml`:
+```yaml
+name: Reusable Deployment Workflow
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+    secrets:
+      FTP_HOST:
+        required: true
+      FTP_USER:
+        required: true
+
+jobs:
+  # Deployment logic here
+```
+
 ### Phase 4: Migration Steps
 
-1. **Create .github-private repository**
-   - Initialize with README and LICENSE
-   - Set up branch protection rules
-   - Configure team access
+1. **Create both centralized repositories**
+   - **`.github-private`**: Private repository (mokoconsulting-tech/.github-private)
+   - **`MokoStandards`**: Public repository (mokoconsulting-tech/MokoStandards)
+   - Initialize each with README and LICENSE
+   - Set up appropriate branch protection rules
+   - Configure access: private (team only) and public (community)
 
-2. **Move workflows to .github-private**
-   - Convert to reusable workflows with `workflow_call` triggers
+2. **Categorize and move workflows**
+   - **Sensitive workflows → `.github-private`**:
+     - deployment workflows, release pipelines
+     - Convert to reusable workflows with `workflow_call` triggers
+     - Add security controls and audit logging
+   
+   - **Public workflows → `MokoStandards`**:
+     - quality checks, testing workflows
+     - Add comprehensive documentation and examples
+     - Enable community contributions
+   
    - Test each workflow in isolation
    - Add proper input parameters and secrets handling
 
 3. **Update main repository workflows**
-   - Replace with simplified caller workflows
-   - Update documentation
-   - Test integration
+   - Replace with simplified caller workflows pointing to appropriate repository
+   - Update documentation with new workflow references
+   - Test integration end-to-end
 
 4. **Migrate shared scripts**
-   - Move organization-wide scripts to .github-private
+   - **Deployment/sensitive scripts → `.github-private/scripts/`**
+   - **Public utilities → `MokoStandards/scripts/shared/`**
    - Keep product-specific scripts in main repo
    - Update import paths and references
 
@@ -154,37 +267,57 @@ jobs:
 
 ## Workflow Categorization
 
-### Workflows to Centralize (Move to .github-private)
+### Workflows to Centralize
+
+#### To `MokoStandards` (Public Repository)
 
 1. **php_quality.yml** ✓
    - Reason: Standardized quality checks across all PHP projects
    - Type: Reusable workflow
-   - Sensitivity: Low
+   - Sensitivity: Low (no secrets, publicly shareable)
+   - Target: `MokoStandards/.github/workflows/reusable-php-quality.yml`
    
-2. **release_pipeline.yml** ✓
+2. **joomla_testing.yml** ✓
+   - Reason: Shared across Joomla projects, community benefit
+   - Type: Reusable workflow
+   - Sensitivity: Low (testing patterns, no sensitive data)
+   - Target: `MokoStandards/.github/workflows/reusable-joomla-testing.yml`
+
+3. **ci.yml** (partially)
+   - Reason: Generic CI patterns can be shared
+   - Type: Reusable workflow template
+   - Sensitivity: Low (standard CI practices)
+   - Target: `MokoStandards/.github/workflows/reusable-ci-base.yml`
+
+#### To `.github-private` (Private Repository)
+
+1. **release_pipeline.yml** ✓
    - Reason: Complex release logic, contains sensitive deployment steps
    - Type: Reusable workflow
-   - Sensitivity: High
+   - Sensitivity: High (deployment credentials, business logic)
+   - Target: `.github-private/.github/workflows/reusable-release-pipeline.yml`
 
-3. **deploy_staging.yml** ✓
-   - Reason: Contains deployment credentials and logic
+2. **deploy_staging.yml** ✓
+   - Reason: Contains deployment credentials and proprietary logic
    - Type: Reusable workflow
-   - Sensitivity: High
+   - Sensitivity: High (FTP credentials, server details)
+   - Target: `.github-private/.github/workflows/reusable-deploy-staging.yml`
 
-4. **joomla_testing.yml** ✓
-   - Reason: Shared across Joomla projects
+3. **deploy_production.yml** ✓
+   - Reason: Production deployment with strict security requirements
    - Type: Reusable workflow
-   - Sensitivity: Low
+   - Sensitivity: Critical (production access)
+   - Target: `.github-private/.github/workflows/reusable-deploy-production.yml`
 
 ### Workflows to Keep Local (Main Repository)
 
-1. **ci.yml**
-   - Reason: Project-specific CI steps
-   - Can call centralized reusable workflows if needed
+1. **ci.yml** (project-specific parts)
+   - Reason: Repository-specific CI steps
+   - Can call centralized workflows from both `MokoStandards` and `.github-private`
 
 2. **repo_health.yml**
-   - Reason: Repository-specific health checks
-   - Keep local with option to extend from centralized base
+   - Reason: Repository-specific health checks and metrics
+   - Keep local with option to extend from `MokoStandards` base
 
 3. **version_branch.yml**
    - Reason: Project-specific versioning strategy
@@ -194,13 +327,32 @@ jobs:
 
 ### Scripts to Centralize
 
+#### To `MokoStandards` (Public)
+
 1. **scripts/lib/extension_utils.py** ✓
    - Shared across all extension projects
-   - Platform detection logic
+   - Platform detection logic (Joomla/Dolibarr)
+   - Target: `MokoStandards/scripts/shared/extension_utils.py`
 
 2. **scripts/lib/common.py** ✓
    - Universal utility functions
-   - No project-specific logic
+   - No project-specific or sensitive logic
+   - Target: `MokoStandards/scripts/shared/common.py`
+
+3. **scripts/release/detect_platform.py** ✓
+   - Platform detection helper
+   - Publicly useful for other projects
+   - Target: `MokoStandards/scripts/shared/detect_platform.py`
+
+#### To `.github-private` (Private)
+
+1. **scripts/release/deployment/** ✓
+   - Deployment scripts with credential handling
+   - Target: `.github-private/scripts/deployment/`
+
+2. **scripts/release/publish.py** (if sensitive)
+   - Release publishing with proprietary logic
+   - Target: `.github-private/scripts/release/publish.py`
 
 ### Scripts to Keep Local
 
