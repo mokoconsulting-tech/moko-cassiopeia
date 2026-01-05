@@ -243,6 +243,8 @@ jobs:
             ${{ runner.os }}-composer-
 
       - name: Install Codeception
+        env:
+          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{ secrets.GITHUB_TOKEN }}"}}'
         run: |
           composer global require codeception/codeception
           composer global require codeception/module-db
