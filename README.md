@@ -209,5 +209,5 @@ See the [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
 
 | Date       | Change Summary                                                      | Author                          |
 | ---------- | ------------------------------------------------------------------- | ------------------------------- |
-| 2026-01-05 | Fixed malformed markdown table formatting in revision history.     | Jonathan Miller (@jmiller-moko) |
 | 2026-01-05 | Initial publication of template documentation and feature overview. | Moko Consulting                 |
+| 2026-01-05 | Fixed malformed markdown table formatting in revision history.     | Jonathan Miller (@jmiller-moko) |
