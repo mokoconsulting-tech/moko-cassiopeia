@@ -75,7 +75,7 @@ This checklist guides the migration of CI/CD workflows from individual repositor
 ## Phase 3: Secrets and Variables Setup
 
 ### Organization-Level Secrets
-- [ ] Migrate FTP_HOST to organization secrets
+- [ ] Migrate FTP_SERVER to organization secrets
 - [ ] Migrate FTP_USER to organization secrets
 - [ ] Migrate FTP_KEY to organization secrets (if used)
 - [ ] Migrate FTP_PASSWORD to organization secrets (if used)
@@ -406,13 +406,13 @@ fi
 - name: Pre-Deployment Validation
   run: |
     # Verify deployment prerequisites
-    if [ -z "${{ secrets.FTP_HOST }}" ]; then
-      echo "❌ FTP_HOST not configured"
+    if [ -z "${{ secrets.FTP_SERVER }}" ]; then
+      echo "❌ FTP_SERVER not configured"
       exit 1
     fi
     
     # Test connectivity
-    nc -zv ${{ secrets.FTP_HOST }} 22 || exit 1
+    nc -zv ${{ secrets.FTP_SERVER }} 22 || exit 1
     
     # Verify artifact exists
     if [ ! -f deployment.zip ]; then
@@ -428,7 +428,7 @@ fi
 - name: Backup Current Deployment
   run: |
     # Create backup of current deployment
-    ssh ${{ secrets.FTP_USER }}@${{ secrets.FTP_HOST }} \
+    ssh ${{ secrets.FTP_USER }}@${{ secrets.FTP_SERVER }} \
         "cd ${{ secrets.FTP_PATH }} && tar -czf backup-$(date +%Y%m%d-%H%M%S).tar.gz ."
     
     echo "✅ Backup created"
@@ -437,9 +437,9 @@ fi
   id: deploy
   run: |
     # Deploy new version
-    scp deployment.zip ${{ secrets.FTP_USER }}@${{ secrets.FTP_HOST }}:${{ secrets.FTP_PATH }}/
+    scp deployment.zip ${{ secrets.FTP_USER }}@${{ secrets.FTP_SERVER }}:${{ secrets.FTP_PATH }}/
     
-    ssh ${{ secrets.FTP_USER }}@${{ secrets.FTP_HOST }} \
+    ssh ${{ secrets.FTP_USER }}@${{ secrets.FTP_SERVER }} \
         "cd ${{ secrets.FTP_PATH }} && unzip -o deployment.zip"
     
     echo "✅ Deployment successful"
@@ -465,10 +465,10 @@ fi
     echo "⚠️ Deployment failed, rolling back..."
     
     # Restore from backup
-    BACKUP=$(ssh ${{ secrets.FTP_USER }}@${{ secrets.FTP_HOST }} \
+    BACKUP=$(ssh ${{ secrets.FTP_USER }}@${{ secrets.FTP_SERVER }} \
              "cd ${{ secrets.FTP_PATH }} && ls -t backup-*.tar.gz | head -1")
     
-    ssh ${{ secrets.FTP_USER }}@${{ secrets.FTP_HOST }} \
+    ssh ${{ secrets.FTP_USER }}@${{ secrets.FTP_SERVER }} \
         "cd ${{ secrets.FTP_PATH }} && tar -xzf $BACKUP"
     
     echo "✅ Rollback completed"
@@ -1102,7 +1102,7 @@ fi
 echo "=== Checking Secret Access ==="
 
 SECRETS=(
-    "FTP_HOST"
+    "FTP_SERVER"
     "FTP_USER"
     "FTP_PASSWORD"
     "FTP_PATH"

@@ -193,7 +193,7 @@ on:
         required: true
         type: string
     secrets:
-      FTP_HOST:
+      FTP_SERVER:
         required: true
       FTP_USER:
         required: true
@@ -246,7 +246,7 @@ jobs:
 ### Secrets to Configure
 
 **In .github-private repository:**
-- Deployment credentials (FTP_HOST, FTP_USER, FTP_KEY, etc.)
+- Deployment credentials (FTP_SERVER, FTP_USER, FTP_KEY, etc.)
 - API tokens for external services
 - Signing keys
 
@@ -481,7 +481,7 @@ If issues arise during migration:
 ```
 Organization Level (Settings > Secrets and Variables)
 ├── Secrets
-│   ├── FTP_HOST                    (inherited by all repos)
+│   ├── FTP_SERVER                    (inherited by all repos)
 │   ├── FTP_USER                    (inherited by all repos)
 │   ├── FTP_KEY                     (inherited by all repos)
 │   ├── FTP_PASSWORD                (inherited by all repos)
