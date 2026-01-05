@@ -755,9 +755,9 @@ else:
 
           SUFFIX="${FTP_PATH_SUFFIX:-}"
           if [ -n "${SUFFIX}" ]; then
-            REMOTE_PATH="${FTP_PATH%/}/${SUFFIX%/}"
+            REMOTE_PATH="${FTP_PATH%/}/${SUFFIX%/}/${CHANNEL}"
           else
-            REMOTE_PATH="${FTP_PATH%/}"
+            REMOTE_PATH="${FTP_PATH%/}/${CHANNEL}"
           fi
 
           AUTH_MODE="password"
@@ -1007,7 +1007,7 @@ else:
             --body "Automated PR created by release pipeline. Version branch is retained by policy." \
             || true
 
-      - name: Attempt to merge PR (best effort, squash merge)
+      - name: Attempt to merge PR (best effort)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -1021,7 +1021,7 @@ else:
             exit 1
           fi
 
-          gh pr merge "${PR_NUMBER}" --squash --delete-branch=false \
+          gh pr merge "${PR_NUMBER}" --merge --delete-branch=false \
             || echo "PR merge blocked by branch protection or policy" >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Report run context (always)
