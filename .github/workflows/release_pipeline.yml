@@ -643,7 +643,7 @@ else:
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Build Joomla ZIP (extension type aware, src-only archive)
+      - name: Build Joomla/Dolibarr ZIP (platform-aware, src-only archive)
         id: build
         run: |
           set -euo pipefail
@@ -657,44 +657,43 @@ else:
           DIST_DIR="${GITHUB_WORKSPACE}/dist"
           mkdir -p "${DIST_DIR}"
 
-          MANIFEST=""
-          if [ -f "src/templateDetails.xml" ]; then
-            MANIFEST="src/templateDetails.xml"
-          elif find src -maxdepth 4 -type f -name 'templateDetails.xml' | head -n 1 | grep -q .; then
-            MANIFEST="$(find src -maxdepth 4 -type f -name 'templateDetails.xml' | head -n 1)"
-          elif find src -maxdepth 4 -type f -name 'pkg_*.xml' | head -n 1 | grep -q .; then
-            MANIFEST="$(find src -maxdepth 4 -type f -name 'pkg_*.xml' | head -n 1)"
-          elif find src -maxdepth 4 -type f -name 'com_*.xml' | head -n 1 | grep -q .; then
-            MANIFEST="$(find src -maxdepth 4 -type f -name 'com_*.xml' | head -n 1)"
-          elif find src -maxdepth 4 -type f -name 'mod_*.xml' | head -n 1 | grep -q .; then
-            MANIFEST="$(find src -maxdepth 4 -type f -name 'mod_*.xml' | head -n 1)"
-          elif find src -maxdepth 6 -type f -name 'plg_*.xml' | head -n 1 | grep -q .; then
-            MANIFEST="$(find src -maxdepth 6 -type f -name 'plg_*.xml' | head -n 1)"
-          else
-            MANIFEST="$(grep -Rsl --include='*.xml' '<extension' src | head -n 1 || true)"
-          fi
-
-          if [ -z "${MANIFEST}" ]; then
-            echo "ERROR: No Joomla manifest XML found under src" >> "${GITHUB_STEP_SUMMARY}"
+          # Detect platform and extension type using dedicated script
+          if ! PLATFORM_INFO=$(python3 "${GITHUB_WORKSPACE}/scripts/release/detect_platform.py" "${GITHUB_WORKSPACE}/src"); then
+            echo "ERROR: Could not detect extension platform and type" >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
-
-          EXT_TYPE="$(grep -Eo 'type="[^"]+"' "${MANIFEST}" | head -n 1 | cut -d '"' -f2 || true)"
-          if [ -z "${EXT_TYPE}" ]; then
-            EXT_TYPE="unknown"
+          
+          if [ -z "${PLATFORM_INFO}" ]; then
+            echo "ERROR: Platform detection returned empty result" >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
           fi
+          
+          PLATFORM="${PLATFORM_INFO%%|*}"
+          EXT_TYPE="${PLATFORM_INFO##*|}"
 
-          ZIP="${REPO_NAME}-${VERSION}-${CHANNEL}-${EXT_TYPE}.zip"
+          ZIP="${REPO_NAME}-${VERSION}-${CHANNEL}-${PLATFORM}-${EXT_TYPE}.zip"
 
+          # Create ZIP with development artifact exclusions
           zip -r -X "${DIST_DIR}/${ZIP}" src \
             -x "src/**/.git/**" \
             -x "src/**/.github/**" \
             -x "src/**/.DS_Store" \
-            -x "src/**/__MACOSX/**"
+            -x "src/**/__MACOSX/**" \
+            -x "src/**/node_modules/**" \
+            -x "src/**/vendor/**" \
+            -x "src/**/tests/**" \
+            -x "src/**/Tests/**" \
+            -x "src/**/.phpstan.cache/**" \
+            -x "src/**/.psalm/**" \
+            -x "src/**/.rector/**" \
+            -x "src/**/phpmd-cache/**" \
+            -x "src/**/.php-cs-fixer.cache" \
+            -x "src/**/.phplint-cache" \
+            -x "src/**/*.log"
 
           echo "zip_name=${ZIP}" >> "${GITHUB_OUTPUT}"
           echo "dist_dir=${DIST_DIR}" >> "${GITHUB_OUTPUT}"
-          echo "manifest=${MANIFEST}" >> "${GITHUB_OUTPUT}"
+          echo "platform=${PLATFORM}" >> "${GITHUB_OUTPUT}"
           echo "ext_type=${EXT_TYPE}" >> "${GITHUB_OUTPUT}"
 
           ZIP_BYTES="$(stat -c%s "${DIST_DIR}/${ZIP}")"
@@ -702,7 +701,7 @@ else:
           {
             echo "### Build report"
             echo "```json"
-            echo "{\"repository\":\"${GITHUB_REPOSITORY}\",\"workflow\":\"${GITHUB_WORKFLOW}\",\"job\":\"${GITHUB_JOB}\",\"run/id\":${GITHUB_RUN_ID},\"run/number\":${GITHUB_RUN_NUMBER},\"run/attempt\":${GITHUB_RUN_ATTEMPT},\"run/url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\",\"actor\":\"${GITHUB_ACTOR}\",\"sha\":\"${GITHUB_SHA}\",\"archive_policy\":\"src_only\",\"manifest\":\"${MANIFEST}\",\"extension_type\":\"${EXT_TYPE}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES}}"
+            echo "{\"repository\":\"${GITHUB_REPOSITORY}\",\"workflow\":\"${GITHUB_WORKFLOW}\",\"job\":\"${GITHUB_JOB}\",\"run/id\":${GITHUB_RUN_ID},\"run/number\":${GITHUB_RUN_NUMBER},\"run/attempt\":${GITHUB_RUN_ATTEMPT},\"run/url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\",\"actor\":\"${GITHUB_ACTOR}\",\"sha\":\"${GITHUB_SHA}\",\"archive_policy\":\"src_only\",\"platform\":\"${PLATFORM}\",\"extension_type\":\"${EXT_TYPE}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES}}"
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 

@@ -793,6 +793,14 @@ package-lock.json
 .phpunit.result.cache
 codeception.phar
 
+# Development tool artifacts
+.phpstan.cache
+.psalm/
+.rector/
+phpmd-cache/
+.php-cs-fixer.cache
+.phplint-cache
+
 # Python
 __pycache__/
 *.py[cod]
@@ -804,8 +812,8 @@ develop-eggs/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/

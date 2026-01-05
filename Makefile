@@ -24,10 +24,13 @@ help:
 install:
 	@echo "Installing development dependencies..."
 	@command -v composer >/dev/null 2>&1 || { echo "Error: composer not found. Please install composer first."; exit 1; }
-	composer global require squizlabs/php_codesniffer
-	composer global require phpstan/phpstan
-	composer global require phpcompatibility/php-compatibility
-	composer global require codeception/codeception
+	composer global require "squizlabs/php_codesniffer:^3.0" --with-all-dependencies
+	composer global require "phpstan/phpstan:^1.0" --with-all-dependencies
+	composer global require "phpcompatibility/php-compatibility:^9.0" --with-all-dependencies
+	composer global require "codeception/codeception" --with-all-dependencies
+	composer global require "vimeo/psalm:^5.0" --with-all-dependencies
+	composer global require "phpmd/phpmd:^2.0" --with-all-dependencies
+	composer global require "friendsofphp/php-cs-fixer:^3.0" --with-all-dependencies
 	phpcs --config-set installed_paths ~/.composer/vendor/phpcompatibility/php-compatibility
 	@echo "✓ Dependencies installed"
 
@@ -93,6 +96,38 @@ phpcompat:
 	@command -v phpcs >/dev/null 2>&1 || { echo "Error: phpcs not found. Run 'make install' first."; exit 1; }
 	phpcs --standard=PHPCompatibility --runtime-set testVersion 8.0- src/
 
+## psalm: Run Psalm static analysis
+psalm:
+	@echo "Running Psalm static analysis..."
+	@command -v psalm >/dev/null 2>&1 || { echo "Error: psalm not found. Run 'make install' first."; exit 1; }
+	psalm --show-info=false
+
+## phpmd: Run PHP Mess Detector
+phpmd:
+	@echo "Running PHP Mess Detector..."
+	@command -v phpmd >/dev/null 2>&1 || { echo "Error: phpmd not found. Run 'make install' first."; exit 1; }
+	phpmd src/ text cleancode,codesize,controversial,design,naming,unusedcode
+
+## php-cs-fixer: Run PHP-CS-Fixer
+php-cs-fixer:
+	@echo "Running PHP-CS-Fixer..."
+	@command -v php-cs-fixer >/dev/null 2>&1 || { echo "Error: php-cs-fixer not found. Run 'make install' first."; exit 1; }
+	php-cs-fixer fix --dry-run --diff src/
+
+## php-cs-fixer-fix: Auto-fix with PHP-CS-Fixer
+php-cs-fixer-fix:
+	@echo "Auto-fixing with PHP-CS-Fixer..."
+	@command -v php-cs-fixer >/dev/null 2>&1 || { echo "Error: php-cs-fixer not found. Run 'make install' first."; exit 1; }
+	php-cs-fixer fix src/
+
+## quality-extended: Run extended quality checks (includes psalm, phpmd)
+quality-extended:
+	@echo "Running extended code quality checks..."
+	@$(MAKE) quality
+	@$(MAKE) psalm
+	@$(MAKE) phpmd
+	@echo "✓ All quality checks passed"
+
 ## package: Create distribution package
 package:
 	@echo "Creating distribution package..."
@@ -128,6 +163,12 @@ clean:
 	@rm -rf dist/
 	@rm -rf tests/_output/
 	@rm -rf .phpunit.cache/
+	@rm -rf .phpstan.cache/
+	@rm -rf .psalm/
+	@rm -rf .rector/
+	@rm -rf phpmd-cache/
+	@find . -type f -name ".php-cs-fixer.cache" -delete
+	@find . -type f -name ".phplint-cache" -delete
 	@find . -type f -name "*.log" -delete
 	@find . -type f -name ".DS_Store" -delete
 	@echo "✓ Cleaned"

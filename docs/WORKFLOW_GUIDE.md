@@ -86,7 +86,8 @@ gh run view <run-id> --log
 **How to run locally:**
 ```bash
 # Install tools
-composer global require squizlabs/php_codesniffer phpstan/phpstan
+composer global require "squizlabs/php_codesniffer:^3.0" --with-all-dependencies
+composer global require "phpstan/phpstan:^1.0" --with-all-dependencies
 
 # Run checks
 phpcs --standard=phpcs.xml src/

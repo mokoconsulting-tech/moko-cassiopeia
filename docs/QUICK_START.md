@@ -28,9 +28,9 @@ cd moko-cassiopeia
 make dev-setup
 
 # Or manually
-composer global require squizlabs/php_codesniffer
+composer global require "squizlabs/php_codesniffer:^3.0"
 composer global require phpstan/phpstan
-composer global require phpcompatibility/php-compatibility
+composer global require "phpcompatibility/php-compatibility:^9.0"
 composer global require codeception/codeception
 ```
 
@@ -243,7 +243,7 @@ chmod +x scripts/**/*.sh
 ```bash
 make install
 # Or manually:
-composer global require squizlabs/php_codesniffer phpstan/phpstan
+composer global require "squizlabs/php_codesniffer:^3.0" phpstan/phpstan
 ```
 
 ### Pre-commit Hook Fails
