@@ -207,6 +207,7 @@ See the [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
 
 ## Revision History
 
-| Version | Date       | Author                           | Description                           |
-| ------- | ---------- | -------------------------------- | ------------------------------------- |
-| 3.0     | 2025-12-09 | Jonathan Miller (@jmiller-moko)  | Added Metadata and Revision History   |
+| Date       | Change Summary                                                      | Author                          |
+| ---------- | ------------------------------------------------------------------- | ------------------------------- |
+| 2026-01-05 | Fixed malformed markdown table formatting in revision history.     | Jonathan Miller (@jmiller-moko) |
+| 2026-01-05 | Initial publication of template documentation and feature overview. | Moko Consulting                 |
