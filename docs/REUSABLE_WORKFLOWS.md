@@ -292,7 +292,7 @@ on:
         type: string
         default: 'joomla'
     secrets:
-      FTP_HOST:
+      FTP_SERVER:
         required: true
       FTP_USER:
         required: true
@@ -425,7 +425,7 @@ on:
         type: boolean
         default: false
     secrets:
-      FTP_HOST:
+      FTP_SERVER:
         required: true
       FTP_USER:
         required: true
@@ -506,7 +506,7 @@ jobs:
           # Upload via SFTP
           lftp -c "
             set sftp:auto-confirm yes;
-            open sftp://${{ secrets.FTP_USER }}:${{ secrets.FTP_PASSWORD }}@${{ secrets.FTP_HOST }};
+            open sftp://${{ secrets.FTP_USER }}:${{ secrets.FTP_PASSWORD }}@${{ secrets.FTP_SERVER }};
             cd ${{ secrets.FTP_PATH }};
             put deployment.tar.gz;
             quit
@@ -703,7 +703,7 @@ on:
         required: true
         type: string
     secrets:
-      FTP_HOST:
+      FTP_SERVER:
         required: true
       FTP_USER:
         required: true
@@ -1010,7 +1010,7 @@ on:
         type: boolean
         default: false
     secrets:
-      FTP_HOST:
+      FTP_SERVER:
         required: true
       FTP_USER:
         required: true
@@ -1179,7 +1179,7 @@ gh secret set ACTIONS_RUNNER_DEBUG --body "true"
     echo '${{ toJson(inputs) }}'
     
     echo "=== Secrets (names only) ==="
-    echo "FTP_HOST: ${{ secrets.FTP_HOST != '' && 'SET' || 'NOT SET' }}"
+    echo "FTP_SERVER: ${{ secrets.FTP_SERVER != '' && 'SET' || 'NOT SET' }}"
 ```
 
 ### Common Error Patterns and Solutions

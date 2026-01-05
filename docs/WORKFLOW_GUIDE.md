@@ -355,7 +355,7 @@ git push origin --delete dev/03.05.00
 #### "Missing required secrets"
 
 Go to repository Settings → Secrets and variables → Actions, and add:
-- `FTP_HOST`
+- `FTP_SERVER`
 - `FTP_USER`
 - `FTP_KEY` or `FTP_PASSWORD`
 - `FTP_PATH`
