@@ -45,8 +45,6 @@ jobs:
           key: ${{ runner.os }}-composer-phpcs-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-phpcs-${{ matrix.php-version }}-
-            ${{ runner.os }}-composer-phpcs-
-            ${{ runner.os }}-composer-
 
       - name: Install PHP_CodeSniffer
         env:
@@ -101,8 +99,6 @@ jobs:
           key: ${{ runner.os }}-composer-phpstan-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-phpstan-${{ matrix.php-version }}-
-            ${{ runner.os }}-composer-phpstan-
-            ${{ runner.os }}-composer-
 
       - name: Install PHPStan
         env:
@@ -151,8 +147,6 @@ jobs:
           key: ${{ runner.os }}-composer-phpcompat-8.3-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-phpcompat-8.3-
-            ${{ runner.os }}-composer-phpcompat-
-            ${{ runner.os }}-composer-
 
       - name: Install dependencies
         env:

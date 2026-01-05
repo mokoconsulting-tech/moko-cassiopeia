@@ -239,8 +239,6 @@ jobs:
           key: ${{ runner.os }}-composer-codeception-8.1-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-codeception-8.1-
-            ${{ runner.os }}-composer-codeception-
-            ${{ runner.os }}-composer-
 
       - name: Install Codeception
         env:
