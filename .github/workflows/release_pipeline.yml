@@ -755,9 +755,9 @@ else:
 
           SUFFIX="${FTP_PATH_SUFFIX:-}"
           if [ -n "${SUFFIX}" ]; then
-            REMOTE_PATH="${FTP_PATH%/}/${SUFFIX%/}/${CHANNEL}"
+            REMOTE_PATH="${FTP_PATH%/}/${SUFFIX%/}"
           else
-            REMOTE_PATH="${FTP_PATH%/}/${CHANNEL}"
+            REMOTE_PATH="${FTP_PATH%/}"
           fi
 
           AUTH_MODE="password"
