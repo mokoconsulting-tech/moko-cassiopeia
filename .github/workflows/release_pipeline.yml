@@ -667,7 +667,8 @@ else:
           ZIP="${REPO_NAME}-${VERSION}-${SUFFIX}.zip"
 
           # Create ZIP with development artifact exclusions
-          # Only zip the contents of the src folder
+          # Zip only the contents of the src folder (not the src/ folder itself)
+          # This creates a ZIP with extension files at the root level for direct installation
           cd src
           zip -r -X "${DIST_DIR}/${ZIP}" . \
             -x ".git/**" \
