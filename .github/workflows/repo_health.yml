@@ -30,7 +30,7 @@ env:
   ALLOWED_SFTP_PROTOCOLS: sftp
 
   # Release policy
-  RELEASE_REQUIRED_VARS: FTP_HOST,FTP_USER,FTP_PATH
+  RELEASE_REQUIRED_VARS: FTP_SERVER,FTP_USER,FTP_PATH
   RELEASE_OPTIONAL_VARS: FTP_KEY,FTP_PASSWORD,FTP_PROTOCOL,FTP_PORT,FTP_PATH_SUFFIX
 
   # Scripts governance policy
@@ -125,7 +125,7 @@ jobs:
       - name: Guardrails release vars
         env:
           PROFILE_RAW: ${{ github.event.inputs.profile }}
-          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_KEY: ${{ secrets.FTP_KEY }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
@@ -236,7 +236,7 @@ jobs:
       - name: Guardrails SFTP connectivity
         env:
           PROFILE_RAW: ${{ github.event.inputs.profile }}
-          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_KEY: ${{ secrets.FTP_KEY }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
@@ -288,7 +288,7 @@ jobs:
             printf '%s\n' '### SFTP connectivity'
             printf '%s\n' '| Control | Value |'
             printf '%s\n' '|---|---|'
-            printf '%s\n' "| Host | ${FTP_HOST} |"
+            printf '%s\n' "| Host | ${FTP_SERVER} |"
             printf '%s\n' "| User | ${FTP_USER} |"
             printf '%s\n' "| Port | ${port} |"
             printf '%s\n' "| Auth | ${auth_method} |"
@@ -319,11 +319,11 @@ jobs:
               ssh-keygen -p -P "${FTP_PASSWORD}" -N '' -f "${key_file}" >/dev/null
             fi
 
-            printf '%s' "${sftp_cmds}" | sftp "${sftp_v_opt[@]}" -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+            printf '%s' "${sftp_cmds}" | sftp "${sftp_v_opt[@]}" -oBatchMode=yes -oStrictHostKeyChecking=no -P "${port}" -i "${key_file}" "${FTP_USER}@${FTP_SERVER}" >/tmp/sftp_check.log 2>&1
             sftp_rc=$?
           elif [ -n "${FTP_PASSWORD:-}" ]; then
             command -v sshpass >/dev/null 2>&1 || (sudo apt-get update -qq && sudo apt-get install -y sshpass >/dev/null)
-            printf '%s' "${sftp_cmds}" | sshpass -p "${FTP_PASSWORD}" sftp "${sftp_v_opt[@]}" -oBatchMode=no -oStrictHostKeyChecking=no -P "${port}" "${FTP_USER}@${FTP_HOST}" >/tmp/sftp_check.log 2>&1
+            printf '%s' "${sftp_cmds}" | sshpass -p "${FTP_PASSWORD}" sftp "${sftp_v_opt[@]}" -oBatchMode=no -oStrictHostKeyChecking=no -P "${port}" "${FTP_USER}@${FTP_SERVER}" >/tmp/sftp_check.log 2>&1
             sftp_rc=$?
           else
             {

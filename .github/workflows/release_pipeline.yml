@@ -483,7 +483,7 @@ else:
 
       - name: Validate required secrets and variables
         env:
-          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_KEY: ${{ secrets.FTP_KEY }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
@@ -498,7 +498,7 @@ else:
 
           missing=()
 
-          [ -n "${FTP_HOST:-}" ] || missing+=("FTP_HOST")
+          [ -n "${FTP_SERVER:-}" ] || missing+=("FTP_SERVER")
           [ -n "${FTP_USER:-}" ] || missing+=("FTP_USER")
           [ -n "${FTP_PATH:-}" ] || missing+=("FTP_PATH")
 
@@ -643,7 +643,7 @@ else:
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Build Joomla/Dolibarr ZIP (platform-aware, src-only archive)
+      - name: Build Joomla/Dolibarr ZIP (src-only archive)
         id: build
         run: |
           set -euo pipefail
@@ -657,51 +657,45 @@ else:
           DIST_DIR="${GITHUB_WORKSPACE}/dist"
           mkdir -p "${DIST_DIR}"
 
-          # Detect platform and extension type using dedicated script
-          if ! PLATFORM_INFO=$(python3 "${GITHUB_WORKSPACE}/scripts/release/detect_platform.py" "${GITHUB_WORKSPACE}/src"); then
-            echo "ERROR: Could not detect extension platform and type" >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
+          # Determine suffix based on channel
+          if [ "${CHANNEL}" = "rc" ]; then
+            SUFFIX="rc"
+          else
+            SUFFIX="stable"
           fi
-          
-          if [ -z "${PLATFORM_INFO}" ]; then
-            echo "ERROR: Platform detection returned empty result" >> "${GITHUB_STEP_SUMMARY}"
-            exit 1
-          fi
-          
-          PLATFORM="${PLATFORM_INFO%%|*}"
-          EXT_TYPE="${PLATFORM_INFO##*|}"
 
-          ZIP="${REPO_NAME}-${VERSION}-${CHANNEL}-${PLATFORM}-${EXT_TYPE}.zip"
+          ZIP="${REPO_NAME}-${VERSION}-${SUFFIX}.zip"
 
           # Create ZIP with development artifact exclusions
-          zip -r -X "${DIST_DIR}/${ZIP}" src \
-            -x "src/**/.git/**" \
-            -x "src/**/.github/**" \
-            -x "src/**/.DS_Store" \
-            -x "src/**/__MACOSX/**" \
-            -x "src/**/node_modules/**" \
-            -x "src/**/vendor/**" \
-            -x "src/**/tests/**" \
-            -x "src/**/Tests/**" \
-            -x "src/**/.phpstan.cache/**" \
-            -x "src/**/.psalm/**" \
-            -x "src/**/.rector/**" \
-            -x "src/**/phpmd-cache/**" \
-            -x "src/**/.php-cs-fixer.cache" \
-            -x "src/**/.phplint-cache" \
-            -x "src/**/*.log"
+          # Only zip the contents of the src folder
+          cd src
+          zip -r -X "${DIST_DIR}/${ZIP}" . \
+            -x ".git/**" \
+            -x ".github/**" \
+            -x ".DS_Store" \
+            -x "__MACOSX/**" \
+            -x "node_modules/**" \
+            -x "vendor/**" \
+            -x "tests/**" \
+            -x "Tests/**" \
+            -x ".phpstan.cache/**" \
+            -x ".psalm/**" \
+            -x ".rector/**" \
+            -x "phpmd-cache/**" \
+            -x ".php-cs-fixer.cache" \
+            -x ".phplint-cache" \
+            -x "*.log"
+          cd ..
 
           echo "zip_name=${ZIP}" >> "${GITHUB_OUTPUT}"
           echo "dist_dir=${DIST_DIR}" >> "${GITHUB_OUTPUT}"
-          echo "platform=${PLATFORM}" >> "${GITHUB_OUTPUT}"
-          echo "ext_type=${EXT_TYPE}" >> "${GITHUB_OUTPUT}"
 
           ZIP_BYTES="$(stat -c%s "${DIST_DIR}/${ZIP}")"
 
           {
             echo "### Build report"
             echo "```json"
-            echo "{\"repository\":\"${GITHUB_REPOSITORY}\",\"workflow\":\"${GITHUB_WORKFLOW}\",\"job\":\"${GITHUB_JOB}\",\"run/id\":${GITHUB_RUN_ID},\"run/number\":${GITHUB_RUN_NUMBER},\"run/attempt\":${GITHUB_RUN_ATTEMPT},\"run/url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\",\"actor\":\"${GITHUB_ACTOR}\",\"sha\":\"${GITHUB_SHA}\",\"archive_policy\":\"src_only\",\"platform\":\"${PLATFORM}\",\"extension_type\":\"${EXT_TYPE}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES}}"
+            echo "{\"repository\":\"${GITHUB_REPOSITORY}\",\"workflow\":\"${GITHUB_WORKFLOW}\",\"job\":\"${GITHUB_JOB}\",\"run/id\":${GITHUB_RUN_ID},\"run/number\":${GITHUB_RUN_NUMBER},\"run/attempt\":${GITHUB_RUN_ATTEMPT},\"run/url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\",\"actor\":\"${GITHUB_ACTOR}\",\"sha\":\"${GITHUB_SHA}\",\"archive_policy\":\"src_only\",\"suffix\":\"${SUFFIX}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES}}"
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
@@ -725,7 +719,7 @@ else:
       - name: Upload ZIP to SFTP (key-preferred, password-fallback, overwrite, verified)
         id: sftp
         env:
-          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
           FTP_USER: ${{ secrets.FTP_USER }}
           FTP_KEY: ${{ secrets.FTP_KEY }}
           FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
@@ -741,7 +735,7 @@ else:
           ZIP="${{ steps.build.outputs.zip_name }}"
           DIST_DIR="${{ steps.build.outputs.dist_dir }}"
 
-          : "${FTP_HOST:?Missing secret FTP_HOST}"
+          : "${FTP_SERVER:?Missing secret FTP_SERVER}"
           : "${FTP_USER:?Missing secret FTP_USER}"
           : "${FTP_PATH:?Missing secret FTP_PATH}"
 
@@ -753,9 +747,9 @@ else:
 
           PORT="${FTP_PORT:-}"
           if [ -n "${PORT}" ]; then
-            HOSTPORT="${FTP_HOST}:${PORT}"
+            HOSTPORT="${FTP_SERVER}:${PORT}"
           else
-            HOSTPORT="${FTP_HOST}"
+            HOSTPORT="${FTP_SERVER}"
           fi
 
           SUFFIX="${FTP_PATH_SUFFIX:-}"
@@ -786,7 +780,7 @@ else:
             printf '{'
             printf '"protocol":"sftp",'
             printf '"auth_mode":"%s",' "${AUTH_MODE}"
-            printf '"host":"%s",' "${FTP_HOST}"
+            printf '"host":"%s",' "${FTP_SERVER}"
             printf '"port":"%s",' "${PORT:-default}"
             printf '"remote_path":"%s",' "${REMOTE_PATH}"
             printf '"overwrite":true,'
@@ -826,7 +820,7 @@ else:
             fi
           fi
 
-          ssh-keyscan -H "${FTP_HOST}" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "${FTP_SERVER}" >> ~/.ssh/known_hosts
 
           if [ "${AUTH_MODE}" = "key" ]; then
             CONNECT="set sftp:connect-program 'ssh -a -x -i ~/.ssh/id_rsa -o PubkeyAuthentication=yes -o PasswordAuthentication=no'"
@@ -840,7 +834,7 @@ else:
             echo "Dry run enabled. Upload skipped." >> "${GITHUB_STEP_SUMMARY}"
             echo "auth_mode=${AUTH_MODE}" >> "${GITHUB_OUTPUT}"
             echo "remote_path=${REMOTE_PATH}" >> "${GITHUB_OUTPUT}"
-            echo "host=${FTP_HOST}" >> "${GITHUB_OUTPUT}"
+            echo "host=${FTP_SERVER}" >> "${GITHUB_OUTPUT}"
             echo "port=${PORT:-default}" >> "${GITHUB_OUTPUT}"
             exit 0
           fi
@@ -877,13 +871,13 @@ else:
           {
             echo "### SFTP upload report"
             echo "```json"
-            echo "{\"status\":\"ok\",\"protocol\":\"sftp\",\"auth_mode\":\"${AUTH_MODE}\",\"host\":\"${FTP_HOST}\",\"port\":\"${PORT:-default}\",\"remote_path\":\"${REMOTE_PATH}\",\"zip\":\"${ZIP}\",\"zip_bytes_local\":${ZIP_BYTES_LOCAL},\"overwrite\":true}"
+            echo "{\"status\":\"ok\",\"protocol\":\"sftp\",\"auth_mode\":\"${AUTH_MODE}\",\"host\":\"${FTP_SERVER}\",\"port\":\"${PORT:-default}\",\"remote_path\":\"${REMOTE_PATH}\",\"zip\":\"${ZIP}\",\"zip_bytes_local\":${ZIP_BYTES_LOCAL},\"overwrite\":true}"
             echo "```"
           } >> "${GITHUB_STEP_SUMMARY}"
 
           echo "auth_mode=${AUTH_MODE}" >> "${GITHUB_OUTPUT}"
           echo "remote_path=${REMOTE_PATH}" >> "${GITHUB_OUTPUT}"
-          echo "host=${FTP_HOST}" >> "${GITHUB_OUTPUT}"
+          echo "host=${FTP_SERVER}" >> "${GITHUB_OUTPUT}"
           echo "port=${PORT:-default}" >> "${GITHUB_OUTPUT}"
 
       - name: Create Git tag
