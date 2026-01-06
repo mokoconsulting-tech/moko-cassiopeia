@@ -56,8 +56,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
 
       - name: Cache Joomla Downloads
         uses: actions/cache@v4
@@ -241,10 +239,10 @@ jobs:
           key: ${{ runner.os }}-composer-codeception-8.1-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-codeception-8.1-
-            ${{ runner.os }}-composer-codeception-
-            ${{ runner.os }}-composer-
 
       - name: Install Codeception
+        env:
+          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{ secrets.GITHUB_TOKEN }}"}}'
         run: |
           composer global require codeception/codeception
           composer global require codeception/module-db

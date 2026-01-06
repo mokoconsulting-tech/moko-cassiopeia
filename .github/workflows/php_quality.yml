@@ -45,10 +45,10 @@ jobs:
           key: ${{ runner.os }}-composer-phpcs-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-phpcs-${{ matrix.php-version }}-
-            ${{ runner.os }}-composer-phpcs-
-            ${{ runner.os }}-composer-
 
       - name: Install PHP_CodeSniffer
+        env:
+          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{ secrets.GITHUB_TOKEN }}"}}'
         run: |
           composer global require "squizlabs/php_codesniffer:^3.0" --with-all-dependencies
           composer global require "phpcompatibility/php-compatibility:^9.0" --with-all-dependencies
@@ -99,11 +99,12 @@ jobs:
           key: ${{ runner.os }}-composer-phpstan-${{ matrix.php-version }}-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-phpstan-${{ matrix.php-version }}-
-            ${{ runner.os }}-composer-phpstan-
-            ${{ runner.os }}-composer-
 
       - name: Install PHPStan
+        env:
+          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{ secrets.GITHUB_TOKEN }}"}}'
         run: |
+          composer global config --no-plugins allow-plugins.phpstan/extension-installer true
           composer global require phpstan/phpstan "^1.0" --with-all-dependencies
           composer global require phpstan/extension-installer "^1.0" --with-all-dependencies
 
@@ -146,10 +147,10 @@ jobs:
           key: ${{ runner.os }}-composer-phpcompat-8.3-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-phpcompat-8.3-
-            ${{ runner.os }}-composer-phpcompat-
-            ${{ runner.os }}-composer-
 
       - name: Install dependencies
+        env:
+          COMPOSER_AUTH: '{"github-oauth": {"github.com": "${{ secrets.GITHUB_TOKEN }}"}}'
         run: |
           composer global require "squizlabs/php_codesniffer:^3.0" --with-all-dependencies
           composer global require "phpcompatibility/php-compatibility:^9.0" --with-all-dependencies
