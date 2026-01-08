@@ -104,6 +104,7 @@ jobs:
             if [ "${REF_NAME}" = "main" ]; then
               # Infer version from manifest when on main branch
               # Use Python library for cross-platform compatibility
+              # Note: Single-line format required for YAML compatibility
               VERSION=$(python3 -c "import sys; sys.path.insert(0, '${GITHUB_WORKSPACE}/scripts/lib'); import extension_utils; ext_info = extension_utils.get_extension_info('${GITHUB_WORKSPACE}/src'); print(ext_info.version) if ext_info else sys.exit(1)")
               
               if [ -z "${VERSION}" ]; then
