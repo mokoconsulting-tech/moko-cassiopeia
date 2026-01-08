@@ -57,6 +57,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+        # Python is required for validation scripts
 
       - name: Run pre-deployment validations
         run: |
