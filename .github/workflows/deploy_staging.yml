@@ -27,7 +27,7 @@ jobs:
     
     environment:
       name: ${{ inputs.environment }}
-      url: ${{ secrets.DEPLOY_URL }}
+      url: ${{ vars.DEPLOY_URL }}
     
     steps:
       - name: Checkout repository
