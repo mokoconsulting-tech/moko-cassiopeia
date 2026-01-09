@@ -57,7 +57,7 @@ jobs:
 
       - name: Actor authorization (admin or maintain)
         id: auth
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const owner = context.repo.owner;
