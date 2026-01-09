@@ -48,11 +48,9 @@ This repository uses GitHub Actions for continuous integration, testing, quality
 
 **Trigger:** Automatic on push/PR to main, dev/*, rc/*, version/* branches
 
-**Purpose:** Comprehensive CI pipeline for validation, quality checks, and testing
+**Purpose:** Validates code quality and repository structure
 
 **What it does:**
-
-**Repository Validation:**
 - ✅ Validates Joomla manifest XML
 - ✅ Checks XML well-formedness
 - ✅ Validates GitHub Actions workflows
@@ -61,19 +59,6 @@ This repository uses GitHub Actions for continuous integration, testing, quality
 - ✅ Validates license headers
 - ✅ Verifies version alignment
 
-**PHP Code Quality:**
-- 🔍 PHPStan static analysis (level 5)
-- 📏 PHP_CodeSniffer with PSR-12 standards
-- ✔️ PHP 8.0+ compatibility checks
-- **Matrix:** PHP 8.0, 8.1, 8.2, 8.3
-
-**Joomla Integration Testing:**
-- 📦 Downloads and installs Joomla (4.4, 5.0, 5.1)
-- 🔧 Installs template into Joomla
-- ✅ Validates template installation
-- 🧪 Runs Codeception tests
-- **Matrix:** Joomla 4.4/5.0/5.1 × PHP 8.0/8.1/8.2/8.3
-
 **When to check:** After every commit
 
 **How to view results:**
@@ -81,24 +66,53 @@ This repository uses GitHub Actions for continuous integration, testing, quality
 # Via GitHub CLI
 gh run list --workflow=ci.yml --limit 5
 gh run view <run-id> --log
-
-# View specific job logs
-gh run view <run-id> --log --job=<job-id>
 ```
 
-**How to run checks locally:**
-```bash
-# Repository validation
-python3 scripts/validate/manifest.py
-python3 scripts/validate/workflows.py
+### PHP Quality Checks (php_quality.yml)
 
-# PHP quality checks
+**Trigger:** Automatic on push/PR to main, dev/*, rc/*, version/* branches
+
+**Purpose:** Ensures PHP code quality and compatibility
+
+**What it does:**
+- 🔍 PHPStan static analysis (level 5)
+- 📏 PHP_CodeSniffer with PSR-12 standards
+- ✔️ PHP 8.0+ compatibility checks
+
+**Matrix:** PHP 8.0, 8.1, 8.2, 8.3
+
+**When to check:** Before committing PHP changes
+
+**How to run locally:**
+```bash
+# Install tools
 composer global require "squizlabs/php_codesniffer:^3.0" --with-all-dependencies
 composer global require "phpstan/phpstan:^1.0" --with-all-dependencies
+
+# Run checks
 phpcs --standard=phpcs.xml src/
 phpstan analyse --configuration=phpstan.neon
+```
 
-# Joomla testing (see docs/JOOMLA_DEVELOPMENT.md)
+### Joomla Testing (joomla_testing.yml)
+
+**Trigger:** Automatic on push/PR to main, dev/*, rc/* branches
+
+**Purpose:** Tests template compatibility with Joomla versions
+
+**What it does:**
+- 📦 Downloads and installs Joomla (4.4, 5.0, 5.1)
+- 🔧 Installs template into Joomla
+- ✅ Validates template installation
+- 🧪 Runs Codeception tests
+
+**Matrix:** Joomla 4.4/5.0/5.1 × PHP 8.0/8.1/8.2/8.3
+
+**When to check:** Before releasing new versions
+
+**How to test locally:**
+```bash
+# See docs/JOOMLA_DEVELOPMENT.md for local testing setup
 codecept run
 ```
 
