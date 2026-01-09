@@ -44,6 +44,7 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: write
 
 defaults:
   run:
@@ -619,6 +620,49 @@ jobs:
           fi
 
           git push --set-upstream origin "${BRANCH_NAME}"
+
+      - name: Create pull request
+        if: ${{ env.REPORT_ONLY != 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Create pull request"
+
+          if [[ -z "${BRANCH_NAME:-}" ]]; then
+            echo "[FATAL] BRANCH_NAME not set." >&2
+            exit 2
+          fi
+
+          PR_TITLE="Version branch ${NEW_VERSION}"
+          if [[ -n "${VERSION_TEXT}" ]]; then
+            PR_TITLE="${PR_TITLE} (${VERSION_TEXT})"
+          fi
+
+          cat > /tmp/pr_body.txt <<EOF
+          Automated pull request created for version branch \`${BRANCH_NAME}\`.
+
+          Version: ${NEW_VERSION}
+          Version Text: ${VERSION_TEXT:-N/A}
+          Branch Prefix: ${BRANCH_PREFIX}
+          Base Branch: ${BASE_BRANCH}
+
+          This PR was automatically created by the version branch workflow.
+          EOF
+
+          echo "[INFO] Creating pull request from ${BRANCH_NAME} to ${BASE_BRANCH}"
+          
+          gh pr create \
+            --base "${BASE_BRANCH}" \
+            --head "${BRANCH_NAME}" \
+            --title "${PR_TITLE}" \
+            --body-file /tmp/pr_body.txt \
+            || {
+              echo "[WARN] Failed to create pull request. It may already exist or there may be no changes." >&2
+              exit 0
+            }
+
+          echo "[INFO] Pull request created successfully"
 
       - name: Publish audit trail
         if: always()
