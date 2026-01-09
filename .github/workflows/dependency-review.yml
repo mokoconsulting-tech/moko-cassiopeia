@@ -77,22 +77,33 @@ jobs:
   composer-audit:
     name: Composer Audit
     runs-on: ubuntu-latest
-    if: hashFiles('composer.json') != ''
     
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
       
+      - name: Check for composer.json
+        id: check-composer
+        run: |
+          if [ -f "composer.json" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Setup PHP
+        if: steps.check-composer.outputs.exists == 'true'
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.1'
           tools: composer:v2
       
       - name: Install Dependencies
+        if: steps.check-composer.outputs.exists == 'true'
         run: composer install --no-interaction --prefer-dist
       
       - name: Run Composer Audit
+        if: steps.check-composer.outputs.exists == 'true'
         run: |
           echo "### Composer Audit Results" >> $GITHUB_STEP_SUMMARY
           
@@ -105,29 +116,47 @@ jobs:
           fi
       
       - name: Check for Outdated Packages
+        if: steps.check-composer.outputs.exists == 'true'
         run: |
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Outdated Composer Packages" >> $GITHUB_STEP_SUMMARY
           composer outdated --direct || echo "All packages are up to date" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Skip Composer Audit
+        if: steps.check-composer.outputs.exists == 'false'
+        run: |
+          echo "### Composer Audit Results" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ No composer.json found - skipping Composer audit" >> $GITHUB_STEP_SUMMARY
 
   python-safety:
     name: Python Safety Check
     runs-on: ubuntu-latest
-    if: hashFiles('requirements.txt', 'pyproject.toml', 'Pipfile') != ''
     
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
       
+      - name: Check for Python dependency files
+        id: check-python
+        run: |
+          if [ -f "requirements.txt" ] || [ -f "pyproject.toml" ] || [ -f "Pipfile" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Setup Python
+        if: steps.check-python.outputs.exists == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       
       - name: Install Safety
+        if: steps.check-python.outputs.exists == 'true'
         run: pip install safety
       
       - name: Run Safety Check
+        if: steps.check-python.outputs.exists == 'true'
         run: |
           echo "### Python Safety Check Results" >> $GITHUB_STEP_SUMMARY
           
@@ -145,6 +174,12 @@ jobs:
           else
             echo "ℹ️ No requirements.txt found" >> $GITHUB_STEP_SUMMARY
           fi
+      
+      - name: Skip Python Safety Check
+        if: steps.check-python.outputs.exists == 'false'
+        run: |
+          echo "### Python Safety Check Results" >> $GITHUB_STEP_SUMMARY
+          echo "ℹ️ No Python dependency files found - skipping Python safety check" >> $GITHUB_STEP_SUMMARY
 
   license-check:
     name: License Compliance Check

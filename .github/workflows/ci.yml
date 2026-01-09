@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   validation:
-    uses: mokoconsulting-tech/MokoStandards/.github/workflows/reusable-ci-validation.yml@v1
+    uses: mokoconsulting-tech/MokoStandards/.github/workflows/reusable-ci-validation.yml@main
     with:
       validation-scripts-path: 'scripts/validate'
     secrets: inherit
