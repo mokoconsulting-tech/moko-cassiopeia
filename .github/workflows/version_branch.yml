@@ -639,16 +639,20 @@ jobs:
             PR_TITLE="${PR_TITLE} (${VERSION_TEXT})"
           fi
 
-          cat > /tmp/pr_body.txt <<EOF
-          Automated pull request created for version branch \`${BRANCH_NAME}\`.
-
-          Version: ${NEW_VERSION}
-          Version Text: ${VERSION_TEXT:-N/A}
-          Branch Prefix: ${BRANCH_PREFIX}
-          Base Branch: ${BASE_BRANCH}
+          cat > /tmp/pr_body.txt <<'PRBODY'
+          Automated pull request created for version branch.
 
           This PR was automatically created by the version branch workflow.
-          EOF
+          PRBODY
+
+          # Add dynamic content
+          {
+            echo ""
+            echo "Version: ${NEW_VERSION}"
+            echo "Version Text: ${VERSION_TEXT:-N/A}"
+            echo "Branch Prefix: ${BRANCH_PREFIX}"
+            echo "Base Branch: ${BASE_BRANCH}"
+          } >> /tmp/pr_body.txt
 
           echo "[INFO] Creating pull request from ${BRANCH_NAME} to ${BASE_BRANCH}"
 
@@ -667,7 +671,7 @@ jobs:
           else
             echo "[WARN] Failed to create pull request (exit code: ${PR_EXIT_CODE})" >&2
             echo "[WARN] Output: ${PR_OUTPUT}" >&2
-            
+
             # Check for common error conditions
             if echo "${PR_OUTPUT}" | grep -iq "already exists"; then
               echo "[INFO] PR likely already exists, continuing..." >&2
