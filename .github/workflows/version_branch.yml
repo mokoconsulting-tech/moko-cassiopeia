@@ -640,9 +640,7 @@ jobs:
           fi
 
           cat > /tmp/pr_body.txt <<'PRBODY'
-          Automated pull request created for version branch.
-
-          This PR was automatically created by the version branch workflow.
+          This pull request was automatically created by the version branch workflow.
           PRBODY
 
           # Add dynamic content
@@ -672,10 +670,10 @@ jobs:
             echo "[WARN] Failed to create pull request (exit code: ${PR_EXIT_CODE})" >&2
             echo "[WARN] Output: ${PR_OUTPUT}" >&2
 
-            # Check for common error conditions
-            if echo "${PR_OUTPUT}" | grep -iq "already exists"; then
-              echo "[INFO] PR likely already exists, continuing..." >&2
-            elif echo "${PR_OUTPUT}" | grep -iq "no commits between"; then
+            # Check for common error conditions with specific patterns
+            if echo "${PR_OUTPUT}" | grep -iqE "pull request.*already exists"; then
+              echo "[INFO] PR already exists, continuing..." >&2
+            elif echo "${PR_OUTPUT}" | grep -iqE "no commits between.*branch"; then
               echo "[INFO] No commits between branches, continuing..." >&2
             else
               echo "[WARN] Unexpected error occurred, but continuing workflow" >&2
