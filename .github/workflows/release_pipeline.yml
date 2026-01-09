@@ -51,7 +51,7 @@ jobs:
 
     steps:
       - name: Checkout (best effort)
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 1
 
@@ -260,7 +260,7 @@ jobs:
 
     steps:
       - name: Checkout source branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.guard.outputs.source_branch }}
           fetch-depth: 0
@@ -344,7 +344,7 @@ jobs:
 
     steps:
       - name: Checkout promoted branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.guard.outputs.promoted_branch }}
           fetch-depth: 0
@@ -461,7 +461,7 @@ jobs:
 
     steps:
       - name: Checkout promoted branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ needs.guard.outputs.promoted_branch }}
           fetch-depth: 0
@@ -971,7 +971,7 @@ jobs:
 
     steps:
       - name: Checkout main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: main
           fetch-depth: 0
@@ -1039,7 +1039,7 @@ jobs:
 
     steps:
       - name: Checkout tag
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 1
