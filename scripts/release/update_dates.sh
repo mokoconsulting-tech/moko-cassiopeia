@@ -42,7 +42,8 @@ echo "TODAY: ${TODAY}"
 echo "VERSION: ${VERSION}"
 
 # Escape special regex characters in VERSION for safe use in grep and sed
-VERSION_ESCAPED=$(printf '%s\n' "${VERSION}" | sed 's/[]\/$*.^[]/\\&/g')
+# Escapes: ] \ / $ * . ^ [
+VERSION_ESCAPED=$(printf '%s\n' "${VERSION}" | sed 's/[][\/$*.^]/\\&/g')
 
 # Update CHANGELOG.md - replace the date on the version heading line
 if [ -f "CHANGELOG.md" ]; then

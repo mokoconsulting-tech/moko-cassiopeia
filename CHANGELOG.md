@@ -21,7 +21,7 @@
 
 # Changelog — Moko-Cassiopeia (VERSION: 03.05.00)
 
-## [03.05.00] 2026-01-04
+## [03.05.00] 2026-01-09
 - Created `.github/workflows`
 - Replaced `./CODE_OF_CONDUCT.md` from `MokoStandards`
 - Replaced `./CONTRIBUTING.md` from `MokoStandards`
