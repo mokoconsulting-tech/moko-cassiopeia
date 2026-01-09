@@ -44,6 +44,7 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: write
 
 defaults:
   run:
@@ -619,6 +620,65 @@ jobs:
           fi
 
           git push --set-upstream origin "${BRANCH_NAME}"
+
+      - name: Create pull request
+        if: ${{ env.REPORT_ONLY != 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          source "$CI_HELPERS"
+          moko_init "Create pull request"
+
+          if [[ -z "${BRANCH_NAME:-}" ]]; then
+            echo "[FATAL] BRANCH_NAME not set." >&2
+            exit 2
+          fi
+
+          PR_TITLE="Version branch ${NEW_VERSION}"
+          if [[ -n "${VERSION_TEXT}" ]]; then
+            PR_TITLE="${PR_TITLE} (${VERSION_TEXT})"
+          fi
+
+          cat > /tmp/pr_body.txt <<'PRBODY'
+          This pull request was automatically created by the version branch workflow.
+          PRBODY
+
+          # Add dynamic content
+          {
+            echo ""
+            echo "Version: ${NEW_VERSION}"
+            echo "Version Text: ${VERSION_TEXT:-N/A}"
+            echo "Branch Prefix: ${BRANCH_PREFIX}"
+            echo "Base Branch: ${BASE_BRANCH}"
+          } >> /tmp/pr_body.txt
+
+          echo "[INFO] Creating pull request from ${BRANCH_NAME} to ${BASE_BRANCH}"
+
+          set +e
+          PR_OUTPUT=$(gh pr create \
+            --base "${BASE_BRANCH}" \
+            --head "${BRANCH_NAME}" \
+            --title "${PR_TITLE}" \
+            --body-file /tmp/pr_body.txt 2>&1)
+          PR_EXIT_CODE=$?
+          set -e
+
+          if [[ ${PR_EXIT_CODE} -eq 0 ]]; then
+            echo "[INFO] Pull request created successfully"
+            echo "${PR_OUTPUT}"
+          else
+            echo "[WARN] Failed to create pull request (exit code: ${PR_EXIT_CODE})" >&2
+            echo "[WARN] Output: ${PR_OUTPUT}" >&2
+
+            # Check for common error conditions with specific patterns
+            if echo "${PR_OUTPUT}" | grep -iqE "pull request.*already exists"; then
+              echo "[INFO] PR already exists, continuing..." >&2
+            elif echo "${PR_OUTPUT}" | grep -iqE "no commits between.*branch"; then
+              echo "[INFO] No commits between branches, continuing..." >&2
+            else
+              echo "[WARN] Unexpected error occurred, but continuing workflow" >&2
+            fi
+          fi
 
       - name: Publish audit trail
         if: always()
