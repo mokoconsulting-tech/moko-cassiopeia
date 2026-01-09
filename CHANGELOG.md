@@ -23,11 +23,13 @@
 
 ## [03.05.01] 2026-01-09
 ### Added
-- Added `codeql-analysis.yml` workflow for security scanning
 - Added `dependency-review.yml` workflow for dependency vulnerability scanning
 - Added `standards-compliance.yml` workflow for MokoStandards validation
 - Added `.github/dependabot.yml` configuration for automated security updates
 - Added `docs/README.md` as documentation index
+
+### Changed
+- Removed custom `codeql-analysis.yml` workflow (repository uses GitHub's default CodeQL setup)
 
 ### Changed
 - Enforced repository compliance with MokoStandards requirements
