@@ -31,15 +31,24 @@ set -euo pipefail
 TODAY="${1:-$(date +%Y-%m-%d)}"
 VERSION="${2:-unknown}"
 
+# Validate date format (YYYY-MM-DD)
+if ! [[ "${TODAY}" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+  echo "ERROR: Invalid date format '${TODAY}'. Expected YYYY-MM-DD format."
+  exit 1
+fi
+
 echo "Date normalization script running..."
 echo "TODAY: ${TODAY}"
 echo "VERSION: ${VERSION}"
 
+# Escape special regex characters in VERSION for safe use in grep and sed
+VERSION_ESCAPED=$(printf '%s\n' "${VERSION}" | sed 's/[]\/$*.^[]/\\&/g')
+
 # Update CHANGELOG.md - replace the date on the version heading line
 if [ -f "CHANGELOG.md" ]; then
   # Match lines like "## [03.05.00] 2026-01-04" and update the date
-  if grep -q "^## \[${VERSION}\] " CHANGELOG.md; then
-    sed -i "s/^## \[${VERSION}\] [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/## [${VERSION}] ${TODAY}/" CHANGELOG.md
+  if grep -q "^## \[${VERSION_ESCAPED}\] " CHANGELOG.md; then
+    sed -i "s/^## \[${VERSION_ESCAPED}\] [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}/## [${VERSION_ESCAPED}] ${TODAY}/" CHANGELOG.md
     echo "✓ Updated CHANGELOG.md version [${VERSION}] date to ${TODAY}"
   else
     echo "⚠ Warning: CHANGELOG.md does not contain version [${VERSION}] heading"
