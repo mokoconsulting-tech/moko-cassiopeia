@@ -23,7 +23,7 @@
  INGROUP: Moko-Cassiopeia.Documentation
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: docs/README.md
- VERSION: 03.05.00
+ VERSION: 01.00.00
  BRIEF: Documentation index for Moko-Cassiopeia template
  PATH: /docs/README.md
 -->

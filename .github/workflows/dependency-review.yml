@@ -133,12 +133,15 @@ jobs:
           
           # Check requirements.txt if exists
           if [ -f "requirements.txt" ]; then
-            if safety check -r requirements.txt; then
+            if safety check -r requirements.txt 2>&1 | tee safety_output.txt; then
               echo "✅ No known vulnerabilities in Python dependencies" >> $GITHUB_STEP_SUMMARY
             else
               echo "⚠️ Vulnerabilities detected in Python dependencies" >> $GITHUB_STEP_SUMMARY
-              safety check -r requirements.txt || true
+              cat safety_output.txt >> $GITHUB_STEP_SUMMARY || true
+              rm -f safety_output.txt
+              exit 0
             fi
+            rm -f safety_output.txt
           else
             echo "ℹ️ No requirements.txt found" >> $GITHUB_STEP_SUMMARY
           fi
