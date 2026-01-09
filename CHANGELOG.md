@@ -21,6 +21,20 @@
 
 # Changelog — Moko-Cassiopeia (VERSION: 03.05.00)
 
+## [03.05.01] 2026-01-09
+### Added
+- Added `dependency-review.yml` workflow for dependency vulnerability scanning
+- Added `standards-compliance.yml` workflow for MokoStandards validation
+- Added `.github/dependabot.yml` configuration for automated security updates
+- Added `docs/README.md` as documentation index
+
+### Changed
+- Removed custom `codeql-analysis.yml` workflow (repository uses GitHub's default CodeQL setup)
+
+### Changed
+- Enforced repository compliance with MokoStandards requirements
+- Improved security posture with automated scanning and dependency management
+
 ## [03.05.00] 2026-01-04
 - Created `.github/workflows`
 - Replaced `./CODE_OF_CONDUCT.md` from `MokoStandards`
