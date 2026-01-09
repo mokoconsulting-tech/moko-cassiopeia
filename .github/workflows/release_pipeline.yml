@@ -187,7 +187,7 @@ jobs:
 
           {
             echo "### Guard report"
-            echo "```json"
+            echo "\`\`\`json"
             echo "{"
             echo "  \"repository\": \"${GITHUB_REPOSITORY}\","
             echo "  \"workflow\": \"${GITHUB_WORKFLOW}\","
@@ -210,7 +210,7 @@ jobs:
             echo "  \"override\": \"${OVERRIDE}\","
             echo "  \"today_utc\": \"${TODAY_UTC}\""
             echo "}"
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Report run context (always)
@@ -220,7 +220,7 @@ jobs:
 
           {
             echo "### Run context"
-            echo "```json"
+            echo "\`\`\`json"
             printf '{'
             printf '"repository":"%s",' "${GITHUB_REPOSITORY}"
             printf '"workflow":"%s",' "${GITHUB_WORKFLOW}"
@@ -236,16 +236,16 @@ jobs:
             printf '"runner_os":"%s",' "${RUNNER_OS}"
             printf '"runner_name":"%s"' "${RUNNER_NAME}"
             printf '}\n'
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
           {
             echo "### Git snapshot"
-            echo "```"
+            echo "\`\`\`"
             git --version || true
             git status --porcelain=v1 || true
             git log -1 --pretty=fuller || true
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
   promote_branch:
@@ -313,9 +313,9 @@ jobs:
 
           {
             echo "### Promotion report"
-            echo "```json"
+            echo "\`\`\`json"
             echo "{\"source\":\"${SRC}\",\"target\":\"${DST}\",\"status\":\"ok\"}"
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Report run context (always)
@@ -324,10 +324,10 @@ jobs:
           set -euo pipefail
           {
             echo "### Git snapshot"
-            echo "```"
+            echo "\`\`\`"
             git status --porcelain=v1 || true
             git log -1 --pretty=fuller || true
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
   normalize_dates:
@@ -378,9 +378,9 @@ jobs:
 
           {
             echo "### Date normalization (repo script only)"
-            echo "```json"
+            echo "\`\`\`json"
             echo "{\"today_utc\":\"${TODAY}\",\"version\":\"${VERSION}\"}"
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
           CANDIDATES=(
@@ -417,9 +417,9 @@ jobs:
 
           {
             echo "### Date normalization diffstat"
-            echo "```"
+            echo "\`\`\`"
             git diff --stat || true
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Commit normalized dates (if changed)
@@ -439,10 +439,10 @@ jobs:
           set -euo pipefail
           {
             echo "### Git snapshot"
-            echo "```"
+            echo "\`\`\`"
             git status --porcelain=v1 || true
             git log -1 --pretty=fuller || true
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
   build_and_release:
@@ -520,7 +520,7 @@ jobs:
 
           {
             echo "### Configuration guardrails"
-            echo "```json"
+            echo "\`\`\`json"
             printf '{"status":"%s","missing":[' "$( [ "${#missing[@]}" -gt 0 ] && echo fail || echo ok )"
             sep=""
             for m in "${missing[@]}"; do
@@ -531,7 +531,7 @@ jobs:
               "${CHANNEL}" "${DEPLOY_DRY_RUN:-false}" \
               "$( [ "${key_present}" = "true" ] && echo present || echo missing )" \
               "$( [ "${pw_present}" = "true" ] && echo present || echo missing )"
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
           if [ "${#missing[@]}" -gt 0 ]; then
@@ -568,7 +568,7 @@ jobs:
           if [ "${#missing[@]}" -gt 0 ]; then
             {
               echo "### Script guardrails"
-              echo "```json"
+              echo "\`\`\`json"
               printf '{"status":"fail","missing_required_scripts":['
               sep=""
               for m in "${missing[@]}"; do
@@ -576,7 +576,7 @@ jobs:
                 sep=",";
               done
               printf ']}\n'
-              echo "```"
+              echo "\`\`\`"
             } >> "${GITHUB_STEP_SUMMARY}"
             exit 1
           fi
@@ -596,7 +596,7 @@ jobs:
 
           {
             echo "### Validation inventory"
-            echo "```json"
+            echo "\`\`\`json"
             printf '{'
             printf '"required_count":%s,' "${#required_scripts[@]}"
             printf '"optional_count":%s,' "${#optional_scripts[@]}"
@@ -632,7 +632,7 @@ jobs:
             done
 
             printf ']}\n'
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Build Joomla/Dolibarr ZIP (src-only archive)
@@ -687,9 +687,9 @@ jobs:
 
           {
             echo "### Build report"
-            echo "```json"
+            echo "\`\`\`json"
             echo "{\"repository\":\"${GITHUB_REPOSITORY}\",\"workflow\":\"${GITHUB_WORKFLOW}\",\"job\":\"${GITHUB_JOB}\",\"run/id\":${GITHUB_RUN_ID},\"run/number\":${GITHUB_RUN_NUMBER},\"run/attempt\":${GITHUB_RUN_ATTEMPT},\"run/url\":\"${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}\",\"actor\":\"${GITHUB_ACTOR}\",\"sha\":\"${GITHUB_SHA}\",\"archive_policy\":\"src_only\",\"suffix\":\"${SUFFIX}\",\"zip\":\"${DIST_DIR}/${ZIP}\",\"zip_bytes\":${ZIP_BYTES}}"
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: ZIP inventory (audit)
@@ -701,12 +701,12 @@ jobs:
 
           {
             echo "### ZIP inventory"
-            echo "```"
+            echo "\`\`\`"
             ls -la "${DIST_DIR}" || true
             echo ""
             echo "ZIP file list (first 200):"
             unzip -l "${DIST_DIR}/${ZIP_NAME}" | head -n 200 || true
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Upload ZIP to SFTP (key-preferred, password-fallback, overwrite, verified)
@@ -769,7 +769,7 @@ jobs:
 
           {
             echo "### Deployment intent"
-            echo "```json"
+            echo "\`\`\`json"
             printf '{'
             printf '"protocol":"sftp",'
             printf '"auth_mode":"%s",' "${AUTH_MODE}"
@@ -779,7 +779,7 @@ jobs:
             printf '"overwrite":true,'
             printf '"dry_run":%s' "${DRY_RUN}"
             printf '}\n'
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
           sudo apt-get update -y
@@ -853,9 +853,9 @@ jobs:
           if [ "${rc}" -ne 0 ]; then
             {
               echo "### SFTP session log"
-              echo "```"
+              echo "\`\`\`"
               tail -n 400 "${upload_log}" || true
-              echo "```"
+              echo "\`\`\`"
             } >> "${GITHUB_STEP_SUMMARY}" || true
             exit "${rc}"
           fi
@@ -863,9 +863,9 @@ jobs:
           ZIP_BYTES_LOCAL="$(stat -c%s "${DIST_DIR}/${ZIP}")"
           {
             echo "### SFTP upload report"
-            echo "```json"
+            echo "\`\`\`json"
             echo "{\"status\":\"ok\",\"protocol\":\"sftp\",\"auth_mode\":\"${AUTH_MODE}\",\"host\":\"${FTP_SERVER}\",\"port\":\"${PORT:-default}\",\"remote_path\":\"${REMOTE_PATH}\",\"zip\":\"${ZIP}\",\"zip_bytes_local\":${ZIP_BYTES_LOCAL},\"overwrite\":true}"
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
           echo "auth_mode=${AUTH_MODE}" >> "${GITHUB_OUTPUT}"
@@ -950,10 +950,10 @@ jobs:
           set -euo pipefail
           {
             echo "### Git snapshot"
-            echo "```"
+            echo "\`\`\`"
             git status --porcelain=v1 || true
             git log -1 --pretty=fuller || true
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
   push_version_to_main:
@@ -1022,9 +1022,9 @@ jobs:
           set -euo pipefail
           {
             echo "### Main promotion report"
-            echo "```json"
+            echo "\`\`\`json"
             echo "{\"head\":\"${{ needs.guard.outputs.promoted_branch }}\",\"base\":\"main\",\"release_mode\":\"${{ needs.guard.outputs.release_mode }}\"}"
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
   release_event_report:
@@ -1049,7 +1049,7 @@ jobs:
           set -euo pipefail
           {
             echo "### Release event telemetry"
-            echo "```json"
+            echo "\`\`\`json"
             echo "{"
             echo "  \"repository\": \"${GITHUB_REPOSITORY}\","
             echo "  \"event\": \"${GITHUB_EVENT_NAME}\","
@@ -1059,7 +1059,7 @@ jobs:
             echo "  \"release_mode\": \"${{ needs.guard.outputs.release_mode }}\","
             echo "  \"version\": \"${{ needs.guard.outputs.version }}\""
             echo "}"
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
 
       - name: Report run context (always)
@@ -1068,8 +1068,8 @@ jobs:
           set -euo pipefail
           {
             echo "### Git snapshot"
-            echo "```"
+            echo "\`\`\`"
             git status --porcelain=v1 || true
             git log -1 --pretty=fuller || true
-            echo "```"
+            echo "\`\`\`"
           } >> "${GITHUB_STEP_SUMMARY}"
