@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   quality:
-    uses: mokoconsulting-tech/MokoStandards/.github/workflows/reusable-php-quality.yml@v1
+    uses: mokoconsulting-tech/MokoStandards/.github/workflows/reusable-php-quality.yml@main
     with:
       php-versions: '["8.0", "8.1", "8.2", "8.3"]'
       php-extensions: 'mbstring, xml, ctype, json, zip'
