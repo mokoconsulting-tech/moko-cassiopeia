@@ -651,18 +651,32 @@ jobs:
           EOF
 
           echo "[INFO] Creating pull request from ${BRANCH_NAME} to ${BASE_BRANCH}"
-          
-          gh pr create \
+
+          set +e
+          PR_OUTPUT=$(gh pr create \
             --base "${BASE_BRANCH}" \
             --head "${BRANCH_NAME}" \
             --title "${PR_TITLE}" \
-            --body-file /tmp/pr_body.txt \
-            || {
-              echo "[WARN] Failed to create pull request. It may already exist or there may be no changes." >&2
-              exit 0
-            }
+            --body-file /tmp/pr_body.txt 2>&1)
+          PR_EXIT_CODE=$?
+          set -e
 
-          echo "[INFO] Pull request created successfully"
+          if [[ ${PR_EXIT_CODE} -eq 0 ]]; then
+            echo "[INFO] Pull request created successfully"
+            echo "${PR_OUTPUT}"
+          else
+            echo "[WARN] Failed to create pull request (exit code: ${PR_EXIT_CODE})" >&2
+            echo "[WARN] Output: ${PR_OUTPUT}" >&2
+            
+            # Check for common error conditions
+            if echo "${PR_OUTPUT}" | grep -iq "already exists"; then
+              echo "[INFO] PR likely already exists, continuing..." >&2
+            elif echo "${PR_OUTPUT}" | grep -iq "no commits between"; then
+              echo "[INFO] No commits between branches, continuing..." >&2
+            else
+              echo "[WARN] Unexpected error occurred, but continuing workflow" >&2
+            fi
+          fi
 
       - name: Publish audit trail
         if: always()
