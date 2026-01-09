@@ -57,6 +57,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+        # Python is required for validation scripts
 
       - name: Run pre-deployment validations
         run: |
@@ -70,17 +71,43 @@ jobs:
       - name: Build deployment package
         id: build
         run: |
-          chmod +x scripts/release/package_extension.py
+          set -euo pipefail
           
           VERSION="${{ inputs.version }}"
           if [ -z "${VERSION}" ]; then
             VERSION=$(grep -oP '<version>\K[^<]+' src/templates/templateDetails.xml | head -n 1)
           fi
           
-          python3 scripts/release/package_extension.py dist "${VERSION}"
+          REPO_NAME="${{ github.event.repository.name }}"
+          DIST_DIR="${GITHUB_WORKSPACE}/dist"
+          mkdir -p "${DIST_DIR}"
           
-          ZIP_FILE=$(ls dist/*.zip | head -n 1)
-          echo "package=${ZIP_FILE}" >> "$GITHUB_OUTPUT"
+          # Use 'staging' suffix for staging deployments
+          ZIP="${REPO_NAME}-${VERSION}-staging.zip"
+          
+          # Create ZIP with development artifact exclusions
+          # Zip only the contents of the src folder (not the src/ folder itself)
+          # This creates a ZIP with extension files at the root level for direct installation
+          cd src
+          zip -r -X "${DIST_DIR}/${ZIP}" . \
+            -x ".git/**" \
+            -x ".github/**" \
+            -x ".DS_Store" \
+            -x "__MACOSX/**" \
+            -x "node_modules/**" \
+            -x "vendor/**" \
+            -x "tests/**" \
+            -x "Tests/**" \
+            -x ".phpstan.cache/**" \
+            -x ".psalm/**" \
+            -x ".rector/**" \
+            -x "phpmd-cache/**" \
+            -x ".php-cs-fixer.cache" \
+            -x ".phplint-cache" \
+            -x "*.log"
+          cd ..
+          
+          echo "package=${DIST_DIR}/${ZIP}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Validate secrets for ${{ inputs.environment }}
