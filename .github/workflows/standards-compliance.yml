@@ -30,6 +30,15 @@ name: Standards Compliance
 
 on:
   workflow_dispatch:
+  schedule:
+    # Run monthly on the 1st at 00:00 UTC
+    - cron: '0 0 1 * *'
+  workflow_run:
+    workflows:
+      - "Create version branch and bump versions"
+      - "Release Pipeline (dev > rc > version > main)"
+    types:
+      - completed
 
 permissions:
   contents: read
