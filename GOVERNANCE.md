@@ -73,6 +73,17 @@ Significant changes should:
 * Consider backward compatibility and upgrade impact.
 * Include documentation updates when behavior or usage changes.
 
+### Repository Protection
+
+The project enforces technical governance controls through organization-level repository rulesets:
+
+* **Branch protection** for main development branches with required reviews and status checks
+* **Commit signing** requirements to ensure authenticity
+* **Linear history** enforcement to maintain clean git logs
+* **Deletion protection** to prevent accidental branch removal
+
+Configuration and implementation details are maintained in `.github/org-rulesets/`.
+
 ## Release Authority
 
 Only maintainers may:

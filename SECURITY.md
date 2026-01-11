@@ -127,6 +127,17 @@ The project aims to manage supply chain risk through:
 
 If you identify a supply chain issue (for example compromised action, dependency confusion, or malicious upstream artifact), report it as a vulnerability.
 
+## Repository Protection and Access Controls
+
+The project uses organization-level repository rulesets to enforce security and governance policies:
+
+* **Branch Protection:** Main development branches (`main`, `dev/**`, `rc/**`, `version/**`) are protected with required reviews and status checks.
+* **Required Status Checks:** All changes must pass validation and quality checks before merging.
+* **Commit Signing:** Commits must be signed to verify author identity and prevent tampering.
+* **Code Review:** At least one approving review is required, including code owner approval.
+
+Configuration files for organization-level rulesets are maintained in `.github/org-rulesets/`. See the README in that directory for implementation details.
+
 ## Secure Development and CI Expectations
 
 Security posture is reinforced through operational controls:
