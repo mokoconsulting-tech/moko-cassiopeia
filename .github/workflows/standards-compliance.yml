@@ -29,18 +29,6 @@
 name: Standards Compliance
 
 on:
-  push:
-    branches:
-      - main
-      - dev/**
-      - rc/**
-      - version/**
-  pull_request:
-    branches:
-      - main
-      - dev/**
-      - rc/**
-      - version/**
   workflow_dispatch:
 
 permissions:
