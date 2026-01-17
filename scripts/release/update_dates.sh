@@ -66,12 +66,4 @@ else
   echo "⚠ Warning: src/templates/templateDetails.xml not found"
 fi
 
-# Update updates.xml - replace the <creationDate> tag
-if [ -f "updates.xml" ]; then
-  sed -i "s|<creationDate>[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}</creationDate>|<creationDate>${TODAY}</creationDate>|" updates.xml
-  echo "✓ Updated updates.xml creationDate to ${TODAY}"
-else
-  echo "⚠ Warning: updates.xml not found"
-fi
-
 echo "Date normalization complete."
