@@ -306,10 +306,10 @@ Supports both Joomla and Dolibarr extensions with automatic platform detection.
 		)
 
 		result = {
-        "status": "success",
-        "zip_path": str(zip_path)
-    }
-    common.json_output(result)
+			"status": "success",
+			"zip_path": str(zip_path)
+		}
+		common.json_output(result)
 		
 		return 0
 		
