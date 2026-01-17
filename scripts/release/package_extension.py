@@ -168,7 +168,7 @@ def create_package(
 	# Generate ZIP filename
 	timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 	platform_suffix = f"{ext_info.platform.value}-{ext_info.extension_type}"
-	zip_filename = f"{repo_name}-{version}-{platform_suffix}.zip"
+	zip_filename = f"{repo_name}-{version}-{platform_suffix}-{timestamp}.zip"
 	zip_path = output_path / zip_filename
 	
 	# Remove existing ZIP if present
@@ -304,6 +304,12 @@ Supports both Joomla and Dolibarr extensions with automatic platform detection.
 			repo_name=args.repo_name,
 			exclude_patterns=exclude_patterns
 		)
+
+		result = {
+        "status": "success",
+        "zip_path": str(zip_path)
+    }
+    common.json_output(result)
 		
 		return 0
 		
