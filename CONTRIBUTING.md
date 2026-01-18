@@ -38,7 +38,6 @@ These guidelines apply to all contributions, including:
 
 * Source code changes
 * Documentation updates
-* Workflow and automation changes
 * Bug reports and enhancement proposals
 
 ## Prerequisites
@@ -72,7 +71,6 @@ The repository provides several tools to streamline development:
 * **Makefile**: Common development tasks (`make help` to see all commands)
 * **Pre-commit Hooks**: Automatic local validation before commits
 * **VS Code Tasks**: Pre-configured tasks for common operations
-* **CI/CD Workflows**: Automated testing and deployment via MokoStandards
 
 Run `make validate-required` before submitting PRs to catch common issues early.
 
@@ -81,8 +79,7 @@ Run `make validate-required` before submitting PRs to catch common issues early.
 1. Fork the repository.
 2. Create a branch from the active development branch.
 3. Make focused, minimal changes that address a single concern.
-4. Ensure changes pass existing CI checks.
-5. Submit a pull request with a clear description of intent and impact.
+4. Submit a pull request with a clear description of intent and impact.
 
 Direct commits to protected branches are not permitted.
 

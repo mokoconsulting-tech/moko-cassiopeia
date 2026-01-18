@@ -171,7 +171,6 @@ make package
 ### Development Resources
 
 - **[Quick Start Guide](./docs/QUICK_START.md)** - Get up and running in 5 minutes
-- **[Workflow Guide](./docs/WORKFLOW_GUIDE.md)** - Complete workflow reference with examples
 - **[Joomla Development Guide](./docs/JOOMLA_DEVELOPMENT.md)** - Testing, quality checks, and deployment
 - **[Contributing Guide](./CONTRIBUTING.md)** - How to contribute
 
@@ -180,23 +179,6 @@ make package
 - **Makefile**: Run `make help` to see all available commands
 - **Pre-commit Hooks**: Automatic validation before commits
 - **VS Code Tasks**: Pre-configured development tasks
-- **GitHub Actions**: Automated CI/CD pipelines
-
-### Cross-Platform Support
-
-All automation is handled through the Makefile and GitHub Actions workflows for maximum cross-platform compatibility:
-- **Joomla Extension Support**: Full support for Joomla 4.x and 5.x templates, components, modules, and plugins
-- **Platform Detection**: Workflows automatically detect whether you're working with Joomla extensions
-- **MokoStandards Integration**: Uses reusable workflows from MokoStandards for consistency
-
-### Joomla Development Workflows
-
-Comprehensive Joomla-aware development tools and workflows are available:
-
-- **Extension Packaging** - Create distributable ZIP packages for Joomla or Dolibarr
-- **PHP Quality Checks** - PHPStan and PHP_CodeSniffer with Joomla standards
-- **Automated Testing** - Codeception framework with multiple Joomla versions
-- **CI/CD Pipelines** - GitHub Actions with caching for faster builds
 
 Run `make help` to see all available development commands.
 
