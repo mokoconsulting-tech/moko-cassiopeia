@@ -19,8 +19,8 @@
 #
 # FILE INFORMATION
 # DEFGROUP: GitHub.Workflow
-# INGROUP: Moko-Cassiopeia.Security
-# REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
+# INGROUP: MokoStandards.Security
+# REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/workflows/dependency-review.yml
 # VERSION: 01.00.00
 # BRIEF: Dependency review workflow for vulnerability scanning in pull requests
