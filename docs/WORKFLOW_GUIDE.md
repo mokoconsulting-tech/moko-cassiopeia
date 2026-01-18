@@ -219,7 +219,7 @@ dev/X.Y.Z → rc/X.Y.Z → version/X.Y.Z → main
 **How to run:**
 1. Go to Actions → Repo Health
 2. Click "Run workflow"
-3. Select profile (all/release/scripts/repo)
+3. Select profile (all/release/repo)
 4. Click "Run workflow"
 
 **Profiles:**
@@ -302,11 +302,8 @@ make validate-required
 #### Manifest Validation Failed
 
 ```bash
-# Validate manifest XML
-./scripts/validate/manifest.sh
-
-# Check XML well-formedness
-./scripts/validate/xml_wellformed.sh
+# Validate manifest and XML files
+make validate-required
 ```
 
 #### Version Alignment Issues
