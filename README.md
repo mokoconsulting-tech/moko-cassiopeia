@@ -150,22 +150,6 @@ For developers and contributors working on the moko-cassiopeia template:
 
 ### Quick Start for Developers
 
-Get started in minutes:
-
-```bash
-# Setup development environment
-make dev-setup
-
-# Validate code
-make validate-required
-
-# Check code quality
-make quality
-
-# Create distribution package
-make package
-```
-
 **New to the project?** See [Quick Start Guide](./docs/QUICK_START.md) for a 5-minute walkthrough.
 
 ### Development Resources
@@ -176,11 +160,7 @@ make package
 
 ### Available Tools
 
-- **Makefile**: Run `make help` to see all available commands
 - **Pre-commit Hooks**: Automatic validation before commits
-- **VS Code Tasks**: Pre-configured development tasks
-
-Run `make help` to see all available development commands.
 
 ## Changelog
 

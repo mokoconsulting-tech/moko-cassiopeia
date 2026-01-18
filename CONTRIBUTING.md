@@ -57,9 +57,6 @@ For first-time contributors:
 # Clone the repository
 git clone https://github.com/mokoconsulting-tech/moko-cassiopeia.git
 cd moko-cassiopeia
-
-# Run development setup
-make dev-setup
 ```
 
 See [docs/QUICK_START.md](./docs/QUICK_START.md) for detailed setup instructions.
@@ -68,11 +65,7 @@ See [docs/QUICK_START.md](./docs/QUICK_START.md) for detailed setup instructions
 
 The repository provides several tools to streamline development:
 
-* **Makefile**: Common development tasks (`make help` to see all commands)
 * **Pre-commit Hooks**: Automatic local validation before commits
-* **VS Code Tasks**: Pre-configured tasks for common operations
-
-Run `make validate-required` before submitting PRs to catch common issues early.
 
 ## Contribution Workflow
 
