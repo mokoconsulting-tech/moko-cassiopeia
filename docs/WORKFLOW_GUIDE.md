@@ -244,8 +244,7 @@ git checkout dev/X.Y.Z
 vim src/templates/index.php
 
 # 4. Validate locally
-./scripts/validate/php_syntax.sh
-./scripts/validate/manifest.sh
+make validate-required
 
 # 5. Commit and push
 git add -A
@@ -257,23 +256,19 @@ git push origin dev/X.Y.Z
 
 ```bash
 # Run comprehensive validation suite
-./scripts/run/validate_all.sh
+make validate-required
 
-# Run with verbose output
-./scripts/run/validate_all.sh -v
-
-# Run smoke tests
-./scripts/run/smoke_test.sh
+# Run quality checks
+make quality
 ```
 
 ### Creating a Release Package
 
 ```bash
 # Package with auto-detected version
-./scripts/release/package_extension.sh
-
-# Package with specific version
-./scripts/release/package_extension.sh dist 03.05.00
+```bash
+# Package with auto-detected version
+make package
 
 # Verify package contents
 unzip -l dist/moko-cassiopeia-*.zip
@@ -283,21 +278,12 @@ unzip -l dist/moko-cassiopeia-*.zip
 
 ```bash
 # Via GitHub Actions (recommended)
-# Actions → Create version branch
-
-# Or manually with scripts
-./scripts/fix/versions.sh 03.05.00
+# Actions → Release Management workflow
 ```
 
 ### Updating CHANGELOG
 
-```bash
-# Add new version entry
-./scripts/release/update_changelog.sh 03.05.00
-
-# Update release dates
-./scripts/release/update_dates.sh 2025-01-15 03.05.00
-```
+Update CHANGELOG.md manually or via pull request following the existing format.
 
 ## Troubleshooting
 
@@ -309,8 +295,8 @@ unzip -l dist/moko-cassiopeia-*.zip
 # Check specific file
 php -l src/templates/index.php
 
-# Run validation script
-./scripts/validate/php_syntax.sh
+# Run validation
+make validate-required
 ```
 
 #### Manifest Validation Failed
@@ -326,21 +312,11 @@ php -l src/templates/index.php
 #### Version Alignment Issues
 
 ```bash
-# Check version in manifest matches CHANGELOG
-./scripts/validate/version_alignment.sh
-
-# Fix versions
-./scripts/fix/versions.sh 03.05.00
+# Check version consistency
+make validate-required
 ```
 
 ### Workflow Failures
-
-#### "Permission denied" on scripts
-
-```bash
-# Fix script permissions
-chmod +x scripts/**/*.sh
-```
 
 #### "Branch already exists"
 
@@ -454,7 +430,6 @@ phpcs --standard=phpcs.xml --report=source src/
 
 - [Main README](../README.md) - Project overview
 - [Joomla Development Guide](./JOOMLA_DEVELOPMENT.md) - Testing and quality
-- [Scripts README](../scripts/README.md) - Script documentation
 - [CHANGELOG](../CHANGELOG.md) - Version history
 - [CONTRIBUTING](../CONTRIBUTING.md) - Contribution guidelines
 

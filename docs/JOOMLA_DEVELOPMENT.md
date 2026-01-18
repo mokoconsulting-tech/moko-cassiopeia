@@ -41,16 +41,7 @@ All requirements are automatically installed in CI/CD pipelines.
 Package the Joomla template as a distributable ZIP file:
 
 ```bash
-./scripts/release/package_extension.sh [output_dir] [version]
-```
-
-**Parameters:**
-- `output_dir` (optional): Output directory for the ZIP file (default: `dist`)
-- `version` (optional): Version string to use (default: extracted from manifest)
-
-**Example:**
-```bash
-./scripts/release/package_extension.sh dist 3.5.0
+make package
 ```
 
 This creates a ZIP file in the `dist` directory with all necessary template files, excluding development files.
@@ -246,7 +237,7 @@ phpcs --config-set installed_paths ~/.composer/vendor/phpcompatibility/php-compa
 3. Run checks:
 ```bash
 # PHP syntax check
-./scripts/validate/php_syntax.sh
+make validate-required
 
 # CodeSniffer
 phpcs --standard=phpcs.xml src/
@@ -266,7 +257,7 @@ Use the package script to create a distribution:
 
 ```bash
 # Create package
-./scripts/release/package_extension.sh dist 3.5.0
+make package
 
 # Upload to server
 scp dist/moko-cassiopeia-3.5.0-template.zip user@server:/path/to/joomla/
