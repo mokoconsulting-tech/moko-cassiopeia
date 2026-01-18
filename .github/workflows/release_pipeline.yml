@@ -902,7 +902,7 @@ jobs:
           SFTP_AUTH_MODE: ${{ steps.sftp.outputs.auth_mode }}
           SFTP_REMOTE_PATH: ${{ steps.sftp.outputs.remote_path }}
           SFTP_HOST: ${{ steps.sftp.outputs.host }}
-          SFTP_PORT: ${{ steps.sftp.outputs.port }}
+          SRC_PORT: ${{ steps.sftp.outputs.port }}
         run: |
           set -euo pipefail
 
@@ -925,7 +925,7 @@ jobs:
             echo "- auth_mode: ${SFTP_AUTH_MODE:-unknown}"
             echo "- remote_path: ${SFTP_REMOTE_PATH:-unknown}"
             echo "- host: ${SFTP_HOST:-unknown}"
-            echo "- port: ${SFTP_PORT:-unknown}"
+            echo "- port: ${SRC_PORT:-unknown}"
           } >> RELEASE_NOTES.md
 
       - name: Create GitHub release and attach ZIP
