@@ -85,8 +85,8 @@ $templatePath = 'media/templates/site/moko-cassiopeia';
 // ===========================
 
 // Core template CSS
-$wa->useStyle('template.base');   // css/template.css
-$wa->useStyle('template.user');   // css/user.css
+$wa->useStyle('template.global.base');   // css/template.css
+$wa->useStyle('template.global.social-media-demo');   // css/user.css
 
 // Optional vendor CSS
 $wa->useStyle('vendor.bootstrap-toc');
@@ -238,6 +238,7 @@ if ($this->params->get('faKitCode')) {
 $params_leftIcon           = htmlspecialchars($this->params->get('drawerLeftIcon', 'fa-solid fa-chevron-left'), ENT_COMPAT, 'UTF-8');
 $params_rightIcon          = htmlspecialchars($this->params->get('drawerRightIcon', 'fa-solid fa-chevron-right'), ENT_COMPAT, 'UTF-8');
 
+$wa->useStyle('template.user');   // css/user.css
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>">

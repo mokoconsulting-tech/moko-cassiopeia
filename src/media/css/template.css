@@ -5127,7 +5127,7 @@ fieldset:disabled .btn {
 	--card-cap-padding-y: 0.5rem;
 	--card-cap-padding-x: 1rem;
 	--card-cap-bg: rgba(0, 0, 0, 0.03);
-	--card-cap-color: ;
+	--card-cap-color: var(--color-primary);
 	--card-height: ;
 	--card-color: ;
 	--card-bg: var(--nav-text-color);
@@ -17241,7 +17241,3 @@ button#mokoThemeSwitch {
   outline: 2px dashed var(--pink);
   outline-offset: 2px;
 }
-
-
-	/* SOCIAL MEDIA DEMOS */
-	@import url("global/social-media-demos.css");
