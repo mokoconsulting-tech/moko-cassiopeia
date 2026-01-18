@@ -150,9 +150,6 @@ make quality
 
 # Create distribution package
 make package
-
-# Install Git hooks (optional but recommended)
-python3 ./scripts/git/install-hooks.py
 ```
 
 **New to the project?** See [Quick Start Guide](./docs/QUICK_START.md) for a 5-minute walkthrough.
@@ -162,23 +159,21 @@ python3 ./scripts/git/install-hooks.py
 - **[Quick Start Guide](./docs/QUICK_START.md)** - Get up and running in 5 minutes
 - **[Workflow Guide](./docs/WORKFLOW_GUIDE.md)** - Complete workflow reference with examples
 - **[Joomla Development Guide](./docs/JOOMLA_DEVELOPMENT.md)** - Testing, quality checks, and deployment
-- **[Scripts Documentation](./scripts/README.md)** - Available automation scripts
 - **[Contributing Guide](./CONTRIBUTING.md)** - How to contribute
 
 ### Available Tools
 
 - **Makefile**: Run `make help` to see all available commands
-- **Python Scripts**: All automation scripts are now Python-based for cross-platform compatibility
 - **Pre-commit Hooks**: Automatic validation before commits
 - **VS Code Tasks**: Pre-configured development tasks
 - **GitHub Actions**: Automated CI/CD pipelines
 
 ### Cross-Platform Support
 
-All scripts are now written in Python for maximum cross-platform compatibility:
+All automation is handled through the Makefile and GitHub Actions workflows for maximum cross-platform compatibility:
 - **Joomla Extension Support**: Full support for Joomla 4.x and 5.x templates, components, modules, and plugins
-- **Dolibarr Module Support**: Automatic detection and packaging of Dolibarr modules
-- **Platform Detection**: Scripts automatically detect whether you're working with Joomla or Dolibarr extensions
+- **Platform Detection**: Workflows automatically detect whether you're working with Joomla extensions
+- **MokoStandards Integration**: Uses reusable workflows from MokoStandards for consistency
 
 ### Joomla Development Workflows
 
