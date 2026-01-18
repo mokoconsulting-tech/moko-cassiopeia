@@ -235,6 +235,11 @@
       "name": "vendor.fa7free.solid.min",
       "type": "style",
       "uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/solid.min.css"
+    },
+    {
+      "name": "template.global.social-media-demo",
+      "type": "style",
+      "uri": "media/templates/site/moko-cassiopeia/css/global/social-media-demo.css"
     }
   ]
 }

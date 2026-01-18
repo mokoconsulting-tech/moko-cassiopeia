@@ -98,6 +98,10 @@ $wa->useStyle('template.user');   // css/user.css
 // Optional vendor CSS
 $wa->useStyle('vendor.bootstrap-toc');
 
+// Optional demo/showcase CSS (available for use, not loaded by default)
+// To use: Add 'template.global.social-media-demo' to your article/module
+// $wa->useStyle('template.global.social-media-demo');
+
 // Color theme (light + optional dark)
 $colorLightKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_LightColorName));
 $colorDarkKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_DarkColorName));
