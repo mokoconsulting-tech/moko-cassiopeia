@@ -34,13 +34,7 @@ composer global require "phpcompatibility/php-compatibility:^9.0"
 composer global require codeception/codeception
 ```
 
-### 3. Install Git Hooks (Optional but Recommended)
-
-```bash
-./scripts/git/install-hooks.sh
-```
-
-### 4. Validate Everything Works
+### 3. Validate Everything Works
 
 ```bash
 # Quick validation
@@ -111,9 +105,6 @@ make phpcompat
 # Package with auto-detected version
 make package
 
-# Or specify directory and version
-./scripts/release/package_extension.sh dist 03.05.00
-
 # Check package contents
 ls -lh dist/
 unzip -l dist/moko-cassiopeia-*.zip
@@ -157,13 +148,6 @@ moko-cassiopeia/
 │   ├── media/                # Assets (CSS, JS, images)
 │   ├── language/             # Language files
 │   └── administrator/        # Admin files
-├── scripts/                  # Automation scripts
-│   ├── validate/             # Validation scripts
-│   ├── fix/                  # Fix/update scripts
-│   ├── release/              # Release scripts
-│   ├── run/                  # Execution scripts
-│   ├── git/                  # Git hooks
-│   └── lib/                  # Shared libraries
 ├── tests/                    # Test suites
 ├── docs/                     # Documentation
 ├── .github/workflows/        # CI/CD workflows
@@ -177,7 +161,6 @@ moko-cassiopeia/
 
 1. **Read the Workflow Guide**: [docs/WORKFLOW_GUIDE.md](./WORKFLOW_GUIDE.md)
 2. **Review Joomla Development**: [docs/JOOMLA_DEVELOPMENT.md](./JOOMLA_DEVELOPMENT.md)
-3. **Check Scripts Documentation**: [scripts/README.md](../scripts/README.md)
 
 ### Creating Your First Feature
 
@@ -234,10 +217,6 @@ Use the Release Pipeline workflow to promote between stages.
 
 ```bash
 make fix-permissions
-# Or manually:
-chmod +x scripts/**/*.sh
-```
-
 ### PHPStan/PHPCS Not Found
 
 ```bash
@@ -246,29 +225,12 @@ make install
 composer global require "squizlabs/php_codesniffer:^3.0" phpstan/phpstan
 ```
 
-### Pre-commit Hook Fails
-
-```bash
-# Run manually to see details
-./scripts/git/pre-commit.sh
-
-# Quick mode (skip some checks)
-./scripts/git/pre-commit.sh --quick
-
-# Skip quality checks
-./scripts/git/pre-commit.sh --skip-quality
-
-# Bypass hook (not recommended)
-git commit --no-verify
-```
-
 ### CI Workflow Fails
 
 1. Check the workflow logs in GitHub Actions
-2. Run the same checks locally:
+2. Run validation locally:
    ```bash
-   ./scripts/validate/manifest.sh
-   ./scripts/validate/php_syntax.sh
+   make validate-required
    make quality
    ```
 
@@ -326,7 +288,6 @@ make test
 ```bash
 # Setup
 make dev-setup              # Initial setup
-./scripts/git/install-hooks.sh  # Install hooks
 
 # Development
 make validate-required      # Quick validation
@@ -342,7 +303,6 @@ make fix-permissions       # Fix script permissions
 
 # Help
 make help                  # Show all commands
-./scripts/run/validate_all.sh --help  # Script help
 ```
 
 ---

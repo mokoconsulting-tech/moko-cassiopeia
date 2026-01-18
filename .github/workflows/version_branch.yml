@@ -1,738 +1,402 @@
-name: Version Branch and Bump
+# Copyright (C) 2026 Moko Consulting <hello@mokoconsulting.tech>
+#
+# This file is part of a Moko Consulting project.
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program. If not, see <https://www.gnu.org/licenses/>.
+#
+# FILE INFORMATION
+# DEFGROUP: GitHub.WorkflowTemplate
+# INGROUP: MokoStandards.Templates
+# REPO: https://github.com/mokoconsulting-tech/MokoStandards
+# PATH: /.github/workflow-templates/release-cycle.yml
+# VERSION: 01.00.00
+# BRIEF: Release management workflow with automated release flow
+# NOTE: Implements main → dev → rc → version → main cycle with semantic versioning
+
+name: Release Management
 
 on:
-  # Run monthly on the 1st at 03:00 UTC for automated version planning
-  schedule:
-    - cron: '0 3 1 * *'
-  
-  # Run on pull requests to version branches for validation
-  pull_request:
-    branches:
-      - version/**
-      - rc/**
-  
-  # Run on release creation for version tracking
-  release:
-    types: [published, created]
-  
-  # Allow manual triggering with full options
   workflow_dispatch:
     inputs:
-      new_version:
-        description: "New version in format NN.NN.NN (example 03.01.00)"
+      action:
+        description: 'Release action to perform'
+        required: true
+        type: choice
+        options:
+          - start-release
+          - create-rc
+          - finalize-release
+          - hotfix
+      version:
+        description: 'Version number (e.g., 1.2.3 for semantic versioning)'
         required: true
         type: string
-      version_text:
-        description: "Optional version label text (example: LTS, RC1, hotfix)"
+      release_notes:
+        description: 'Release notes or changelog summary (optional)'
         required: false
-        default: ""
         type: string
-      report_only:
-        description: "Report only mode (no branch creation, no file writes, report output only)"
-        required: false
-        default: "false"
-        type: choice
-        options:
-          - "true"
-          - "false"
-      commit_changes:
-        description: "Commit and push changes (forced to true when report_only=false)"
-        required: false
-        default: "true"
-        type: choice
-        options:
-          - "true"
-          - "false"
-      branch_prefix:
-        description: "Branch prefix for version (version/ for stable, rc/ for release candidate, dev/ for development)"
-        required: false
-        default: "dev/"
-        type: choice
-        options:
-          - "dev/"
-          - "rc/"
-          - "version/"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.repository }}-${{ github.event.inputs.new_version }}
-  cancel-in-progress: false
 
 permissions:
   contents: write
   pull-requests: write
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
-  version-bump:
-    name: Version branch and bump
+  validate-version:
+    name: Validate Version Format
     runs-on: ubuntu-latest
-
-    env:
-      NEW_VERSION: ${{ github.event.inputs.new_version }}
-      VERSION_TEXT: ${{ github.event.inputs.version_text }}
-      REPORT_ONLY: ${{ github.event.inputs.report_only }}
-      COMMIT_CHANGES: ${{ github.event.inputs.commit_changes }}
-      BASE_BRANCH: ${{ github.ref_name }}
-      BRANCH_PREFIX: ${{ github.event.inputs.branch_prefix || 'dev/' }}
-      ERROR_LOG: /tmp/version_branch_errors.log
-      CI_HELPERS: /tmp/moko_ci_helpers.sh
-      REPORT_PATH: /tmp/version-bump-report.json
-
+    outputs:
+      version: ${{ steps.validate.outputs.version }}
+      major: ${{ steps.validate.outputs.major }}
+      minor: ${{ steps.validate.outputs.minor }}
+      patch: ${{ steps.validate.outputs.patch }}
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+      - name: Validate Semantic Version
+        id: validate
+        run: |
+          VERSION="${{ inputs.version }}"
+          
+          # Remove 'v' prefix if present
+          VERSION=${VERSION#v}
+          
+          # Validate semantic versioning format (MAJOR.MINOR.PATCH)
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "❌ Invalid version format: $VERSION" >> $GITHUB_STEP_SUMMARY
+            echo "Expected format: MAJOR.MINOR.PATCH (e.g., 1.2.3)" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          # Extract version components
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          PATCH=$(echo "$VERSION" | cut -d. -f3)
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "major=$MAJOR" >> $GITHUB_OUTPUT
+          echo "minor=$MINOR" >> $GITHUB_OUTPUT
+          echo "patch=$PATCH" >> $GITHUB_OUTPUT
+          
+          echo "✅ Valid semantic version: $VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "- Major: $MAJOR" >> $GITHUB_STEP_SUMMARY
+          echo "- Minor: $MINOR" >> $GITHUB_STEP_SUMMARY
+          echo "- Patch: $PATCH" >> $GITHUB_STEP_SUMMARY
+
+  start-release:
+    name: Start Release (main → dev)
+    runs-on: ubuntu-latest
+    needs: validate-version
+    if: inputs.action == 'start-release'
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.ref_name }}
-
-      - name: Init CI helpers
+          ref: main
+      
+      - name: Configure Git
         run: |
-          set -Eeuo pipefail
-          : > "$ERROR_LOG"
-
-          cat > "$CI_HELPERS" <<'SH'
-          set -Eeuo pipefail
-
-          moko_init() {
-            local step_name="${1:-step}"
-            export PS4='+ ['"${step_name}"':${BASH_SOURCE##*/}:${LINENO}] '
-            set -x
-            trap "moko_on_err '${step_name}' \"\$LINENO\" \"\$BASH_COMMAND\"" ERR
-          }
-
-          moko_on_err() {
-            local step_name="$1"
-            local line_no="$2"
-            local last_cmd="$3"
-
-            echo "[FATAL] ${step_name} failed at line ${line_no}" >&2
-            echo "[FATAL] Last command: ${last_cmd}" >&2
-
-            if [[ -n "${ERROR_LOG:-}" ]]; then
-              echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) | ${step_name} | line ${line_no} | ${last_cmd}" >> "$ERROR_LOG" || true
-            fi
-          }
-
-          moko_bool() {
-            local v="${1:-false}"
-            [[ "${v}" == "true" ]]
-          }
-
-          moko_trim() {
-            local s="${1:-}"
-            s="${s#${s%%[![:space:]]*}}"
-            s="${s%${s##*[![:space:]]}}"
-            printf '%s' "$s"
-          }
-          SH
-
-          chmod 0755 "$CI_HELPERS"
-
-      - name: Validate inputs and policy locks
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Validate inputs and policy locks"
-
-          VERSION_TEXT="$(moko_trim "${VERSION_TEXT}")"
-
-          echo "[INFO] Inputs received:"
-          echo "  NEW_VERSION=${NEW_VERSION}"
-          echo "  VERSION_TEXT=${VERSION_TEXT}"
-          echo "  REPORT_ONLY=${REPORT_ONLY}"
-          echo "  COMMIT_CHANGES=${COMMIT_CHANGES}"
-          echo "  BASE_BRANCH=${BASE_BRANCH}"
-          echo "  BRANCH_PREFIX=${BRANCH_PREFIX}"
-
-          [[ -n "${NEW_VERSION}" ]] || { echo "[ERROR] new_version missing" >&2; exit 2; }
-          [[ "${NEW_VERSION}" =~ ^[0-9]{2}[.][0-9]{2}[.][0-9]{2}$ ]] || { echo "[ERROR] Invalid version format: ${NEW_VERSION}" >&2; exit 2; }
-
-          # Validate BRANCH_PREFIX is one of the allowed values
-          case "${BRANCH_PREFIX}" in
-            "dev/"|"rc/"|"version/")
-              echo "[INFO] ✓ Branch prefix '${BRANCH_PREFIX}' is valid"
-              ;;
-            *)
-              echo "[FATAL] BRANCH_PREFIX must be one of: dev/, rc/, version/ (got: '${BRANCH_PREFIX}')" >&2
-              exit 2
-              ;;
-          esac
-
-          if ! moko_bool "${REPORT_ONLY}" && [[ "${COMMIT_CHANGES}" != "true" ]]; then
-            echo "[FATAL] commit_changes must be 'true' when report_only is 'false' to ensure the branch is auditable." >&2
-            exit 2
-          fi
-
-          if [[ -n "${VERSION_TEXT}" ]]; then
-            if [[ ! "${VERSION_TEXT}" =~ ^[A-Za-z0-9._-]{1,32}$ ]]; then
-              echo "[FATAL] version_text must match ^[A-Za-z0-9._-]{1,32}$ when set." >&2
-              exit 2
-            fi
-          fi
-
-          git ls-remote --exit-code --heads origin "${BASE_BRANCH}" >/dev/null 2>&1 || {
-            echo "[ERROR] Base branch does not exist on origin: ${BASE_BRANCH}" >&2
-            echo "[INFO] Remote branches:" >&2
-            git ls-remote --heads origin | awk '{sub("refs/heads/","",$2); print $2}' >&2
-            exit 2
-          }
-
-          echo "VERSION_TEXT=${VERSION_TEXT}" >> "$GITHUB_ENV"
-
-      - name: Sanity check workflow file (no literal tabs or control chars)
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Sanity check workflow file"
-
-          python3 - <<'PY'
-          from pathlib import Path
-
-          target = Path('.github/workflows/version_branch.yml')
-          if not target.exists():
-            raise SystemExit('[FATAL] Missing workflow file: .github/workflows/version_branch.yml')
-
-          data = target.read_bytes()
-
-          # Disallow literal tab (0x09) and other ASCII control characters except LF (0x0A) and CR (0x0D).
-          # Report line numbers without printing the raw characters.
-
-          def byte_to_line(blob: bytes, idx: int) -> int:
-            return blob[:idx].count(b'\n') + 1
-
-          bad = []
-          for i, b in enumerate(data):
-            if b == 0x09:
-              bad.append(('TAB', i, b))
-            elif b < 0x20 and b not in (0x0A, 0x0D):
-              bad.append(('CTRL', i, b))
-
-          if bad:
-            print('[ERROR] Disallowed characters detected in workflow file:')
-            for kind, off, val in bad[:200]:
-              line_no = byte_to_line(data, off)
-              if kind == 'TAB':
-                print(f'  line {line_no}: TAB_PRESENT')
-              else:
-                print(f'  line {line_no}: CTRL_0x{val:02X}_PRESENT')
-            raise SystemExit(2)
-
-          print('[INFO] Sanity check passed')
-          PY
-
-      - name: Enterprise policy gate
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Enterprise policy gate"
-
-          required=(
-            "LICENSE"
-            "CONTRIBUTING.md"
-            "CODE_OF_CONDUCT.md"
-            "SECURITY.md"
-            "GOVERNANCE.md"
-            "CHANGELOG.md"
-          )
-
-          missing=0
-          for f in "${required[@]}"; do
-            if [[ ! -f "${f}" ]]; then
-              echo "[ERROR] Missing required file: ${f}" >&2
-              missing=1
-              continue
-            fi
-            if [[ ! -s "${f}" ]]; then
-              echo "[ERROR] Required file is empty: ${f}" >&2
-              missing=1
-              continue
-            fi
-          done
-
-          if [[ "${missing}" -ne 0 ]]; then
-            echo "[FATAL] Policy gate failed. Add missing governance artifacts before versioning." >&2
-            exit 2
-          fi
-
-          echo "[INFO] Policy gate passed"
-
-      - name: Branch namespace collision defense
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Branch namespace collision defense"
-
-          # Skip collision check for known static prefixes
-          case "${BRANCH_PREFIX}" in
-            "dev/"|"rc/"|"version/")
-              echo "[INFO] Skipping collision check for known prefix '${BRANCH_PREFIX}'" >&2
-              exit 0
-              ;;
-          esac
-
-          PREFIX_TOP="${BRANCH_PREFIX%%/*}"
-          if git ls-remote --exit-code --heads origin "${PREFIX_TOP}" >/dev/null 2>&1; then
-            echo "[FATAL] Branch namespace collision detected: '${PREFIX_TOP}' exists on origin." >&2
-            exit 2
-          fi
-
-      - name: Configure git identity
-        if: ${{ env.REPORT_ONLY != 'true' }}
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Configure git identity"
-
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Create version branch (local)
-        if: ${{ env.REPORT_ONLY != 'true' }}
+      
+      - name: Create Development Branch
         run: |
-          source "$CI_HELPERS"
-          moko_init "Create version branch (local)"
-
-          BRANCH_NAME="${BRANCH_PREFIX}${NEW_VERSION}"
-          echo "[INFO] Creating local branch: ${BRANCH_NAME} from origin/${BASE_BRANCH}"
-
-          git fetch --all --tags --prune
-
-          if git ls-remote --exit-code --heads origin "${BRANCH_NAME}" >/dev/null 2>&1; then
-            echo "[FATAL] Branch already exists on origin: ${BRANCH_NAME}" >&2
-            exit 2
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          DEV_BRANCH="dev/$VERSION"
+          
+          # Check if dev branch already exists
+          if git ls-remote --heads origin "$DEV_BRANCH" | grep -q "$DEV_BRANCH"; then
+            echo "⚠️ Development branch $DEV_BRANCH already exists" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          # Create and push development branch
+          git checkout -b "$DEV_BRANCH"
+          git push origin "$DEV_BRANCH"
+          
+          echo "✅ Created development branch: $DEV_BRANCH" >> $GITHUB_STEP_SUMMARY
+          echo "Next steps:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Make changes in $DEV_BRANCH" >> $GITHUB_STEP_SUMMARY
+          echo "2. Run 'create-rc' action when ready for testing" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Update Version Files
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          
+          # Update version in common files (customize for your project)
+          # Examples:
+          if [ -f "package.json" ]; then
+            npm version "$VERSION" --no-git-tag-version
+            git add package.json package-lock.json 2>/dev/null || true
+            echo "✅ Updated package.json" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f "composer.json" ]; then
+            # Update version in composer.json if it exists
+            if grep -q "\"version\":" composer.json; then
+              sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" composer.json
+              git add composer.json
+              echo "✅ Updated composer.json" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          # Commit changes if any
+          if ! git diff --staged --quiet; then
+            git commit -m "chore: bump version to $VERSION"
+            git push origin "dev/$VERSION"
+            echo "✅ Version files updated and committed" >> $GITHUB_STEP_SUMMARY
           fi
 
-          git checkout -B "${BRANCH_NAME}" "origin/${BASE_BRANCH}"
-          echo "BRANCH_NAME=${BRANCH_NAME}" >> "$GITHUB_ENV"
-
-      - name: Validate version hierarchy (prevent creating in lower priority branches)
-        if: ${{ env.REPORT_ONLY != 'true' }}
+  create-rc:
+    name: Create Release Candidate (dev → rc)
+    runs-on: ubuntu-latest
+    needs: validate-version
+    if: inputs.action == 'create-rc'
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: dev/${{ needs.validate-version.outputs.version }}
+      
+      - name: Configure Git
         run: |
-          source "$CI_HELPERS"
-          moko_init "Validate version hierarchy"
-
-          # Version hierarchy (highest to lowest priority):
-          # 1. version/X.Y.Z - production/stable versions
-          # 2. rc/X.Y.Z      - release candidate versions
-          # 3. dev/X.Y.Z     - development versions
-          #
-          # Rule: If a version exists in a higher priority branch, 
-          # do not allow creating it in a lower priority branch
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Create Release Candidate Branch
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          RC_BRANCH="rc/$VERSION"
+          DEV_BRANCH="dev/$VERSION"
           
-          echo "[INFO] Checking version hierarchy for: ${NEW_VERSION}"
-          echo "[INFO] Current branch prefix: ${BRANCH_PREFIX}"
+          # Check if rc branch already exists
+          if git ls-remote --heads origin "$RC_BRANCH" | grep -q "$RC_BRANCH"; then
+            echo "⚠️ Release candidate branch $RC_BRANCH already exists" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          
+          # Create RC branch from dev
+          git checkout -b "$RC_BRANCH"
+          git push origin "$RC_BRANCH"
+          
+          echo "✅ Created release candidate branch: $RC_BRANCH" >> $GITHUB_STEP_SUMMARY
+          echo "Next steps:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Test thoroughly in $RC_BRANCH" >> $GITHUB_STEP_SUMMARY
+          echo "2. Fix any issues found (commit to $RC_BRANCH)" >> $GITHUB_STEP_SUMMARY
+          echo "3. Run 'finalize-release' action when ready to release" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Create Pre-release Tag
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          TAG="v${VERSION}-rc"
+          
+          git tag -a "$TAG" -m "Release Candidate $VERSION"
+          git push origin "$TAG"
+          
+          echo "✅ Created pre-release tag: $TAG" >> $GITHUB_STEP_SUMMARY
 
-          # Determine current priority level
-          case "${BRANCH_PREFIX}" in
-            "version/")
-              echo "[INFO] Creating stable version branch - no hierarchy checks needed"
+  finalize-release:
+    name: Finalize Release (rc → version → main)
+    runs-on: ubuntu-latest
+    needs: validate-version
+    if: inputs.action == 'finalize-release'
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: rc/${{ needs.validate-version.outputs.version }}
+      
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Create Version Branch
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          VERSION_BRANCH="version/$VERSION"
+          
+          # Create version branch (permanent record)
+          git checkout -b "$VERSION_BRANCH"
+          git push origin "$VERSION_BRANCH"
+          
+          echo "✅ Created version branch: $VERSION_BRANCH" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Merge to Main
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          
+          # Merge to main
+          git checkout main
+          git pull origin main
+          git merge --no-ff "version/$VERSION" -m "Release version $VERSION"
+          git push origin main
+          
+          echo "✅ Merged to main branch" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Create Release Tag
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          TAG="v$VERSION"
+          
+          git tag -a "$TAG" -m "Release $VERSION"
+          git push origin "$TAG"
+          
+          echo "✅ Created release tag: $TAG" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          
+          # Generate changelog from commits
+          NOTES="${{ inputs.release_notes }}"
+          
+          if [ -z "$NOTES" ]; then
+            # Auto-generate from git log if not provided
+            NOTES=$(git log --pretty=format:"- %s" "v${VERSION}-rc"..HEAD 2>/dev/null || echo "Initial release")
+          fi
+          
+          # Save to file for GitHub release
+          cat > release_notes.md <<EOF
+          ## Release $VERSION
+          
+          $NOTES
+          
+          ### Changes
+          $(git log --pretty=format:"- %s (%h)" "v${VERSION}-rc"..HEAD 2>/dev/null || echo "- Initial release")
+          EOF
+          
+          echo "✅ Generated release notes" >> $GITHUB_STEP_SUMMARY
+      
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.validate-version.outputs.version }}
+          name: Release ${{ needs.validate-version.outputs.version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+      
+      - name: Cleanup Development Branches
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          
+          # Optionally delete dev and rc branches after release
+          # Uncomment if you want automatic cleanup:
+          # git push origin --delete "dev/$VERSION" 2>/dev/null || true
+          # git push origin --delete "rc/$VERSION" 2>/dev/null || true
+          
+          echo "ℹ️ Development branches retained for history" >> $GITHUB_STEP_SUMMARY
+          echo "To manually cleanup, run:" >> $GITHUB_STEP_SUMMARY
+          echo "  git push origin --delete dev/$VERSION" >> $GITHUB_STEP_SUMMARY
+          echo "  git push origin --delete rc/$VERSION" >> $GITHUB_STEP_SUMMARY
+
+  hotfix:
+    name: Create Hotfix Branch
+    runs-on: ubuntu-latest
+    needs: validate-version
+    if: inputs.action == 'hotfix'
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+      
+      - name: Create Hotfix Branch
+        run: |
+          VERSION="${{ needs.validate-version.outputs.version }}"
+          HOTFIX_BRANCH="hotfix/$VERSION"
+          
+          # Create hotfix branch from main
+          git checkout -b "$HOTFIX_BRANCH"
+          git push origin "$HOTFIX_BRANCH"
+          
+          echo "✅ Created hotfix branch: $HOTFIX_BRANCH" >> $GITHUB_STEP_SUMMARY
+          echo "Next steps:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Apply hotfix changes to $HOTFIX_BRANCH" >> $GITHUB_STEP_SUMMARY
+          echo "2. Test thoroughly" >> $GITHUB_STEP_SUMMARY
+          echo "3. Create PR to merge back to main" >> $GITHUB_STEP_SUMMARY
+          echo "4. After merge, create release tag manually or re-run finalize-release" >> $GITHUB_STEP_SUMMARY
+
+  summary:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs: [validate-version, start-release, create-rc, finalize-release, hotfix]
+    if: always()
+    
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "# Release Management Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Action**: ${{ inputs.action }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version**: ${{ needs.validate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          case "${{ inputs.action }}" in
+            start-release)
+              echo "## Release Started" >> $GITHUB_STEP_SUMMARY
+              echo "- Development branch created: dev/${{ needs.validate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+              echo "- Version files updated" >> $GITHUB_STEP_SUMMARY
               ;;
-            "rc/")
-              echo "[INFO] Creating RC branch - checking if version exists in stable"
-              if git ls-remote --exit-code --heads origin "version/${NEW_VERSION}" >/dev/null 2>&1; then
-                echo "[FATAL] Version ${NEW_VERSION} already exists in stable branch: version/${NEW_VERSION}" >&2
-                echo "[FATAL] Cannot create RC version for a version that already exists in stable" >&2
-                exit 2
-              fi
-              echo "[INFO] ✓ No conflict with stable versions"
+            create-rc)
+              echo "## Release Candidate Created" >> $GITHUB_STEP_SUMMARY
+              echo "- RC branch created: rc/${{ needs.validate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+              echo "- Pre-release tag created: v${{ needs.validate-version.outputs.version }}-rc" >> $GITHUB_STEP_SUMMARY
               ;;
-            "dev/")
-              echo "[INFO] Creating dev branch - checking if version exists in stable or RC"
-              
-              # Check stable versions
-              if git ls-remote --exit-code --heads origin "version/${NEW_VERSION}" >/dev/null 2>&1; then
-                echo "[FATAL] Version ${NEW_VERSION} already exists in stable branch: version/${NEW_VERSION}" >&2
-                echo "[FATAL] Cannot create dev version for a version that already exists in stable" >&2
-                exit 2
-              fi
-              
-              # Check RC versions
-              if git ls-remote --exit-code --heads origin "rc/${NEW_VERSION}" >/dev/null 2>&1; then
-                echo "[FATAL] Version ${NEW_VERSION} already exists in RC branch: rc/${NEW_VERSION}" >&2
-                echo "[FATAL] Cannot create dev version for a version that already exists in RC" >&2
-                exit 2
-              fi
-              
-              echo "[INFO] ✓ No conflict with stable or RC versions"
+            finalize-release)
+              echo "## Release Finalized" >> $GITHUB_STEP_SUMMARY
+              echo "- Version branch created: version/${{ needs.validate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+              echo "- Merged to main" >> $GITHUB_STEP_SUMMARY
+              echo "- Release tag created: v${{ needs.validate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+              echo "- GitHub release published" >> $GITHUB_STEP_SUMMARY
               ;;
-            *)
-              echo "[WARN] Unknown branch prefix: ${BRANCH_PREFIX}, skipping hierarchy check"
+            hotfix)
+              echo "## Hotfix Branch Created" >> $GITHUB_STEP_SUMMARY
+              echo "- Hotfix branch created: hotfix/${{ needs.validate-version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
               ;;
           esac
 
-      - name: Enforce update feed files absent (update.xml, updates.xml)
-        if: ${{ env.REPORT_ONLY != 'true' }}
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Enforce update feed deletion"
-
-          git rm -f --ignore-unmatch update.xml updates.xml || true
-          rm -f update.xml updates.xml || true
-
-          if [[ -f update.xml || -f updates.xml ]]; then
-            echo "[FATAL] update feed files still present after deletion attempt." >&2
-            ls -la update.xml updates.xml 2>/dev/null || true
-            exit 2
-          fi
-
-      - name: Preflight discovery (governed version markers outside .github)
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Preflight discovery"
-
-          COUNT=$(grep -RIn --exclude-dir=.git --exclude-dir=.github -i -E "VERSION[[:space:]]*:[[:space:]]*[0-9]{2}[.][0-9]{2}[.][0-9]{2}" . | wc -l || true)
-          COUNT2=$(grep -RIn --exclude-dir=.git --exclude-dir=.github "<version" . | wc -l || true)
-
-          echo "[INFO] VERSION: hits (repo wide): ${COUNT}"
-          echo "[INFO] <version> hits (repo wide): ${COUNT2}"
-
-          if [[ "${COUNT}" -eq 0 && "${COUNT2}" -eq 0 ]]; then
-            echo "[FATAL] No governed version markers found outside .github" >&2
-            exit 2
-          fi
-
-      - name: Bump versions and update manifest dates (targeted, excluding .github)
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Version bump"
-
-          python3 - <<'PY'
-          import json
-          import os
-          import re
-          from pathlib import Path
-          from collections import defaultdict
-          from datetime import datetime, timezone
-
-          new_version = (os.environ.get("NEW_VERSION") or "").strip()
-          version_text = (os.environ.get("VERSION_TEXT") or "").strip()
-          report_only = (os.environ.get("REPORT_ONLY") or "").strip().lower() == "true"
-          report_path = (os.environ.get("REPORT_PATH") or "").strip()
-
-          stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-          root = Path(".").resolve()
-
-          # Use escape sequences only. Do not introduce literal tab characters.
-          header_re = re.compile(r"(?im)(VERSION[ \t]*:[ \t]*)([0-9]{2}[.][0-9]{2}[.][0-9]{2})")
-          manifest_marker_re = re.compile(r"(?is)<extension\b")
-          xml_version_re = re.compile(r"(?is)(<version[ \t]*>)([^<]*?)(</version[ \t]*>)")
-          xml_date_res = [
-            re.compile(r"(?is)(<creationDate[ \t]*>)([^<]*?)(</creationDate[ \t]*>)"),
-            re.compile(r"(?is)(<date[ \t]*>)([^<]*?)(</date[ \t]*>)"),
-            re.compile(r"(?is)(<releaseDate[ \t]*>)([^<]*?)(</releaseDate[ \t]*>)"),
-          ]
-
-          skip_ext = {
-            ".json", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".pdf",
-            ".zip", ".7z", ".tar", ".gz", ".woff", ".woff2", ".ttf", ".otf",
-            ".mp3", ".mp4",
-          }
-          skip_dirs = {".git", ".github", "node_modules", "vendor", ".venv", "dist", "build"}
-
-          counters = defaultdict(int)
-          updated_files = []
-          updated_manifests = []
-          would_update_files = []
-          would_update_manifests = []
-
-          exclude_root = {"update.xml", "updates.xml"}
-
-          def should_skip(p: Path) -> bool:
-            if p.suffix.lower() in skip_ext:
-              counters["skipped_by_ext"] += 1
-              return True
-            parts = {x.lower() for x in p.parts}
-            if any(d in parts for d in skip_dirs):
-              counters["skipped_by_dir"] += 1
-              return True
-            return False
-
-          for p in root.rglob("*"):
-            if not p.is_file():
-              continue
-            if should_skip(p):
-              continue
-
-            if p.parent == root and p.name.lower() in exclude_root:
-              counters["skipped_release_artifacts"] += 1
-              continue
-
-            try:
-              original = p.read_text(encoding="utf-8", errors="replace")
-            except Exception:
-              counters["skipped_read_error"] += 1
-              continue
-
-            text = original
-
-            text, n1 = header_re.subn(lambda m: m.group(1) + new_version, text)
-            if n1:
-              counters["header_replacements"] += n1
-
-            is_manifest = (p.suffix.lower() == ".xml" and manifest_marker_re.search(original) is not None)
-            if is_manifest:
-              text, n2 = xml_version_re.subn(lambda m: m.group(1) + new_version + m.group(3), text)
-              if n2:
-                counters["xml_version_replacements"] += n2
-
-              for rx in xml_date_res:
-                text, n3 = rx.subn(lambda m: m.group(1) + stamp + m.group(3), text)
-                if n3:
-                  counters["xml_date_replacements"] += n3
-
-            if text != original:
-              would_update_files.append(str(p))
-              if is_manifest:
-                would_update_manifests.append(str(p))
-
-              if not report_only:
-                p.write_text(text, encoding="utf-8")
-                updated_files.append(str(p))
-                if is_manifest:
-                  updated_manifests.append(str(p))
-
-          report = {
-            "mode": "report_only" if report_only else "apply",
-            "new_version": new_version,
-            "version_text": version_text,
-            "stamp_utc": stamp,
-            "counters": dict(counters),
-            "updated_files": updated_files,
-            "updated_manifests": updated_manifests,
-            "would_update_files": would_update_files,
-            "would_update_manifests": would_update_manifests,
-          }
-
-          Path(report_path).write_text(json.dumps(report, indent=2), encoding="utf-8")
-
-          print("[INFO] Report written to:", report_path)
-          print("[INFO] Mode:", report["mode"])
-          print("[INFO] Would update files:", len(would_update_files))
-          print("[INFO] Would update manifests:", len(would_update_manifests))
-          print("[INFO] Updated files:", len(updated_files))
-          print("[INFO] Updated manifests:", len(updated_manifests))
-          PY
-
-      - name: Update CHANGELOG (move Unreleased into version entry)
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Update CHANGELOG"
-
-          if [[ ! -f "CHANGELOG.md" ]]; then
-            echo "[FATAL] CHANGELOG.md not found." >&2
-            exit 2
-          fi
-
-          python3 - <<'PY'
-          import os
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          new_version = (os.environ.get("NEW_VERSION") or "").strip()
-          if not new_version:
-            raise SystemExit("[FATAL] NEW_VERSION not set")
-
-          stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-          p = Path("CHANGELOG.md")
-          lines = p.read_text(encoding="utf-8", errors="replace").splitlines(True)
-
-          def is_h2(line: str) -> bool:
-            return line.lstrip().startswith("## ")
-
-          def norm(line: str) -> str:
-            return line.strip().lower()
-
-          def find_idx(predicate):
-            for i, ln in enumerate(lines):
-              if predicate(ln):
-                return i
-            return None
-
-          unreleased_idx = find_idx(lambda ln: norm(ln) == "## [unreleased]")
-          version_idx = find_idx(lambda ln: ln.lstrip().startswith(f"## [{new_version}]"))
-
-          def version_header() -> list[str]:
-            return ["\n", f"## [{new_version}] - {stamp}\n", "\n"]
-
-          if unreleased_idx is None:
-            if version_idx is None:
-              insert_at = 0
-              for i, ln in enumerate(lines):
-                if ln.lstrip().startswith("# "):
-                  insert_at = i + 1
-                  while insert_at < len(lines) and lines[insert_at].strip() == "":
-                    insert_at += 1
-                  break
-              entry = version_header() + ["- No changes recorded.\n", "\n"]
-              lines[insert_at:insert_at] = entry
-              p.write_text("".join(lines), encoding="utf-8")
-            raise SystemExit(0)
-
-          u_start = unreleased_idx + 1
-          u_end = len(lines)
-          for j in range(u_start, len(lines)):
-            if is_h2(lines[j]):
-              u_end = j
-              break
-
-          unreleased_body = "".join(lines[u_start:u_end]).strip()
-
-          if version_idx is None:
-            lines[u_end:u_end] = version_header()
-
-          version_idx = find_idx(lambda ln: ln.lstrip().startswith(f"## [{new_version}]"))
-          if version_idx is None:
-            raise SystemExit("[FATAL] Failed to locate version header after insertion")
-
-          if unreleased_body:
-            insert_at = version_idx + 1
-            while insert_at < len(lines) and lines[insert_at].strip() == "":
-              insert_at += 1
-
-            moved = ["\n"] + [ln + "\n" for ln in unreleased_body.split("\n") if ln != ""] + ["\n"]
-            lines[insert_at:insert_at] = moved
-
-          unreleased_idx = find_idx(lambda ln: norm(ln) == "## [unreleased]")
-          if unreleased_idx is not None:
-            u_start = unreleased_idx + 1
-            u_end = len(lines)
-            for j in range(u_start, len(lines)):
-              if is_h2(lines[j]):
-                u_end = j
-                break
-            lines[u_start:u_end] = ["\n"]
-
-          p.write_text("".join(lines), encoding="utf-8")
-          PY
-
-      - name: Commit changes
-        if: ${{ env.REPORT_ONLY != 'true' }}
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Commit changes"
-
-          if [[ -z "$(git status --porcelain=v1)" ]]; then
-            echo "[INFO] No changes detected. Skipping commit."
-            exit 0
-          fi
-
-          git add -A
-
-          MSG="chore(release): bump version to ${NEW_VERSION}"
-          if [[ -n "${VERSION_TEXT}" ]]; then
-            MSG="${MSG} (${VERSION_TEXT})"
-          fi
-
-          git commit -m "${MSG}"
-
-      - name: Push branch
-        if: ${{ env.REPORT_ONLY != 'true' }}
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Push branch"
-
-          if [[ -z "${BRANCH_NAME:-}" ]]; then
-            echo "[FATAL] BRANCH_NAME not set." >&2
-            exit 2
-          fi
-
-          git push --set-upstream origin "${BRANCH_NAME}"
-
-      - name: Create pull request
-        if: ${{ env.REPORT_ONLY != 'true' }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Create pull request"
-
-          if [[ -z "${BRANCH_NAME:-}" ]]; then
-            echo "[FATAL] BRANCH_NAME not set." >&2
-            exit 2
-          fi
-
-          PR_TITLE="Version branch ${NEW_VERSION}"
-          if [[ -n "${VERSION_TEXT}" ]]; then
-            PR_TITLE="${PR_TITLE} (${VERSION_TEXT})"
-          fi
-
-          cat > /tmp/pr_body.txt <<'PRBODY'
-          This pull request was automatically created by the version branch workflow.
-          PRBODY
-
-          # Add dynamic content
-          {
-            echo ""
-            echo "Version: ${NEW_VERSION}"
-            echo "Version Text: ${VERSION_TEXT:-N/A}"
-            echo "Branch Prefix: ${BRANCH_PREFIX}"
-            echo "Base Branch: ${BASE_BRANCH}"
-          } >> /tmp/pr_body.txt
-
-          echo "[INFO] Creating pull request from ${BRANCH_NAME} to ${BASE_BRANCH}"
-
-          set +e
-          PR_OUTPUT=$(gh pr create \
-            --base "${BASE_BRANCH}" \
-            --head "${BRANCH_NAME}" \
-            --title "${PR_TITLE}" \
-            --body-file /tmp/pr_body.txt 2>&1)
-          PR_EXIT_CODE=$?
-          set -e
-
-          if [[ ${PR_EXIT_CODE} -eq 0 ]]; then
-            echo "[INFO] Pull request created successfully"
-            echo "${PR_OUTPUT}"
-          else
-            echo "[WARN] Failed to create pull request (exit code: ${PR_EXIT_CODE})" >&2
-            echo "[WARN] Output: ${PR_OUTPUT}" >&2
-
-            # Check for common error conditions with specific patterns
-            if echo "${PR_OUTPUT}" | grep -iqE "pull request.*already exists"; then
-              echo "[INFO] PR already exists, continuing..." >&2
-            elif echo "${PR_OUTPUT}" | grep -iqE "no commits between.*branch"; then
-              echo "[INFO] No commits between branches, continuing..." >&2
-            else
-              echo "[WARN] Unexpected error occurred, but continuing workflow" >&2
-            fi
-          fi
-
-      - name: Publish audit trail
-        if: always()
-        run: |
-          source "$CI_HELPERS"
-          moko_init "Publish audit trail"
-
-          echo "# Version branch run" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Repository: $GITHUB_REPOSITORY" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Base branch: ${BASE_BRANCH}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Branch prefix: ${BRANCH_PREFIX}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- New version: ${NEW_VERSION}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Version text: ${VERSION_TEXT}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Report only: ${REPORT_ONLY}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Commit changes: ${COMMIT_CHANGES}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- New branch: ${BRANCH_NAME:-}" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-
-          echo "## Version bump report" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-
-          if [[ -f "${REPORT_PATH}" ]]; then
-            echo "\`\`\`json" >> "$GITHUB_STEP_SUMMARY"
-            head -c 12000 "${REPORT_PATH}" >> "$GITHUB_STEP_SUMMARY" || true
-            echo "" >> "$GITHUB_STEP_SUMMARY"
-            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "Report file not found at: ${REPORT_PATH}" >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "## Error summary" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-
-          if [[ -f "$ERROR_LOG" && -s "$ERROR_LOG" ]]; then
-            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
-            tail -n 200 "$ERROR_LOG" >> "$GITHUB_STEP_SUMMARY" || true
-            echo "\`\`\`" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "No errors recorded." >> "$GITHUB_STEP_SUMMARY"
-          fi
+# RELEASE FLOW DIAGRAM:
+#
+# Normal Release:
+#   main → dev/X.Y.Z → rc/X.Y.Z → version/X.Y.Z → main (tagged vX.Y.Z)
+#
+# Hotfix:
+#   main → hotfix/X.Y.Z → main (tagged vX.Y.Z)
+#
+# SEMANTIC VERSIONING:
+#   - MAJOR version: incompatible API changes
+#   - MINOR version: backwards-compatible functionality
+#   - PATCH version: backwards-compatible bug fixes
+#
+# CUSTOMIZATION:
+#   - Modify version file updates in start-release job
+#   - Add build/test steps before creating releases
+#   - Customize release notes generation
+#   - Add notification steps (Slack, email, etc.)

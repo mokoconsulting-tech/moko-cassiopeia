@@ -69,7 +69,6 @@ moko-cassiopeia/
 ├── src/                     # Template source code
 │   ├── templates/          # Joomla template files
 │   └── media/              # Assets (CSS, JS, images)
-├── scripts/                 # Build and automation scripts
 ├── tests/                   # Automated tests
 └── .github/                # GitHub configuration and workflows
 ```

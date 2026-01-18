@@ -63,7 +63,7 @@ permissions:
 jobs:
   compliance:
     name: Standards Compliance Validation
-    uses: ./.github/workflows/reusable-ci-validation.yml
+    uses: mokoconsulting-tech/MokoStandards/.github/workflows/reusable-ci-validation.yml@main
     with:
       profile: ${{ inputs.profile || 'full' }}
       validate-manifests: true

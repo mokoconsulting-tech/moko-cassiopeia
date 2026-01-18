@@ -103,6 +103,20 @@ If upgrading from a prior version, Joomla will safely overwrite files
 -   **Color Scheme**: Toggle light/dark defaults.
 -   **Analytics/GTM**: Enable/disable optional expansions.
 
+### Custom Color Palettes
+
+Moko-Cassiopeia supports custom color schemes for both light and dark modes:
+
+-   **Standard**: Default Joomla Cassiopeia colors
+-   **Alternative**: Alternative color palette
+-   **Custom**: Create your own custom colors by adding `colors_custom.css` files
+
+To use custom colors:
+1. Create `src/media/css/colors/light/colors_custom.css` for light mode
+2. Create `src/media/css/colors/dark/colors_custom.css` for dark mode  
+3. Define your CSS variables in these files (see existing `colors_standard.css` for reference)
+4. Select "Custom" in template settings under **Variables & Palettes**
+
 ### Font Awesome 7
 
 -   Fully integrated into Joomla's asset manager.
@@ -150,9 +164,6 @@ make quality
 
 # Create distribution package
 make package
-
-# Install Git hooks (optional but recommended)
-python3 ./scripts/git/install-hooks.py
 ```
 
 **New to the project?** See [Quick Start Guide](./docs/QUICK_START.md) for a 5-minute walkthrough.
@@ -162,23 +173,21 @@ python3 ./scripts/git/install-hooks.py
 - **[Quick Start Guide](./docs/QUICK_START.md)** - Get up and running in 5 minutes
 - **[Workflow Guide](./docs/WORKFLOW_GUIDE.md)** - Complete workflow reference with examples
 - **[Joomla Development Guide](./docs/JOOMLA_DEVELOPMENT.md)** - Testing, quality checks, and deployment
-- **[Scripts Documentation](./scripts/README.md)** - Available automation scripts
 - **[Contributing Guide](./CONTRIBUTING.md)** - How to contribute
 
 ### Available Tools
 
 - **Makefile**: Run `make help` to see all available commands
-- **Python Scripts**: All automation scripts are now Python-based for cross-platform compatibility
 - **Pre-commit Hooks**: Automatic validation before commits
 - **VS Code Tasks**: Pre-configured development tasks
 - **GitHub Actions**: Automated CI/CD pipelines
 
 ### Cross-Platform Support
 
-All scripts are now written in Python for maximum cross-platform compatibility:
+All automation is handled through the Makefile and GitHub Actions workflows for maximum cross-platform compatibility:
 - **Joomla Extension Support**: Full support for Joomla 4.x and 5.x templates, components, modules, and plugins
-- **Dolibarr Module Support**: Automatic detection and packaging of Dolibarr modules
-- **Platform Detection**: Scripts automatically detect whether you're working with Joomla or Dolibarr extensions
+- **Platform Detection**: Workflows automatically detect whether you're working with Joomla extensions
+- **MokoStandards Integration**: Uses reusable workflows from MokoStandards for consistency
 
 ### Joomla Development Workflows
 
