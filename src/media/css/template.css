@@ -790,8 +790,8 @@ progress {
 	flex-shrink: 0;
 	width: 100%;
 	max-width: 100%;
-	padding-right: 0;
-	padding-left: 0;
+	padding-right: 0.25em;
+	padding-left: 0.25em;
 	margin-top: var(--gutter-y);
 }
 
