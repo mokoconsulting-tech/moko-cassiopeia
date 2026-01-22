@@ -118,7 +118,7 @@ if ($this->params->get('faKitCode')) {
 	HTMLHelper::_('script', $faKit, ['crossorigin' => 'anonymous']);
 } else {
 		try {
-			if($params_developmentmode){
+			if ($params_developmentmode){
 				$wa->useStyle('vendor.fa7free.all');
 				$wa->useStyle('vendor.fa7free.brands');
 				$wa->useStyle('vendor.fa7free.fontawesome');
@@ -132,7 +132,7 @@ if ($this->params->get('faKitCode')) {
 				$wa->useStyle('vendor.fa7free.solid.min');
 			}
 	} catch (\Throwable $e) {
-		if($params_developmentmode){
+		if ($params_developmentmode){
 			$wa->registerAndUseStyle('vendor.fa7free.all.dynamic', $templatePath . '/vendor/fa7free/css/all.css');
 			$wa->registerAndUseStyle('vendor.fa7free.brands.dynamic', $templatePath . '/vendor/fa7free/css/brands.css');
 			$wa->registerAndUseStyle('vendor.fa7free.fontawesome.dynamic', $templatePath . '/vendor/fa7free/css/fontawesome.css');
@@ -140,10 +140,10 @@ if ($this->params->get('faKitCode')) {
 			$wa->registerAndUseStyle('vendor.fa7free.solid.dynamic', $templatePath . '/vendor/fa7free/css/solid.css');
 		} else {
 			$wa->registerAndUseStyle('vendor.fa7free.all.min.dynamic', $templatePath . '/vendor/fa7free/css/all.min.css');
-				$wa->registerAndUseStyle('vendor.fa7free.brands.min.dynamic', $templatePath . '/vendor/fa7free/css/brands.min.css');
-				$wa->registerAndUseStyle('vendor.fa7free.fontawesome.min.dynamic', $templatePath . '/vendor/fa7free/css/fontawesome.min.css');
-				$wa->registerAndUseStyle('vendor.fa7free.regular.min.dynamic', $templatePath . '/vendor/fa7free/css/regular.min.css');
-				$wa->registerAndUseStyle('vendor.fa7free.solid.min.dynamic', $templatePath . '/vendor/fa7free/css/solid.min.css');
+			$wa->registerAndUseStyle('vendor.fa7free.brands.min.dynamic', $templatePath . '/vendor/fa7free/css/brands.min.css');
+			$wa->registerAndUseStyle('vendor.fa7free.fontawesome.min.dynamic', $templatePath . '/vendor/fa7free/css/fontawesome.min.css');
+			$wa->registerAndUseStyle('vendor.fa7free.regular.min.dynamic', $templatePath . '/vendor/fa7free/css/regular.min.css');
+			$wa->registerAndUseStyle('vendor.fa7free.solid.min.dynamic', $templatePath . '/vendor/fa7free/css/solid.min.css');
 		}
 
 	}
