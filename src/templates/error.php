@@ -26,72 +26,156 @@ $app    = Factory::getApplication();
 $params = $this->params;
 $wa     = $this->getWebAssetManager();
 
+// Template params
+$params_LightColorName          = (string) $params->get('colorLightName', 'colors_standard'); // colors_standard|colors_alternative|colors_custom
+
+$params_DarkColorName          = (string) $params->get('colorDarkName', 'colors_standard'); // colors_standard|colors_alternative|colors_custom
+
+$params_googletagmanager   = $params->get('googletagmanager', false);
+$params_googletagmanagerid = $params->get('googletagmanagerid', null);
+$params_googleanalytics    = $params->get('googleanalytics', false);
+$params_googleanalyticsid  = $params->get('googleanalyticsid', null);
+$params_custom_head_start  = $params->get('custom_head_start', null);
+$params_custom_head_end    = $params->get('custom_head_end', null);
+$params_developmentmode = $params->get('developmentmode', false);
+
+// Bootstrap behaviors (assets handled via WAM)
+HTMLHelper::_('bootstrap.framework');
+HTMLHelper::_('bootstrap.loadCss', true);
+HTMLHelper::_('bootstrap.alert');
+HTMLHelper::_('bootstrap.button');
+HTMLHelper::_('bootstrap.carousel');
+HTMLHelper::_('bootstrap.collapse');
+HTMLHelper::_('bootstrap.dropdown');
+HTMLHelper::_('bootstrap.modal');
+HTMLHelper::_('bootstrap.offcanvas');
+HTMLHelper::_('bootstrap.popover');
+HTMLHelper::_('bootstrap.scrollspy');
+HTMLHelper::_('bootstrap.tab');
+HTMLHelper::_('bootstrap.tooltip');
+HTMLHelper::_('bootstrap.toast');
+
 // ------------------ Params ------------------
-$colorLight      = (string) $params->get('colorLightName', 'colors_standard');
-$colorDark       = (string) $params->get('colorDarkName',  'colors_standard');
-$themeFab        = (int)    $params->get('theme_fab_enabled', 1);
-$fABodyPos       = (string) $params->get('theme_fab_pos', 'br');
-$gtmEnabled      = (int)    $params->get('googletagmanager', 0);
-$gtmId           = (string) $params->get('googletagmanagerid', '');
-$fa6KitCode      = (string) $params->get('fA6KitCode', '');
 $stickyHeader    = (bool)   $params->get('stickyHeader', 0);
 $brandEnabled    = (int)    $params->get('brand', 1);
 $siteDescription = (string) $params->get('siteDescription', '');
 
 // Drawer icon params (escaped)
-$params_leftIcon  = htmlspecialchars($params->get('drawerLeftIcon',  'fa-solid fa-chevron-right'), ENT_QUOTES, 'UTF-8');
-$params_rightIcon = htmlspecialchars($params->get('drawerRightIcon', 'fa-solid fa-chevron-left'),  ENT_QUOTES, 'UTF-8');
+$params_leftIcon  = htmlspecialchars($params->get('drawerLeftIcon',  'fa-solid fa-chevron-left'), ENT_QUOTES, 'UTF-8');
+$params_rightIcon = htmlspecialchars($params->get('drawerRightIcon', 'fa-solid fa-chevron-right'),  ENT_QUOTES, 'UTF-8');
 
-// ------------------ Styles ------------------
-$wa->useStyle('template.base');
-$wa->useStyle('template.user');
+// Template/Media path
+$templatePath = 'media/templates/site/moko-cassiopeia';
 
-// Light/Dark variable sheets (load before consumers)
-if ($wa->assetExists('style', 'template.light.' . $colorLight)) {
-	$wa->useStyle('template.light.' . $colorLight);
+// ===========================
+// Web Asset Manager (WAM) — matches your joomla.asset.json
+// ===========================
+
+// Core template CSS
+$wa->useStyle('template.global.base');   // css/template.css
+$wa->useStyle('template.global.social-media-demo');   // css/user.css
+
+// Optional vendor CSS
+$wa->useStyle('vendor.bootstrap-toc');
+
+// Color theme (light + optional dark)
+$colorLightKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_LightColorName));
+$colorDarkKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_DarkColorName));
+$lightKey  = 'template.light.' . $colorLightKey;
+$darkKey   = 'template.dark.' . $colorDarkKey;
+try {
+	$wa->useStyle('template.light.colors_standard');
+} catch (\Throwable $e) {
+	$wa->registerAndUseStyle('template.light.colors_standard', $templatePath . '/css/global/light/colors_standard.css');
 }
-if ($wa->assetExists('style', 'template.dark.' . $colorDark)) {
-	$wa->useStyle('template.dark.' . $colorDark);
+try {
+	$wa->useStyle('template.dark.colors_standard');
+} catch (\Throwable $e) {
+	$wa->registerAndUseStyle('template.dark.colors_standard', $templatePath . '/css/global/dark/colors_standard.css');
+}
+try {
+	$wa->useStyle($lightKey);
+} catch (\Throwable $e) {
+	$wa->registerAndUseStyle('template.light.dynamic', $templatePath . '/css/global/light/' . $colorLightKey . '.css');
+}
+try {
+	$wa->useStyle($darkKey);
+} catch (\Throwable $e) {
+	$wa->registerAndUseStyle('template.dark.dynamic', $templatePath . '/css/global/dark/' . $colorDarkKey . '.css');
 }
 
-// ------------------ Scripts ------------------
+// Scripts
+$wa->useScript('template.js');
 $wa->useScript('theme-init.js');
-if ($themeFab === 1) {
-	$wa->useScript('darkmode-toggle.js');
-}
-if ($gtmEnabled === 1) {
-	$wa->useScript('gtm.js');
+$wa->useScript('darkmode-toggle.js');
+$wa->useScript('vendor.bootstrap-toc.js');
+
+// Meta
+$this->setMetaData('viewport', 'width=device-width, initial-scale=1');
+
+if ($this->params->get('faKitCode')) {
+	$faKit = "https://kit.fontawesome.com/" . $this->params->get('faKitCode') . ".js";
+	HTMLHelper::_('script', $faKit, ['crossorigin' => 'anonymous']);
+} else {
+		try {
+			if($params_developmentmode){
+				$wa->useStyle('vendor.fa7free.all');
+				$wa->useStyle('vendor.fa7free.brands');
+				$wa->useStyle('vendor.fa7free.fontawesome');
+				$wa->useStyle('vendor.fa7free.regular');
+				$wa->useStyle('vendor.fa7free.solid');
+			} else {
+				$wa->useStyle('vendor.fa7free.all.min');
+				$wa->useStyle('vendor.fa7free.brands.min');
+				$wa->useStyle('vendor.fa7free.fontawesome.min');
+				$wa->useStyle('vendor.fa7free.regular.min');
+				$wa->useStyle('vendor.fa7free.solid.min');
+			}
+	} catch (\Throwable $e) {
+		if($params_developmentmode){
+			$wa->registerAndUseStyle('vendor.fa7free.all.dynamic', $templatePath . '/vendor/fa7free/css/all.css');
+			$wa->registerAndUseStyle('vendor.fa7free.brands.dynamic', $templatePath . '/vendor/fa7free/css/brands.css');
+			$wa->registerAndUseStyle('vendor.fa7free.fontawesome.dynamic', $templatePath . '/vendor/fa7free/css/fontawesome.css');
+			$wa->registerAndUseStyle('vendor.fa7free.regular.dynamic', $templatePath . '/vendor/fa7free/css/regular.css');
+			$wa->registerAndUseStyle('vendor.fa7free.solid.dynamic', $templatePath . '/vendor/fa7free/css/solid.css');
+		} else {
+			$wa->registerAndUseStyle('vendor.fa7free.all.min.dynamic', $templatePath . '/vendor/fa7free/css/all.min.css');
+				$wa->registerAndUseStyle('vendor.fa7free.brands.min.dynamic', $templatePath . '/vendor/fa7free/css/brands.min.css');
+				$wa->registerAndUseStyle('vendor.fa7free.fontawesome.min.dynamic', $templatePath . '/vendor/fa7free/css/fontawesome.min.css');
+				$wa->registerAndUseStyle('vendor.fa7free.regular.min.dynamic', $templatePath . '/vendor/fa7free/css/regular.min.css');
+				$wa->registerAndUseStyle('vendor.fa7free.solid.min.dynamic', $templatePath . '/vendor/fa7free/css/solid.min.css');
+		}
+
+	}
 }
 
-// Optional Font Awesome 6 Kit (preferred) or FA5 fallback
-if (!empty($fa6KitCode)) {
-	HTMLHelper::_('script', 'https://kit.fontawesome.com/' . rawurlencode($fa6KitCode) . '.js', [
-		'crossorigin' => 'anonymous'
-	]);
-} else {
-	HTMLHelper::_('stylesheet', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css', ['version' => 'auto'], [
-		'crossorigin'    => 'anonymous',
-		'referrerpolicy' => 'no-referrer',
-	]);
-}
+$wa->useStyle('template.user');   // css/user.css
 
 // ------------------ Context (logo, bootstrap needs) ------------------
 $sitename = htmlspecialchars($app->get('sitename'), ENT_QUOTES, 'UTF-8');
 
-// Build logo/title
-if ($params->get('logoFile')) {
-	$logo = HTMLHelper::_(
+// -------------------------------------
+// Brand: logo from params OR siteTitle
+// -------------------------------------
+$brandHtml = '';
+$logoFile  = (string) $this->params->get('logoFile');
+
+if ($logoFile !== '') {
+	$brandHtml = HTMLHelper::_(
 		'image',
-		Uri::root(false) . htmlspecialchars($params->get('logoFile'), ENT_QUOTES),
+		Uri::root(false) . htmlspecialchars($logoFile, ENT_QUOTES, 'UTF-8'),
 		$sitename,
-		['loading' => 'eager', 'decoding' => 'async'],
+		['class' => 'logo d-inline-block', 'loading' => 'eager', 'decoding' => 'async'],
 		false,
 		0
 	);
-} elseif ($params->get('siteTitle')) {
-	$logo = '<span title="' . $sitename . '">' . htmlspecialchars($params->get('siteTitle'), ENT_COMPAT, 'UTF-8') . '</span>';
+} elseif ($this->params->get('siteTitle')) {
+	$brandHtml = '<span class="site-title" title="' . $sitename . '">'
+			   . htmlspecialchars($this->params->get('siteTitle'), ENT_COMPAT, 'UTF-8')
+			   . '</span>';
 } else {
-	$logo = HTMLHelper::_('image', 'full_logo.png', $sitename, ['class' => 'logo d-inline-block', 'loading' => 'eager', 'decoding' => 'async'], true, 0);
+	// Fallback to a bundled image (relative to media paths)
+	$brandHtml = HTMLHelper::_('image', 'full_logo.png', $sitename, ['class' => 'logo d-inline-block', 'loading' => 'eager', 'decoding' => 'async'], true, 0);
 }
 
 // ------------------ Error details ------------------
@@ -103,23 +187,107 @@ $debugOn   = defined('JDEBUG') && JDEBUG;
 <!DOCTYPE html>
 <html lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>">
 <head>
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<meta name="theme-color" content="#ffffff" id="meta-theme-color" />
+	<?php if (trim($params_custom_head_start)) : ?><?php echo $params_custom_head_start; ?><?php endif; ?>
 	<jdoc:include type="head" />
+
+	<script>
+	  // Early theme application to avoid FOUC
+	  (function () {
+		try {
+		  var stored = localStorage.getItem('theme');
+		  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+		  var theme = stored ? stored : (prefersDark ? 'dark' : 'light');
+		  document.documentElement.setAttribute('data-bs-theme', theme);
+		} catch (e) {}
+	  })();
+	</script>
+
+	<script>
+	  // Facebook in-app browser warning banner
+	  window.addEventListener('DOMContentLoaded', function () {
+		var ua = navigator.userAgent || navigator.vendor || window.opera;
+		var isFacebookBrowser = ua.indexOf('FBAN') > -1 || ua.indexOf('FBAV') > -1;
+		if (isFacebookBrowser) {
+		  var warning = document.createElement('div');
+		  warning.textContent = '⚠️ KNOWN ISSUE: Images do not load in Facebook Web browser. Please open in external browser for full experience.';
+		  warning.style.position = 'fixed';
+		  warning.style.top = '0';
+		  warning.style.left = '0';
+		  warning.style.right = '0';
+		  warning.style.zIndex = '10000';
+		  warning.style.backgroundColor = '#007bff';
+		  warning.style.color = '#fff';
+		  warning.style.padding = '15px';
+		  warning.style.textAlign = 'center';
+		  warning.style.fontWeight = 'bold';
+		  warning.style.fontSize = '16px';
+		  warning.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+		  document.body.appendChild(warning);
+		}
+	  });
+	</script>
+
+	<?php if (trim($params_custom_head_end)) : ?><?php echo $params_custom_head_end; ?><?php endif; ?>
 </head>
-<body data-theme-fab-pos="<?php echo htmlspecialchars($fABodyPos, ENT_QUOTES, 'UTF-8'); ?>">
-<?php if ($gtmEnabled === 1 && !empty($gtmId)) : ?>
+<body data-bs-spy="scroll" data-bs-target="#toc" class="site error-page<?php
+	echo ($this->direction == 'rtl' ? ' rtl' : '');
+?>">
+<?php if (!empty($params_googletagmanager) && !empty($params_googletagmanagerid)) :
+	$gtmID = htmlspecialchars($params_googletagmanagerid, ENT_QUOTES, 'UTF-8'); ?>
+	<!-- Google Tag Manager -->
+	<script>
+		(function(w,d,s,l,i){
+			w[l]=w[l]||[];
+			w[l].push({'gtm.start': new Date().getTime(), event:'gtm.js'});
+			var f=d.getElementsByTagName(s)[0],
+				j=d.createElement(s),
+				dl=l!='dataLayer'?'&l='+l:'';
+			j.async=true;
+			j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
+			f.parentNode.insertBefore(j,f);
+		})(window,document,'script','dataLayer','<?php echo $gtmID; ?>');
+	</script>
+	<!-- End Google Tag Manager -->
+
 	<!-- Google Tag Manager (noscript) -->
 	<noscript>
-		<iframe src="https://www.googletagmanager.com/ns.html?id=<?php echo htmlspecialchars($gtmId, ENT_QUOTES, 'UTF-8'); ?>"
+		<iframe src="https://www.googletagmanager.com/ns.html?id=<?php echo $gtmID; ?>"
 				height="0" width="0" style="display:none;visibility:hidden"></iframe>
 	</noscript>
 	<!-- End Google Tag Manager (noscript) -->
 <?php endif; ?>
 
-<!-- ========== DUPLICATED HEADER FROM INDEX ========== -->
-<header class="header container-header full-width<?php echo $stickyHeader ? ' position-sticky sticky-top' : ''; ?>">
+<?php if (!empty($params_googleanalytics) && !empty($params_googleanalyticsid)) :
+	$gaId = htmlspecialchars($params_googleanalyticsid, ENT_QUOTES, 'UTF-8'); ?>
+	<!-- Google Analytics (gtag.js) -->
+	<script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo $gaId; ?>"></script>
+	<script>
+		window.dataLayer = window.dataLayer || [];
+		function gtag(){dataLayer.push(arguments);}
+		gtag('js', new Date());
+		gtag('consent', 'default', {
+			'ad_storage': 'denied',
+			'analytics_storage': 'granted',
+			'ad_user_data': 'denied',
+			'ad_personalization': 'denied'
+		});
+		(function(id){
+			if (/^G-/.test(id)) {
+				gtag('config', id, { 'anonymize_ip': true });
+			} else if (/^UA-/.test(id)) {
+				gtag('config', id, { 'anonymize_ip': true });
+				console.warn('Using a UA- ID. Universal Analytics is sunset; consider migrating to GA4.');
+			} else {
+				console.warn('Unrecognized Google Analytics ID format:', id);
+			}
+		})('<?php echo $gaId; ?>');
+	</script>
+	<!-- End Google Analytics -->
+<?php endif; ?>
+
+<!-- ========== HEADER FROM INDEX ========== -->
+<header class="header container-header full-width<?php echo $stickyHeader ? ' position-sticky sticky-top' : ''; ?>" role="banner">
+
 	<?php if ($this->countModules('topbar')) : ?>
 		<div class="container-topbar">
 			<jdoc:include type="modules" name="topbar" style="none" />
@@ -133,14 +301,16 @@ $debugOn   = defined('JDEBUG') && JDEBUG;
 			</div>
 		<?php endif; ?>
 
-		<?php if ($brandEnabled) : ?>
+		<?php if ($this->params->get('brand', 1)) : ?>
 			<div class="grid-child">
 				<div class="navbar-brand">
 					<a class="brand-logo" href="<?php echo $this->baseurl; ?>/">
-						<?php echo $logo; ?>
+						<?php echo $brandHtml; ?>
 					</a>
-					<?php if (!empty($siteDescription)) : ?>
-						<div class="site-description"><?php echo htmlspecialchars($siteDescription); ?></div>
+					<?php if ($this->params->get('siteDescription')) : ?>
+						<div class="site-description">
+						  <?php echo htmlspecialchars($this->params->get('siteDescription'), ENT_QUOTES, 'UTF-8'); ?>
+						</div>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -153,10 +323,33 @@ $debugOn   = defined('JDEBUG') && JDEBUG;
 		<?php endif; ?>
 	</div>
 
+	<!-- Drawer Toggle Buttons -->
+	<?php if ($this->countModules('drawer-left')) : ?>
+	  <button class="drawer-toggle-left btn btn-outline-secondary me-2"
+			  type="button"
+			  data-bs-toggle="offcanvas"
+			  data-bs-target="#drawer-left"
+			  aria-controls="drawer-left">
+		<span class="<?php echo $params_leftIcon; ?>"></span>
+	  </button>
+	<?php endif; ?>
+
+	<?php if ($this->countModules('drawer-right')) : ?>
+	  <button class="drawer-toggle-right btn btn-outline-secondary"
+			  type="button"
+			  data-bs-toggle="offcanvas"
+			  data-bs-target="#drawer-right"
+			  aria-controls="drawer-right">
+		<span class="<?php echo $params_rightIcon; ?>"></span>
+	  </button>
+	<?php endif; ?>
+
 	<?php if ($this->countModules('menu', true) || $this->countModules('search', true)) : ?>
 		<div class="grid-child container-nav">
 			<?php if ($this->countModules('menu', true)) : ?>
-				<jdoc:include type="modules" name="menu" style="none" />
+				<nav role="navigation" aria-label="Primary">
+					<jdoc:include type="modules" name="menu" style="none" />
+				</nav>
 			<?php endif; ?>
 			<?php if ($this->countModules('search', true)) : ?>
 				<div class="container-search">
@@ -166,7 +359,7 @@ $debugOn   = defined('JDEBUG') && JDEBUG;
 		</div>
 	<?php endif; ?>
 </header>
-<!-- ========== END DUPLICATED HEADER ========== -->
+<!-- ========== END HEADER ========== -->
 
 <main class="container my-4">
 	<div class="card border-0 shadow-sm mb-4">
@@ -245,7 +438,7 @@ $debugOn   = defined('JDEBUG') && JDEBUG;
 	</section>
 <?php endif; ?>
 </main>
-<footer class="container-footer footer full-width py-4">
+<footer class="container-footer footer full-width">
 	<?php if ($this->countModules('footer-menu', true)) : ?>
 		<div class="grid-child footer-menu">
 			<jdoc:include type="modules" name="footer-menu" />
@@ -258,6 +451,37 @@ $debugOn   = defined('JDEBUG') && JDEBUG;
 	<?php endif; ?>
 </footer>
 
+<?php if ($this->params->get('backTop') == 1) : ?>
+	<a href="#top" id="back-top" class="back-to-top-link" aria-label="<?php echo Text::_('TPL_MOKO-CASSIOPEIA_BACKTOTOP'); ?>">
+		<span class="icon-arrow-up icon-fw" aria-hidden="true"></span>
+	</a>
+<?php endif; ?>
+
+<?php if ($this->countModules('drawer-left', true)) : ?>
+<!-- Left Offcanvas Drawer -->
+<aside class="offcanvas offcanvas-start" tabindex="-1" id="drawer-left">
+  <div class="offcanvas-header">
+	<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="<?php echo Text::_('JLIB_HTML_BEHAVIOR_CLOSE'); ?>"></button>
+  </div>
+  <div class="offcanvas-body">
+	<jdoc:include type="modules" name="drawer-left" style="none" />
+  </div>
+</aside>
+<?php endif; ?>
+
+<?php if ($this->countModules('drawer-right', true)) : ?>
+<!-- Right Offcanvas Drawer -->
+<aside class="offcanvas offcanvas-end" tabindex="-1" id="drawer-right">
+  <div class="offcanvas-header">
+	<button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="<?php echo Text::_('JLIB_HTML_BEHAVIOR_CLOSE'); ?>"></button>
+  </div>
+  <div class="offcanvas-body">
+	<jdoc:include type="modules" name="drawer-right" style="none" />
+  </div>
+</aside>
+<?php endif; ?>
+
 <jdoc:include type="modules" name="debug" style="none" />
+
 </body>
 </html>
