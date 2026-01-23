@@ -32,11 +32,11 @@ $params_LightColorName          = (string) $params->get('colorLightName', 'color
 $params_DarkColorName          = (string) $params->get('colorDarkName', 'colors_standard'); // colors_standard|colors_alternative|colors_custom
 
 $params_googletagmanager   = $params->get('googletagmanager', false);
-$params_googletagmanagerid = $params->get('googletagmanagerid', null);
+$params_googletagmanagerid = $params->get('googletagmanagerid', '');
 $params_googleanalytics    = $params->get('googleanalytics', false);
-$params_googleanalyticsid  = $params->get('googleanalyticsid', null);
-$params_custom_head_start  = $params->get('custom_head_start', null);
-$params_custom_head_end    = $params->get('custom_head_end', null);
+$params_googleanalyticsid  = $params->get('googleanalyticsid', '');
+$params_custom_head_start  = $params->get('custom_head_start', '');
+$params_custom_head_end    = $params->get('custom_head_end', '');
 $params_developmentmode = $params->get('developmentmode', false);
 
 // Bootstrap behaviors (assets handled via WAM)
@@ -57,8 +57,6 @@ HTMLHelper::_('bootstrap.toast');
 
 // ------------------ Params ------------------
 $stickyHeader    = (bool)   $params->get('stickyHeader', 0);
-$brandEnabled    = (int)    $params->get('brand', 1);
-$siteDescription = (string) $params->get('siteDescription', '');
 
 // Drawer icon params (escaped)
 $params_leftIcon  = htmlspecialchars($params->get('drawerLeftIcon',  'fa-solid fa-chevron-left'), ENT_QUOTES, 'UTF-8');
@@ -73,7 +71,7 @@ $templatePath = 'media/templates/site/moko-cassiopeia';
 
 // Core template CSS
 $wa->useStyle('template.global.base');   // css/template.css
-$wa->useStyle('template.global.social-media-demo');   // css/user.css
+$wa->useStyle('template.global.social-media-demo');   // css/global/social-media-demo.css
 
 // Optional vendor CSS
 $wa->useStyle('vendor.bootstrap-toc');
@@ -187,7 +185,7 @@ $debugOn   = defined('JDEBUG') && JDEBUG;
 <!DOCTYPE html>
 <html lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>">
 <head>
-	<?php if (trim($params_custom_head_start)) : ?><?php echo $params_custom_head_start; ?><?php endif; ?>
+	<?php if ($params_custom_head_start !== '') : ?><?php echo $params_custom_head_start; ?><?php endif; ?>
 	<jdoc:include type="head" />
 
 	<script>
@@ -227,13 +225,12 @@ $debugOn   = defined('JDEBUG') && JDEBUG;
 	  });
 	</script>
 
-	<?php if (trim($params_custom_head_end)) : ?><?php echo $params_custom_head_end; ?><?php endif; ?>
+	<?php if ($params_custom_head_end !== '') : ?><?php echo $params_custom_head_end; ?><?php endif; ?>
 </head>
 <body data-bs-spy="scroll" data-bs-target="#toc" class="site error-page<?php
 	echo ($this->direction == 'rtl' ? ' rtl' : '');
 ?>">
-<?php if (!empty($params_googletagmanager) && !empty($params_googletagmanagerid)) :
-	$gtmID = htmlspecialchars($params_googletagmanagerid, ENT_QUOTES, 'UTF-8'); ?>
+<?php if (!empty($params_googletagmanager) && !empty($params_googletagmanagerid)) : ?>
 	<!-- Google Tag Manager -->
 	<script>
 		(function(w,d,s,l,i){
@@ -245,22 +242,21 @@ $debugOn   = defined('JDEBUG') && JDEBUG;
 			j.async=true;
 			j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;
 			f.parentNode.insertBefore(j,f);
-		})(window,document,'script','dataLayer','<?php echo $gtmID; ?>');
+		})(window,document,'script','dataLayer',<?php echo json_encode($params_googletagmanagerid, JSON_HEX_TAG | JSON_HEX_AMP); ?>);
 	</script>
 	<!-- End Google Tag Manager -->
 
 	<!-- Google Tag Manager (noscript) -->
 	<noscript>
-		<iframe src="https://www.googletagmanager.com/ns.html?id=<?php echo $gtmID; ?>"
+		<iframe src="https://www.googletagmanager.com/ns.html?id=<?php echo htmlspecialchars($params_googletagmanagerid, ENT_QUOTES, 'UTF-8'); ?>"
 				height="0" width="0" style="display:none;visibility:hidden"></iframe>
 	</noscript>
 	<!-- End Google Tag Manager (noscript) -->
 <?php endif; ?>
 
-<?php if (!empty($params_googleanalytics) && !empty($params_googleanalyticsid)) :
-	$gaId = htmlspecialchars($params_googleanalyticsid, ENT_QUOTES, 'UTF-8'); ?>
+<?php if (!empty($params_googleanalytics) && !empty($params_googleanalyticsid)) : ?>
 	<!-- Google Analytics (gtag.js) -->
-	<script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo $gaId; ?>"></script>
+	<script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo htmlspecialchars($params_googleanalyticsid, ENT_QUOTES, 'UTF-8'); ?>"></script>
 	<script>
 		window.dataLayer = window.dataLayer || [];
 		function gtag(){dataLayer.push(arguments);}
@@ -280,7 +276,7 @@ $debugOn   = defined('JDEBUG') && JDEBUG;
 			} else {
 				console.warn('Unrecognized Google Analytics ID format:', id);
 			}
-		})('<?php echo $gaId; ?>');
+		})(<?php echo json_encode($params_googleanalyticsid, JSON_HEX_TAG | JSON_HEX_AMP); ?>);
 	</script>
 	<!-- End Google Analytics -->
 <?php endif; ?>
@@ -379,11 +375,11 @@ $debugOn   = defined('JDEBUG') && JDEBUG;
 
 	<div class="d-flex gap-2 flex-wrap">
 		<a class="btn btn-primary" href="<?php echo htmlspecialchars(Uri::base(), ENT_QUOTES, 'UTF-8'); ?>">
-			<i class="fas fa-home me-1" aria-hidden="true"></i>
+			<i class="fa-solid fa-home me-1" aria-hidden="true"></i>
 			<?php echo Text::_('JERROR_LAYOUT_HOME_PAGE'); ?>
 		</a>
 		<button class="btn btn-outline-secondary" type="button" onclick="history.back();">
-			<i class="fas fa-arrow-left me-1" aria-hidden="true"></i>
+			<i class="fa-solid fa-arrow-left me-1" aria-hidden="true"></i>
 			<?php echo Text::_('JPREV'); ?>
 		</button>
 	</div>
