@@ -103,6 +103,7 @@ class AssetMinifier
 
 	/**
 	 * Delete all minified files in a directory (recursive)
+	 * Excludes vendor directory to preserve pre-minified vendor assets
 	 * 
 	 * @param string $dir Directory path
 	 * @return int Number of files deleted
@@ -122,6 +123,11 @@ class AssetMinifier
 
 		foreach ($iterator as $file) {
 			if ($file->isFile() && preg_match('/\.min\.(css|js)$/', $file->getFilename())) {
+				// Skip vendor files as they come pre-minified from vendors
+				if (strpos($file->getPathname(), '/vendor/') !== false) {
+					continue;
+				}
+				
 				if (unlink($file->getPathname())) {
 					$deleted++;
 				}
