@@ -133,8 +133,8 @@ try {
 
 // Scripts
 $wa->useScript('template.js' . $assetSuffix);
-$wa->useScript('theme-init' . $assetSuffix . '.js');
-$wa->useScript('darkmode-toggle' . $assetSuffix . '.js');
+$wa->useScript('theme-init.js' . $assetSuffix);
+$wa->useScript('darkmode-toggle.js' . $assetSuffix);
 $wa->useScript('vendor.bootstrap-toc.js' . $assetSuffix);
 
 // Font scheme (external or local) + CSS custom properties

@@ -21,6 +21,18 @@ defined('_JEXEC') or die;
  * 
  * Handles minification and cleanup of CSS and JavaScript assets
  * based on the development mode setting.
+ * 
+ * IMPORTANT NOTES:
+ * - This is a BASIC minifier suitable for development/production switching
+ * - For production builds, consider using professional tools like:
+ *   * CSS: cssnano, clean-css
+ *   * JavaScript: terser, uglify-js, closure-compiler
+ * - URL preservation in JS is best-effort; complex cases may fail
+ * - String content preservation is basic; edge cases may exist
+ * - Does not handle complex string scenarios or regex patterns
+ * 
+ * The minifier is designed to be "good enough" for automatic switching
+ * between development and production modes, not for optimal compression.
  */
 class AssetMinifier
 {
@@ -167,6 +179,9 @@ class AssetMinifier
 			$result['deleted'] = self::deleteMinifiedFiles($mediaPath);
 		} else {
 			// Create minified versions of CSS and JS files
+			// NOTE: This list is hardcoded for predictability and to ensure only
+			// specific template files are minified. Vendor files are excluded as
+			// they come pre-minified. If you add new template assets, add them here.
 			$files = [
 				'css/template.css' => 'css/template.min.css',
 				'css/user.css' => 'css/user.min.css',
