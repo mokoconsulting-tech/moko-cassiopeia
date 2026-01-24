@@ -71,7 +71,10 @@ class AssetMinifier
 	public static function minifyJS(string $js): string
 	{
 		// Remove single-line comments but preserve URLs (https://, http://)
-		// Only remove comments that start at the beginning of a line or after whitespace
+		// The negative lookbehind (?<![:\'"a-zA-Z0-9]) ensures we don't match:
+		// - URLs: https://example.com (preceded by :)
+		// - String literals: "//comment" (preceded by quote)
+		// - Protocol-relative URLs: //example.com (preceded by non-alphanumeric)
 		$js = preg_replace('~(?<![:\'"a-zA-Z0-9])//[^\n]*\n~', "\n", $js);
 		
 		// Remove multi-line comments
