@@ -35,8 +35,8 @@ class AssetMinifier
 		// Remove comments
 		$css = preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!', '', $css);
 		
-		// Remove whitespace
-		$css = str_replace(["\r\n", "\r", "\n", "\t", '  ', '    ', '    '], '', $css);
+		// Remove all whitespace and newlines
+		$css = preg_replace('/\s+/', ' ', $css);
 		
 		// Remove spaces around selectors and properties
 		$css = preg_replace('/\s*([{}|:;,])\s*/', '$1', $css);
@@ -50,21 +50,25 @@ class AssetMinifier
 	/**
 	 * Minify JavaScript content
 	 * 
+	 * Note: This is a basic minifier. For production use, consider using
+	 * a more sophisticated minifier like terser or uglify-js.
+	 * 
 	 * @param string $js JavaScript content to minify
 	 * @return string Minified JavaScript
 	 */
 	public static function minifyJS(string $js): string
 	{
-		// Remove single-line comments (but preserve URLs)
-		$js = preg_replace('~//[^\n]*\n~', "\n", $js);
+		// Remove single-line comments but preserve URLs (https://, http://)
+		// Only remove comments that start at the beginning of a line or after whitespace
+		$js = preg_replace('~(?<![:\'"a-zA-Z0-9])//[^\n]*\n~', "\n", $js);
 		
 		// Remove multi-line comments
 		$js = preg_replace('~/\*.*?\*/~s', '', $js);
 		
-		// Remove whitespace
+		// Normalize whitespace to single spaces
 		$js = preg_replace('/\s+/', ' ', $js);
 		
-		// Remove spaces around operators and punctuation
+		// Remove spaces around operators and punctuation (but keep spaces in strings)
 		$js = preg_replace('/\s*([\{\}\[\]\(\);,=<>!&|+\-*\/])\s*/', '$1', $js);
 		
 		return trim($js);

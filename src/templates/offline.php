@@ -43,12 +43,12 @@ $direction = $this->direction ?: 'ltr';
 /* -----------------------
    Load ONLY template.css + colors_*.css (with min toggle)
 ------------------------ */
-$useMin      = !((int) $params->get('developmentmode', 0) === 1);
-$assetSuffix = $useMin ? '.min' : '';
+$developmentMode = (int) $params->get('developmentmode', 0) === 1;
+$assetSuffix = $developmentMode ? '' : '.min';
 
 // Process assets based on development mode
 $mediaPath = JPATH_ROOT . '/media/templates/site/moko-cassiopeia';
-AssetMinifier::processAssets($mediaPath, !$useMin);
+AssetMinifier::processAssets($mediaPath, $developmentMode);
 
 $base        = rtrim(Uri::root(true), '/') . '/media/templates/site/moko-cassiopeia/css/';
 
