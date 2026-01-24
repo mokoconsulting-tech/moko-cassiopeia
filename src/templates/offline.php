@@ -32,6 +32,9 @@ use Joomla\CMS\Uri\Uri;
  * @var string                            $this->direction
  */
 
+// Load Asset Minifier
+require_once __DIR__ . '/AssetMinifier.php';
+
 $app       = Factory::getApplication();
 $doc       = Factory::getDocument();
 $params    = $this->params ?: $app->getTemplate(true)->params;
@@ -40,15 +43,23 @@ $direction = $this->direction ?: 'ltr';
 /* -----------------------
    Load ONLY template.css + colors_*.css (with min toggle)
 ------------------------ */
-$useMin      = !((int) $params->get('development_mode', 0) === 1);
+$useMin      = !((int) $params->get('developmentmode', 0) === 1);
 $assetSuffix = $useMin ? '.min' : '';
-$base        = rtrim(Uri::root(true), '/') . '/templates/' . $this->template . '/css/';
+
+// Process assets based on development mode
+$mediaPath = JPATH_ROOT . '/media/templates/site/moko-cassiopeia';
+AssetMinifier::processAssets($mediaPath, !$useMin);
+
+$base        = rtrim(Uri::root(true), '/') . '/media/templates/site/moko-cassiopeia/css/';
 
 $doc->addStyleSheet($base . 'template' . $assetSuffix . '.css', ['version' => 'auto'], ['id' => 'moko-template']);
 /* If you have a template param for color variant, set it here; defaults to 'standard' */
-$colorKey = (string) ($params->get('colors', 'standard') ?: 'standard');
+$colorKey = (string) ($params->get('colorLightName', 'colors_standard') ?: 'colors_standard');
 $colorKey = preg_replace('~[^a-z0-9_-]~i', '', $colorKey);
-$doc->addStyleSheet($base . 'colors_' . $colorKey . $assetSuffix . '.css', ['version' => 'auto'], ['id' => 'moko-colors']);
+$doc->addStyleSheet($base . 'colors/light/' . $colorKey . $assetSuffix . '.css', ['version' => 'auto'], ['id' => 'moko-colors-light']);
+$colorKeyDark = (string) ($params->get('colorDarkName', 'colors_standard') ?: 'colors_standard');
+$colorKeyDark = preg_replace('~[^a-z0-9_-]~i', '', $colorKeyDark);
+$doc->addStyleSheet($base . 'colors/dark/' . $colorKeyDark . $assetSuffix . '.css', ['version' => 'auto'], ['id' => 'moko-colors-dark']);
 
 /* Bootstrap CSS/JS for accordion behavior; safe to keep. */
 HTMLHelper::_('bootstrap.loadCss', true, $doc);

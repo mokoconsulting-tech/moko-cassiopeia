@@ -24,6 +24,9 @@ use Joomla\CMS\Uri\Uri;
 
 /** @var Joomla\CMS\Document\HtmlDocument $this */
 
+// Load Asset Minifier
+require_once __DIR__ . '/AssetMinifier.php';
+
 $app   = Factory::getApplication();
 $input = $app->getInput();
 $wa    = $this->getWebAssetManager();
@@ -40,6 +43,10 @@ $params_googleanalyticsid  = $this->params->get('googleanalyticsid', null);
 $params_custom_head_start  = $this->params->get('custom_head_start', null);
 $params_custom_head_end    = $this->params->get('custom_head_end', null);
 $params_developmentmode = $this->params->get('developmentmode', false);
+
+// Process assets based on development mode
+$mediaPath = JPATH_ROOT . '/media/templates/site/moko-cassiopeia';
+AssetMinifier::processAssets($mediaPath, $params_developmentmode);
 
 // Bootstrap behaviors (assets handled via WAM)
 HTMLHelper::_('bootstrap.framework');
@@ -80,16 +87,19 @@ $this->setTitle($final);
 // Template/Media path
 $templatePath = 'media/templates/site/moko-cassiopeia';
 
+// Asset suffix based on development mode
+$assetSuffix = $params_developmentmode ? '' : '.min';
+
 // ===========================
 // Web Asset Manager (WAM) — matches your joomla.asset.json
 // ===========================
 
 // Core template CSS
-$wa->useStyle('template.global.base');   // css/template.css
-$wa->useStyle('template.global.social-media-demo');   // css/user.css
+$wa->useStyle('template.global.base' . $assetSuffix);   // css/template.css or template.min.css
+$wa->useStyle('template.user' . $assetSuffix);   // css/user.css or user.min.css
 
 // Optional vendor CSS
-$wa->useStyle('vendor.bootstrap-toc');
+$wa->useStyle('vendor.bootstrap-toc' . $assetSuffix);
 
 // Optional demo/showcase CSS (available for use, not loaded by default)
 // To use: Add 'template.global.social-media-demo' to your article/module
@@ -98,34 +108,34 @@ $wa->useStyle('vendor.bootstrap-toc');
 // Color theme (light + optional dark)
 $colorLightKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_LightColorName));
 $colorDarkKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_DarkColorName));
-$lightKey  = 'template.light.' . $colorLightKey;
-$darkKey   = 'template.dark.' . $colorDarkKey;
+$lightKey  = 'template.light.' . $colorLightKey . $assetSuffix;
+$darkKey   = 'template.dark.' . $colorDarkKey . $assetSuffix;
 try {
-	$wa->useStyle('template.light.colors_standard');
+	$wa->useStyle('template.light.colors_standard' . $assetSuffix);
 } catch (\Throwable $e) {
-	$wa->registerAndUseStyle('template.light.colors_standard', $templatePath . '/css/global/light/colors_standard.css');
+	$wa->registerAndUseStyle('template.light.colors_standard', $templatePath . '/css/colors/light/colors_standard' . $assetSuffix . '.css');
 }
 try {
-	$wa->useStyle('template.dark.colors_standard');
+	$wa->useStyle('template.dark.colors_standard' . $assetSuffix);
 } catch (\Throwable $e) {
-	$wa->registerAndUseStyle('template.dark.colors_standard', $templatePath . '/css/global/dark/colors_standard.css');
+	$wa->registerAndUseStyle('template.dark.colors_standard', $templatePath . '/css/colors/dark/colors_standard' . $assetSuffix . '.css');
 }
 try {
 	$wa->useStyle($lightKey);
 } catch (\Throwable $e) {
-	$wa->registerAndUseStyle('template.light.dynamic', $templatePath . '/css/global/light/' . $colorLightKey . '.css');
+	$wa->registerAndUseStyle('template.light.dynamic', $templatePath . '/css/colors/light/' . $colorLightKey . $assetSuffix . '.css');
 }
 try {
 	$wa->useStyle($darkKey);
 } catch (\Throwable $e) {
-	$wa->registerAndUseStyle('template.dark.dynamic', $templatePath . '/css/global/dark/' . $colorDarkKey . '.css');
+	$wa->registerAndUseStyle('template.dark.dynamic', $templatePath . '/css/colors/dark/' . $colorDarkKey . $assetSuffix . '.css');
 }
 
 // Scripts
-$wa->useScript('template.js');
-$wa->useScript('theme-init.js');
-$wa->useScript('darkmode-toggle.js');
-$wa->useScript('vendor.bootstrap-toc.js');
+$wa->useScript('template.js' . $assetSuffix);
+$wa->useScript('theme-init' . $assetSuffix . '.js');
+$wa->useScript('darkmode-toggle' . $assetSuffix . '.js');
+$wa->useScript('vendor.bootstrap-toc.js' . $assetSuffix);
 
 // Font scheme (external or local) + CSS custom properties
 $params_FontScheme = $this->params->get('useFontScheme', false);
@@ -205,40 +215,21 @@ if ($this->params->get('faKitCode')) {
 	HTMLHelper::_('script', $faKit, ['crossorigin' => 'anonymous']);
 } else {
 		try {
-			if($params_developmentmode){
-				$wa->useStyle('vendor.fa7free.all');
-				$wa->useStyle('vendor.fa7free.brands');
-				$wa->useStyle('vendor.fa7free.fontawesome');
-				$wa->useStyle('vendor.fa7free.regular');
-				$wa->useStyle('vendor.fa7free.solid');
-			} else {
-				$wa->useStyle('vendor.fa7free.all.min');
-				$wa->useStyle('vendor.fa7free.brands.min');
-				$wa->useStyle('vendor.fa7free.fontawesome.min');
-				$wa->useStyle('vendor.fa7free.regular.min');
-				$wa->useStyle('vendor.fa7free.solid.min');
-			}
+			$wa->useStyle('vendor.fa7free.all' . $assetSuffix);
+			$wa->useStyle('vendor.fa7free.brands' . $assetSuffix);
+			$wa->useStyle('vendor.fa7free.fontawesome' . $assetSuffix);
+			$wa->useStyle('vendor.fa7free.regular' . $assetSuffix);
+			$wa->useStyle('vendor.fa7free.solid' . $assetSuffix);
 	} catch (\Throwable $e) {
-		if($params_developmentmode){
-			$wa->registerAndUseStyle('vendor.fa7free.all.dynamic', $templatePath . '/vendor/fa7free/css/all.css');
-			$wa->registerAndUseStyle('vendor.fa7free.brands.dynamic', $templatePath . '/vendor/fa7free/css/brands.css');
-			$wa->registerAndUseStyle('vendor.fa7free.fontawesome.dynamic', $templatePath . '/vendor/fa7free/css/fontawesome.css');
-			$wa->registerAndUseStyle('vendor.fa7free.regular.dynamic', $templatePath . '/vendor/fa7free/css/regular.css');
-			$wa->registerAndUseStyle('vendor.fa7free.solid.dynamic', $templatePath . '/vendor/fa7free/css/solid.css');
-		} else {
-			$wa->registerAndUseStyle('vendor.fa7free.all.min.dynamic', $templatePath . '/vendor/fa7free/css/all.min.css');
-				$wa->registerAndUseStyle('vendor.fa7free.brands.min.dynamic', $templatePath . '/vendor/fa7free/css/brands.min.css');
-				$wa->registerAndUseStyle('vendor.fa7free.fontawesome.min.dynamic', $templatePath . '/vendor/fa7free/css/fontawesome.min.css');
-				$wa->registerAndUseStyle('vendor.fa7free.regular.min.dynamic', $templatePath . '/vendor/fa7free/css/regular.min.css');
-				$wa->registerAndUseStyle('vendor.fa7free.solid.min.dynamic', $templatePath . '/vendor/fa7free/css/solid.min.css');
-		}
-
+		$wa->registerAndUseStyle('vendor.fa7free.all.dynamic', $templatePath . '/vendor/fa7free/css/all' . $assetSuffix . '.css');
+		$wa->registerAndUseStyle('vendor.fa7free.brands.dynamic', $templatePath . '/vendor/fa7free/css/brands' . $assetSuffix . '.css');
+		$wa->registerAndUseStyle('vendor.fa7free.fontawesome.dynamic', $templatePath . '/vendor/fa7free/css/fontawesome' . $assetSuffix . '.css');
+		$wa->registerAndUseStyle('vendor.fa7free.regular.dynamic', $templatePath . '/vendor/fa7free/css/regular' . $assetSuffix . '.css');
+		$wa->registerAndUseStyle('vendor.fa7free.solid.dynamic', $templatePath . '/vendor/fa7free/css/solid' . $assetSuffix . '.css');
 	}
 }
 $params_leftIcon           = htmlspecialchars($this->params->get('drawerLeftIcon', 'fa-solid fa-chevron-left'), ENT_COMPAT, 'UTF-8');
 $params_rightIcon          = htmlspecialchars($this->params->get('drawerRightIcon', 'fa-solid fa-chevron-right'), ENT_COMPAT, 'UTF-8');
-
-$wa->useStyle('template.user');   // css/user.css
 ?>
 <!DOCTYPE html>
 <html lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>">
