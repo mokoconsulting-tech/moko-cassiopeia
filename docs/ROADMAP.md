@@ -10,19 +10,19 @@
  INGROUP: Moko-Cassiopeia.Documentation
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: docs/ROADMAP.md
- VERSION: 03.05.00
+ VERSION: 03.05.01
  BRIEF: Version-specific roadmap for Moko-Cassiopeia template
  PATH: /docs/ROADMAP.md
 -->
 
-# Moko-Cassiopeia Roadmap (VERSION: 03.05.00)
+# Moko-Cassiopeia Roadmap (VERSION: 03.05.01)
 
 This document provides a comprehensive, version-specific roadmap for the Moko-Cassiopeia Joomla template, tracking feature evolution, current capabilities, and planned enhancements.
 
 ## Table of Contents
 
 - [Version Timeline](#version-timeline)
-- [Current Release (v03.05.00)](#current-release-v030500)
+- [Current Release (v03.05.01)](#current-release-v030501)
 - [Implemented Features](#implemented-features)
 - [Planned Features](#planned-features)
 - [Development Priorities](#development-priorities)
@@ -114,7 +114,7 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
 
 ---
 
-## Current Release (v03.05.00)
+## Current Release (v03.05.01)
 
 ### System Requirements
 - **Joomla**: 4.4.x or 5.x
@@ -499,7 +499,7 @@ Have ideas for future features? We welcome community input!
 * Repository: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
 * Path: /docs/ROADMAP.md
 * Owner: Moko Consulting
-* Version: 03.05.00
+* Version: 03.05.01
 * Status: Active
 * Last Updated: 2026-01-27
 * Classification: Public Open Source Documentation
