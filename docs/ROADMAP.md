@@ -686,9 +686,6 @@ Moko-Cassiopeia aims to be the **most developer-friendly, user-customizable, and
 - Immersive technologies (WebXR)
 - Advanced business intelligence
 - Extensive ecosystem and marketplace
-- AI-powered accessibility checker
-- Headless CMS mode (API-first rendering)
-- Marketplace ecosystem for extensions
 
 ---
 
@@ -749,3 +746,4 @@ Have ideas for future features? We welcome community input!
 | Date       | Change Summary                                        | Author          |
 | ---------- | ----------------------------------------------------- | --------------- |
 | 2026-01-27 | Initial version-specific roadmap generated from codebase scan. | GitHub Copilot |
+| 2026-01-27 | Added 5-year future roadmap with annual major version releases (v04-v08). | GitHub Copilot |
