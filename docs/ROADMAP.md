@@ -22,6 +22,8 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
 ## Table of Contents
 
 - [Version Timeline](#version-timeline)
+  - [Past Releases](#past-releases)
+  - [Future Roadmap (5-Year Plan)](#future-roadmap-5-year-plan)
 - [Current Release (v03.05.00)](#current-release-v030500)
 - [Implemented Features](#implemented-features)
 - [Planned Features](#planned-features)
@@ -32,6 +34,8 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
 ---
 
 ## Version Timeline
+
+### Past Releases
 
 ### v03.05.01 (2026-01-09) - Standards & Security
 **Status**: Released (CHANGELOG entry exists, code files pending version update)
@@ -113,6 +117,212 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
 - Automatic Table of Contents (TOC) utility
 - Moko Expansions: Google Tag Manager / GA4 hooks
 - Built on Joomla's Cassiopeia template
+
+---
+
+### Future Roadmap (5-Year Plan)
+
+The following versions represent our planned annual major releases, each building upon the previous version's foundation.
+
+#### v04.00.00 (Q4 2027) - Enhanced Accessibility & Performance
+**Status**: Planned  
+**Target Release**: December 2027
+
+**Major Features**:
+- **WCAG 2.1 AA Compliance**
+  - Full accessibility audit and remediation
+  - High-contrast theme options
+  - Screen reader optimizations
+  - Keyboard navigation enhancements
+  - ARIA landmark improvements
+
+- **Performance Optimizations**
+  - Critical CSS inlining
+  - Lazy loading for images and below-fold content
+  - WebP image support with automatic fallbacks
+  - Advanced asset bundling and minification
+  - Service worker for offline functionality
+
+- **Developer Experience**
+  - Development mode enablement (unminified assets, debug output)
+  - Live reload during development
+  - Enhanced error logging and diagnostics
+  - Template debugging tools
+
+- **Content Features**
+  - Soft offline mode (category-based access during maintenance)
+  - Enhanced article layouts (grid, masonry options)
+  - Advanced typography controls
+
+**Infrastructure**:
+- Codeception test coverage expanded to 80%+
+- Automated performance testing in CI/CD
+- Enhanced security scanning with additional tools
+
+---
+
+#### v05.00.00 (Q4 2028) - Visual Builder & Advanced SEO
+**Status**: Planned  
+**Target Release**: December 2028
+
+**Major Features**:
+- **Visual Page Builder Integration**
+  - Drag-and-drop layout editor
+  - Real-time preview
+  - Preset layout templates library
+  - Custom component builder
+  - Style preset management
+
+- **Advanced SEO Module**
+  - Schema markup generator (JSON-LD)
+  - Open Graph and Twitter Card management
+  - Automatic sitemap generation
+  - Meta tag optimization tools
+  - Rich snippets support
+
+- **E-commerce Enhancements**
+  - Expanded VirtueMart integration
+  - WooCommerce bridge support
+  - Shopping cart widget improvements
+  - Product showcase layouts
+
+- **Social Integration**
+  - Social media feed aggregation
+  - Share buttons with analytics
+  - Social login integration
+  - Comment system enhancements
+
+**Infrastructure**:
+- Joomla 6.x compatibility (if released)
+- PHP 8.2+ requirement
+- Multi-site template synchronization
+- Cloud storage integration for media
+
+---
+
+#### v06.00.00 (Q4 2029) - Enterprise Features & Headless CMS
+**Status**: Planned  
+**Target Release**: December 2029
+
+**Major Features**:
+- **Headless CMS Mode**
+  - API-first rendering capability
+  - RESTful API endpoints for template data
+  - JSON:API compliance
+  - GraphQL support
+  - Decoupled frontend options
+
+- **Enterprise Support Tier**
+  - Advanced caching strategies
+  - CDN integration (Cloudflare, AWS CloudFront)
+  - Multi-language management system
+  - Advanced user role customization
+  - White-label branding options
+
+- **AI-Powered Features**
+  - AI accessibility checker
+  - Automated content suggestions
+  - Smart image optimization
+  - Intelligent layout recommendations
+
+- **Advanced Customization**
+  - Theme marketplace ecosystem
+  - Community-contributed extensions
+  - Style inheritance system
+  - CSS variable management UI
+
+**Infrastructure**:
+- Containerized deployment options (Docker)
+- Kubernetes support for scaling
+- Advanced monitoring and analytics
+- Enterprise security features (SSO, 2FA)
+
+---
+
+#### v07.00.00 (Q4 2030) - AI Integration & Advanced Personalization
+**Status**: Planned  
+**Target Release**: December 2030
+
+**Major Features**:
+- **AI-Powered Personalization**
+  - Content recommendation engine
+  - Adaptive layouts based on user behavior
+  - A/B testing framework
+  - Predictive analytics dashboard
+  - Smart content organization
+
+- **Advanced Newsletter Integration**
+  - Mailchimp, Sendinblue, SendGrid support
+  - Automated email campaigns
+  - Subscriber segmentation
+  - Template-based email design
+  - Analytics and reporting
+
+- **Progressive Web App (PWA)**
+  - Full offline functionality
+  - Install to home screen
+  - Push notifications
+  - Background sync
+  - App shell architecture
+
+- **Advanced Media Management**
+  - Video hosting integration (YouTube, Vimeo, self-hosted)
+  - Image gallery enhancements
+  - 3D model support
+  - Audio player integration
+  - Media CDN optimization
+
+**Infrastructure**:
+- Edge computing support
+- Serverless deployment options
+- Advanced caching with Redis/Memcached
+- Real-time collaboration features
+
+---
+
+#### v08.00.00 (Q4 2031) - Next-Generation Platform
+**Status**: Conceptual  
+**Target Release**: December 2031
+
+**Major Features**:
+- **Next-Gen Web Standards**
+  - HTTP/3 optimization
+  - WebAssembly components
+  - Web Components integration
+  - Modern CSS features (Container Queries, Cascade Layers)
+  - Advanced animations and transitions
+
+- **Immersive Technologies**
+  - WebXR support for AR/VR content
+  - 3D visualization tools
+  - Interactive media experiences
+  - Spatial navigation
+
+- **Blockchain Integration** (if relevant)
+  - Decentralized content verification
+  - NFT showcase capabilities
+  - Web3 wallet integration
+  - Smart contract interactions
+
+- **Advanced Analytics & Business Intelligence**
+  - Real-time visitor analytics
+  - Conversion tracking and optimization
+  - Heatmap and session recording
+  - Custom reporting dashboards
+  - Data warehouse integration
+
+- **Ecosystem & Marketplace**
+  - Extensive plugin marketplace
+  - Template derivatives and child themes
+  - Professional support network
+  - Training and certification programs
+  - Community-driven roadmap
+
+**Infrastructure**:
+- Quantum-ready cryptography
+- Carbon-neutral hosting optimization
+- Advanced security with zero-trust architecture
+- Multi-cloud deployment strategies
 
 ---
 
@@ -399,23 +609,36 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
 
 ## Development Priorities
 
-### High Priority (Next Release)
+### Immediate Focus (v03.x - 2026)
 1. **TODO Tracking System**: Implement separate file for issue tracking
 2. **Soft Offline Mode**: Complete category-based offline access
 3. **Security Updates**: Maintain Dependabot and CodeQL scans
 4. **Documentation**: Keep docs synchronized with features
+5. **Bug Fixes**: Address reported issues and edge cases
 
-### Medium Priority (Future Releases)
-1. **Development Mode**: Enable and enhance developer experience
-2. **Performance**: Optimize asset loading and rendering
-3. **Accessibility**: WCAG 2.1 compliance improvements
-4. **Testing**: Expand Codeception test coverage
+### v04.00.00 Priorities (2027)
+1. **WCAG 2.1 AA Compliance**: Full accessibility audit and implementation
+2. **Performance Optimizations**: Critical CSS, lazy loading, WebP support
+3. **Development Mode**: Enable comprehensive developer tools
+4. **Testing**: Achieve 80%+ Codeception coverage
 
-### Low Priority (Long-term)
-1. **Visual Builder**: Integrate page builder functionality
-2. **Advanced SEO**: Schema markup and meta optimization
-3. **Multi-language**: Enhanced RTL and translation support
-4. **Theme Marketplace**: Community-contributed color schemes
+### v05.00.00 Priorities (2028)
+1. **Visual Page Builder**: Drag-and-drop layout editor
+2. **Advanced SEO**: Schema markup, meta optimization
+3. **E-commerce Enhancements**: Expanded platform support
+4. **Social Integration**: Feed aggregation and sharing
+
+### v06.00.00 Priorities (2029)
+1. **Headless CMS Mode**: API-first architecture
+2. **Enterprise Features**: Advanced caching, CDN integration
+3. **AI-Powered Tools**: Accessibility checker, content optimization
+4. **Marketplace Ecosystem**: Theme and extension marketplace
+
+### v07.00.00+ Priorities (2030+)
+1. **AI Personalization**: Adaptive layouts and content recommendations
+2. **Progressive Web App**: Full offline functionality
+3. **Advanced Analytics**: Real-time insights and BI integration
+4. **Immersive Technologies**: AR/VR support, 3D visualization
 
 ---
 
@@ -432,22 +655,37 @@ Moko-Cassiopeia aims to be the **most developer-friendly, user-customizable, and
 5. **Security**: Proactive vulnerability management
 6. **Developer Experience**: Clear docs, easy setup, powerful tools
 
-### Strategic Goals
+### 5-Year Strategic Roadmap
 
-#### 2026
-- Complete soft offline mode implementation
-- Achieve 100% WCAG 2.1 AA compliance
-- Expand Codeception test coverage to 80%+
-- Release community style pack (5+ color schemes)
+#### 2027 (v04.00.00) - Accessibility & Performance
+- Achieve WCAG 2.1 AA compliance
+- Implement critical performance optimizations
+- Enable development mode for developers
+- Expand automated testing coverage
 
-#### 2027
-- Visual page builder integration
-- Advanced SEO module
-- Multi-site template synchronization
-- Enterprise support tier
+#### 2028 (v05.00.00) - Visual Builder & SEO
+- Launch integrated visual page builder
+- Deploy advanced SEO tools and schema markup
+- Enhance e-commerce capabilities
+- Integrate social media features
 
-#### 2028+
-- Joomla 6.x compatibility (when released)
+#### 2029 (v06.00.00) - Enterprise & Headless
+- Introduce headless CMS capabilities
+- Launch enterprise support tier
+- Deploy AI-powered features
+- Build marketplace ecosystem
+
+#### 2030 (v07.00.00) - AI & Personalization
+- AI-driven content personalization
+- Progressive Web App functionality
+- Advanced newsletter integration
+- Real-time analytics and optimization
+
+#### 2031 (v08.00.00) - Next-Generation Platform
+- Next-gen web standards (HTTP/3, WebAssembly)
+- Immersive technologies (WebXR)
+- Advanced business intelligence
+- Extensive ecosystem and marketplace
 - AI-powered accessibility checker
 - Headless CMS mode (API-first rendering)
 - Marketplace ecosystem for extensions
