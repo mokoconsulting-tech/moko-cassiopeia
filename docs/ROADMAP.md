@@ -128,201 +128,306 @@ The following versions represent our planned annual major releases, each buildin
 **Status**: Planned  
 **Target Release**: December 2027
 
-**Major Features**:
+**Major Template Features**:
 - **WCAG 2.1 AA Compliance**
   - Full accessibility audit and remediation
   - High-contrast theme options
   - Screen reader optimizations
   - Keyboard navigation enhancements
   - ARIA landmark improvements
+  - Skip navigation enhancements
 
-- **Performance Optimizations**
-  - Critical CSS inlining
+- **Template Performance Optimizations**
+  - Critical CSS inlining for faster first paint
   - Lazy loading for images and below-fold content
   - WebP image support with automatic fallbacks
   - Advanced asset bundling and minification
-  - Service worker for offline functionality
+  - Template-level caching strategies
+
+- **Enhanced Layout System**
+  - Additional responsive grid layouts
+  - Flexible module position system
+  - Column layout presets (2-col, 3-col, 4-col variations)
+  - Grid/masonry article layouts
+  - Sticky sidebar options
+
+- **Typography Enhancements**
+  - Advanced typography controls in template settings
+  - Additional font pairing presets
+  - Custom font upload support
+  - Line height and letter spacing controls
+  - Responsive typography scaling
 
 - **Developer Experience**
   - Development mode enablement (unminified assets, debug output)
   - Live reload during development
   - Enhanced error logging and diagnostics
   - Template debugging tools
+  - Style guide generator
 
-- **Content Features**
+- **Content Display Features**
   - Soft offline mode (category-based access during maintenance)
-  - Enhanced article layouts (grid, masonry options)
-  - Advanced typography controls
+  - Enhanced article layouts (grid, masonry, timeline)
+  - Image caption styling options
+  - Quote block styling variations
+  - Enhanced breadcrumb customization
 
-**Infrastructure**:
-- Codeception test coverage expanded to 80%+
-- Automated performance testing in CI/CD
-- Enhanced security scanning with additional tools
+**Template Infrastructure**:
+- Expanded template parameter validation
+- Enhanced template override detection
+- Automated template compatibility testing
+- Template performance profiling tools
 
 ---
 
-#### v05.00.00 (Q4 2028) - Visual Builder & Advanced SEO
+#### v05.00.00 (Q4 2028) - Advanced Layouts & Template Customization
 **Status**: Planned  
 **Target Release**: December 2028
 
-**Major Features**:
-- **Visual Page Builder Integration**
-  - Drag-and-drop layout editor
-  - Real-time preview
-  - Preset layout templates library
-  - Custom component builder
-  - Style preset management
+**Major Template Features**:
+- **Enhanced Layout Builder**
+  - Template-based page layout variations
+  - Custom layout creation through template parameters
+  - Layout presets library (blog, portfolio, business, magazine)
+  - Module position layout manager
+  - Visual layout preview in admin
 
-- **Advanced SEO Module**
-  - Schema markup generator (JSON-LD)
-  - Open Graph and Twitter Card management
-  - Automatic sitemap generation
-  - Meta tag optimization tools
-  - Rich snippets support
+- **Advanced Styling System**
+  - Extended color palette management (unlimited custom palettes)
+  - CSS variable editor in template settings
+  - Style presets for different site types
+  - Border radius and spacing controls
+  - Box shadow and effect controls
 
-- **E-commerce Enhancements**
-  - Expanded VirtueMart integration
-  - WooCommerce bridge support
-  - Shopping cart widget improvements
-  - Product showcase layouts
+- **Template Component Enhancements**
+  - Enhanced menu styling options (mega menu support)
+  - Advanced header variations (transparent, sticky, minimal)
+  - Footer layout options (column variations, widgets)
+  - Sidebar styling and behavior options
+  - Hero section templates and variations
 
-- **Social Integration**
-  - Social media feed aggregation
-  - Share buttons with analytics
-  - Social login integration
-  - Comment system enhancements
+- **Content Display Options**
+  - Article intro/full text display controls
+  - Category layout variations (grid, list, masonry, cards)
+  - Featured content sections
+  - Related articles display options
+  - Author bio box styling
 
-**Infrastructure**:
-- Joomla 6.x compatibility (if released)
-- PHP 8.2+ requirement
-- Multi-site template synchronization
-- Cloud storage integration for media
+- **Responsive Design Improvements**
+  - Mobile-first navigation patterns
+  - Tablet-specific layout controls
+  - Responsive image sizing options
+  - Mobile header variations
+  - Touch-friendly interface elements
+
+- **Template Integration Features**
+  - Enhanced VirtueMart template overrides
+  - Contact form styling variations
+  - Search result layout options
+  - Error page customization
+  - Archive page templates
+
+**Template Infrastructure**:
+- Joomla 6.x template compatibility (if released)
+- PHP 8.2+ support
+- Template child theme support
+- Template preset import/export functionality
 
 ---
 
-#### v06.00.00 (Q4 2029) - Enterprise Features & Headless CMS
+#### v06.00.00 (Q4 2029) - Template Extensions & Advanced Features
 **Status**: Planned  
 **Target Release**: December 2029
 
-**Major Features**:
-- **Headless CMS Mode**
-  - API-first rendering capability
-  - RESTful API endpoints for template data
-  - JSON:API compliance
-  - GraphQL support
-  - Decoupled frontend options
+**Major Template Features**:
+- **Template Marketplace & Extensions**
+  - Template addon system for modular features
+  - Community-contributed template extensions
+  - Template preset marketplace
+  - Style pack distribution system
+  - Template component library
 
-- **Enterprise Support Tier**
-  - Advanced caching strategies
-  - CDN integration (Cloudflare, AWS CloudFront)
-  - Multi-language management system
-  - Advanced user role customization
-  - White-label branding options
+- **Advanced Module System**
+  - Custom module chrome options
+  - Module animation effects
+  - Module visibility controls (scroll, time-based)
+  - Module group management
+  - Module style inheritance
 
-- **AI-Powered Features**
-  - AI accessibility checker
-  - Automated content suggestions
-  - Smart image optimization
-  - Intelligent layout recommendations
+- **Enhanced Media Handling**
+  - Background image options per page/section
+  - Image overlay controls
+  - Parallax scrolling effects
+  - Video background support
+  - Gallery template variations
 
-- **Advanced Customization**
-  - Theme marketplace ecosystem
-  - Community-contributed extensions
-  - Style inheritance system
-  - CSS variable management UI
+- **Template Branding Options**
+  - Multiple logo upload (standard, retina, mobile)
+  - Favicon and app icon management
+  - Custom loading screen/animations
+  - Watermark options
+  - Brand color scheme generator
 
-**Infrastructure**:
-- Containerized deployment options (Docker)
-- Kubernetes support for scaling
-- Advanced monitoring and analytics
-- Enterprise security features (SSO, 2FA)
+- **Advanced Header/Footer**
+  - Multiple header layout presets
+  - Sticky header variations and behaviors
+  - Header transparency controls
+  - Footer widget areas expansion
+  - Floating action buttons
+
+- **Content Enhancement Features**
+  - Reading progress indicator
+  - Social sharing buttons (template-integrated)
+  - Print-friendly styles
+  - Reading time estimation display
+  - Content table enhancements
+
+- **Template SEO Features**
+  - Schema markup templates for common types
+  - Open Graph tag management
+  - Twitter Card support
+  - Breadcrumb schema integration
+  - Meta tag template controls
+
+**Template Infrastructure**:
+- Template versioning system
+- Template backup/restore functionality
+- Template A/B testing support
+- Multi-language template variations
+- Template documentation generator
 
 ---
 
-#### v07.00.00 (Q4 2030) - AI Integration & Advanced Personalization
+#### v07.00.00 (Q4 2030) - Modern Template Standards & Enhancements
 **Status**: Planned  
 **Target Release**: December 2030
 
-**Major Features**:
-- **AI-Powered Personalization**
-  - Content recommendation engine
-  - Adaptive layouts based on user behavior
-  - A/B testing framework
-  - Predictive analytics dashboard
-  - Smart content organization
+**Major Template Features**:
+- **Modern CSS Features**
+  - CSS Grid layout system integration
+  - CSS Container Queries support
+  - CSS Cascade Layers implementation
+  - Custom properties (CSS variables) UI
+  - Modern filter and backdrop effects
 
-- **Advanced Newsletter Integration**
-  - Mailchimp, Sendinblue, SendGrid support
-  - Automated email campaigns
-  - Subscriber segmentation
-  - Template-based email design
-  - Analytics and reporting
+- **Progressive Template Features**
+  - Offline-capable template assets
+  - Service worker template integration
+  - App manifest generation
+  - Install to home screen support
+  - Template asset preloading strategies
 
-- **Progressive Web App (PWA)**
-  - Full offline functionality
-  - Install to home screen
-  - Push notifications
-  - Background sync
-  - App shell architecture
+- **Animation & Interaction**
+  - Scroll-triggered animations
+  - Hover effect library
+  - Page transition effects
+  - Micro-interactions for UI elements
+  - Loading animation options
 
-- **Advanced Media Management**
-  - Video hosting integration (YouTube, Vimeo, self-hosted)
-  - Image gallery enhancements
-  - 3D model support
-  - Audio player integration
-  - Media CDN optimization
+- **Advanced Responsive Features**
+  - Container-based responsive design
+  - Element visibility by viewport
+  - Responsive navigation patterns library
+  - Mobile-optimized interactions
+  - Adaptive image loading
 
-**Infrastructure**:
-- Edge computing support
-- Serverless deployment options
-- Advanced caching with Redis/Memcached
-- Real-time collaboration features
+- **Template Accessibility Features**
+  - Focus indicators customization
+  - Reduced motion preferences support
+  - High contrast mode automation
+  - Keyboard navigation patterns
+  - ARIA live regions for dynamic content
+
+- **Content Presentation**
+  - Advanced blockquote styles
+  - Code snippet highlighting themes
+  - Table styling variations
+  - List styling options
+  - Custom content block templates
+
+- **Template Performance**
+  - Resource hints (preconnect, prefetch)
+  - Optimal asset delivery strategies
+  - Image format optimization (AVIF support)
+  - Font loading optimization
+  - Template metrics dashboard
+
+**Template Infrastructure**:
+- Template pattern library
+- Design token system
+- Template component documentation
+- Automated template testing suite
+- Template performance monitoring
 
 ---
 
-#### v08.00.00 (Q4 2031) - Next-Generation Platform
+#### v08.00.00 (Q4 2031) - Next-Generation Template Features
 **Status**: Conceptual  
 **Target Release**: December 2031
 
-**Major Features**:
-- **Next-Gen Web Standards**
-  - HTTP/3 optimization
-  - WebAssembly components
-  - Web Components integration
-  - Modern CSS features (Container Queries, Cascade Layers)
-  - Advanced animations and transitions
+**Major Template Features**:
+- **Advanced Layout Systems**
+  - Subgrid support for complex layouts
+  - Multi-column layout variations
+  - Asymmetric grid systems
+  - Dynamic layout switching
+  - Layout constraint system
 
-- **Immersive Technologies**
-  - WebXR support for AR/VR content
-  - 3D visualization tools
-  - Interactive media experiences
-  - Spatial navigation
+- **Enhanced Visual Customization**
+  - Real-time style editor
+  - Template style variations manager
+  - Custom CSS injection with validation
+  - Style inheritance and override system
+  - Visual design tokens editor
 
-- **Blockchain Integration** (if relevant)
-  - Decentralized content verification
-  - NFT showcase capabilities
-  - Web3 wallet integration
-  - Smart contract interactions
+- **Template Component Library**
+  - Comprehensive UI component set
+  - Reusable template blocks
+  - Component variation system
+  - Template snippet library
+  - Pattern library integration
 
-- **Advanced Analytics & Business Intelligence**
-  - Real-time visitor analytics
-  - Conversion tracking and optimization
-  - Heatmap and session recording
-  - Custom reporting dashboards
-  - Data warehouse integration
+- **Advanced Typography System**
+  - Variable font support
+  - Advanced typographic scales
+  - Font pairing recommendations
+  - Fluid typography system
+  - Custom font fallback chains
 
-- **Ecosystem & Marketplace**
-  - Extensive plugin marketplace
-  - Template derivatives and child themes
-  - Professional support network
-  - Training and certification programs
-  - Community-driven roadmap
+- **Template Integration Features**
+  - Enhanced component overrides
+  - Template hooks system
+  - Event-based template modifications
+  - Custom field rendering templates
+  - Module position API enhancements
 
-**Infrastructure**:
-- Quantum-ready cryptography
-- Carbon-neutral hosting optimization
-- Advanced security with zero-trust architecture
-- Multi-cloud deployment strategies
+- **Responsive & Adaptive Design**
+  - Advanced breakpoint management
+  - Element-specific responsive controls
+  - Adaptive images with art direction
+  - Responsive typography system
+  - Context-aware component rendering
+
+- **Template Ecosystem**
+  - Child template framework
+  - Template derivative system
+  - Community template marketplace
+  - Template rating and review system
+  - Professional template support network
+
+- **Template Quality & Maintenance**
+  - Automated accessibility testing
+  - Template performance auditing
+  - Code quality monitoring
+  - Update notification system
+  - Template health dashboard
+
+**Template Infrastructure**:
+- Template API for extensibility
+- Template package manager
+- Template development CLI tools
+- Template migration utilities
+- Comprehensive template documentation system
 
 ---
 
@@ -587,23 +692,17 @@ The following versions represent our planned annual major releases, each buildin
 - Screen reader optimizations
 - Keyboard navigation improvements
 
-**Performance Optimizations**:
-- Critical CSS inlining
-- Lazy loading for below-the-fold content
-- WebP image support with fallbacks
-- Service worker for offline functionality
+**Template Layout Features**:
+- Advanced responsive grid layouts
+- Multiple column variations
+- Custom module position system
+- Layout preset library
 
-**Additional Integrations**:
-- More e-commerce platform support
-- Newsletter integration (Mailchimp, Sendinblue)
-- Social media feed aggregation
-- Advanced SEO tools
-
-**Content Builder**:
-- Visual page builder integration
-- Drag-and-drop layout editor
-- Preset layout templates
-- Style presets library
+**Template Styling Features**:
+- Extended color palette management
+- Custom font upload support
+- Typography scale controls
+- Visual style editor
 
 ---
 
@@ -616,29 +715,29 @@ The following versions represent our planned annual major releases, each buildin
 4. **Documentation**: Keep docs synchronized with features
 5. **Bug Fixes**: Address reported issues and edge cases
 
-### v04.00.00 Priorities (2027)
-1. **WCAG 2.1 AA Compliance**: Full accessibility audit and implementation
-2. **Performance Optimizations**: Critical CSS, lazy loading, WebP support
-3. **Development Mode**: Enable comprehensive developer tools
-4. **Testing**: Achieve 80%+ Codeception coverage
+### v04.00.00 Priorities (2027) - Template Foundation
+1. **WCAG 2.1 AA Compliance**: Full template accessibility audit and implementation
+2. **Template Performance**: Critical CSS, lazy loading, WebP support
+3. **Layout System**: Enhanced responsive grid and module positions
+4. **Development Mode**: Enable comprehensive template developer tools
 
-### v05.00.00 Priorities (2028)
-1. **Visual Page Builder**: Drag-and-drop layout editor
-2. **Advanced SEO**: Schema markup, meta optimization
-3. **E-commerce Enhancements**: Expanded platform support
-4. **Social Integration**: Feed aggregation and sharing
+### v05.00.00 Priorities (2028) - Template Customization
+1. **Layout Builder**: Template-based page layout system
+2. **Styling System**: Extended color palettes and CSS variable management
+3. **Template Components**: Enhanced header, footer, and menu variations
+4. **Responsive Design**: Mobile-first navigation and layout improvements
 
-### v06.00.00 Priorities (2029)
-1. **Headless CMS Mode**: API-first architecture
-2. **Enterprise Features**: Advanced caching, CDN integration
-3. **AI-Powered Tools**: Accessibility checker, content optimization
-4. **Marketplace Ecosystem**: Theme and extension marketplace
+### v06.00.00 Priorities (2029) - Template Extensions
+1. **Template Marketplace**: Addon system and community extensions
+2. **Module System**: Advanced module chrome and animation options
+3. **Media Handling**: Background images, parallax, video backgrounds
+4. **Template SEO**: Schema markup templates and meta tag controls
 
-### v07.00.00+ Priorities (2030+)
-1. **AI Personalization**: Adaptive layouts and content recommendations
-2. **Progressive Web App**: Full offline functionality
-3. **Advanced Analytics**: Real-time insights and BI integration
-4. **Immersive Technologies**: AR/VR support, 3D visualization
+### v07.00.00+ Priorities (2030+) - Modern Standards
+1. **Modern CSS**: Grid, Container Queries, Cascade Layers
+2. **Progressive Template**: Offline-capable assets and PWA features
+3. **Animation System**: Scroll-triggered effects and micro-interactions
+4. **Template Performance**: Advanced optimization and monitoring
 
 ---
 
@@ -652,40 +751,40 @@ Moko-Cassiopeia aims to be the **most developer-friendly, user-customizable, and
 2. **Standards-First**: MokoStandards compliance
 3. **Accessibility**: WCAG 2.1 compliance
 4. **Performance**: Fast, optimized delivery
-5. **Security**: Proactive vulnerability management
-6. **Developer Experience**: Clear docs, easy setup, powerful tools
+5. **Developer Experience**: Clear docs, easy setup, powerful tools
+6. **Template-Focused**: Pure template features without complex external dependencies
 
-### 5-Year Strategic Roadmap
+### 5-Year Strategic Roadmap (Template Features)
 
 #### 2027 (v04.00.00) - Accessibility & Performance
-- Achieve WCAG 2.1 AA compliance
-- Implement critical performance optimizations
-- Enable development mode for developers
-- Expand automated testing coverage
+- Achieve WCAG 2.1 AA compliance for all template elements
+- Implement critical template performance optimizations
+- Enhance template layout system with flexible grids
+- Enable comprehensive development mode for template developers
 
-#### 2028 (v05.00.00) - Visual Builder & SEO
-- Launch integrated visual page builder
-- Deploy advanced SEO tools and schema markup
-- Enhance e-commerce capabilities
-- Integrate social media features
+#### 2028 (v05.00.00) - Layouts & Customization
+- Launch template-based layout builder system
+- Deploy extended styling and customization options
+- Enhance template component variations (headers, footers, menus)
+- Improve responsive design patterns for all devices
 
-#### 2029 (v06.00.00) - Enterprise & Headless
-- Introduce headless CMS capabilities
-- Launch enterprise support tier
-- Deploy AI-powered features
-- Build marketplace ecosystem
+#### 2029 (v06.00.00) - Extensions & Enhancements
+- Introduce template addon and extension system
+- Launch template preset marketplace
+- Deploy advanced module styling and animation features
+- Implement comprehensive template SEO controls
 
-#### 2030 (v07.00.00) - AI & Personalization
-- AI-driven content personalization
-- Progressive Web App functionality
-- Advanced newsletter integration
-- Real-time analytics and optimization
+#### 2030 (v07.00.00) - Modern Standards
+- Adopt modern CSS standards (Grid, Container Queries, Cascade Layers)
+- Implement progressive template features (PWA support)
+- Deploy advanced animation and interaction system
+- Enhance template performance monitoring and optimization
 
-#### 2031 (v08.00.00) - Next-Generation Platform
-- Next-gen web standards (HTTP/3, WebAssembly)
-- Immersive technologies (WebXR)
-- Advanced business intelligence
-- Extensive ecosystem and marketplace
+#### 2031 (v08.00.00) - Next-Generation Template
+- Advanced layout systems with subgrid support
+- Comprehensive template component library
+- Enhanced visual customization tools
+- Template ecosystem with child themes and derivatives
 
 ---
 
@@ -747,3 +846,4 @@ Have ideas for future features? We welcome community input!
 | ---------- | ----------------------------------------------------- | --------------- |
 | 2026-01-27 | Initial version-specific roadmap generated from codebase scan. | GitHub Copilot |
 | 2026-01-27 | Added 5-year future roadmap with annual major version releases (v04-v08). | GitHub Copilot |
+| 2026-01-27 | Refocused roadmap to concentrate on template-oriented features only. | GitHub Copilot |
