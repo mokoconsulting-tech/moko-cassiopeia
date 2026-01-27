@@ -142,7 +142,7 @@ The following versions represent our planned annual major releases, each buildin
   - Lazy loading for images and below-fold content
   - WebP image support with automatic fallbacks
   - Advanced asset bundling and minification
-  - Template-level caching strategies
+  - Template asset caching (CSS/JS bundles)
 
 - **Enhanced Layout System**
   - Additional responsive grid layouts
@@ -187,7 +187,7 @@ The following versions represent our planned annual major releases, each buildin
 **Major Template Features**:
 - **Enhanced Layout Builder**
   - Template-based page layout variations
-  - Custom layout creation through template parameters
+  - Configurable layout options via template parameters
   - Layout presets library (blog, portfolio, business, magazine)
   - Module position layout manager
   - Visual layout preview in admin
@@ -306,7 +306,7 @@ The following versions represent our planned annual major releases, each buildin
 - **Modern CSS Features**
   - CSS Grid layout system integration
   - CSS Container Queries support
-  - CSS Cascade Layers implementation
+  - CSS Cascade Layers implementation (layered style priority system)
   - Custom properties (CSS variables) UI
   - Modern filter and backdrop effects
 
