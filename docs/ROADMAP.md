@@ -10,19 +10,19 @@
  INGROUP: Moko-Cassiopeia.Documentation
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: docs/ROADMAP.md
- VERSION: 03.05.01
+ VERSION: 03.05.00
  BRIEF: Version-specific roadmap for Moko-Cassiopeia template
  PATH: /docs/ROADMAP.md
 -->
 
-# Moko-Cassiopeia Roadmap (VERSION: 03.05.01)
+# Moko-Cassiopeia Roadmap (VERSION: 03.05.00)
 
 This document provides a comprehensive, version-specific roadmap for the Moko-Cassiopeia Joomla template, tracking feature evolution, current capabilities, and planned enhancements.
 
 ## Table of Contents
 
 - [Version Timeline](#version-timeline)
-- [Current Release (v03.05.01)](#current-release-v030501)
+- [Current Release (v03.05.00)](#current-release-v030500)
 - [Implemented Features](#implemented-features)
 - [Planned Features](#planned-features)
 - [Development Priorities](#development-priorities)
@@ -34,7 +34,7 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
 ## Version Timeline
 
 ### v03.05.01 (2026-01-09) - Standards & Security
-**Status**: Current Release
+**Status**: Released (CHANGELOG entry exists, code files pending version update)
 
 **Added**:
 - Dependency review workflow for vulnerability scanning
@@ -48,6 +48,8 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
 - Improved security posture with automated scanning
 
 ### v03.05.00 (2026-01-04) - Workflow & Governance
+**Status**: Current Release (in code)
+
 **Added**:
 - `.github/workflows` directory structure
 - CODE_OF_CONDUCT.md from MokoStandards
@@ -114,7 +116,7 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
 
 ---
 
-## Current Release (v03.05.01)
+## Current Release (v03.05.00)
 
 ### System Requirements
 - **Joomla**: 4.4.x or 5.x
@@ -499,7 +501,7 @@ Have ideas for future features? We welcome community input!
 * Repository: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
 * Path: /docs/ROADMAP.md
 * Owner: Moko Consulting
-* Version: 03.05.01
+* Version: 03.05.00
 * Status: Active
 * Last Updated: 2026-01-27
 * Classification: Public Open Source Documentation
