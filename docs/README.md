@@ -40,6 +40,12 @@ This directory contains comprehensive documentation for the Moko-Cassiopeia Joom
   * Joomla extension packaging
   * Multi-version testing
 
+* **[Roadmap](ROADMAP.md)** - Version-specific roadmap
+  * Current features (v03.05.00)
+  * Feature evolution timeline
+  * Planned enhancements
+  * Development priorities
+
 ### User Documentation
 
 For end-user documentation, installation instructions, and feature guides, see the main [README.md](../README.md) in the repository root.
@@ -52,7 +58,8 @@ moko-cassiopeia/
 │   ├── README.md           # This file - documentation index
 │   ├── QUICK_START.md      # Quick start guide for developers
 │   ├── WORKFLOW_GUIDE.md   # Development workflow guide
-│   └── JOOMLA_DEVELOPMENT.md # Joomla-specific development guide
+│   ├── JOOMLA_DEVELOPMENT.md # Joomla-specific development guide
+│   └── ROADMAP.md          # Version-specific roadmap
 ├── src/                     # Template source code
 │   ├── templates/          # Joomla template files
 │   └── media/              # Assets (CSS, JS, images)
