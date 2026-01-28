@@ -8,11 +8,31 @@
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia.Documentation
  PATH: ./CHANGELOG.md
- VERSION: 03.05.00
+ VERSION: 03.06.00
  BRIEF: Changelog file documenting version history of Moko-Cassiopeia
  -->
 
-# Changelog — Moko-Cassiopeia (VERSION: 03.05.00)
+# Changelog — Moko-Cassiopeia (VERSION: 03.06.00)
+
+## [Unreleased]
+### Added
+- PR-based changelog process with comprehensive documentation (#66)
+  - Created CHANGELOG_PROCESS.md guide with detailed workflow
+  - Added changelog entry section to PR template
+  - Integrated changelog guidance into CONTRIBUTING.md and WORKFLOW_GUIDE.md
+- GitHub Actions workflow for automatic changelog validation and PR labeling (#66)
+  - Validates changelog entries in PR descriptions
+  - Automatically comments with guidance on missing/invalid entries
+  - Smart detection skips automated PRs
+
+### Changed
+- Updated roadmap documentation based on current open pull requests (#66)
+- Added document generation system as planned feature (#66)
+- Synchronized roadmap version timeline with active development branches (#66)
+
+## [03.06.00] 2026-01-28
+### Changed
+- Updated version to 03.06.00 across all files
 
 ## [03.05.01] 2026-01-09
 ### Added

@@ -10,7 +10,7 @@
  INGROUP: Moko-Cassiopeia.Documentation
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: docs/README.md
- VERSION: 03.05.00
+ VERSION: 03.06.00
  BRIEF: Documentation index for Moko-Cassiopeia template
  PATH: /docs/README.md
 -->
@@ -34,6 +34,12 @@ This directory contains comprehensive documentation for the Moko-Cassiopeia Joom
   * Release process
   * Pull request guidelines
 
+* **[Changelog Process Guide](CHANGELOG_PROCESS.md)** - Maintaining the changelog
+  * PR-based changelog workflow
+  * Writing good changelog entries
+  * Categories and formatting
+  * Automation and best practices
+
 * **[Joomla Development Guide](JOOMLA_DEVELOPMENT.md)** - Joomla-specific development
   * Testing with Codeception
   * PHP quality checks (PHPStan, PHPCS)
@@ -41,7 +47,7 @@ This directory contains comprehensive documentation for the Moko-Cassiopeia Joom
   * Multi-version testing
 
 * **[Roadmap](ROADMAP.md)** - Version-specific roadmap
-  * Current features (v03.05.00)
+  * Current features (v03.06.00)
   * Feature evolution timeline
   * Planned enhancements
   * Development priorities
@@ -58,6 +64,7 @@ moko-cassiopeia/
 │   ├── README.md           # This file - documentation index
 │   ├── QUICK_START.md      # Quick start guide for developers
 │   ├── WORKFLOW_GUIDE.md   # Development workflow guide
+│   ├── CHANGELOG_PROCESS.md # Changelog maintenance guide
 │   ├── JOOMLA_DEVELOPMENT.md # Joomla-specific development guide
 │   └── ROADMAP.md          # Version-specific roadmap
 ├── src/                     # Template source code
@@ -105,7 +112,7 @@ This project adheres to [MokoStandards](https://github.com/mokoconsulting-tech/M
 * Repository: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
 * Path: /docs/README.md
 * Owner: Moko Consulting
-* Version: 03.05.00
+* Version: 03.06.00
 * Status: Active
 * Effective Date: 2026-01-09
 
@@ -113,5 +120,6 @@ This project adheres to [MokoStandards](https://github.com/mokoconsulting-tech/M
 
 | Date       | Change Summary                                        | Author          |
 | ---------- | ----------------------------------------------------- | --------------- |
-| 2026-01-09 | Initial documentation index created for MokoStandards compliance. | GitHub Copilot |
+| 2026-01-28 | Added CHANGELOG_PROCESS.md reference and link.       | GitHub Copilot  |
 | 2026-01-27 | Updated with roadmap link and version to 03.05.01.   | GitHub Copilot  |
+| 2026-01-09 | Initial documentation index created for MokoStandards compliance. | GitHub Copilot |
