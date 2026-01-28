@@ -14,6 +14,18 @@
 
 # Changelog — Moko-Cassiopeia (VERSION: 03.06.00)
 
+## [Unreleased]
+### Added
+- PR-based changelog process with comprehensive documentation (#66)
+  - Created CHANGELOG_PROCESS.md guide with detailed workflow
+  - Added changelog entry section to PR template
+  - Integrated changelog guidance into CONTRIBUTING.md and WORKFLOW_GUIDE.md
+
+### Changed
+- Updated roadmap documentation based on current open pull requests (#66)
+- Added document generation system as planned feature (#66)
+- Synchronized roadmap version timeline with active development branches (#66)
+
 ## [03.06.00] 2026-01-28
 ### Changed
 - Updated version to 03.06.00 across all files
