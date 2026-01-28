@@ -10,12 +10,12 @@
  INGROUP: Moko-Cassiopeia.Documentation
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: docs/ROADMAP.md
- VERSION: 03.05.00
+ VERSION: 03.06.00
  BRIEF: Version-specific roadmap for Moko-Cassiopeia template
  PATH: /docs/ROADMAP.md
 -->
 
-# Moko-Cassiopeia Roadmap (VERSION: 03.05.00)
+# Moko-Cassiopeia Roadmap (VERSION: 03.06.00)
 
 This document provides a comprehensive, version-specific roadmap for the Moko-Cassiopeia Joomla template, tracking feature evolution, current capabilities, and planned enhancements.
 
@@ -24,7 +24,7 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
 - [Version Timeline](#version-timeline)
   - [Past Releases](#past-releases)
   - [Future Roadmap (5-Year Plan)](#future-roadmap-5-year-plan)
-- [Current Release (v03.05.00)](#current-release-v030500)
+- [Current Release (v03.06.00)](#current-release-v030600)
 - [Implemented Features](#implemented-features)
 - [Planned Features](#planned-features)
 - [Development Priorities](#development-priorities)
@@ -51,8 +51,14 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
 - Enforced repository compliance with MokoStandards
 - Improved security posture with automated scanning
 
-### v03.05.00 (2026-01-04) - Workflow & Governance
+### v03.06.00 (2026-01-28) - Version Update
 **Status**: Current Release (in code)
+
+**Changed**:
+- Updated version to 03.06.00 across all files
+
+### v03.05.00 (2026-01-04) - Workflow & Governance
+**Status**: Mentioned in CHANGELOG (v03.05.00)
 
 **Added**:
 - `.github/workflows` directory structure
@@ -431,7 +437,7 @@ The following versions represent our planned annual major releases, each buildin
 
 ---
 
-## Current Release (v03.05.00)
+## Current Release (v03.06.00)
 
 ### System Requirements
 - **Joomla**: 4.4.x or 5.x
@@ -835,7 +841,7 @@ Have ideas for future features? We welcome community input!
 * Repository: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
 * Path: /docs/ROADMAP.md
 * Owner: Moko Consulting
-* Version: 03.05.00
+* Version: 03.06.00
 * Status: Active
 * Last Updated: 2026-01-27
 * Classification: Public Open Source Documentation
