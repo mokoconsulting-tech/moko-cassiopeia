@@ -11,7 +11,7 @@
 	DEFGROUP: Joomla
 	INGROUP: Moko-Cassiopeia
 	PATH: templates/moko-cassiopeia/templateDetails.xml
-	VERSION: 03.06.00
+	VERSION: 03.07.00
 	BRIEF: Template manifest XML file for Moko-Cassiopeia
 	=========================================================================
 -->
@@ -22,8 +22,8 @@
 	  </server>
 	</updateservers>
 	<name>moko-cassiopeia</name>
-	<version>03.06.00</version>
-	<creationDate>2025-12-23</creationDate>
+	<version>03.07.00</version>
+	<creationDate>2026-01-29</creationDate>
 	<author>Jonathan Miller || Moko Consulting</author>
 	<authorEmail>hello@mokoconsulting.tech</authorEmail>
 	<copyright>(C)GNU General Public License Version 3 - 2025 Moko Consulting</copyright>
@@ -87,12 +87,10 @@
 		<fields name="params">
 			<!-- Advanced tab (non-theme/system options only) -->
 			<fieldset name="advanced">
-				<!--
-				<field name="developmentmode" type="radio" label="TPL_MOKO-CASSIOPEIA_DEVELOPMENTMODE_LABEL" description="TPL_MOKO-CASSIOPEIA_DEVELOPMENTMODE_DESC" default="1" layout="joomla.form.field.radio.switcher" filter="boolean">
+				<field name="developmentmode" type="radio" label="TPL_MOKO-CASSIOPEIA_DEVELOPMENTMODE_LABEL" description="TPL_MOKO-CASSIOPEIA_DEVELOPMENTMODE_DESC" default="0" layout="joomla.form.field.radio.switcher" filter="boolean">
 					<option value="0">JNO</option>
 					<option value="1">JYES</option>
 				</field>
-			-->
 				<field name="fluidContainer" type="radio" layout="joomla.form.field.radio.switcher" default="0" label="TPL_MOKO-CASSIOPEIA_FLUID_LABEL">
 					<option value="0">TPL_MOKO-CASSIOPEIA_STATIC</option>
 					<option value="1">TPL_MOKO-CASSIOPEIA_FLUID</option>
