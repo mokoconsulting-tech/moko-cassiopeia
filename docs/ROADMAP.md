@@ -15,7 +15,7 @@
  PATH: /docs/ROADMAP.md
 -->
 
-# Moko-Cassiopeia Roadmap (VERSION: 03.06.00)
+# Moko-Cassiopeia Roadmap (VERSION: 03.07.00)
 
 This document provides a comprehensive, version-specific roadmap for the Moko-Cassiopeia Joomla template, tracking feature evolution, current capabilities, and planned enhancements.
 
@@ -51,8 +51,27 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
 - Enforced repository compliance with MokoStandards
 - Improved security posture with automated scanning
 
+### v03.07.00 (2026-01-28) - Installation Automation & Cache Integration
+**Status**: In Development (Open PR #65, #62)
+
+**Added**:
+- Installation script (`src/templates/script.php`) for automated media folder cleanup during template updates
+  - Implements `InstallerScriptInterface` with lifecycle hooks
+  - Automatic removal of deprecated files/folders during updates
+  - Recursive cleanup of empty directories
+  - Operation logging to `logs/moko_cassiopeia_cleanup.php`
+  - Validates Joomla 4.0+ and PHP 7.4+ requirements
+
+**Changed**:
+- Asset minification now linked to Joomla's global cache system
+  - When cache enabled: minified assets (`.min` suffix) are created and used
+  - When cache disabled: non-minified assets used, minified files deleted
+  - Replaced template-specific `developmentmode` parameter with Joomla cache configuration
+  - `AssetMinifier.php` updated with inverted parameter logic for cache semantics
+- Updated version to 03.07.00 across 24+ files (CSS/JS, PHP/Config, templateDetails.xml, joomla.asset.json)
+
 ### v03.06.00 (2026-01-28) - Version Update
-**Status**: Current Release (in code)
+**Status**: Released
 
 **Changed**:
 - Updated version to 03.06.00 across all files
@@ -169,7 +188,8 @@ The following versions represent our planned annual major releases, each buildin
   - Live reload during development
   - Enhanced error logging and diagnostics
   - Template debugging tools
-  - Style guide generator
+  - Document generation system (style guides, API docs, parameter reference)
+  - Automated documentation from code annotations
 
 - **Content Display Features**
   - Soft offline mode (category-based access during maintenance)
@@ -300,7 +320,7 @@ The following versions represent our planned annual major releases, each buildin
 - Template backup/restore functionality
 - Template A/B testing support
 - Multi-language template variations
-- Template documentation generator
+- Enhanced document generation (multi-format export, interactive docs)
 
 ---
 
@@ -361,7 +381,7 @@ The following versions represent our planned annual major releases, each buildin
 **Template Infrastructure**:
 - Template pattern library
 - Design token system
-- Template component documentation
+- Advanced document generation with live previews
 - Automated template testing suite
 - Template performance monitoring
 
@@ -437,7 +457,7 @@ The following versions represent our planned annual major releases, each buildin
 
 ---
 
-## Current Release (v03.06.00)
+## Current Release (v03.07.00)
 
 ### System Requirements
 - **Joomla**: 4.4.x or 5.x
@@ -548,8 +568,11 @@ The following versions represent our planned annual major releases, each buildin
 
 #### Asset Management
 - **Joomla WAM**: Complete asset registry in `joomla.asset.json`
-- **Development/Production Modes**: Minified and unminified assets
+- **Cache-Based Minification**: Asset minification controlled by Joomla cache system
+  - Cache enabled: Minified assets (`.min` suffix) created and used
+  - Cache disabled: Non-minified assets used, minified files automatically removed
 - **Dependency Management**: Automatic script/style loading
+- **Installation Script**: Automated cleanup of deprecated files during updates
 
 ### 🏗️ Template Overrides
 
@@ -677,6 +700,23 @@ The following versions represent our planned annual major releases, each buildin
 **Description**: Separate TODO tracking file  
 **Purpose**: Centralized issue and feature tracking outside changelog
 
+#### Document Generation System
+**Status**: Planned  
+**Description**: Automated documentation generation from template code and configuration  
+**Potential Features**:
+- Template documentation generator from inline code comments
+- Automatic parameter reference documentation
+- Style guide generation from CSS/SCSS files
+- Module position documentation with visual layout diagrams
+- Template override documentation
+- Configuration guide generation
+- API documentation for template helper classes
+**Use Cases**:
+- Maintain up-to-date documentation automatically
+- Generate user-friendly configuration guides
+- Create developer reference documentation
+- Export documentation in multiple formats (HTML, PDF, Markdown)
+
 ### 🔮 Future Enhancements
 
 #### Development Mode (Commented Out)
@@ -715,11 +755,14 @@ The following versions represent our planned annual major releases, each buildin
 ## Development Priorities
 
 ### Immediate Focus (v03.x - 2026)
-1. **TODO Tracking System**: Implement separate file for issue tracking
-2. **Soft Offline Mode**: Complete category-based offline access
-3. **Security Updates**: Maintain Dependabot and CodeQL scans
-4. **Documentation**: Keep docs synchronized with features
-5. **Bug Fixes**: Address reported issues and edge cases
+1. **Installation Automation** (v03.07.00): Complete installation script for automated cleanup
+2. **Cache-Based Asset Minification** (v03.07.00): Finalize integration with Joomla cache system
+3. **Document Generation System**: Implement automated documentation generation
+4. **TODO Tracking System**: Implement separate file for issue tracking
+5. **Soft Offline Mode**: Complete category-based offline access
+6. **Security Updates**: Maintain Dependabot and CodeQL scans
+7. **Documentation**: Keep docs synchronized with features
+8. **Bug Fixes**: Address reported issues and edge cases
 
 ### v04.00.00 Priorities (2027) - Template Foundation
 1. **WCAG 2.1 AA Compliance**: Full template accessibility audit and implementation
@@ -841,9 +884,9 @@ Have ideas for future features? We welcome community input!
 * Repository: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
 * Path: /docs/ROADMAP.md
 * Owner: Moko Consulting
-* Version: 03.06.00
+* Version: 03.07.00
 * Status: Active
-* Last Updated: 2026-01-27
+* Last Updated: 2026-01-28
 * Classification: Public Open Source Documentation
 
 ## Revision History
@@ -853,3 +896,5 @@ Have ideas for future features? We welcome community input!
 | 2026-01-27 | Initial version-specific roadmap generated from codebase scan. | GitHub Copilot |
 | 2026-01-27 | Added 5-year future roadmap with annual major version releases (v04-v08). | GitHub Copilot |
 | 2026-01-27 | Refocused roadmap to concentrate on template-oriented features only. | GitHub Copilot |
+| 2026-01-28 | Updated roadmap based on open PRs #62 and #65 (v03.07.00). | GitHub Copilot |
+| 2026-01-28 | Added document generation system as planned feature. | GitHub Copilot |
