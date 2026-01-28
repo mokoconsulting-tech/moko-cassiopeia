@@ -11,7 +11,7 @@
 	DEFGROUP: Joomla
 	INGROUP: Moko-Cassiopeia
 	PATH: templates/moko-cassiopeia/templateDetails.xml
-	VERSION: 03.06.00
+	VERSION: 03.08.00
 	BRIEF: Template manifest XML file for Moko-Cassiopeia
 	=========================================================================
 -->
@@ -22,7 +22,7 @@
 	  </server>
 	</updateservers>
 	<name>moko-cassiopeia</name>
-	<version>03.06.00</version>
+	<version>03.08.00</version>
 	<creationDate>2025-12-23</creationDate>
 	<author>Jonathan Miller || Moko Consulting</author>
 	<authorEmail>hello@mokoconsulting.tech</authorEmail>
@@ -206,7 +206,7 @@
 					<option value="0">JNO</option>
 					<option value="1">JYES</option>
 				</field>
-				<field name="logoFile" type="media" default="media/templates/site/moko-cassiopeia/images/logo.svg" label="TPL_MOKO-CASSIOPEIA_LOGO_LABEL" showon="brand:1" />
+				<field name="logoFile" type="media" label="TPL_MOKO-CASSIOPEIA_LOGO_LABEL" showon="brand:1" />
 				<field name="siteTitle" type="text" default="" label="TPL_MOKO-CASSIOPEIA_TITLE" filter="string" showon="brand:1" />
 				<field name="siteDescription" type="text" default="" label="TPL_MOKO-CASSIOPEIA_TAGLINE_LABEL" description="TPL_MOKO-CASSIOPEIA_TAGLINE_DESC" filter="string" showon="brand:1" />
 				<field name="fA6KitCode" type="text" default="" label="TPL_MOKO-CASSIOPEIA_FA6KITCODE_LABEL" description="TPL_MOKO-CASSIOPEIA_FA6KITCODE_DESC" filter="string" />

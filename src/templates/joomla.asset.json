@@ -17,7 +17,7 @@
 			"defgroup": "Joomla.Template.Site",
 			"ingroup": "Moko-Cassiopeia.Template.Assets",
 			"path": "./media/templates/site/moko-cassiopeia/joomla.asset.json",
-			"version": "03.06.00",
+			"version": "03.08.00",
 			"brief": "Joomla asset registry for Moko-Cassiopeia"
 		}
 	},
