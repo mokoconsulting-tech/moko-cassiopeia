@@ -29,6 +29,10 @@ This guide explains how to maintain the changelog based on pull requests, ensuri
 - [Examples](#examples)
 - [Automation](#automation)
 - [Best Practices](#best-practices)
+- [Troubleshooting](#troubleshooting)
+- [Quick Reference](#quick-reference)
+- [Resources](#resources)
+- [Related Documentation](#related-documentation)
 
 ## Overview
 
@@ -263,22 +267,32 @@ In the PR template:
 
 ## Automation
 
-### Current Process (Manual)
+### Current Automation
 
-1. **PR Creation** - Author fills changelog entry in PR template
-2. **PR Review** - Maintainer reviews changelog entry for accuracy
-3. **PR Merge** - Maintainer copies entry to CHANGELOG.md
-4. **Release** - Maintainer moves entries from Unreleased to version section
+The repository now includes automated changelog validation:
+
+- ✅ **GitHub Actions workflow** validates changelog entries in PRs
+- ✅ **Automatic PR labeling** based on changelog status
+- ✅ **PR comments** with guidance for missing/invalid entries
+- ✅ **Smart detection** skips automated PRs (Dependabot, bots)
+
+**Workflow:** `.github/workflows/changelog-validation.yml`
+
+The workflow:
+1. Checks PR description for changelog entry
+2. Validates entry format and category
+3. Comments on PR if entry is missing or invalid
+4. Adds/removes "needs-changelog" label
+5. Fails check if changelog is missing (except for automated PRs)
 
 ### Future Automation (Planned)
 
 Future enhancements may include:
 
-- **GitHub Actions workflow** to validate changelog entries in PRs
-- **Automatic PR labeling** based on changelog categories
 - **Semi-automated CHANGELOG.md updates** on PR merge
 - **Release notes generation** from changelog entries
-- **Changelog preview** in PR comments
+- **Changelog preview** in PR comments showing how entry will appear
+- **Multi-format export** for release notes
 
 ## Best Practices
 

@@ -20,6 +20,10 @@
   - Created CHANGELOG_PROCESS.md guide with detailed workflow
   - Added changelog entry section to PR template
   - Integrated changelog guidance into CONTRIBUTING.md and WORKFLOW_GUIDE.md
+- GitHub Actions workflow for automatic changelog validation and PR labeling (#66)
+  - Validates changelog entries in PR descriptions
+  - Automatically comments with guidance on missing/invalid entries
+  - Smart detection skips automated PRs
 
 ### Changed
 - Updated roadmap documentation based on current open pull requests (#66)
