@@ -21,12 +21,14 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
+use Joomla\CMS\Component\ComponentHelper;
 
 /** @var Joomla\CMS\Document\HtmlDocument $this */
 
 $app   = Factory::getApplication();
 $input = $app->getInput();
-$wa    = $this->getWebAssetManager();
+$document = $app->getDocument();
+$wa    = $document->getWebAssetManager();
 
 // Template params
 $params_LightColorName          = (string) $this->params->get('colorLightName', 'colors_standard'); // colors_standard|colors_alternative|colors_custom
@@ -40,10 +42,9 @@ $params_googleanalyticsid  = $this->params->get('googleanalyticsid', null);
 $params_custom_head_start  = $this->params->get('custom_head_start', null);
 $params_custom_head_end    = $this->params->get('custom_head_end', null);
 $params_developmentmode = $this->params->get('developmentmode', false);
-
+/*
 // Bootstrap behaviors (assets handled via WAM)
 HTMLHelper::_('bootstrap.framework');
-HTMLHelper::_('bootstrap.loadCss', true);
 HTMLHelper::_('bootstrap.alert');
 HTMLHelper::_('bootstrap.button');
 HTMLHelper::_('bootstrap.carousel');
@@ -56,7 +57,7 @@ HTMLHelper::_('bootstrap.scrollspy');
 HTMLHelper::_('bootstrap.tab');
 HTMLHelper::_('bootstrap.tooltip');
 HTMLHelper::_('bootstrap.toast');
-
+*/
 // Detecting Active Variables
 $option    = $input->getCmd('option', '');
 $view      = $input->getCmd('view', '');
@@ -80,41 +81,33 @@ $this->setTitle($final);
 // Template/Media path
 $templatePath = 'media/templates/site/moko-cassiopeia';
 
-// ===========================
-// Web Asset Manager (WAM) — matches your joomla.asset.json
-// ===========================
-
 // Core template CSS
-$wa->useStyle('template.global.base');   // css/template.css
-$wa->useStyle('template.global.social-media-demo');   // css/user.css
-
-// Optional vendor CSS
-$wa->useStyle('vendor.bootstrap-toc');
-
-// Optional demo/showcase CSS (available for use, not loaded by default)
-// To use: Add 'template.global.social-media-demo' to your article/module
-// $wa->useStyle('template.global.social-media-demo');
+$wa->useStyle('template.base');   // css/template.css
 
 // Color theme (light + optional dark)
 $colorLightKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_LightColorName));
 $colorDarkKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_DarkColorName));
 $lightKey  = 'template.light.' . $colorLightKey;
 $darkKey   = 'template.dark.' . $colorDarkKey;
+
 try {
 	$wa->useStyle('template.light.colors_standard');
 } catch (\Throwable $e) {
 	$wa->registerAndUseStyle('template.light.colors_standard', $templatePath . '/css/global/light/colors_standard.css');
 }
+
 try {
 	$wa->useStyle('template.dark.colors_standard');
 } catch (\Throwable $e) {
 	$wa->registerAndUseStyle('template.dark.colors_standard', $templatePath . '/css/global/dark/colors_standard.css');
 }
+
 try {
 	$wa->useStyle($lightKey);
 } catch (\Throwable $e) {
 	$wa->registerAndUseStyle('template.light.dynamic', $templatePath . '/css/global/light/' . $colorLightKey . '.css');
 }
+
 try {
 	$wa->useStyle($darkKey);
 } catch (\Throwable $e) {
@@ -123,9 +116,20 @@ try {
 
 // Scripts
 $wa->useScript('template.js');
-$wa->useScript('theme-init.js');
-$wa->useScript('darkmode-toggle.js');
-$wa->useScript('vendor.bootstrap-toc.js');
+
+/**
+ * VirtueMart detection:
+ * - Component must exist and be enabled
+ */
+$isVirtueMartActive = ComponentHelper::isEnabled('com_virtuemart', true);
+
+if ($isVirtueMartActive) {
+    /**
+     * Load a VirtueMart-specific stylesheet defined in your template manifest.
+     * This assumes you defined an asset named "template.virtuemart".
+     */
+    $wa->useStyle('vendor.vm');
+}
 
 // Font scheme (external or local) + CSS custom properties
 $params_FontScheme = $this->params->get('useFontScheme', false);
