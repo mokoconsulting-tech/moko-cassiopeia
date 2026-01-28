@@ -244,8 +244,8 @@
 	--focus-ring-opacity: .6;
 	--focus-ring-color: #5472ff66;
 
-	--form-valid-color: #78d694;
-	--form-valid-border-color: #78d694;
+	--form-valid-color: var(--green);
+	--form-valid-border-color: var(--green);
 	--form-invalid-color: #ff8e86;
 	--form-invalid-border-color: #ff8e86;
 

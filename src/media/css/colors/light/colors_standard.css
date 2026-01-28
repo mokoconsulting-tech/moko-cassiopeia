@@ -94,7 +94,7 @@
 	--nav-bg-color: var(--color-link);
 	--border: 5px;
 
-	--muted-color: #6d757e;
+	--muted-color: var(--secondary);
   --hr-color: var(--border-color, #dfe3e7);
   --link-active-color: var(--link-color);
   --code-color-ink: var(--code-color, #e93f8e);
@@ -217,10 +217,10 @@
 	--focus-ring-width: .25rem;
 	--focus-ring-opacity: .25;
 	--focus-ring-color: #01015640;
-	--form-valid-color: #448344;
-	--form-valid-border-color: #448344;
-	--form-invalid-color: #a51f18;
-	--form-invalid-border-color: #a51f18;
+	--form-valid-color: var(--success);
+	--form-valid-border-color: var(--success);
+	--form-invalid-color: var(--danger);
+	--form-invalid-border-color: var(--danger);
 
 	/* Missing variables from template.css - Added for compatibility */
 	--_fa-family: var(--fa-family, var(--fa-style-family, "Font Awesome 7 Free"));
