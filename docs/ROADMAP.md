@@ -51,6 +51,15 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
 - Enforced repository compliance with MokoStandards
 - Improved security posture with automated scanning
 
+### v03.07.00 (2026-01-28) - Roadmap Update
+**Status**: In Development (Open PR #66)
+
+**Changed**:
+- Updated roadmap documentation based on current open pull requests
+- Added document generation system as planned feature
+- Synchronized roadmap version timeline with active development branches
+- Enhanced future roadmap planning with documentation capabilities
+
 ### v03.08.00 (2026-01-28) - Installation Automation & Cache Integration
 **Status**: In Development (Open PR #65, #62)
 
@@ -69,15 +78,6 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
   - Replaced template-specific `developmentmode` parameter with Joomla cache configuration
   - `AssetMinifier.php` updated with inverted parameter logic for cache semantics
 - Updated version to 03.08.00 across 24+ files (CSS/JS, PHP/Config, templateDetails.xml, joomla.asset.json) (PR #65)
-
-### v03.07.00 (2026-01-28) - Roadmap Update
-**Status**: In Development (Open PR #66)
-
-**Changed**:
-- Updated roadmap documentation based on current open pull requests
-- Added document generation system as planned feature
-- Synchronized roadmap version timeline with active development branches
-- Enhanced future roadmap planning with documentation capabilities
 
 ### v03.06.00 (2026-01-28) - Version Update
 **Status**: Released
@@ -905,9 +905,9 @@ Have ideas for future features? We welcome community input!
 
 | Date       | Change Summary                                        | Author          |
 | ---------- | ----------------------------------------------------- | --------------- |
-| 2026-01-27 | Initial version-specific roadmap generated from codebase scan. | GitHub Copilot |
-| 2026-01-27 | Added 5-year future roadmap with annual major version releases (v04-v08). | GitHub Copilot |
-| 2026-01-27 | Refocused roadmap to concentrate on template-oriented features only. | GitHub Copilot |
-| 2026-01-28 | Updated roadmap based on open PRs #62, #65, and #66. | GitHub Copilot |
-| 2026-01-28 | Added document generation system as planned feature. | GitHub Copilot |
 | 2026-01-28 | Clarified version numbers: PR #66 (v03.07.00), PR #65 (v03.08.00). | GitHub Copilot |
+| 2026-01-28 | Added document generation system as planned feature. | GitHub Copilot |
+| 2026-01-28 | Updated roadmap based on open PRs #62, #65, and #66. | GitHub Copilot |
+| 2026-01-27 | Refocused roadmap to concentrate on template-oriented features only. | GitHub Copilot |
+| 2026-01-27 | Added 5-year future roadmap with annual major version releases (v04-v08). | GitHub Copilot |
+| 2026-01-27 | Initial version-specific roadmap generated from codebase scan. | GitHub Copilot |
