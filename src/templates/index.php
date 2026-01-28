@@ -10,7 +10,7 @@
  INGROUP: Moko-Cassiopeia
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./templates/moko-cassiopeia/index.php
- VERSION: 03.08.00
+ VERSION: 03.07.00
  BRIEF: Main template index file for Moko-Cassiopeia rendering site layout
  */
 
