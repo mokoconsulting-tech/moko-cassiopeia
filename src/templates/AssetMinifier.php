@@ -11,7 +11,7 @@
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./templates/moko-cassiopeia/AssetMinifier.php
  VERSION: 03.08.00
- BRIEF: Asset minification helper for development mode toggle
+ BRIEF: Asset minification helper linked to Joomla cache system
  */
 
 defined('_JEXEC') or die;
@@ -20,10 +20,10 @@ defined('_JEXEC') or die;
  * Asset Minifier Helper
  * 
  * Handles minification and cleanup of CSS and JavaScript assets
- * based on the development mode setting.
+ * based on the Joomla cache system setting.
  * 
  * IMPORTANT NOTES:
- * - This is a BASIC minifier suitable for development/production switching
+ * - This is a BASIC minifier suitable for cache-based switching
  * - For production builds, consider using professional tools like:
  *   * CSS: cssnano, clean-css
  *   * JavaScript: terser, uglify-js, closure-compiler
@@ -32,7 +32,11 @@ defined('_JEXEC') or die;
  * - Does not handle complex string scenarios or regex patterns
  * 
  * The minifier is designed to be "good enough" for automatic switching
- * between development and production modes, not for optimal compression.
+ * based on Joomla's cache setting, not for optimal compression.
+ * 
+ * BEHAVIOR:
+ * - When Joomla cache is ENABLED: Uses minified (.min) files for performance
+ * - When Joomla cache is DISABLED: Uses non-minified files for debugging
  */
 class AssetMinifier
 {
@@ -157,16 +161,19 @@ class AssetMinifier
 	}
 
 	/**
-	 * Process assets based on development mode
+	 * Process assets based on cache setting
+	 * 
+	 * When $useNonMinified is true (cache disabled), deletes .min files and uses source files
+	 * When $useNonMinified is false (cache enabled), creates .min files and uses them
 	 * 
 	 * @param string $mediaPath Path to media directory
-	 * @param bool $developmentMode Development mode flag
+	 * @param bool $useNonMinified Whether to use non-minified files (true when cache disabled)
 	 * @return array Status information
 	 */
-	public static function processAssets(string $mediaPath, bool $developmentMode): array
+	public static function processAssets(string $mediaPath, bool $useNonMinified): array
 	{
 		$result = [
-			'mode' => $developmentMode ? 'development' : 'production',
+			'mode' => $useNonMinified ? 'cache-disabled' : 'cache-enabled',
 			'minified' => 0,
 			'deleted' => 0,
 			'errors' => []
@@ -177,11 +184,11 @@ class AssetMinifier
 			return $result;
 		}
 
-		if ($developmentMode) {
-			// Delete all .min files
+		if ($useNonMinified) {
+			// Cache disabled: Delete all .min files and use non-minified sources
 			$result['deleted'] = self::deleteMinifiedFiles($mediaPath);
 		} else {
-			// Create minified versions of CSS and JS files
+			// Cache enabled: Create minified versions of CSS and JS files for performance
 			// NOTE: This list is hardcoded for predictability and to ensure only
 			// specific template files are minified. Vendor files are excluded as
 			// they come pre-minified. If you add new template assets, add them here.

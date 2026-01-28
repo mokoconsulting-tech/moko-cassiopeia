@@ -42,11 +42,15 @@ $params_googleanalytics    = $this->params->get('googleanalytics', false);
 $params_googleanalyticsid  = $this->params->get('googleanalyticsid', null);
 $params_custom_head_start  = $this->params->get('custom_head_start', null);
 $params_custom_head_end    = $this->params->get('custom_head_end', null);
-$params_developmentmode = $this->params->get('developmentmode', false);
 
-// Process assets based on development mode
+// Check if Joomla cache is enabled (use minified assets when cache is on)
+$cacheEnabled = (bool) $app->get('caching', 0);
+
+// Process assets based on cache setting
+// When cache is enabled, use minified assets for performance
+// When cache is disabled, use non-minified assets for debugging
 $mediaPath = JPATH_ROOT . '/media/templates/site/moko-cassiopeia';
-AssetMinifier::processAssets($mediaPath, $params_developmentmode);
+AssetMinifier::processAssets($mediaPath, !$cacheEnabled);
 
 // Bootstrap behaviors (assets handled via WAM)
 HTMLHelper::_('bootstrap.framework');
@@ -87,8 +91,10 @@ $this->setTitle($final);
 // Template/Media path
 $templatePath = 'media/templates/site/moko-cassiopeia';
 
-// Asset suffix based on development mode
-$assetSuffix = $params_developmentmode ? '' : '.min';
+// Asset suffix based on Joomla cache setting
+// When cache is enabled, use minified (.min) files for performance
+// When cache is disabled, use non-minified files for debugging
+$assetSuffix = $cacheEnabled ? '.min' : '';
 
 // ===========================
 // Web Asset Manager (WAM) — matches your joomla.asset.json

@@ -41,14 +41,17 @@ $params    = $this->params ?: $app->getTemplate(true)->params;
 $direction = $this->direction ?: 'ltr';
 
 /* -----------------------
-   Load ONLY template.css + colors_*.css (with min toggle)
+   Load ONLY template.css + colors_*.css (with min toggle based on cache)
 ------------------------ */
-$developmentMode = (int) $params->get('developmentmode', 0) === 1;
-$assetSuffix = $developmentMode ? '' : '.min';
+// Check if Joomla cache is enabled (use minified assets when cache is on)
+$cacheEnabled = (bool) $app->get('caching', 0);
+$assetSuffix = $cacheEnabled ? '.min' : '';
 
-// Process assets based on development mode
+// Process assets based on cache setting
+// When cache is enabled, use minified assets for performance
+// When cache is disabled, use non-minified assets for debugging
 $mediaPath = JPATH_ROOT . '/media/templates/site/moko-cassiopeia';
-AssetMinifier::processAssets($mediaPath, $developmentMode);
+AssetMinifier::processAssets($mediaPath, !$cacheEnabled);
 
 $base        = rtrim(Uri::root(true), '/') . '/media/templates/site/moko-cassiopeia/css/';
 
