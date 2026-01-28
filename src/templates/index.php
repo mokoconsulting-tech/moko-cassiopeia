@@ -21,6 +21,7 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
+use Joomla\CMS\Component\ComponentHelper;
 
 /** @var Joomla\CMS\Document\HtmlDocument $this */
 
@@ -29,7 +30,8 @@ require_once __DIR__ . '/AssetMinifier.php';
 
 $app   = Factory::getApplication();
 $input = $app->getInput();
-$wa    = $this->getWebAssetManager();
+$document = $app->getDocument();
+$wa    = $document->getWebAssetManager();
 
 // Template params
 $params_LightColorName          = (string) $this->params->get('colorLightName', 'colors_standard'); // colors_standard|colors_alternative|colors_custom
@@ -54,7 +56,6 @@ AssetMinifier::processAssets($mediaPath, !$cacheEnabled);
 
 // Bootstrap behaviors (assets handled via WAM)
 HTMLHelper::_('bootstrap.framework');
-HTMLHelper::_('bootstrap.loadCss', true);
 HTMLHelper::_('bootstrap.alert');
 HTMLHelper::_('bootstrap.button');
 HTMLHelper::_('bootstrap.carousel');
@@ -67,7 +68,7 @@ HTMLHelper::_('bootstrap.scrollspy');
 HTMLHelper::_('bootstrap.tab');
 HTMLHelper::_('bootstrap.tooltip');
 HTMLHelper::_('bootstrap.toast');
-
+*/
 // Detecting Active Variables
 $option    = $input->getCmd('option', '');
 $view      = $input->getCmd('view', '');
@@ -121,16 +122,19 @@ try {
 } catch (\Throwable $e) {
 	$wa->registerAndUseStyle('template.light.colors_standard', $templatePath . '/css/colors/light/colors_standard' . $assetSuffix . '.css');
 }
+
 try {
 	$wa->useStyle('template.dark.colors_standard' . $assetSuffix);
 } catch (\Throwable $e) {
 	$wa->registerAndUseStyle('template.dark.colors_standard', $templatePath . '/css/colors/dark/colors_standard' . $assetSuffix . '.css');
 }
+
 try {
 	$wa->useStyle($lightKey);
 } catch (\Throwable $e) {
 	$wa->registerAndUseStyle('template.light.dynamic', $templatePath . '/css/colors/light/' . $colorLightKey . $assetSuffix . '.css');
 }
+
 try {
 	$wa->useStyle($darkKey);
 } catch (\Throwable $e) {

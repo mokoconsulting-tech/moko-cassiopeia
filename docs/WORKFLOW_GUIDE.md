@@ -134,7 +134,7 @@ codecept run
 **How to run:**
 1. Go to Actions → Create version branch
 2. Click "Run workflow"
-3. Enter version (e.g., 03.05.00)
+3. Enter version (e.g., 03.06.00)
 4. Select branch prefix (dev/, rc/, or version/)
 5. Click "Run workflow"
 
@@ -322,7 +322,7 @@ make validate-required
 git branch -r | grep dev/
 
 # Delete remote branch if needed (carefully!)
-git push origin --delete dev/03.05.00
+git push origin --delete dev/03.06.00
 ```
 
 #### "Missing required secrets"
@@ -381,7 +381,7 @@ phpcs --standard=phpcs.xml --report=source src/
 1. **Always use version branches:** dev/X.Y.Z, rc/X.Y.Z, version/X.Y.Z
 2. **Follow hierarchy:** dev → rc → version → main
 3. **Update CHANGELOG:** Document all changes in Unreleased section
-4. **Semantic versioning:** Major.Minor.Patch (03.05.00)
+4. **Semantic versioning:** Major.Minor.Patch (03.06.00)
 
 ### Code Quality
 

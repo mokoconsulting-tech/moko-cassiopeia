@@ -10,7 +10,7 @@
  INGROUP: Moko-Cassiopeia.Governance
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: GOVERNANCE.md
- VERSION: 03.05.00
+ VERSION: 03.06.00
  BRIEF: Project governance model, roles, and decision processes for Moko-Cassiopeia.
  PATH: /GOVERNANCE.md
  NOTE: This document defines authority, decision making, and escalation paths.
@@ -103,7 +103,7 @@ This project is managed from Tennessee, USA. This statement is informational and
 * **Repository:** [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
 * **Path:** /GOVERNANCE.md
 * **Owner:** Moko Consulting
-* **Version:** 03.05.00
+* **Version:** 03.06.00
 * **Status:** Active
 * **Effective Date:** 2025-12-18
 * **Last Reviewed:** 2025-12-18

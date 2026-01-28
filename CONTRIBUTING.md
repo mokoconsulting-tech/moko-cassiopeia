@@ -10,7 +10,7 @@
  INGROUP: Moko-Cassiopeia.Governance
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: CONTRIBUTING.md
- VERSION: 03.05.00
+ VERSION: 03.06.00
  BRIEF: Contribution guidelines for the Moko-Cassiopeia project.
  PATH: /CONTRIBUTING.md
  NOTE: This document defines contribution workflow, standards, and governance alignment.
@@ -133,7 +133,7 @@ Participation in this project is governed by the Code of Conduct. Unacceptable b
 * **Repository:** [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
 * **Path:** /CONTRIBUTING.md
 * **Owner:** Moko Consulting
-* **Version:** 03.05.00
+* **Version:** 03.06.00
 * **Status:** Active
 * **Effective Date:** 2025-12-18
 * **Last Reviewed:** 2025-12-18
