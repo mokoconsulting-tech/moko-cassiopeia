@@ -192,20 +192,39 @@ class AssetMinifierTest extends Unit
     }
     
     /**
-     * Test process assets in development mode
+     * Test process assets with cache disabled (use non-minified)
      */
-    public function testProcessAssetsDevelopmentMode()
+    public function testProcessAssetsCacheDisabled()
     {
         // Create some minified files
         file_put_contents($this->testDir . '/test.min.css', 'body{}');
         file_put_contents($this->testDir . '/test.min.js', 'var x=1;');
         
+        // When cache is disabled, useNonMinified = true
         $result = \AssetMinifier::processAssets($this->testDir, true);
         
-        $this->assertEquals('development', $result['mode']);
+        $this->assertEquals('cache-disabled', $result['mode']);
         $this->assertGreaterThanOrEqual(2, $result['deleted'], 'Should delete minified files');
         $this->assertFileDoesNotExist($this->testDir . '/test.min.css');
         $this->assertFileDoesNotExist($this->testDir . '/test.min.js');
+    }
+    
+    /**
+     * Test process assets with cache enabled (use minified)
+     */
+    public function testProcessAssetsCacheEnabled()
+    {
+        // Create source files
+        file_put_contents($this->testDir . '/test.css', 'body { margin: 0; }');
+        file_put_contents($this->testDir . '/test.js', 'function test() { return true; }');
+        
+        // When cache is enabled, useNonMinified = false
+        // This would try to minify files in the hardcoded list, which won't match our test files
+        // So we just verify the mode is set correctly
+        $result = \AssetMinifier::processAssets($this->testDir, false);
+        
+        $this->assertEquals('cache-enabled', $result['mode']);
+        $this->assertEquals(0, $result['minified'], 'Should not minify test files (not in hardcoded list)');
     }
     
     /**
