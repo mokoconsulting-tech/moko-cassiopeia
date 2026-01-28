@@ -219,7 +219,7 @@ class AssetMinifierTest extends Unit
         file_put_contents($this->testDir . '/test.js', 'function test() { return true; }');
         
         // When cache is enabled, useNonMinified = false
-        // This would try to minify files in the hardcoded list, which won't match our test files
+        // This will try to minify files in the hardcoded list, which won't match our test files
         // So we just verify the mode is set correctly
         $result = \AssetMinifier::processAssets($this->testDir, false);
         
