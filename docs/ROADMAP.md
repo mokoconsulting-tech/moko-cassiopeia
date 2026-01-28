@@ -15,7 +15,7 @@
  PATH: /docs/ROADMAP.md
 -->
 
-# Moko-Cassiopeia Roadmap (VERSION: 03.07.00)
+# Moko-Cassiopeia Roadmap (VERSION: 03.08.00)
 
 This document provides a comprehensive, version-specific roadmap for the Moko-Cassiopeia Joomla template, tracking feature evolution, current capabilities, and planned enhancements.
 
@@ -51,11 +51,11 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
 - Enforced repository compliance with MokoStandards
 - Improved security posture with automated scanning
 
-### v03.07.00 (2026-01-28) - Installation Automation & Cache Integration
+### v03.08.00 (2026-01-28) - Installation Automation & Cache Integration
 **Status**: In Development (Open PR #65, #62)
 
 **Added**:
-- Installation script (`src/templates/script.php`) for automated media folder cleanup during template updates
+- Installation script (`src/templates/script.php`) for automated media folder cleanup during template updates (PR #65)
   - Implements `InstallerScriptInterface` with lifecycle hooks
   - Automatic removal of deprecated files/folders during updates
   - Recursive cleanup of empty directories
@@ -63,12 +63,12 @@ This document provides a comprehensive, version-specific roadmap for the Moko-Ca
   - Validates Joomla 4.0+ and PHP 7.4+ requirements
 
 **Changed**:
-- Asset minification now linked to Joomla's global cache system
+- Asset minification now linked to Joomla's global cache system (PR #62)
   - When cache enabled: minified assets (`.min` suffix) are created and used
   - When cache disabled: non-minified assets used, minified files deleted
   - Replaced template-specific `developmentmode` parameter with Joomla cache configuration
   - `AssetMinifier.php` updated with inverted parameter logic for cache semantics
-- Updated version to 03.07.00 across 24+ files (CSS/JS, PHP/Config, templateDetails.xml, joomla.asset.json)
+- Updated version to 03.08.00 across 24+ files (CSS/JS, PHP/Config, templateDetails.xml, joomla.asset.json) (PR #65)
 
 ### v03.06.00 (2026-01-28) - Version Update
 **Status**: Released
@@ -457,7 +457,7 @@ The following versions represent our planned annual major releases, each buildin
 
 ---
 
-## Current Release (v03.07.00)
+## Current Release (v03.08.00)
 
 ### System Requirements
 - **Joomla**: 4.4.x or 5.x
@@ -755,8 +755,8 @@ The following versions represent our planned annual major releases, each buildin
 ## Development Priorities
 
 ### Immediate Focus (v03.x - 2026)
-1. **Installation Automation** (v03.07.00): Complete installation script for automated cleanup
-2. **Cache-Based Asset Minification** (v03.07.00): Finalize integration with Joomla cache system
+1. **Installation Automation** (v03.08.00): Complete installation script for automated cleanup (PR #65)
+2. **Cache-Based Asset Minification** (v03.08.00): Finalize integration with Joomla cache system (PR #62)
 3. **Document Generation System**: Implement automated documentation generation
 4. **TODO Tracking System**: Implement separate file for issue tracking
 5. **Soft Offline Mode**: Complete category-based offline access
@@ -884,7 +884,7 @@ Have ideas for future features? We welcome community input!
 * Repository: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
 * Path: /docs/ROADMAP.md
 * Owner: Moko Consulting
-* Version: 03.07.00
+* Version: 03.08.00
 * Status: Active
 * Last Updated: 2026-01-28
 * Classification: Public Open Source Documentation
@@ -896,5 +896,6 @@ Have ideas for future features? We welcome community input!
 | 2026-01-27 | Initial version-specific roadmap generated from codebase scan. | GitHub Copilot |
 | 2026-01-27 | Added 5-year future roadmap with annual major version releases (v04-v08). | GitHub Copilot |
 | 2026-01-27 | Refocused roadmap to concentrate on template-oriented features only. | GitHub Copilot |
-| 2026-01-28 | Updated roadmap based on open PRs #62 and #65 (v03.07.00). | GitHub Copilot |
+| 2026-01-28 | Updated roadmap based on open PRs #62 and #65 (v03.08.00). | GitHub Copilot |
 | 2026-01-28 | Added document generation system as planned feature. | GitHub Copilot |
+| 2026-01-28 | Corrected version number: PR #65 is v03.08.00, not v03.07.00. | GitHub Copilot |
