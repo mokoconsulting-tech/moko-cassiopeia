@@ -10,7 +10,7 @@
  INGROUP: Moko-Cassiopeia
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./templates/moko-cassiopeia/AssetMinifier.php
- VERSION: 03.05.00
+ VERSION: 03.07.00
  BRIEF: Asset minification helper for development mode toggle
  */
 
