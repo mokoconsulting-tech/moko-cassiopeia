@@ -10,7 +10,7 @@
  INGROUP: Moko-Cassiopeia.Documentation
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: docs/README.md
- VERSION: 03.05.00
+ VERSION: 03.06.00
  BRIEF: Documentation index for Moko-Cassiopeia template
  PATH: /docs/README.md
 -->
@@ -41,7 +41,7 @@ This directory contains comprehensive documentation for the Moko-Cassiopeia Joom
   * Multi-version testing
 
 * **[Roadmap](ROADMAP.md)** - Version-specific roadmap
-  * Current features (v03.05.00)
+  * Current features (v03.06.00)
   * Feature evolution timeline
   * Planned enhancements
   * Development priorities
@@ -105,7 +105,7 @@ This project adheres to [MokoStandards](https://github.com/mokoconsulting-tech/M
 * Repository: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
 * Path: /docs/README.md
 * Owner: Moko Consulting
-* Version: 03.05.00
+* Version: 03.06.00
 * Status: Active
 * Effective Date: 2026-01-09
 

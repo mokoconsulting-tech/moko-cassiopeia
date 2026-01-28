@@ -10,7 +10,7 @@
  INGROUP: Moko-Cassiopeia.Governance
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: SECURITY.md
- VERSION: 03.05.00
+ VERSION: 03.06.00
  BRIEF: Security policy and vulnerability reporting process for Moko-Cassiopeia.
  PATH: /SECURITY.md
  NOTE: This policy is process oriented and does not replace secure engineering practices.
@@ -153,7 +153,7 @@ If you want credit, include the name or handle to list in an advisory. If you pr
 * **Repository:** [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
 * **Path:** /SECURITY.md
 * **Owner:** Moko Consulting
-* **Version:** 03.05.00
+* **Version:** 03.06.00
 * **Status:** Active
 * **Effective Date:** 2025-12-18
 * **Last Reviewed:** 2025-12-18

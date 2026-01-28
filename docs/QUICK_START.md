@@ -271,7 +271,7 @@ make test
 
 ### Version Management
 
-- Use semantic versioning: Major.Minor.Patch (03.05.00)
+- Use semantic versioning: Major.Minor.Patch (03.06.00)
 - Update CHANGELOG.md with all changes
 - Follow the version hierarchy: dev → rc → version → main
 - Never skip stages in the release process

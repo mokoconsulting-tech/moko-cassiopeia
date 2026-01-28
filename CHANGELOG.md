@@ -8,11 +8,15 @@
  DEFGROUP: Joomla.Template.Site
  INGROUP: Moko-Cassiopeia.Documentation
  PATH: ./CHANGELOG.md
- VERSION: 03.05.00
+ VERSION: 03.06.00
  BRIEF: Changelog file documenting version history of Moko-Cassiopeia
  -->
 
-# Changelog — Moko-Cassiopeia (VERSION: 03.05.00)
+# Changelog — Moko-Cassiopeia (VERSION: 03.06.00)
+
+## [03.06.00] 2026-01-28
+### Changed
+- Updated version to 03.06.00 across all files
 
 ## [03.05.01] 2026-01-09
 ### Added
