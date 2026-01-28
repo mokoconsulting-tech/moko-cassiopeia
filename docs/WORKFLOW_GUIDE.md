@@ -283,7 +283,30 @@ unzip -l dist/moko-cassiopeia-*.zip
 
 ### Updating CHANGELOG
 
-Update CHANGELOG.md manually or via pull request following the existing format.
+The changelog is maintained based on pull requests. Every PR should include a changelog entry.
+
+**Process:**
+1. When creating a PR, fill out the "Changelog Entry" section in the PR template
+2. Follow the Keep a Changelog format (Added, Changed, Fixed, etc.)
+3. Maintainers will copy the entry to CHANGELOG.md upon merge
+4. See [CHANGELOG_PROCESS.md](./CHANGELOG_PROCESS.md) for detailed guidelines
+
+**Example changelog entry in PR:**
+```markdown
+### Added
+- Installation script for automated media folder cleanup (#65)
+
+### Changed
+- Asset minification linked to Joomla cache system (#62)
+```
+
+**Quick reference:**
+- **Added** - New features or files
+- **Changed** - Modifications to existing functionality
+- **Deprecated** - Features marked for future removal
+- **Removed** - Deleted features or files
+- **Fixed** - Bug fixes
+- **Security** - Security-related changes
 
 ## Troubleshooting
 

@@ -61,6 +61,7 @@ The repository provides several tools to streamline development:
 2. Create a branch from the active development branch.
 3. Make focused, minimal changes that address a single concern.
 4. Submit a pull request with a clear description of intent and impact.
+5. **Include a changelog entry** in the PR template describing your changes (see [CHANGELOG_PROCESS.md](./docs/CHANGELOG_PROCESS.md)).
 
 Direct commits to protected branches are not permitted.
 
@@ -87,6 +88,16 @@ Documentation changes must:
 * Include required metadata and revision history sections.
 * Avoid embedding version numbers in revision history tables.
 * Preserve existing structure unless a structural change is explicitly proposed.
+
+## Changelog Maintenance
+
+All changes must be documented in the changelog:
+
+* **Include a changelog entry** in every pull request (see the PR template)
+* Follow [Keep a Changelog](https://keepachangelog.com/) format
+* Use appropriate categories: Added, Changed, Deprecated, Removed, Fixed, Security
+* Write from a user perspective, not implementation details
+* See [docs/CHANGELOG_PROCESS.md](./docs/CHANGELOG_PROCESS.md) for complete guidelines
 
 ## Commit Messages
 
