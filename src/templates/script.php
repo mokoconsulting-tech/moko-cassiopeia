@@ -12,7 +12,7 @@
  * DEFGROUP: Joomla.Template.Site
  * INGROUP: Moko-Cassiopeia
  * PATH: ./templates/moko-cassiopeia/script.php
- * VERSION: 03.07.00
+ * VERSION: 03.08.00
  * BRIEF: Installation and update script for Moko-Cassiopeia template
  */
 
@@ -29,14 +29,14 @@ use Joomla\CMS\Log\Log;
 /**
  * Installation script for Moko-Cassiopeia template
  *
- * @since  03.07.00
+ * @since  03.08.00
  */
 return new class () implements InstallerScriptInterface {
     /**
      * The template's minimum supported Joomla version
      *
      * @var    string
-     * @since  03.07.00
+     * @since  03.08.00
      */
     private $minimumJoomla = '4.0';
 
@@ -44,7 +44,7 @@ return new class () implements InstallerScriptInterface {
      * The template's minimum supported PHP version
      *
      * @var    string
-     * @since  03.07.00
+     * @since  03.08.00
      */
     private $minimumPhp = '7.4';
 
@@ -52,7 +52,7 @@ return new class () implements InstallerScriptInterface {
      * List of files to be removed during update (old/deprecated files)
      *
      * @var    array
-     * @since  03.07.00
+     * @since  03.08.00
      */
     private $filesToRemove = [
         // Add deprecated files here as needed
@@ -63,7 +63,7 @@ return new class () implements InstallerScriptInterface {
      * List of folders to be removed during update (old/deprecated folders)
      *
      * @var    array
-     * @since  03.07.00
+     * @since  03.08.00
      */
     private $foldersToRemove = [
         // Add deprecated folders here as needed
@@ -78,7 +78,7 @@ return new class () implements InstallerScriptInterface {
      *
      * @return  boolean  True on success
      *
-     * @since   03.07.00
+     * @since   03.08.00
      */
     public function preflight(string $type, InstallerAdapter $parent): bool
     {
@@ -117,7 +117,7 @@ return new class () implements InstallerScriptInterface {
      *
      * @return  boolean  True on success
      *
-     * @since   03.07.00
+     * @since   03.08.00
      */
     public function postflight(string $type, InstallerAdapter $parent): bool
     {
@@ -134,7 +134,7 @@ return new class () implements InstallerScriptInterface {
             );
         } elseif ($type === 'update') {
             Factory::getApplication()->enqueueMessage(
-                'Moko-Cassiopeia template has been successfully updated to version 03.07.00!',
+                'Moko-Cassiopeia template has been successfully updated to version 03.08.00!',
                 'success'
             );
         }
@@ -149,7 +149,7 @@ return new class () implements InstallerScriptInterface {
      *
      * @return  boolean  True on success
      *
-     * @since   03.07.00
+     * @since   03.08.00
      */
     public function install(InstallerAdapter $parent): bool
     {
@@ -163,7 +163,7 @@ return new class () implements InstallerScriptInterface {
      *
      * @return  boolean  True on success
      *
-     * @since   03.07.00
+     * @since   03.08.00
      */
     public function update(InstallerAdapter $parent): bool
     {
@@ -177,7 +177,7 @@ return new class () implements InstallerScriptInterface {
      *
      * @return  boolean  True on success
      *
-     * @since   03.07.00
+     * @since   03.08.00
      */
     public function uninstall(InstallerAdapter $parent): bool
     {
@@ -189,7 +189,7 @@ return new class () implements InstallerScriptInterface {
      *
      * @return  void
      *
-     * @since   03.07.00
+     * @since   03.08.00
      */
     private function cleanupMediaFolder(): void
     {
@@ -279,7 +279,7 @@ return new class () implements InstallerScriptInterface {
      *
      * @return  boolean  True if directory was removed, false otherwise
      *
-     * @since   03.07.00
+     * @since   03.08.00
      */
     private function removeEmptyDirectories(string $path): bool
     {

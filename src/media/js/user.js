@@ -16,6 +16,6 @@
  INGROUP: Moko-Cassiopeia
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./media/templates/site/moko-cassiopeia/js/user.js
- VERSION: 03.07.00
+ VERSION: 03.08.00
  BRIEF: JavaScript for handling user-specific interactions in Moko-Cassiopeia template
  */
