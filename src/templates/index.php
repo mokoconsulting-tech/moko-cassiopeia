@@ -116,6 +116,8 @@ try {
 
 // Scripts
 $wa->useScript('template.js');
+$wa->useScript('theme-init.js');
+$wa->useScript('darkmode-toggle.js');
 
 /**
  * VirtueMart detection:
