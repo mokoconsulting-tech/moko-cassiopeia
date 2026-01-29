@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<j2xml version="26.0.000">
+<version>26.0.000</version>
+<category>
+<id>3</id>
+<title>Membership</title>
+<alias>membership</alias>
+<description><![CDATA[Sample articles for membership websites]]></description>
+<published>1</published>
+<access>1</access>
+<language>*</language>
+<extension>com_content</extension>
+</category>
+
+<article>
+<id>20</id>
+<title>Welcome to Our Member Portal</title>
+<alias>member-portal</alias>
+<introtext><![CDATA[<p>Welcome to your exclusive member area! Access premium content, resources, and benefits.</p>]]></introtext>
+<fulltext><![CDATA[<h2>Your Membership Dashboard</h2>
+<p>As a valued member, you have access to exclusive benefits, resources, and premium content designed to help you succeed.</p>
+
+<div class="row">
+<div class="col-md-4">
+<h3><i class="fa-solid fa-book"></i> Resources</h3>
+<p>Access our complete library of guides, tutorials, and training materials.</p>
+<p><a href="/member-resources" class="btn btn-primary">Browse Resources</a></p>
+</div>
+
+<div class="col-md-4">
+<h3><i class="fa-solid fa-calendar"></i> Events</h3>
+<p>Join exclusive member-only webinars, workshops, and networking events.</p>
+<p><a href="/member-events" class="btn btn-primary">View Events</a></p>
+</div>
+
+<div class="col-md-4">
+<h3><i class="fa-solid fa-headset"></i> Support</h3>
+<p>Get priority support from our expert team whenever you need assistance.</p>
+<p><a href="/member-support" class="btn btn-primary">Get Support</a></p>
+</div>
+</div>
+
+<h3 class="mt-4">Quick Links</h3>
+<ul>
+<li><a href="/my-profile">Update Your Profile</a></li>
+<li><a href="/membership-details">View Membership Details</a></li>
+<li><a href="/download-center">Downloads</a></li>
+<li><a href="/community-forum">Community Forum</a></li>
+</ul>
+
+<h3>Latest Member News</h3>
+<p>Stay updated with the latest announcements, new resources, and upcoming events.</p>]]></fulltext>
+<state>1</state>
+<catid>3</catid>
+<created>2026-01-29 00:00:00</created>
+<created_by>1</created_by>
+<featured>1</featured>
+<language>*</language>
+<access>2</access>
+<metadesc>Member portal - access exclusive resources and benefits</metadesc>
+</article>
+
+<article>
+<id>21</id>
+<title>Membership Plans</title>
+<alias>membership-plans</alias>
+<introtext><![CDATA[<p>Choose the membership plan that's right for you. All plans include our core benefits with increasing levels of access.</p>]]></introtext>
+<fulltext><![CDATA[<h2>Choose Your Membership Level</h2>
+
+<div class="row">
+<div class="col-md-4">
+<div class="card">
+<div class="card-header bg-secondary text-white">
+<h3>Basic</h3>
+<h4>$9.99/month</h4>
+</div>
+<div class="card-body">
+<ul>
+<li>Access to basic resources</li>
+<li>Monthly newsletter</li>
+<li>Community forum access</li>
+<li>Email support</li>
+</ul>
+<p><a href="/signup?plan=basic" class="btn btn-secondary">Get Started</a></p>
+</div>
+</div>
+</div>
+
+<div class="col-md-4">
+<div class="card border-primary">
+<div class="card-header bg-primary text-white">
+<h3>Professional</h3>
+<h4>$24.99/month</h4>
+<span class="badge bg-warning">Most Popular</span>
+</div>
+<div class="card-body">
+<ul>
+<li><strong>Everything in Basic, plus:</strong></li>
+<li>Premium resources library</li>
+<li>Monthly webinars</li>
+<li>Advanced training materials</li>
+<li>Priority email support</li>
+<li>Quarterly networking events</li>
+</ul>
+<p><a href="/signup?plan=professional" class="btn btn-primary">Get Started</a></p>
+</div>
+</div>
+</div>
+
+<div class="col-md-4">
+<div class="card">
+<div class="card-header bg-success text-white">
+<h3>Enterprise</h3>
+<h4>$49.99/month</h4>
+</div>
+<div class="card-body">
+<ul>
+<li><strong>Everything in Professional, plus:</strong></li>
+<li>1-on-1 consulting sessions</li>
+<li>Custom training programs</li>
+<li>Phone support</li>
+<li>VIP event access</li>
+<li>Annual conference pass</li>
+<li>API access</li>
+</ul>
+<p><a href="/signup?plan=enterprise" class="btn btn-success">Get Started</a></p>
+</div>
+</div>
+</div>
+</div>
+
+<h3 class="mt-4">All Plans Include</h3>
+<ul>
+<li>Cancel anytime, no commitments</li>
+<li>30-day money-back guarantee</li>
+<li>Secure payment processing</li>
+<li>Access from any device</li>
+</ul>
+
+<p class="mt-4"><strong>Need help choosing?</strong> <a href="/contact-us">Contact us</a> for personalized recommendations.</p>]]></fulltext>
+<state>1</state>
+<catid>3</catid>
+<created>2026-01-29 00:00:00</created>
+<created_by>1</created_by>
+<language>*</language>
+<access>1</access>
+<metadesc>Membership plans and pricing - choose the right tier for you</metadesc>
+</article>
+</j2xml>

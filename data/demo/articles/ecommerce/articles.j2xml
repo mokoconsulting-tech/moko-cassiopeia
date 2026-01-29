@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<j2xml version="26.0.000">
+	<version>26.0.000</version>
+	<category>
+		<id>2</id>
+		<title>E-commerce</title>
+		<alias>ecommerce</alias>
+		<description><![CDATA[Sample articles for e-commerce websites]]></description>
+		<published>1</published>
+		<access>1</access>
+		<language>*</language>
+		<extension>com_content</extension>
+	</category>
+	
+	<article>
+		<id>10</id>
+		<title>Shop Our Collection</title>
+		<alias>shop-collection</alias>
+		<introtext><![CDATA[<p>Discover our carefully curated collection of premium products. Quality, style, and value in every item.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Welcome to Our Online Store</h2>
+<p>Browse our extensive collection of high-quality products, carefully selected to meet your needs and exceed your expectations.</p>
+
+<div class="row">
+<div class="col-md-4">
+<h3>New Arrivals</h3>
+<p>Check out the latest additions to our collection. Fresh styles and innovative products added regularly.</p>
+<p><a href="/shop/new-arrivals" class="btn btn-primary">Shop New</a></p>
+</div>
+
+<div class="col-md-4">
+<h3>Best Sellers</h3>
+<p>Our most popular products loved by customers worldwide. See what everyone's talking about.</p>
+<p><a href="/shop/best-sellers" class="btn btn-primary">Shop Best Sellers</a></p>
+</div>
+
+<div class="col-md-4">
+<h3>On Sale</h3>
+<p>Save big on select items. Limited time offers and exclusive deals you don't want to miss.</p>
+<p><a href="/shop/sale" class="btn btn-danger">Shop Sale</a></p>
+</div>
+</div>
+
+<h3 class="mt-4">Why Shop With Us</h3>
+<ul>
+<li><strong>Free Shipping</strong> on orders over $50</li>
+<li><strong>30-Day Returns</strong> - Shop with confidence</li>
+<li><strong>Secure Checkout</strong> - Your data is protected</li>
+<li><strong>Expert Support</strong> - We're here to help</li>
+<li><strong>Quality Guaranteed</strong> - Premium products only</li>
+</ul>
+
+<p class="mt-4"><a href="/shop" class="btn btn-lg btn-success">Start Shopping</a></p>]]></fulltext>
+		<state>1</state>
+		<catid>2</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<featured>1</featured>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Shop our premium collection - new arrivals, best sellers, and exclusive deals</metadesc>
+	</article>
+
+	<article>
+		<id>11</id>
+		<title>Shipping Information</title>
+		<alias>shipping-information</alias>
+		<introtext><![CDATA[<p>Learn about our shipping options, rates, and delivery times.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Shipping Policy</h2>
+
+<h3>Shipping Options</h3>
+
+<table class="table table-striped">
+<thead>
+<tr>
+<th>Method</th>
+<th>Delivery Time</th>
+<th>Cost</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Standard Shipping</td>
+<td>5-7 business days</td>
+<td>$5.99 (FREE over $50)</td>
+</tr>
+<tr>
+<td>Express Shipping</td>
+<td>2-3 business days</td>
+<td>$14.99</td>
+</tr>
+<tr>
+<td>Next Day Delivery</td>
+<td>1 business day</td>
+<td>$24.99</td>
+</tr>
+<tr>
+<td>International Shipping</td>
+<td>7-21 business days</td>
+<td>Varies by location</td>
+</tr>
+</tbody>
+</table>
+
+<h3>Processing Time</h3>
+<p>Orders are typically processed within 1-2 business days. You'll receive a confirmation email with tracking information once your order ships.</p>
+
+<h3>International Shipping</h3>
+<p>We ship to over 100 countries worldwide. International shipping costs are calculated at checkout based on your location and order weight.</p>
+
+<p><strong>Important:</strong> International customers are responsible for any customs duties or import taxes.</p>
+
+<h3>Order Tracking</h3>
+<p>Once your order ships, you'll receive a tracking number via email. You can track your shipment at:</p>
+<ul>
+<li>Visit our <a href="/order-tracking">Order Tracking page</a></li>
+<li>Check your account dashboard</li>
+<li>Contact customer service</li>
+</ul>
+
+<h3>Shipping Restrictions</h3>
+<p>Some products may have shipping restrictions based on local regulations. These restrictions will be noted on the product page.</p>
+
+<p>Questions about shipping? <a href="/contact-us">Contact us</a> for assistance.</p>]]></fulltext>
+		<state>1</state>
+		<catid>2</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Shipping options, rates, and delivery times for your orders</metadesc>
+	</article>
+
+	<article>
+		<id>12</id>
+		<title>Returns &amp; Refunds</title>
+		<alias>returns-refunds</alias>
+		<introtext><![CDATA[<p>Our hassle-free return policy ensures your complete satisfaction.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Return Policy</h2>
+
+<h3>30-Day Return Window</h3>
+<p>We want you to love your purchase! If you're not completely satisfied, you can return most items within 30 days of delivery for a full refund.</p>
+
+<h3>Return Eligibility</h3>
+<p>To be eligible for a return, items must:</p>
+<ul>
+<li>Be in original, unused condition</li>
+<li>Include all original packaging and tags</li>
+<li>Have proof of purchase (receipt or order number)</li>
+<li>Be returned within 30 days of delivery</li>
+</ul>
+
+<h3>Non-Returnable Items</h3>
+<p>Some items cannot be returned for hygiene and safety reasons:</p>
+<ul>
+<li>Final sale/clearance items</li>
+<li>Personalized or custom products</li>
+<li>Gift cards</li>
+<li>Downloadable products</li>
+</ul>
+
+<h3>How to Return</h3>
+<ol>
+<li><strong>Initiate Return</strong> - Log into your account and select the order</li>
+<li><strong>Print Label</strong> - Download and print your prepaid return label</li>
+<li><strong>Pack Securely</strong> - Package items in original packaging if possible</li>
+<li><strong>Ship It Back</strong> - Drop off at any carrier location</li>
+</ol>
+
+<h3>Return Shipping</h3>
+<p>Return shipping is FREE for US customers. International returns: customer pays return shipping costs.</p>
+
+<h3>Refund Process</h3>
+<p>Once we receive your return:</p>
+<ul>
+<li>Inspection: 2-3 business days</li>
+<li>Refund processing: 3-5 business days</li>
+<li>Bank processing: 5-10 business days</li>
+</ul>
+<p>You'll receive an email confirmation once your refund is processed.</p>
+
+<h3>Exchanges</h3>
+<p>Need a different size or color? We offer free exchanges! Follow the return process and specify your exchange preference.</p>
+
+<h3>Damaged or Defective Items</h3>
+<p>If you receive a damaged or defective item:</p>
+<ol>
+<li>Contact us within 48 hours of delivery</li>
+<li>Provide photos of the damage</li>
+<li>We'll arrange for immediate replacement or refund</li>
+</ol>
+
+<p>Questions? <a href="/contact-us">Contact our customer service team</a> - we're here to help!</p>]]></fulltext>
+		<state>1</state>
+		<catid>2</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Easy returns and refunds - 30-day money-back guarantee</metadesc>
+	</article>
+
+	<article>
+		<id>13</id>
+		<title>Payment Methods</title>
+		<alias>payment-methods</alias>
+		<introtext><![CDATA[<p>We accept multiple secure payment methods for your convenience.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Accepted Payment Methods</h2>
+
+<h3>Credit & Debit Cards</h3>
+<p>We accept all major credit and debit cards:</p>
+<ul>
+<li>Visa</li>
+<li>Mastercard</li>
+<li>American Express</li>
+<li>Discover</li>
+</ul>
+
+<h3>Digital Wallets</h3>
+<p>Fast and secure checkout with:</p>
+<ul>
+<li>PayPal</li>
+<li>Apple Pay</li>
+<li>Google Pay</li>
+<li>Shop Pay</li>
+</ul>
+
+<h3>Other Payment Options</h3>
+<ul>
+<li><strong>Bank Transfer</strong> - Available for orders over $500</li>
+<li><strong>Gift Cards</strong> - Use store credit at checkout</li>
+<li><strong>Buy Now, Pay Later</strong> - Flexible payment plans available</li>
+</ul>
+
+<h3>Payment Security</h3>
+<p>Your payment information is always secure:</p>
+<ul>
+<li><strong>SSL Encryption</strong> - All transactions are encrypted</li>
+<li><strong>PCI Compliance</strong> - We meet industry security standards</li>
+<li><strong>Fraud Protection</strong> - Advanced fraud detection systems</li>
+<li><strong>No Stored Data</strong> - We don't store your card information</li>
+</ul>
+
+<h3>Currency</h3>
+<p>All prices are in USD. International customers will see converted prices at checkout based on current exchange rates.</p>
+
+<h3>Payment Issues</h3>
+<p>If your payment is declined:</p>
+<ol>
+<li>Verify card information is correct</li>
+<li>Check with your bank for any restrictions</li>
+<li>Try an alternative payment method</li>
+<li><a href="/contact-us">Contact us</a> if problems persist</li>
+</ol>
+
+<h3>Billing Information</h3>
+<p>Your billing address must match the address on file with your card issuer. This helps prevent fraud and ensures smooth processing.</p>
+
+<p>Need help? <a href="/contact-us">Contact our support team</a></p>]]></fulltext>
+		<state>1</state>
+		<catid>2</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Secure payment methods - credit cards, PayPal, digital wallets</metadesc>
+	</article>
+
+	<article>
+		<id>14</id>
+		<title>Size Guide</title>
+		<alias>size-guide</alias>
+		<introtext><![CDATA[<p>Find your perfect fit with our comprehensive size guide.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Size Guide</h2>
+
+<h3>How to Measure</h3>
+<p>For the most accurate sizing, take your measurements with a flexible measuring tape:</p>
+<ul>
+<li><strong>Chest/Bust</strong> - Measure around the fullest part</li>
+<li><strong>Waist</strong> - Measure around your natural waistline</li>
+<li><strong>Hips</strong> - Measure around the fullest part</li>
+<li><strong>Inseam</strong> - Measure from crotch to ankle</li>
+</ul>
+
+<h3>Men's Clothing</h3>
+<table class="table table-bordered">
+<thead>
+<tr>
+<th>Size</th>
+<th>Chest (in)</th>
+<th>Waist (in)</th>
+<th>Hips (in)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>XS</td>
+<td>32-34</td>
+<td>26-28</td>
+<td>32-34</td>
+</tr>
+<tr>
+<td>S</td>
+<td>35-37</td>
+<td>29-31</td>
+<td>35-37</td>
+</tr>
+<tr>
+<td>M</td>
+<td>38-40</td>
+<td>32-34</td>
+<td>38-40</td>
+</tr>
+<tr>
+<td>L</td>
+<td>41-43</td>
+<td>35-37</td>
+<td>41-43</td>
+</tr>
+<tr>
+<td>XL</td>
+<td>44-46</td>
+<td>38-40</td>
+<td>44-46</td>
+</tr>
+<tr>
+<td>XXL</td>
+<td>47-49</td>
+<td>41-43</td>
+<td>47-49</td>
+</tr>
+</tbody>
+</table>
+
+<h3>Women's Clothing</h3>
+<table class="table table-bordered">
+<thead>
+<tr>
+<th>Size</th>
+<th>Bust (in)</th>
+<th>Waist (in)</th>
+<th>Hips (in)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>XS</td>
+<td>31-32</td>
+<td>24-25</td>
+<td>34-35</td>
+</tr>
+<tr>
+<td>S</td>
+<td>33-34</td>
+<td>26-27</td>
+<td>36-37</td>
+</tr>
+<tr>
+<td>M</td>
+<td>35-36</td>
+<td>28-29</td>
+<td>38-39</td>
+</tr>
+<tr>
+<td>L</td>
+<td>37-39</td>
+<td>30-32</td>
+<td>40-42</td>
+</tr>
+<tr>
+<td>XL</td>
+<td>40-42</td>
+<td>33-35</td>
+<td>43-45</td>
+</tr>
+<tr>
+<td>XXL</td>
+<td>43-45</td>
+<td>36-38</td>
+<td>46-48</td>
+</tr>
+</tbody>
+</table>
+
+<h3>Size Conversion</h3>
+<p>International size conversions:</p>
+<ul>
+<li><strong>US to UK</strong>: Add 2 sizes (US 8 = UK 10)</li>
+<li><strong>US to EU</strong>: Add 30 (US 8 = EU 38)</li>
+</ul>
+
+<h3>Between Sizes?</h3>
+<p>If you're between sizes:</p>
+<ul>
+<li>Size up for a looser fit</li>
+<li>Size down for a tighter fit</li>
+<li>Check product-specific fit notes</li>
+</ul>
+
+<p>Still unsure? <a href="/contact-us">Contact us</a> for personalized sizing help!</p>]]></fulltext>
+		<state>1</state>
+		<catid>2</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Complete size guide with measurements and fit recommendations</metadesc>
+	</article>
+
+	<article>
+		<id>15</id>
+		<title>Product Care Instructions</title>
+		<alias>product-care</alias>
+		<introtext><![CDATA[<p>Keep your products looking great with proper care and maintenance.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Product Care Guide</h2>
+
+<h3>Clothing Care</h3>
+
+<h4>Washing</h4>
+<ul>
+<li>Always check the care label first</li>
+<li>Wash similar colors together</li>
+<li>Turn garments inside out to protect prints</li>
+<li>Use cold water to prevent shrinking</li>
+<li>Choose gentle cycle for delicate items</li>
+</ul>
+
+<h4>Drying</h4>
+<ul>
+<li>Air dry when possible to extend garment life</li>
+<li>If using a dryer, use low heat</li>
+<li>Remove promptly to prevent wrinkles</li>
+<li>Never tumble dry wool or silk</li>
+</ul>
+
+<h4>Ironing</h4>
+<ul>
+<li>Check garment label for heat settings</li>
+<li>Iron inside out to protect fabric</li>
+<li>Use steam for stubborn wrinkles</li>
+<li>Store properly to minimize ironing needs</li>
+</ul>
+
+<h3>Fabric-Specific Care</h3>
+
+<h4>Cotton</h4>
+<p>Machine wash cold, tumble dry low. May shrink slightly on first wash.</p>
+
+<h4>Wool</h4>
+<p>Hand wash or dry clean only. Lay flat to dry. Never wring or twist.</p>
+
+<h4>Silk</h4>
+<p>Dry clean or hand wash in cool water. Never use bleach. Air dry away from direct sunlight.</p>
+
+<h4>Synthetic Blends</h4>
+<p>Machine wash cold, low heat dry. Remove promptly to prevent wrinkles.</p>
+
+<h3>Storage Tips</h3>
+<ul>
+<li>Store in a cool, dry place</li>
+<li>Use padded hangers for structured items</li>
+<li>Fold knits to prevent stretching</li>
+<li>Keep away from direct sunlight</li>
+<li>Use moth protection for wool items</li>
+</ul>
+
+<h3>Stain Removal</h3>
+<ul>
+<li>Treat stains immediately for best results</li>
+<li>Blot, don't rub, to prevent spreading</li>
+<li>Test cleaning products on hidden areas first</li>
+<li>For tough stains, consult a professional</li>
+</ul>
+
+<h3>Product-Specific Care</h3>
+<p>Always refer to the care label on your specific product. If you have questions about caring for a particular item, <a href="/contact-us">contact us</a> for guidance.</p>]]></fulltext>
+		<state>1</state>
+		<catid>2</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Care instructions for your products - washing, drying, and storage tips</metadesc>
+	</article>
+</j2xml>

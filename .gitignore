@@ -194,6 +194,7 @@ custom/
 uploads/
 thumbs/
 data/
+!data/demo/
 cache/
 temp/
 tmp/

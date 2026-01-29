@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<j2xml version="26.0.000">
+<version>26.0.000</version>
+<category>
+<id>4</id>
+<title>Community</title>
+<alias>community</alias>
+<description><![CDATA[Sample articles for community websites]]></description>
+<published>1</published>
+<access>1</access>
+<language>*</language>
+<extension>com_content</extension>
+</category>
+
+<article>
+<id>30</id>
+<title>Welcome to Our Community</title>
+<alias>community-home</alias>
+<introtext><![CDATA[<p>Join our vibrant community of members sharing knowledge, experiences, and support.</p>]]></introtext>
+<fulltext><![CDATA[<h2>A Community Built on Connection</h2>
+<p>Welcome! You've just joined a community of passionate individuals who share your interests and goals. Together, we learn, grow, and support each other.</p>
+
+<div class="row">
+<div class="col-md-4">
+<h3><i class="fa-solid fa-comments"></i> Discussions</h3>
+<p>Join conversations on topics that matter to you. Share your expertise and learn from others.</p>
+<p><a href="/forum" class="btn btn-primary">Browse Forums</a></p>
+</div>
+
+<div class="col-md-4">
+<h3><i class="fa-solid fa-calendar-days"></i> Events</h3>
+<p>Participate in community events, meetups, and online gatherings.</p>
+<p><a href="/events" class="btn btn-primary">View Events</a></p>
+</div>
+
+<div class="col-md-4">
+<h3><i class="fa-solid fa-users"></i> Members</h3>
+<p>Connect with fellow members, build your network, and collaborate.</p>
+<p><a href="/members" class="btn btn-primary">Find Members</a></p>
+</div>
+</div>
+
+<h3 class="mt-4">Community Stats</h3>
+<div class="row text-center">
+<div class="col-md-3">
+<h4>5,000+</h4>
+<p>Active Members</p>
+</div>
+<div class="col-md-3">
+<h4>50,000+</h4>
+<p>Forum Posts</p>
+</div>
+<div class="col-md-3">
+<h4>200+</h4>
+<p>Events Hosted</p>
+</div>
+<div class="col-md-3">
+<h4>24/7</h4>
+<p>Community Active</p>
+</div>
+</div>
+
+<h3>Getting Started</h3>
+<ol>
+<li><a href="/profile">Complete your profile</a></li>
+<li><a href="/introduce-yourself">Introduce yourself</a> in the welcome forum</li>
+<li><a href="/community-guidelines">Read the community guidelines</a></li>
+<li><a href="/forum">Start participating in discussions</a></li>
+</ol>]]></fulltext>
+<state>1</state>
+<catid>4</catid>
+<created>2026-01-29 00:00:00</created>
+<created_by>1</created_by>
+<featured>1</featured>
+<language>*</language>
+<access>1</access>
+<metadesc>Welcome to our community - connect, learn, and grow together</metadesc>
+</article>
+
+<article>
+<id>31</id>
+<title>Community Guidelines</title>
+<alias>community-guidelines</alias>
+<introtext><![CDATA[<p>Our community guidelines ensure a respectful, inclusive, and productive environment for all members.</p>]]></introtext>
+<fulltext><![CDATA[<h2>Community Guidelines</h2>
+<p><em>Last updated: January 29, 2026</em></p>
+
+<p>These guidelines help maintain a positive, respectful community where everyone feels welcome to participate.</p>
+
+<h3>1. Be Respectful</h3>
+<ul>
+<li>Treat all members with respect and courtesy</li>
+<li>Disagree with ideas, not people</li>
+<li>No personal attacks, harassment, or bullying</li>
+<li>Respect diverse perspectives and backgrounds</li>
+</ul>
+
+<h3>2. Stay On Topic</h3>
+<ul>
+<li>Post content in appropriate forums/categories</li>
+<li>Keep discussions relevant to the topic</li>
+<li>Avoid excessive off-topic conversation</li>
+<li>Use descriptive titles for new topics</li>
+</ul>
+
+<h3>3. No Spam or Self-Promotion</h3>
+<ul>
+<li>Don't post unsolicited advertisements</li>
+<li>Limit self-promotion to designated areas</li>
+<li>No duplicate posts or cross-posting</li>
+<li>Contribute value, not just links</li>
+</ul>
+
+<h3>4. Protect Privacy</h3>
+<ul>
+<li>Don't share others' personal information</li>
+<li>Respect confidentiality</li>
+<li>Be mindful of what you share publicly</li>
+<li>Report privacy violations to moderators</li>
+</ul>
+
+<h3>5. Use Appropriate Language</h3>
+<ul>
+<li>Keep content family-friendly</li>
+<li>No profanity or offensive language</li>
+<li>Avoid inflammatory or provocative posts</li>
+<li>Write clearly and thoughtfully</li>
+</ul>
+
+<h3>6. Give Credit</h3>
+<ul>
+<li>Cite sources for shared content</li>
+<li>Acknowledge others' contributions</li>
+<li>Respect intellectual property</li>
+<li>Don't plagiarize</li>
+</ul>
+
+<h3>7. Help Others</h3>
+<ul>
+<li>Share knowledge and experience</li>
+<li>Welcome new members</li>
+<li>Provide constructive feedback</li>
+<li>Assume good intentions</li>
+</ul>
+
+<h3>Enforcement</h3>
+<p>Violations may result in:</p>
+<ul>
+<li>Warning from moderators</li>
+<li>Temporary suspension</li>
+<li>Permanent ban for serious or repeat violations</li>
+</ul>
+
+<h3>Reporting Issues</h3>
+<p>If you see content that violates these guidelines:</p>
+<ul>
+<li>Use the "Report" button on the post</li>
+<li>Contact moderators directly</li>
+<li>Email community@example.com</li>
+</ul>
+
+<p class="mt-4">Together, we create a community that benefits everyone. Thank you for helping us maintain a positive environment!</p>]]></fulltext>
+<state>1</state>
+<catid>4</catid>
+<created>2026-01-29 00:00:00</created>
+<created_by>1</created_by>
+<language>*</language>
+<access>1</access>
+<metadesc>Community guidelines - rules and expectations for respectful participation</metadesc>
+</article>
+</j2xml>

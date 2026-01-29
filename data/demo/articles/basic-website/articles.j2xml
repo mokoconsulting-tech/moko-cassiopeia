@@ -1,0 +1,493 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<j2xml version="26.0.000">
+	<version>26.0.000</version>
+	<category>
+		<id>1</id>
+		<title>Basic Website</title>
+		<alias>basic-website</alias>
+		<description><![CDATA[Sample articles for a basic informational website]]></description>
+		<published>1</published>
+		<access>1</access>
+		<language>*</language>
+		<extension>com_content</extension>
+	</category>
+	
+	<article>
+		<id>1</id>
+		<title>Welcome to Our Website</title>
+		<alias>welcome</alias>
+		<introtext><![CDATA[<p>Welcome to our website! We're excited to have you here. Discover what we do and how we can help you achieve your goals.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Who We Are</h2>
+<p>We are a dedicated team of professionals committed to delivering exceptional service and innovative solutions. Our mission is to help businesses and individuals succeed in an ever-changing digital landscape.</p>
+
+<h3>What We Offer</h3>
+<ul>
+<li>Professional consulting services</li>
+<li>Custom development solutions</li>
+<li>24/7 customer support</li>
+<li>Comprehensive training programs</li>
+</ul>
+
+<h3>Why Choose Us</h3>
+<p>With over a decade of experience, we've helped hundreds of clients achieve their objectives. Our commitment to quality, innovation, and customer satisfaction sets us apart.</p>
+
+<p>Explore our site to learn more about our services, meet our team, and discover how we can help you succeed.</p>
+
+<p><a href="/contact-us" class="btn btn-primary">Get in Touch</a></p>]]></fulltext>
+		<state>1</state>
+		<catid>1</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<modified>2026-01-29 00:00:00</modified>
+		<featured>1</featured>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Welcome to our website - Discover our services and solutions</metadesc>
+	</article>
+
+	<article>
+		<id>2</id>
+		<title>About Our Company</title>
+		<alias>about-us</alias>
+		<introtext><![CDATA[<p>Learn about our history, mission, and the values that drive us forward every day.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Our Story</h2>
+<p>Founded in 2014, our company began with a simple mission: to provide high-quality, innovative solutions that make a real difference. What started as a small team of passionate professionals has grown into a thriving organization serving clients worldwide.</p>
+
+<h3>Our Mission</h3>
+<p>We strive to empower businesses and individuals through cutting-edge technology, exceptional service, and unwavering commitment to excellence.</p>
+
+<h3>Our Values</h3>
+<ul>
+<li><strong>Integrity</strong> - We operate with honesty and transparency</li>
+<li><strong>Innovation</strong> - We embrace new ideas and technologies</li>
+<li><strong>Excellence</strong> - We deliver the highest quality in everything we do</li>
+<li><strong>Customer Focus</strong> - Our clients' success is our success</li>
+<li><strong>Collaboration</strong> - We work together to achieve great things</li>
+</ul>
+
+<h3>Our Vision</h3>
+<p>To be the leading provider of innovative solutions that transform how people work and live, creating lasting value for our clients and communities.</p>]]></fulltext>
+		<state>1</state>
+		<catid>1</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Learn about our company history, mission, and values</metadesc>
+	</article>
+
+	<article>
+		<id>3</id>
+		<title>Our Services</title>
+		<alias>our-services</alias>
+		<introtext><![CDATA[<p>Discover the comprehensive range of services we offer to help your business grow and succeed.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>What We Do</h2>
+<p>We provide a full suite of professional services designed to meet your business needs:</p>
+
+<div class="row">
+<div class="col-md-6">
+<h3><i class="fa-solid fa-laptop-code"></i> Web Development</h3>
+<p>Custom websites and web applications built with the latest technologies. From simple brochure sites to complex e-commerce platforms, we deliver solutions that work.</p>
+<ul>
+<li>Responsive design</li>
+<li>E-commerce integration</li>
+<li>Content management systems</li>
+<li>Custom web applications</li>
+</ul>
+</div>
+
+<div class="col-md-6">
+<h3><i class="fa-solid fa-mobile-screen"></i> Mobile Development</h3>
+<p>Native and cross-platform mobile applications for iOS and Android that engage users and drive results.</p>
+<ul>
+<li>iOS app development</li>
+<li>Android app development</li>
+<li>Cross-platform solutions</li>
+<li>App store optimization</li>
+</ul>
+</div>
+</div>
+
+<div class="row mt-4">
+<div class="col-md-6">
+<h3><i class="fa-solid fa-chart-line"></i> Digital Marketing</h3>
+<p>Strategic marketing campaigns that increase visibility, drive traffic, and generate leads.</p>
+<ul>
+<li>SEO optimization</li>
+<li>Social media marketing</li>
+<li>Content marketing</li>
+<li>Email campaigns</li>
+</ul>
+</div>
+
+<div class="col-md-6">
+<h3><i class="fa-solid fa-headset"></i> Support & Maintenance</h3>
+<p>Ongoing support to keep your systems running smoothly and securely.</p>
+<ul>
+<li>24/7 technical support</li>
+<li>Security updates</li>
+<li>Performance monitoring</li>
+<li>Regular backups</li>
+</ul>
+</div>
+</div>
+
+<p class="mt-4"><a href="/contact-us" class="btn btn-primary">Request a Quote</a></p>]]></fulltext>
+		<state>1</state>
+		<catid>1</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Professional web development, mobile apps, and digital marketing services</metadesc>
+	</article>
+
+	<article>
+		<id>4</id>
+		<title>Meet Our Team</title>
+		<alias>our-team</alias>
+		<introtext><![CDATA[<p>Get to know the talented professionals who make it all happen.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Our Team</h2>
+<p>We're proud to have assembled a team of experienced, passionate professionals who are dedicated to your success.</p>
+
+<div class="row">
+<div class="col-md-4">
+<h3>Sarah Johnson</h3>
+<p><strong>Chief Executive Officer</strong></p>
+<p>Sarah has over 15 years of experience in technology leadership. She guides our strategic vision and ensures we deliver exceptional value to our clients.</p>
+</div>
+
+<div class="col-md-4">
+<h3>Michael Chen</h3>
+<p><strong>Chief Technology Officer</strong></p>
+<p>Michael leads our technical team with expertise in software architecture and innovation. He ensures we stay at the forefront of technology trends.</p>
+</div>
+
+<div class="col-md-4">
+<h3>Emily Rodriguez</h3>
+<p><strong>Director of Operations</strong></p>
+<p>Emily manages our day-to-day operations, ensuring projects are delivered on time and exceed expectations.</p>
+</div>
+</div>
+
+<div class="row mt-4">
+<div class="col-md-4">
+<h3>David Park</h3>
+<p><strong>Lead Developer</strong></p>
+<p>David brings 10 years of full-stack development experience, creating robust and scalable solutions.</p>
+</div>
+
+<div class="col-md-4">
+<h3>Lisa Thompson</h3>
+<p><strong>UX/UI Designer</strong></p>
+<p>Lisa creates beautiful, user-friendly interfaces that delight users and drive engagement.</p>
+</div>
+
+<div class="col-md-4">
+<h3>James Wilson</h3>
+<p><strong>Marketing Director</strong></p>
+<p>James develops and executes marketing strategies that increase brand awareness and generate qualified leads.</p>
+</div>
+</div>
+
+<p class="mt-4">Want to join our team? <a href="/careers">View open positions</a></p>]]></fulltext>
+		<state>1</state>
+		<catid>1</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Meet the talented team behind our success</metadesc>
+	</article>
+
+	<article>
+		<id>5</id>
+		<title>Contact Us</title>
+		<alias>contact-us</alias>
+		<introtext><![CDATA[<p>Get in touch with us - we'd love to hear from you!</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Contact Information</h2>
+
+<div class="row">
+<div class="col-md-6">
+<h3>Get in Touch</h3>
+<p>We're here to help! Reach out to us with any questions, comments, or project inquiries.</p>
+
+<p><strong><i class="fa-solid fa-phone"></i> Phone:</strong><br>
++1 (555) 123-4567</p>
+
+<p><strong><i class="fa-solid fa-envelope"></i> Email:</strong><br>
+hello@example.com</p>
+
+<p><strong><i class="fa-solid fa-location-dot"></i> Address:</strong><br>
+123 Business Street<br>
+Suite 100<br>
+City, State 12345</p>
+
+<p><strong><i class="fa-solid fa-clock"></i> Business Hours:</strong><br>
+Monday - Friday: 9:00 AM - 6:00 PM<br>
+Saturday - Sunday: Closed</p>
+</div>
+
+<div class="col-md-6">
+<h3>Send Us a Message</h3>
+<p>Fill out the form below and we'll get back to you within 24 hours.</p>
+<!-- Contact form would be inserted here via Joomla form module -->
+<p><em>Note: Insert your contact form component here</em></p>
+</div>
+</div>
+
+<h3 class="mt-4">Follow Us</h3>
+<p>Stay connected on social media:</p>
+<p>
+<a href="#" class="btn btn-primary me-2"><i class="fa-brands fa-facebook"></i> Facebook</a>
+<a href="#" class="btn btn-info me-2"><i class="fa-brands fa-twitter"></i> Twitter</a>
+<a href="#" class="btn btn-danger me-2"><i class="fa-brands fa-instagram"></i> Instagram</a>
+<a href="#" class="btn btn-primary"><i class="fa-brands fa-linkedin"></i> LinkedIn</a>
+</p>]]></fulltext>
+		<state>1</state>
+		<catid>1</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Contact us - phone, email, and office address information</metadesc>
+	</article>
+
+	<article>
+		<id>6</id>
+		<title>Privacy Policy</title>
+		<alias>privacy-policy</alias>
+		<introtext><![CDATA[<p>Learn how we collect, use, and protect your personal information.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Privacy Policy</h2>
+<p><em>Last updated: January 29, 2026</em></p>
+
+<h3>1. Information We Collect</h3>
+<p>We collect information that you provide directly to us, including:</p>
+<ul>
+<li>Name and contact information</li>
+<li>Email address</li>
+<li>Phone number</li>
+<li>Company information</li>
+<li>Messages and inquiries</li>
+</ul>
+
+<h3>2. How We Use Your Information</h3>
+<p>We use the information we collect to:</p>
+<ul>
+<li>Respond to your inquiries and requests</li>
+<li>Provide customer support</li>
+<li>Send you updates and marketing communications (with your consent)</li>
+<li>Improve our services</li>
+<li>Comply with legal obligations</li>
+</ul>
+
+<h3>3. Information Sharing</h3>
+<p>We do not sell, trade, or rent your personal information to third parties. We may share your information with:</p>
+<ul>
+<li>Service providers who assist in our operations</li>
+<li>Law enforcement when required by law</li>
+<li>Business partners with your explicit consent</li>
+</ul>
+
+<h3>4. Data Security</h3>
+<p>We implement appropriate security measures to protect your personal information from unauthorized access, alteration, disclosure, or destruction.</p>
+
+<h3>5. Your Rights</h3>
+<p>You have the right to:</p>
+<ul>
+<li>Access your personal information</li>
+<li>Correct inaccurate data</li>
+<li>Request deletion of your data</li>
+<li>Opt-out of marketing communications</li>
+<li>Object to processing of your data</li>
+</ul>
+
+<h3>6. Cookies</h3>
+<p>We use cookies to improve your browsing experience. You can control cookie settings through your browser preferences.</p>
+
+<h3>7. Changes to This Policy</h3>
+<p>We may update this privacy policy from time to time. We will notify you of any changes by posting the new policy on this page.</p>
+
+<h3>8. Contact Us</h3>
+<p>If you have questions about this privacy policy, please contact us at privacy@example.com</p>
+
+<p><em>This is a sample privacy policy. Consult with legal counsel to ensure compliance with applicable laws in your jurisdiction.</em></p>]]></fulltext>
+		<state>1</state>
+		<catid>1</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Our privacy policy - how we collect, use, and protect your data</metadesc>
+	</article>
+
+	<article>
+		<id>7</id>
+		<title>Terms of Service</title>
+		<alias>terms-of-service</alias>
+		<introtext><![CDATA[<p>Please read these terms and conditions carefully before using our services.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Terms of Service</h2>
+<p><em>Last updated: January 29, 2026</em></p>
+
+<h3>1. Acceptance of Terms</h3>
+<p>By accessing and using this website, you accept and agree to be bound by the terms and conditions of this agreement.</p>
+
+<h3>2. Use License</h3>
+<p>Permission is granted to temporarily download one copy of the materials on our website for personal, non-commercial transitory viewing only.</p>
+
+<h3>3. Disclaimer</h3>
+<p>The materials on our website are provided on an 'as is' basis. We make no warranties, expressed or implied, and hereby disclaim and negate all other warranties.</p>
+
+<h3>4. Limitations</h3>
+<p>In no event shall we or our suppliers be liable for any damages arising out of the use or inability to use the materials on our website.</p>
+
+<h3>5. Accuracy of Materials</h3>
+<p>The materials appearing on our website could include technical, typographical, or photographic errors. We do not warrant that any of the materials are accurate, complete, or current.</p>
+
+<h3>6. Links</h3>
+<p>We have not reviewed all sites linked to our website and are not responsible for the contents of any such linked site.</p>
+
+<h3>7. Modifications</h3>
+<p>We may revise these terms of service at any time without notice. By using this website, you agree to be bound by the current version of these terms.</p>
+
+<h3>8. Governing Law</h3>
+<p>These terms and conditions are governed by and construed in accordance with applicable laws.</p>
+
+<p><em>This is a sample terms of service. Consult with legal counsel to create terms appropriate for your business and jurisdiction.</em></p>]]></fulltext>
+		<state>1</state>
+		<catid>1</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Terms of service and conditions for using our website</metadesc>
+	</article>
+
+	<article>
+		<id>8</id>
+		<title>Frequently Asked Questions</title>
+		<alias>faq</alias>
+		<introtext><![CDATA[<p>Find answers to the most common questions about our services.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Frequently Asked Questions</h2>
+
+<h3>General Questions</h3>
+
+<h4>What services do you offer?</h4>
+<p>We offer web development, mobile app development, digital marketing, and ongoing support and maintenance services. Visit our <a href="/our-services">Services page</a> for more details.</p>
+
+<h4>How long does a typical project take?</h4>
+<p>Project timelines vary based on scope and complexity. A simple website might take 4-6 weeks, while complex applications can take 3-6 months or longer. We'll provide a detailed timeline during the project planning phase.</p>
+
+<h4>What are your payment terms?</h4>
+<p>We typically require a 50% deposit to begin work, with the balance due upon completion. For larger projects, we can arrange milestone-based payments.</p>
+
+<h3>Technical Questions</h3>
+
+<h4>What technologies do you use?</h4>
+<p>We work with modern, proven technologies including Joomla, WordPress, React, Node.js, PHP, and many others. We select technologies based on your specific project requirements.</p>
+
+<h4>Do you provide hosting services?</h4>
+<p>While we don't provide hosting directly, we can recommend reliable hosting providers and assist with setup and configuration.</p>
+
+<h4>Will my website be mobile-friendly?</h4>
+<p>Absolutely! All our websites are built with responsive design, ensuring they look and function perfectly on all devices.</p>
+
+<h3>Support Questions</h3>
+
+<h4>What kind of support do you provide?</h4>
+<p>We offer various support plans including email support, phone support, and emergency assistance. We can also provide ongoing maintenance and updates.</p>
+
+<h4>How do I get started?</h4>
+<p>Simply <a href="/contact-us">contact us</a> with your project details. We'll schedule a consultation to discuss your needs and provide a proposal.</p>
+
+<h4>Do you offer training?</h4>
+<p>Yes! We provide comprehensive training to ensure you and your team can effectively manage and update your website or application.</p>
+
+<p class="mt-4">Still have questions? <a href="/contact-us">Contact us</a> and we'll be happy to help!</p>]]></fulltext>
+		<state>1</state>
+		<catid>1</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Frequently asked questions about our services and processes</metadesc>
+	</article>
+
+	<article>
+		<id>9</id>
+		<title>Getting Started Guide</title>
+		<alias>getting-started</alias>
+		<introtext><![CDATA[<p>New here? This guide will help you get started with our services.</p>]]></introtext>
+		<fulltext><![CDATA[<h2>Getting Started Guide</h2>
+
+<h3>Step 1: Contact Us</h3>
+<p>The first step is to reach out! You can:</p>
+<ul>
+<li>Fill out our <a href="/contact-us">contact form</a></li>
+<li>Call us at +1 (555) 123-4567</li>
+<li>Email us at hello@example.com</li>
+</ul>
+
+<h3>Step 2: Consultation</h3>
+<p>We'll schedule a free consultation to discuss:</p>
+<ul>
+<li>Your goals and objectives</li>
+<li>Project requirements</li>
+<li>Timeline and budget</li>
+<li>Any questions you have</li>
+</ul>
+
+<h3>Step 3: Proposal</h3>
+<p>After understanding your needs, we'll provide:</p>
+<ul>
+<li>Detailed project scope</li>
+<li>Timeline with milestones</li>
+<li>Transparent pricing</li>
+<li>Terms and conditions</li>
+</ul>
+
+<h3>Step 4: Agreement</h3>
+<p>Once you approve the proposal:</p>
+<ul>
+<li>Sign the service agreement</li>
+<li>Submit initial payment</li>
+<li>Provide necessary access and materials</li>
+</ul>
+
+<h3>Step 5: Development</h3>
+<p>During the development phase:</p>
+<ul>
+<li>Regular progress updates</li>
+<li>Milestone reviews</li>
+<li>Your feedback and approval</li>
+<li>Ongoing communication</li>
+</ul>
+
+<h3>Step 6: Launch</h3>
+<p>When your project is ready:</p>
+<ul>
+<li>Final review and testing</li>
+<li>Training session</li>
+<li>Launch and deployment</li>
+<li>Post-launch support</li>
+</ul>
+
+<h3>Step 7: Ongoing Support</h3>
+<p>After launch, we provide:</p>
+<ul>
+<li>Technical support</li>
+<li>Regular updates</li>
+<li>Performance monitoring</li>
+<li>Continuous improvement</li>
+</ul>
+
+<p class="mt-4">Ready to get started? <a href="/contact-us" class="btn btn-primary">Contact Us Today</a></p>]]></fulltext>
+		<state>1</state>
+		<catid>1</catid>
+		<created>2026-01-29 00:00:00</created>
+		<created_by>1</created_by>
+		<language>*</language>
+		<access>1</access>
+		<metadesc>Step-by-step guide to getting started with our services</metadesc>
+	</article>
+</j2xml>
