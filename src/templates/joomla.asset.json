@@ -47,6 +47,12 @@
 			"attributes": {"media": "all"}
 		},
 		{
+			"name": "template.font.osaka",
+			"type": "style",
+			"uri": "media/templates/site/mokocassiopeia/css/fonts/osaka.css",
+			"attributes": {"media": "all"}
+		},
+		{
 			"name": "template.editor",
 			"type": "style",
 			"uri": "media/templates/site/mokocassiopeia/css/editor.css",

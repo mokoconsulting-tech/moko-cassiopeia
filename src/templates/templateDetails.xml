@@ -202,7 +202,7 @@
 
 				<!-- Typography -->
 				<field name="theme_sep_typo" type="spacer" label="Typography" hr="false" class="text fw-bold" />
-				<field name="useFontScheme" type="groupedlist" label="TPL_MOKOCASSIOPEIA_FONT_LABEL" default="0">
+				<field name="useFontScheme" type="groupedlist" label="TPL_MOKOCASSIOPEIA_FONT_LABEL" default="media/templates/site/mokocassiopeia/css/colors/fonts-local_roboto.css">
 					<option value="0">JNONE</option>
 					<group label="TPL_MOKOCASSIOPEIA_FONT_GROUP_LOCAL">
 						<option value="media/templates/site/mokocassiopeia/css/colors/fonts-local_roboto.css">Roboto (local)</option>

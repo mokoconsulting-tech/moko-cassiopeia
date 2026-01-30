@@ -89,6 +89,9 @@ try {
 // Scripts
 $wa->useScript('template.js');
 
+// Load Osaka font for site title
+$wa->useStyle('template.font.osaka');
+
 // Smart Bootstrap component loading - only load what's needed
 if ($this->countModules('drawer-left', true) || $this->countModules('drawer-right', true)) {
 	// Load Bootstrap Offcanvas component for drawers

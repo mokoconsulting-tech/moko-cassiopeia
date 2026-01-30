@@ -100,6 +100,9 @@ try {
 // Scripts
 $wa->useScript('template.js');
 
+// Load Osaka font for site title
+$wa->useStyle('template.font.osaka');
+
 /**
  * VirtueMart detection:
  * - Component must exist and be enabled

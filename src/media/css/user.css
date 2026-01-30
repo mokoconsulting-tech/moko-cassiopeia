@@ -20,6 +20,7 @@
 /* Site title styling - match nav background color */
 .site-title {
 	color: var(--nav-bg-color);
+	font-family: 'Osaka', sans-serif;
 	font-weight: 600;
 	font-size: 1.5rem;
 	text-decoration: none;

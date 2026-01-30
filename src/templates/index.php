@@ -121,6 +121,9 @@ try {
 // Scripts
 $wa->useScript('template.js');
 
+// Load Osaka font for site title
+$wa->useStyle('template.font.osaka');
+
 // Load GTM script if GTM is enabled
 if (!empty($params_googletagmanager) && !empty($params_googletagmanagerid)) {
 	$wa->useScript('gtm.js');
