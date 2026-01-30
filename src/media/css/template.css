@@ -14609,7 +14609,7 @@ li.current a {
 }
 
 .icon-white {
-	color: var(--body-color);
+	color: var(--body-bg);
 }
 
 .input-group-text::before {
