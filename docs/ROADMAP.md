@@ -7,15 +7,15 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia.Documentation
+ INGROUP: MokoCassiopeia.Documentation
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: docs/ROADMAP.md
- VERSION: 03.06.00
- BRIEF: Version-specific roadmap for Moko-Cassiopeia template
+ VERSION: 03.06.02
+ BRIEF: Version-specific roadmap for MokoCassiopeia template
  PATH: /docs/ROADMAP.md
 -->
 
-# Moko-Cassiopeia Roadmap (VERSION: 03.06.00)
+# MokoCassiopeia Roadmap (VERSION: 03.06.02)
 
 This document provides a comprehensive, version-specific roadmap for the Moko-Cassiopeia Joomla template, tracking feature evolution, current capabilities, and planned enhancements.
 

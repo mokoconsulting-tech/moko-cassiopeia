@@ -7,10 +7,10 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia
+ INGROUP: MokoCassiopeia
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./templates/moko-cassiopeia/index.php
- VERSION: 03.06.00
+ VERSION: 03.06.02
  BRIEF: Main template index file for Moko-Cassiopeia rendering site layout
  */
 

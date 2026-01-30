@@ -7,18 +7,18 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template
- INGROUP: Moko-Cassiopeia.Governance
+ INGROUP: MokoCassiopeia.Governance
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: CONTRIBUTING.md
- VERSION: 03.06.00
- BRIEF: Contribution guidelines for the Moko-Cassiopeia project.
+ VERSION: 03.06.02
+ BRIEF: Contribution guidelines for the MokoCassiopeia project.
  PATH: /CONTRIBUTING.md
  NOTE: This document defines contribution workflow, standards, and governance alignment.
 -->
 
 ## Contributing
 
-This document defines how to contribute to the Moko-Cassiopeia project. The goal is to ensure changes are reviewable, auditable, and aligned with project governance and release processes.
+This document defines how to contribute to the MokoCassiopeia project. The goal is to ensure changes are reviewable, auditable, and aligned with project governance and release processes.
 
 ## Scope
 

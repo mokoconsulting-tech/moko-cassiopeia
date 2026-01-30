@@ -7,17 +7,17 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia.Documentation
+ INGROUP: MokoCassiopeia.Documentation
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  FILE: docs/README.md
- VERSION: 03.06.00
- BRIEF: Documentation index for Moko-Cassiopeia template
+ VERSION: 03.06.02
+ BRIEF: Documentation index for MokoCassiopeia template
  PATH: /docs/README.md
 -->
 
-# Moko-Cassiopeia Documentation
+# MokoCassiopeia Documentation
 
-This directory contains comprehensive documentation for the Moko-Cassiopeia Joomla template.
+This directory contains comprehensive documentation for the MokoCassiopeia Joomla template.
 
 ## Documentation Overview
 

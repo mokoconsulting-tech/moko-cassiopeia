@@ -6,18 +6,18 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia.Documentation
- REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
+ INGROUP: MokoCassiopeia.Documentation
+ REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
  FILE: ./README.md
- VERSION: 03.06.00
- BRIEF: Documentation for Moko-Cassiopeia template
+ VERSION: 03.06.02
+ BRIEF: Documentation for MokoCassiopeia template
  -->
 
-# Moko-Cassiopeia (VERSION: 03.06.00)
+# MokoCassiopeia (VERSION: 03.06.02)
 
 A modern, lightweight enhancement layer for Joomla's Cassiopeia
 template.
-Moko-Cassiopeia adds **Font Awesome 7**, **Bootstrap 5** helpers, an
+MokoCassiopeia adds **Font Awesome 7**, **Bootstrap 5** helpers, an
 automatic **Table of Contents (TOC)** utility, and optional **Moko
 Expansions** including **Google Tag Manager** and **Google Analytics
 (GA4)** hooks---all while keeping core template overrides minimal and
@@ -77,10 +77,10 @@ upgrade-friendly.
 
 ## Quick Start
 
-1.  Install `moko-cassiopeia.zip` via Joomla's Template Installer.
-2.  Set **Moko-Cassiopeia** as your default template.
+1.  Install `mokocassiopeia.zip` via Joomla's Template Installer.
+2.  Set **MokoCassiopeia** as your default template.
 3.  Configure template options under **System → Site Templates →
-	Moko-Cassiopeia**.
+	MokoCassiopeia**.
 
 ## Installation
 
@@ -98,7 +98,7 @@ If upgrading from a prior version, Joomla will safely overwrite files
 
 ### Custom Color Palettes
 
-Moko-Cassiopeia supports custom color schemes for both light and dark modes:
+MokoCassiopeia supports custom color schemes for both light and dark modes:
 
 -   **Standard**: Default Joomla Cassiopeia colors
 -   **Alternative**: Alternative color palette
@@ -139,7 +139,7 @@ To use custom colors:
 
 ## Development
 
-For developers and contributors working on the moko-cassiopeia template:
+For developers and contributors working on the MokoCassiopeia template:
 
 ### Quick Start for Developers
 
@@ -164,7 +164,7 @@ See the [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
 ## Metadata
 
 * Maintainer: Moko Consulting Engineering
-* Repository: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
+* Repository: [https://github.com/mokoconsulting-tech/MokoCassiopeia](https://github.com/mokoconsulting-tech/MokoCassiopeia)
 * File: README.md
 * Version: 3.0
 * Classification: Public Open Source Standards

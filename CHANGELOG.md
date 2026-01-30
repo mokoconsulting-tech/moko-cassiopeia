@@ -6,13 +6,19 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia.Documentation
+ INGROUP: MokoCassiopeia.Documentation
  PATH: ./CHANGELOG.md
- VERSION: 03.06.00
- BRIEF: Changelog file documenting version history of Moko-Cassiopeia
+ VERSION: 03.06.02
+ BRIEF: Changelog file documenting version history of MokoCassiopeia
  -->
 
-# Changelog — Moko-Cassiopeia (VERSION: 03.06.00)
+# Changelog — MokoCassiopeia (VERSION: 03.06.02)
+
+## [03.06.02] 2026-01-30
+### Changed
+- Changed name from Moko-Cassiopeia to MokoCassiopeia across all files and folders
+- Updated version to 03.06.02
+- Updated all documentation to use MokoCassiopeia
 
 ## [03.06.00] 2026-01-28
 ### Changed
@@ -94,4 +100,4 @@
 	* Moko Expansions: Google Tag Manager / GA4 hooks
 
 For the full development roadmap, visit:
-[Moko-Cassiopeia Roadmap](https://mokoconsulting.tech/support/joomla-cms/moko-cassiopeia-roadmap)
+[Moko-Cassiopeia Roadmap](https://mokoconsulting.tech/support/joomla-cms/mokocassiopeia-roadmap)

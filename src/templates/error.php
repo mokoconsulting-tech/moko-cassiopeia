@@ -7,10 +7,10 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia
+ INGROUP: MokoCassiopeia
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./templates/moko-cassiopeia/error.php
- VERSION: 03.06.00
+ VERSION: 03.06.02
  BRIEF: Error page template file for Moko-Cassiopeia
  */
 

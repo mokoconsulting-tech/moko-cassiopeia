@@ -3,7 +3,7 @@
 
 /**
  * @package     Joomla.Site
- * @subpackage  Templates.Moko-Cassiopeia
+ * @subpackage  Templates.MokoCassiopeia
  *
   * @copyright   (C) 2020 Open Source Matters, Inc. <https://www.joomla.org>
  * @copyright   (C) 2025 Jonathan Miler || Moko Consulting <https://mokoconsulting.tech>

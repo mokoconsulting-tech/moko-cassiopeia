@@ -1,6 +1,6 @@
-# Quick Start Guide - Moko Cassiopeia Development
+# Quick Start Guide - MokoCassiopeia Development
 
-Get up and running with Moko Cassiopeia development in minutes.
+Get up and running with MokoCassiopeia development in minutes.
 
 ## Prerequisites
 

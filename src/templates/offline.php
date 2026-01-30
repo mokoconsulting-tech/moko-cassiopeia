@@ -7,11 +7,11 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia
+ INGROUP: MokoCassiopeia
  REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
  PATH: ./templates/moko-cassiopeia/offline.php
- VERSION: 03.06.00
- BRIEF: Offline page template file for Moko-Cassiopeia
+ VERSION: 03.06.02
+ BRIEF: Offline page template file for MokoCassiopeia
  */
 
 declare(strict_types=1);
