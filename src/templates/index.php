@@ -510,7 +510,7 @@ $wa->useStyle('template.user');   // css/user.css
 </footer>
 
 <?php if ($this->params->get('backTop') == 1) : ?>
-	<a href="#top" id="back-top" class="back-to-top-link" aria-label="<?php echo Text::_('TPL_MOKO-CASSIOPEIA_BACKTOTOP'); ?>">
+	<a href="#top" id="back-top" class="back-to-top-link" aria-label="<?php echo Text::_('TPL_MOKOCASSIOPEIA_BACKTOTOP'); ?>">
 		<span class="icon-arrow-up icon-fw" aria-hidden="true"></span>
 	</a>
 <?php endif; ?>
