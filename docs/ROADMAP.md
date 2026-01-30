@@ -24,7 +24,7 @@ This document provides a comprehensive, version-specific roadmap for the MokoCas
 - [Version Timeline](#version-timeline)
   - [Past Releases](#past-releases)
   - [Future Roadmap (5-Year Plan)](#future-roadmap-5-year-plan)
-- [Current Release (v03.06.00)](#current-release-v030600)
+- [Current Release (v03.06.02)](#current-release-v030600)
 - [Implemented Features](#implemented-features)
 - [Planned Features](#planned-features)
 - [Development Priorities](#development-priorities)
@@ -437,7 +437,7 @@ The following versions represent our planned annual major releases, each buildin
 
 ---
 
-## Current Release (v03.06.00)
+## Current Release (v03.06.02)
 
 ### System Requirements
 - **Joomla**: 4.4.x or 5.x
@@ -841,7 +841,7 @@ Have ideas for future features? We welcome community input!
 * Repository: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
 * Path: /docs/ROADMAP.md
 * Owner: Moko Consulting
-* Version: 03.06.00
+* Version: 03.06.02
 * Status: Active
 * Last Updated: 2026-01-27
 * Classification: Public Open Source Documentation

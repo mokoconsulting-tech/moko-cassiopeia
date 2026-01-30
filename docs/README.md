@@ -105,7 +105,7 @@ This project adheres to [MokoStandards](https://github.com/mokoconsulting-tech/M
 * Repository: [https://github.com/mokoconsulting-tech/MokoCassiopeia](https://github.com/mokoconsulting-tech/MokoCassiopeia)
 * Path: /docs/README.md
 * Owner: Moko Consulting
-* Version: 03.06.00
+* Version: 03.06.02
 * Status: Active
 * Effective Date: 2026-01-09
 
