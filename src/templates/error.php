@@ -41,22 +41,6 @@ $params_custom_head_start  = $params->get('custom_head_start', '');
 $params_custom_head_end    = $params->get('custom_head_end', '');
 $params_developmentmode = $params->get('developmentmode', false);
 
-// Bootstrap behaviors (assets handled via WAM)
-HTMLHelper::_('bootstrap.framework');
-HTMLHelper::_('bootstrap.loadCss', true);
-HTMLHelper::_('bootstrap.alert');
-HTMLHelper::_('bootstrap.button');
-HTMLHelper::_('bootstrap.carousel');
-HTMLHelper::_('bootstrap.collapse');
-HTMLHelper::_('bootstrap.dropdown');
-HTMLHelper::_('bootstrap.modal');
-HTMLHelper::_('bootstrap.offcanvas');
-HTMLHelper::_('bootstrap.popover');
-HTMLHelper::_('bootstrap.scrollspy');
-HTMLHelper::_('bootstrap.tab');
-HTMLHelper::_('bootstrap.tooltip');
-HTMLHelper::_('bootstrap.toast');
-
 // ------------------ Params ------------------
 $stickyHeader    = (bool)   $params->get('stickyHeader', 0);
 
@@ -73,9 +57,6 @@ $templatePath = 'media/templates/site/mokocassiopeia';
 
 // Core template CSS
 $wa->useStyle('template.base');   // css/template.css
-
-// Optional vendor CSS
-$wa->useStyle('vendor.bootstrap-toc');
 
 // Color theme (light + optional dark)
 $colorLightKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_LightColorName));
@@ -107,7 +88,6 @@ try {
 $wa->useScript('template.js');
 $wa->useScript('theme-init.js');
 $wa->useScript('darkmode-toggle.js');
-$wa->useScript('vendor.bootstrap-toc.js');
 
 // Meta
 $this->setMetaData('viewport', 'width=device-width, initial-scale=1');

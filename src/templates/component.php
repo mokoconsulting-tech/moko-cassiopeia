@@ -45,21 +45,6 @@ $params_custom_head_start  = $this->params->get('custom_head_start', null);
 $params_custom_head_end    = $this->params->get('custom_head_end', null);
 $params_developmentmode = $this->params->get('developmentmode', false);
 
-// Bootstrap behaviors (assets handled via WAM)
-HTMLHelper::_('bootstrap.framework');
-HTMLHelper::_('bootstrap.alert');
-HTMLHelper::_('bootstrap.button');
-HTMLHelper::_('bootstrap.carousel');
-HTMLHelper::_('bootstrap.collapse');
-HTMLHelper::_('bootstrap.dropdown');
-HTMLHelper::_('bootstrap.modal');
-HTMLHelper::_('bootstrap.offcanvas');
-HTMLHelper::_('bootstrap.popover');
-HTMLHelper::_('bootstrap.scrollspy');
-HTMLHelper::_('bootstrap.tab');
-HTMLHelper::_('bootstrap.tooltip');
-HTMLHelper::_('bootstrap.toast');
-
 // Detecting Active Variables
 $option    = $input->getCmd('option', '');
 $view      = $input->getCmd('view', '');
@@ -85,13 +70,6 @@ $templatePath = 'media/templates/site/mokocassiopeia';
 
 // Core template CSS
 $wa->useStyle('template.base');   // css/template.css
-
-// Optional vendor CSS
-$wa->useStyle('vendor.bootstrap-toc');
-
-// Optional demo/showcase CSS (available for use, not loaded by default)
-// To use: Create the CSS file and register it in joomla.asset.json, then add to your article/module
-// Example: $wa->useStyle('template.social-media-demo');
 
 // Color theme (light + optional dark)
 $colorLightKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_LightColorName));
@@ -122,7 +100,6 @@ try {
 // Scripts
 $wa->useScript('template.js');
 $wa->useScript('theme-init.js');
-$wa->useScript('vendor.bootstrap-toc.js');
 
 /**
  * VirtueMart detection:

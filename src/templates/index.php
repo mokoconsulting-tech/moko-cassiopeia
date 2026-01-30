@@ -61,22 +61,7 @@ $params_developmentmode = $this->params->get('developmentmode', false);
 $params_theme_enabled      = $this->params->get('theme_enabled', 1);
 $params_theme_fab_enabled  = $this->params->get('theme_fab_enabled', 1);
 $params_theme_fab_pos      = $this->params->get('theme_fab_pos', 'br');
-/*
-// Bootstrap behaviors (assets handled via WAM)
-HTMLHelper::_('bootstrap.framework');
-HTMLHelper::_('bootstrap.alert');
-HTMLHelper::_('bootstrap.button');
-HTMLHelper::_('bootstrap.carousel');
-HTMLHelper::_('bootstrap.collapse');
-HTMLHelper::_('bootstrap.dropdown');
-HTMLHelper::_('bootstrap.modal');
-HTMLHelper::_('bootstrap.offcanvas');
-HTMLHelper::_('bootstrap.popover');
-HTMLHelper::_('bootstrap.scrollspy');
-HTMLHelper::_('bootstrap.tab');
-HTMLHelper::_('bootstrap.tooltip');
-HTMLHelper::_('bootstrap.toast');
-*/
+
 // Detecting Active Variables
 $option    = $input->getCmd('option', '');
 $view      = $input->getCmd('view', '');

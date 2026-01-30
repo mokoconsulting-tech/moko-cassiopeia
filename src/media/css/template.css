@@ -14012,10 +14012,6 @@ meter {
 	border-bottom-left-radius: 0;
 }
 
-.article-index .toclink.active {
-	color: currentColor;
-}
-
 .j-main-container .alert {
 	margin: 0.75rem;
 }
@@ -16784,102 +16780,6 @@ body:not(.has-sidebar-right) .site-grid .container-component {
 form .form-control,
 form .form-select {
 	border-color: #C7C7C7
-}
-
-/* --- TOC right-rail container (non-invasive) --- */
-.container-toc-right {
-	float: right;
-	width: 280px;
-	margin: 0 0 1.25rem 1.25rem;
-	/* gap from main content */
-	position: relative;
-	z-index: 1;
-	color: var(--container-toc-color);
-}
-
-/* Make the inner nav sticky without touching bootstrap-toc styles */
-.container-toc-right>nav[id='toc'] {
-	position: sticky;
-	top: 6rem;
-	/* adjust to sit below your header/nav */
-	max-height: calc(100vh - 7rem);
-	overflow: auto;
-	background: var(--container-toc-bg);
-	border: 1px solid rgba(0, 0, 0, .08);
-	border-radius: .75rem;
-	padding: 1rem;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, .06);
-}
-
-/* Optional: title spacing if you render a heading inside #toc */
-.container-toc-right>nav[id='toc']>.toc-title {
-	margin: 0 0 .5rem 0;
-	font-weight: 600;
-	border-bottom: 1px solid rgba(0, 0, 0, .06);
-	padding-bottom: .5rem;
-}
-
-/* Responsive: stack on smaller screens */
-@media (max-width: 991.98px) {
-	.container-toc-right {
-		float: none;
-		width: 100%;
-		margin: 1rem 0;
-	}
-
-	.container-toc-right>nav[id='toc'] {
-		position: relative;
-		top: auto;
-		max-height: 300px;
-	}
-}
-
-/* --- TOC left-rail container (non-invasive) --- */
-.container-toc-left {
-	float: left;
-	width: 280px;
-	margin: 0 1.25rem 1.25rem 0;
-	/* space on right side for main content */
-	position: relative;
-	z-index: 1;
-	color: var(--container-toc-color);
-}
-
-/* Make the inner nav sticky without altering bootstrap-toc core styles */
-.container-toc-left>nav[id='toc'] {
-	position: sticky;
-	top: 6rem;
-	/* adjust if your site header height differs */
-	max-height: calc(100vh - 7rem);
-	overflow: auto;
-	background: var(--bs-body-bg, #fff);
-	border: 1px solid rgba(0, 0, 0, .08);
-	border-radius: .75rem;
-	padding: 1rem;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, .06);
-}
-
-/* Optional: TOC title styling */
-.container-toc-left>nav[id='toc']>.toc-title {
-	margin: 0 0 .5rem 0;
-	font-weight: 600;
-	border-bottom: 1px solid rgba(0, 0, 0, .06);
-	padding-bottom: .5rem;
-}
-
-/* Responsive: stack under content on smaller screens */
-@media (max-width: 991.98px) {
-	.container-toc-left {
-		float: none;
-		width: 100%;
-		margin: 1rem 0;
-	}
-
-	.container-toc-left>nav[id='toc'] {
-		position: relative;
-		top: auto;
-		max-height: 300px;
-	}
 }
 
 .container-below-topbar {
