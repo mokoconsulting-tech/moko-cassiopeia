@@ -10,7 +10,7 @@
  INGROUP: MokoCassiopeia.Documentation
  REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
  FILE: docs/README.md
- VERSION: 03.06.02
+ VERSION: 03.06.03
  BRIEF: Documentation index for MokoCassiopeia template
  PATH: /docs/README.md
 -->
@@ -40,8 +40,14 @@ This directory contains comprehensive documentation for the MokoCassiopeia Jooml
   * Joomla extension packaging
   * Multi-version testing
 
+* **[CSS Variables Reference](CSS_VARIABLES.md)** - Complete CSS customization guide
+  * All available CSS variables
+  * Custom color palette creation
+  * Usage examples and tips
+  * Light and dark mode theming
+
 * **[Roadmap](ROADMAP.md)** - Version-specific roadmap
-  * Current features (v03.06.00)
+  * Current features (v03.06.03)
   * Feature evolution timeline
   * Planned enhancements
   * Development priorities
@@ -59,10 +65,14 @@ moko-cassiopeia/
 │   ├── QUICK_START.md      # Quick start guide for developers
 │   ├── WORKFLOW_GUIDE.md   # Development workflow guide
 │   ├── JOOMLA_DEVELOPMENT.md # Joomla-specific development guide
+│   ├── CSS_VARIABLES.md    # CSS variables reference
 │   └── ROADMAP.md          # Version-specific roadmap
 ├── src/                     # Template source code
 │   ├── templates/          # Joomla template files
 │   └── media/              # Assets (CSS, JS, images)
+├── templates/               # Template files for customization
+│   ├── colors_custom_light.css # Light mode color template
+│   └── colors_custom_dark.css  # Dark mode color template
 ├── tests/                   # Automated tests
 └── .github/                # GitHub configuration and workflows
 ```
@@ -105,13 +115,15 @@ This project adheres to [MokoStandards](https://github.com/mokoconsulting-tech/M
 * Repository: [https://github.com/mokoconsulting-tech/MokoCassiopeia](https://github.com/mokoconsulting-tech/MokoCassiopeia)
 * Path: /docs/README.md
 * Owner: Moko Consulting
-* Version: 03.06.02
+* Version: 03.06.03
 * Status: Active
-* Effective Date: 2026-01-09
+* Effective Date: 2026-01-30
+* Classification: Public Open Source Documentation
 
 ## Revision History
 
 | Date       | Change Summary                                        | Author          |
 | ---------- | ----------------------------------------------------- | --------------- |
+| 2026-01-30 | Added CSS Variables reference, updated version to 03.06.03 | GitHub Copilot |
 | 2026-01-09 | Initial documentation index created for MokoStandards compliance. | GitHub Copilot |
 | 2026-01-27 | Updated with roadmap link and version to 03.05.01.   | GitHub Copilot  |

@@ -9,13 +9,12 @@
  INGROUP: MokoCassiopeia.Documentation
  REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
  FILE: ./README.md
- VERSION: 03.06.02
+ VERSION: 03.06.03
  BRIEF: Documentation for MokoCassiopeia template
  -->
 
-# MokoCassiopeia
+# README - MokoCassiopeia (VERSION: 03.06.03)
 
-**Version:** 03.06.02  
 **A Modern, Lightweight Joomla Template Based on Cassiopeia**
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -206,22 +205,28 @@ Access template configuration via **System → Site Templates → MokoCassiopeia
 
 MokoCassiopeia supports custom color schemes:
 
-1. Create `src/media/css/colors/light/colors_custom.css` for light mode
-2. Create `src/media/css/colors/dark/colors_custom.css` for dark mode
-3. Define CSS variables (reference `colors_standard.css` for structure)
-4. Select "Custom" palette in template settings
+1. **Copy template files** from `/templates/` directory:
+   - `colors_custom_light.css` → `media/templates/site/mokocassiopeia/css/colors/light/colors_custom.css`
+   - `colors_custom_dark.css` → `media/templates/site/mokocassiopeia/css/colors/dark/colors_custom.css`
+2. **Customize** the CSS variables to match your brand colors
+3. **Enable in Joomla**: System → Site Templates → MokoCassiopeia → Theme tab → Set palette to "Custom"
+4. **Save** and view your site with custom colors
 
-**Example CSS Variables:**
+**Note:** Custom color files are excluded from version control (`.gitignore`) to prevent fork-specific customizations from being committed.
+
+**Quick Example:**
 
 ```css
-:root {
-  --cassiopeia-color-primary: #1e40af;
-  --cassiopeia-color-link: #2563eb;
-  --cassiopeia-color-hover: #1d4ed8;
-  --cassiopeia-color-text: #1f2937;
-  --cassiopeia-color-bg: #ffffff;
+:root[data-bs-theme="light"] {
+  --color-primary: #1e40af;
+  --color-link: #2563eb;
+  --color-hover: #1d4ed8;
+  --body-color: #1f2937;
+  --body-bg: #ffffff;
 }
 ```
+
+**Complete Reference:** See [CSS Variables Documentation](./docs/CSS_VARIABLES.md) for all available variables and detailed usage examples.
 
 ### Table of Contents
 
@@ -318,7 +323,14 @@ See [Joomla Development Guide](./docs/JOOMLA_DEVELOPMENT.md) for packaging instr
 - **[Quick Start](./docs/QUICK_START.md)** - 5-minute developer setup
 - **[Development Guide](./docs/JOOMLA_DEVELOPMENT.md)** - Comprehensive development guide
 - **[Workflow Guide](./docs/WORKFLOW_GUIDE.md)** - Git workflow and processes
+- **[CSS Variables Reference](./docs/CSS_VARIABLES.md)** - Complete CSS customization guide
 - **[Documentation Index](./docs/README.md)** - All documentation links
+
+### Customization Resources
+
+- **[Template Files](./templates/)** - Ready-to-use color palette templates
+  - `colors_custom_light.css` - Light mode template
+  - `colors_custom_dark.css` - Dark mode template
 
 ### Governance
 
@@ -335,6 +347,7 @@ See the [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
 
 ### Recent Releases
 
+- **[03.06.03]** (2026-01-30) - README updates and TOC color variable improvements
 - **[03.06.02]** (2026-01-30) - Complete rebrand to MokoCassiopeia, removed all overrides
 - **[03.06.00]** (2026-01-28) - Version standardization
 - **[03.05.01]** (2026-01-09) - Security and compliance improvements
@@ -479,6 +492,7 @@ All third-party libraries and assets remain the property of their respective aut
 
 | Date       | Version  | Change Summary                                                            | Author                          |
 | ---------- | -------- | ------------------------------------------------------------------------- | ------------------------------- |
+| 2026-01-30 | 03.06.03 | Updated README title, fixed custom color variables instructions, improved TOC color scheme integration | Copilot Agent                   |
 | 2026-01-30 | 03.06.02 | Regenerated README with comprehensive documentation and updated structure | Copilot Agent                   |
 | 2026-01-30 | 03.06.02 | Complete rebrand to MokoCassiopeia, removed overrides                     | Copilot Agent                   |
 | 2026-01-05 | 03.00.00 | Initial publication of template documentation and feature overview        | Moko Consulting                 |

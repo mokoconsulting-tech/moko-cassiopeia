@@ -440,6 +440,20 @@ phpcs --standard=phpcs.xml --report=source src/
 
 ---
 
-**Document Version:** 1.0.0  
-**Last Updated:** 2025-01-04  
-**Maintained by:** Moko Consulting Engineering
+## Metadata
+
+* Document: docs/WORKFLOW_GUIDE.md
+* Repository: [https://github.com/mokoconsulting-tech/MokoCassiopeia](https://github.com/mokoconsulting-tech/MokoCassiopeia)
+* Path: /docs/WORKFLOW_GUIDE.md
+* Owner: Moko Consulting
+* Version: 03.06.03
+* Status: Active
+* Effective Date: 2026-01-30
+* Classification: Public Open Source Documentation
+
+## Revision History
+
+| Date       | Change Summary                                        | Author          |
+| ---------- | ----------------------------------------------------- | --------------- |
+| 2026-01-30 | Updated metadata to MokoStandards format             | GitHub Copilot  |
+| 2025-01-04 | Initial workflow guide created                       | GitHub Copilot  |
