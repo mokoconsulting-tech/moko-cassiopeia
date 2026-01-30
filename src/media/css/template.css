@@ -14179,7 +14179,6 @@ meter {
 
 .form-control {
 	max-width: 100%;
-	background-color: var(--body-color);
 }
 
 .form-control.input-xlarge {
@@ -14369,7 +14368,6 @@ fieldset>* {
 
 .container-header nav {
 	padding: 0;
-	margin-top: 0.25em;
 }
 
 .container-header .site-description {
@@ -14408,7 +14406,6 @@ fieldset>* {
 	-webkit-box-pack: justify;
 	-ms-flex-pack: justify;
 	justify-content: space-between;
-	padding-bottom: 0.3em;
 	background-color: var(--nav-bg-color);
 	border-width: var(--border-width);
 	border-top: solid var(--accent-color-primary);
@@ -14589,6 +14586,7 @@ li.current a {
 
 .container-header .mod-finder {
 	color: var(--body-color);
+	margin-block-end: 0;
 }
 
 .container-header .mod-finder a {
