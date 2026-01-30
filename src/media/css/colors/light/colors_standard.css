@@ -294,8 +294,8 @@
 }
 
 .btn-secondary {
-	--btn-color: --nav-text-color;
-	--btn-bg: --nav-bg-color;
+	--btn-color: var(--body-bg);
+	--btn-bg: var(--nav-bg-color);
 	--btn-border-color: hsl(210, 7%, 46%);
 	--btn-hover-color: hsl(0, 0%, 100%);
 	--btn-hover-bg: #5d636b;

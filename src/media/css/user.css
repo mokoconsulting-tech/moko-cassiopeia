@@ -104,6 +104,7 @@
 
 .container-search .icon-search {
 	font-size: 1rem;
+	color: var(--nav-bg-color);
 }
 
 /* Responsive header menu and search layout improvements */

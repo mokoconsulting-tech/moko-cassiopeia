@@ -16777,7 +16777,7 @@ body:not(.has-sidebar-right) .site-grid .container-component {
 
 form .form-control,
 form .form-select {
-	border-color: #C7C7C7
+	border-color: var(--input-border-color);
 }
 
 .container-below-topbar {
