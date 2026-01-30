@@ -21,15 +21,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [03.06.03] - 2026-01-30
 
+### Added
+- **Templates Directory**: Created `/templates/` directory with ready-to-use color palette templates
+  - `colors_custom_light.css` - Comprehensive light mode color template with all available variables
+  - `colors_custom_dark.css` - Comprehensive dark mode color template with all available variables
+- **CSS Variables Documentation**: Added complete CSS variables reference guide (`docs/CSS_VARIABLES.md`)
+  - Complete list of all customizable CSS variables
+  - Organized by category (colors, typography, borders, etc.)
+  - Usage examples and tips for customization
+  - Light and dark mode variable differences documented
+
 ### Changed
 - **README**: Updated title to "README - MokoCassiopeia (VERSION: 03.06.03)"
 - **README**: Fixed custom color variables instructions with correct file paths
 - **README**: Updated example CSS variables to use actual template variable names (e.g., `--color-link` instead of `--cassiopeia-color-link`)
 - **README**: Added note that custom color files are excluded from version control via `.gitignore`
+- **README**: Enhanced Custom Color Palettes section with step-by-step instructions
+- **README**: Added link to CSS Variables documentation for complete reference
 - **TOC CSS**: Updated bootstrap-toc.css to use template color variables for proper theme integration
 - **Version**: Updated version to 03.06.03 across all files
 
 ### Documentation
+- **docs/README.md**: Added CSS Variables Reference to developer documentation section
+- **docs/README.md**: Updated project structure to include `/templates/` directory
+- **docs/README.md**: Updated version to 03.06.03
 - Clarified that `colors_custom.css` files are gitignored to prevent fork-specific customizations from being committed
 
 ## [03.06.02] - 2026-01-30

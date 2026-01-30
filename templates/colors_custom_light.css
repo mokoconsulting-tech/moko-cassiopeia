@@ -1,0 +1,227 @@
+@charset "UTF-8";
+/* Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+
+ This file is part of a Moko Consulting project.
+
+ SPDX-License-Identifier: GPL-3.0-or-later
+
+ # FILE INFORMATION
+ DEFGROUP: Joomla.Template.Site
+ INGROUP: MokoCassiopeia.Templates
+ PATH: ./templates/colors_custom_light.css
+ VERSION: 03.06.03
+ BRIEF: Template for custom light mode color definitions
+ 
+ # USAGE INSTRUCTIONS
+ 1. Copy this file to: media/templates/site/mokocassiopeia/css/colors/light/colors_custom.css
+ 2. Customize the CSS variables below to match your brand colors
+ 3. In Joomla admin, go to System → Site Templates → MokoCassiopeia
+ 4. Under Theme tab, set "Light Mode Palette" to "Custom"
+ 5. Save and view your site to see the custom colors
+ 
+ NOTE: This file is excluded from version control (.gitignore) to prevent
+ fork-specific customizations from being committed to the repository.
+ */
+
+/* -----------------------------------------------
+ * CUSTOM LIGHT THEME
+ * --------------------------------------------- */
+
+:root[data-bs-theme="light"] {
+	color-scheme: light;
+	
+	/* ===== PRIMARY BRAND COLORS ===== */
+	/* Main brand color used throughout the template */
+	--color-primary: #112855;
+	
+	/* Accent colors for interactive elements */
+	--accent-color-primary: #3f8ff0;
+	--accent-color-secondary: #3f8ff0;
+	
+	/* ===== LINK COLORS ===== */
+	/* Color for hyperlinks */
+	--color-link: #224FAA;
+	
+	/* Color when hovering over links */
+	--color-hover: var(--accent-color-primary);
+	
+	/* ===== NAVIGATION ===== */
+	/* Text color in main menu */
+	--mainmenu-nav-link-color: white;
+	
+	/* Background color for navigation */
+	--nav-text-color: white;
+	--nav-bg-color: var(--color-link);
+	
+	/* ===== HEADER BACKGROUND ===== */
+	/* Background image for header section */
+	--header-background-image: url('../../../../../../media/templates/site/mokocassiopeia/images/bg.svg');
+	--header-background-attachment: fixed;
+	--header-background-repeat: repeat;
+	--header-background-size: auto;
+	
+	/* ===== CONTAINER BACKGROUNDS ===== */
+	/* Below Topbar Container */
+	--container-below-topbar-bg-image: ;
+	--container-below-topbar-bg-color: ;
+	--container-below-topbar-bg-position: auto;
+	--container-below-topbar-bg-attachment: fixed;
+	--container-below-topbar-bg-repeat: repeat;
+	--container-below-topbar-bg-size: auto;
+	--container-below-topbar-border: ;
+	--container-below-topbar-border-radius: ;
+	
+	/* Top A Container */
+	--container-top-a-bg-image: ;
+	--container-top-a-bg-color: ;
+	--container-top-a-bg-position: auto;
+	--container-top-a-bg-attachment: fixed;
+	--container-top-a-bg-repeat: repeat;
+	--container-top-a-bg-size: auto;
+	--container-top-a-border: ;
+	--container-top-a-border-radius: ;
+	
+	/* Top B Container */
+	--container-top-b-bg-image: ;
+	--container-top-b-bg-color: ;
+	--container-top-b-bg-position: auto;
+	--container-top-b-bg-attachment: fixed;
+	--container-top-b-bg-repeat: repeat;
+	--container-top-b-bg-size: auto;
+	--container-top-b-border: ;
+	--container-top-b-border-radius: ;
+	
+	/* Table of Contents Container */
+	--container-toc-bg: var(--mainmenu-nav-link-color);
+	--container-toc-color: var(--color-primary);
+	
+	/* Sidebar Container */
+	--container-sidebar-bg-image: ;
+	--container-sidebar-bg-color: ;
+	--container-sidebar-bg-position: auto;
+	--container-sidebar-bg-attachment: scroll;
+	--container-sidebar-bg-repeat: repeat;
+	--container-sidebar-bg-size: auto;
+	--container-sidebar-border: ;
+	--container-sidebar-border-radius: ;
+	
+	/* Bottom A Container */
+	--container-bottom-a-bg-image: ;
+	--container-bottom-a-bg-color: ;
+	--container-bottom-a-bg-position: auto;
+	--container-bottom-a-bg-attachment: fixed;
+	--container-bottom-a-bg-repeat: repeat;
+	--container-bottom-a-bg-size: auto;
+	--container-bottom-a-border: ;
+	--container-bottom-a-border-radius: ;
+	
+	/* Bottom B Container */
+	--container-bottom-b-bg-image: ;
+	--container-bottom-b-bg-color: ;
+	--container-bottom-b-bg-position: auto;
+	--container-bottom-b-bg-attachment: fixed;
+	--container-bottom-b-bg-repeat: repeat;
+	--container-bottom-b-bg-size: auto;
+	--container-bottom-b-border: ;
+	--container-bottom-b-border-radius: ;
+	
+	/* ===== BOOTSTRAP 5 COLOR PALETTE ===== */
+	/* Standard Bootstrap color variables */
+	--blue: #010156;
+	--black: #000;
+	--indigo: #6812f3;
+	--purple: #6f42c2;
+	--pink: #e93f8e;
+	--red: #a51f18;
+	--orange: #fd7e17;
+	--yellow: #ad6200;
+	--green: #448344;
+	--teal: #5abfdd;
+	--cyan: #30638d;
+	--white: #fff;
+	
+	/* Gray scale */
+	--gray-100: #f9fafb;
+	--gray-200: #eaedf0;
+	--gray-300: #dfe3e7;
+	--gray-400: #ced4da;
+	--gray-500: #adb5bd;
+	--gray-600: #6d757e;
+	--gray-700: #484f56;
+	--gray-800: #353b41;
+	--gray-900: #22262a;
+	
+	/* Contextual colors */
+	--primary: #010156;
+	--secondary: #6d757e;
+	--success: #448344;
+	--info: #30638d;
+	--warning: #ad6200;
+	--danger: #a51f18;
+	--light: #f9fafb;
+	--dark: #353b41;
+	
+	/* ===== BODY & TYPOGRAPHY ===== */
+	--body-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+	--body-font-size: 1rem;
+	--body-font-weight: 400;
+	--body-line-height: 1.5;
+	--body-color: #22262a;
+	--body-color-rgb: 34, 38, 42;
+	--body-bg: #fff;
+	--body-bg-rgb: 255, 255, 255;
+	
+	/* ===== ADDITIONAL THEME COLORS ===== */
+	--muted-color: #6d757e;
+	--hr-color: var(--border-color, #dfe3e7);
+	--link-active-color: var(--link-color);
+	--code-color: #e93f8e;
+	--code-color-ink: var(--code-color, #e93f8e);
+	--border-color-soft: var(--border-color, #dfe3e7);
+	--kbd-bg: var(--secondary-bg, #eaedf0);
+	--kbd-ink: var(--body-bg, #fff);
+	--toc-bg: var(--secondary-bg, #eaedf0);
+	--toc-ink: var(--color-primary, #112855);
+	--selection-bg: var(--highlight-bg, #fbeea8);
+	--selection-ink: var(--body-color, #22262a);
+	--emphasis-color: #000;
+	--emphasis-color-rgb: 0, 0, 0;
+	--secondary-color: #22262abf;
+	--secondary-bg: #eaedf0;
+	--tertiary-color: #22262a80;
+	--tertiary-bg: #f9fafb;
+	--heading-color: inherit;
+	--link-color: #224faa;
+	--link-color-rgb: 34, 79, 170;
+	--link-decoration: underline;
+	--link-hover-color: #424077;
+	--link-hover-color-rgb: 66, 64, 119;
+	--highlight-color: #22262a;
+	--highlight-bg: #fbeea8;
+	
+	/* ===== BORDERS & SHADOWS ===== */
+	--border: 5px;
+	--border-width: 1px;
+	--border-style: solid;
+	--border-color: #dfe3e7;
+	--border-color-translucent: #0000002d;
+	--border-radius: .25rem;
+	--border-radius-sm: .2rem;
+	--border-radius-lg: .3rem;
+	--border-radius-xl: .3rem;
+	--border-radius-xxl: 2rem;
+	--border-radius-pill: 50rem;
+	--box-shadow: 0 .5rem 1rem #00000026;
+	--box-shadow-sm: 0 .125rem .25rem #00000013;
+	--box-shadow-lg: 0 1rem 3rem #0000002d;
+	--box-shadow-inset: inset 0 1px 2px #00000013;
+	
+	/* ===== FORM COLORS ===== */
+	--focus-ring-width: .25rem;
+	--focus-ring-opacity: .25;
+	--focus-ring-color: #01015640;
+	--form-valid-color: #448344;
+	--form-valid-border-color: #448344;
+	--form-invalid-color: #a51f18;
+	--form-invalid-border-color: #a51f18;
+}

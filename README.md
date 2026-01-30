@@ -205,14 +205,16 @@ Access template configuration via **System → Site Templates → MokoCassiopeia
 
 MokoCassiopeia supports custom color schemes:
 
-1. Create `media/templates/site/mokocassiopeia/css/colors/light/colors_custom.css` for light mode
-2. Create `media/templates/site/mokocassiopeia/css/colors/dark/colors_custom.css` for dark mode
-3. Define CSS variables (reference `colors_standard.css` for structure)
-4. Select "Custom" palette in template settings
+1. **Copy template files** from `/templates/` directory:
+   - `colors_custom_light.css` → `media/templates/site/mokocassiopeia/css/colors/light/colors_custom.css`
+   - `colors_custom_dark.css` → `media/templates/site/mokocassiopeia/css/colors/dark/colors_custom.css`
+2. **Customize** the CSS variables to match your brand colors
+3. **Enable in Joomla**: System → Site Templates → MokoCassiopeia → Theme tab → Set palette to "Custom"
+4. **Save** and view your site with custom colors
 
 **Note:** Custom color files are excluded from version control (`.gitignore`) to prevent fork-specific customizations from being committed.
 
-**Example CSS Variables:**
+**Quick Example:**
 
 ```css
 :root[data-bs-theme="light"] {
@@ -223,6 +225,8 @@ MokoCassiopeia supports custom color schemes:
   --body-bg: #ffffff;
 }
 ```
+
+**Complete Reference:** See [CSS Variables Documentation](./docs/CSS_VARIABLES.md) for all available variables and detailed usage examples.
 
 ### Table of Contents
 
@@ -319,7 +323,14 @@ See [Joomla Development Guide](./docs/JOOMLA_DEVELOPMENT.md) for packaging instr
 - **[Quick Start](./docs/QUICK_START.md)** - 5-minute developer setup
 - **[Development Guide](./docs/JOOMLA_DEVELOPMENT.md)** - Comprehensive development guide
 - **[Workflow Guide](./docs/WORKFLOW_GUIDE.md)** - Git workflow and processes
+- **[CSS Variables Reference](./docs/CSS_VARIABLES.md)** - Complete CSS customization guide
 - **[Documentation Index](./docs/README.md)** - All documentation links
+
+### Customization Resources
+
+- **[Template Files](./templates/)** - Ready-to-use color palette templates
+  - `colors_custom_light.css` - Light mode template
+  - `colors_custom_dark.css` - Dark mode template
 
 ### Governance
 
