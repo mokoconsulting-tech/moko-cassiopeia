@@ -205,13 +205,12 @@ if ($logoFile !== '') {
 		false,
 		0
 	);
-} elseif ($this->params->get('siteTitle')) {
-	$brandHtml = '<span class="site-title" title="' . $sitename . '">'
-			   . htmlspecialchars($this->params->get('siteTitle'), ENT_COMPAT, 'UTF-8')
-			   . '</span>';
 } else {
-	// Fallback to a bundled image (relative to media paths)
-	$brandHtml = HTMLHelper::_('image', 'full_logo.png', $sitename, ['class' => 'logo d-inline-block', 'loading' => 'eager', 'decoding' => 'async'], true, 0);
+	// If no logo file, show the title (defaults to "MokoCassiopeia" if not set)
+	$siteTitle = $this->params->get('siteTitle', 'MokoCassiopeia');
+	$brandHtml = '<span class="site-title" title="' . $sitename . '">'
+			   . htmlspecialchars($siteTitle, ENT_COMPAT, 'UTF-8')
+			   . '</span>';
 }
 
 // Layout flags
