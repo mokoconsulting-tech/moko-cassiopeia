@@ -8,8 +8,8 @@
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: MokoCassiopeia
- REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
- PATH: ./templates/moko-cassiopeia/offline.php
+ REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
+ PATH: ./templates/mokocassiopeia/offline.php
  VERSION: 03.06.02
  BRIEF: Offline page template file for MokoCassiopeia
  */

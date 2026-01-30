@@ -7,18 +7,18 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template
- INGROUP: Moko-Cassiopeia.Governance
- REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
+ INGROUP: MokoCassiopeia.Governance
+ REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
  FILE: CODE_OF_CONDUCT.md
  VERSION: 03.06.02
- BRIEF: Contributor code of conduct for the Moko-Cassiopeia project.
+ BRIEF: Contributor code of conduct for the MokoCassiopeia project.
  PATH: /CODE_OF_CONDUCT.md
  NOTE: This document defines behavioral expectations and enforcement processes.
 -->
 
 ## Code of Conduct
 
-This Code of Conduct establishes expectations for behavior within the Moko-Cassiopeia project community. The objective is to maintain a professional, inclusive, and respectful environment aligned with open source governance best practices.
+This Code of Conduct establishes expectations for behavior within the MokoCassiopeia project community. The objective is to maintain a professional, inclusive, and respectful environment aligned with open source governance best practices.
 
 ## Scope
 
@@ -56,7 +56,7 @@ Project maintainers are responsible for:
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be reported through:
 
-* Email: `hello@mokoconsulting.tech` with subject `CODE OF CONDUCT: Moko-Cassiopeia`.
+* Email: `hello@mokoconsulting.tech` with subject `CODE OF CONDUCT: MokoCassiopeia`.
 
 Reports should include relevant context, links, screenshots, or other supporting information.
 
@@ -83,7 +83,7 @@ This project is managed from Tennessee, USA. This statement is informational and
 ## Metadata
 
 * **Document:** CODE_OF_CONDUCT.md
-* **Repository:** [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
+* **Repository:** [https://github.com/mokoconsulting-tech/MokoCassiopeia](https://github.com/mokoconsulting-tech/MokoCassiopeia)
 * **Path:** /CODE_OF_CONDUCT.md
 * **Owner:** Moko Consulting
 * **Version:** 03.06.00

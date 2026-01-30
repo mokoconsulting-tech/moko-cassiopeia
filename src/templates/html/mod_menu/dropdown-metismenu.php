@@ -17,7 +17,7 @@ use Joomla\Utilities\ArrayHelper;
 
 /** @var \Joomla\CMS\WebAsset\WebAssetManager $wa */
 $wa = $app->getDocument()->getWebAssetManager();
-$wa->registerAndUseScript('metismenu', 'media/templates/site/moko-cassiopeia/js/mod_menu/menu-metismenu.min.js', [], ['defer' => true], ['metismenujs']);
+$wa->registerAndUseScript('metismenu', 'media/templates/site/mokocassiopeia/js/mod_menu/menu-metismenu.min.js', [], ['defer' => true], ['metismenujs']);
 
 $attributes          = [];
 $attributes['class'] = 'mod-menu mod-menu_dropdown-metismenu metismenu mod-list ' . $class_sfx;

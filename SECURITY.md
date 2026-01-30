@@ -7,18 +7,18 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template
- INGROUP: Moko-Cassiopeia.Governance
- REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
+ INGROUP: MokoCassiopeia.Governance
+ REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
  FILE: SECURITY.md
  VERSION: 03.06.02
- BRIEF: Security policy and vulnerability reporting process for Moko-Cassiopeia.
+ BRIEF: Security policy and vulnerability reporting process for MokoCassiopeia.
  PATH: /SECURITY.md
  NOTE: This policy is process oriented and does not replace secure engineering practices.
 -->
 
 ## Security Policy
 
-This document defines how Moko-Cassiopeia handles vulnerability intake, triage, remediation, and disclosure. The objective is to reduce risk, protect downstream users, and preserve operational continuity with a verifiable audit trail.
+This document defines how MokoCassiopeia handles vulnerability intake, triage, remediation, and disclosure. The objective is to reduce risk, protect downstream users, and preserve operational continuity with a verifiable audit trail.
 
 ## Scope
 
@@ -47,7 +47,7 @@ Backports may be provided based on impact, deployment footprint, and engineering
 Use one of the following channels:
 
 * GitHub Security Advisories (preferred): use the repository security tab to submit a private report.
-* Email: send details to `hello@mokoconsulting.tech` with subject `SECURITY: Moko-Cassiopeia vulnerability report`.
+* Email: send details to `hello@mokoconsulting.tech` with subject `SECURITY: MokoCassiopeia vulnerability report`.
 
 Do not file a public GitHub issue for suspected security vulnerabilities.
 
@@ -150,7 +150,7 @@ If you want credit, include the name or handle to list in an advisory. If you pr
 ## Metadata
 
 * **Document:** SECURITY.md
-* **Repository:** [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
+* **Repository:** [https://github.com/mokoconsulting-tech/MokoCassiopeia](https://github.com/mokoconsulting-tech/MokoCassiopeia)
 * **Path:** /SECURITY.md
 * **Owner:** Moko Consulting
 * **Version:** 03.06.00

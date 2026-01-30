@@ -8,10 +8,10 @@
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: MokoCassiopeia
- REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
- PATH: ./templates/moko-cassiopeia/error.php
+ REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
+ PATH: ./templates/mokocassiopeia/error.php
  VERSION: 03.06.02
- BRIEF: Error page template file for Moko-Cassiopeia
+ BRIEF: Error page template file for MokoCassiopeia
  */
 
 defined('_JEXEC') or die;
@@ -63,7 +63,7 @@ $params_leftIcon  = htmlspecialchars($params->get('drawerLeftIcon',  'fa-solid f
 $params_rightIcon = htmlspecialchars($params->get('drawerRightIcon', 'fa-solid fa-chevron-right'),  ENT_QUOTES, 'UTF-8');
 
 // Template/Media path
-$templatePath = 'media/templates/site/moko-cassiopeia';
+$templatePath = 'media/templates/site/mokocassiopeia';
 
 // ===========================
 // Web Asset Manager (WAM) — matches your joomla.asset.json

@@ -8,8 +8,8 @@
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: MokoCassiopeia
- REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
- PATH: ./templates/moko-cassiopeia/html/com_content/article/toc-right.php
+ REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
+ PATH: ./templates/mokocassiopeia/html/com_content/article/toc-right.php
  VERSION: 03.06.02
  BRIEF: Template override for Joomla articles with Table of Contents aligned right
  */

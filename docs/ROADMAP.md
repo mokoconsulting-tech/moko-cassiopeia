@@ -17,7 +17,7 @@
 
 # MokoCassiopeia Roadmap (VERSION: 03.06.02)
 
-This document provides a comprehensive, version-specific roadmap for the Moko-Cassiopeia Joomla template, tracking feature evolution, current capabilities, and planned enhancements.
+This document provides a comprehensive, version-specific roadmap for the MokoCassiopeia Joomla template, tracking feature evolution, current capabilities, and planned enhancements.
 
 ## Table of Contents
 
@@ -750,7 +750,7 @@ The following versions represent our planned annual major releases, each buildin
 ## Long-term Vision
 
 ### Mission Statement
-Moko-Cassiopeia aims to be the **most developer-friendly, user-customizable, and standards-compliant Joomla template** while maintaining minimal core overrides for maximum upgrade compatibility.
+MokoCassiopeia aims to be the **most developer-friendly, user-customizable, and standards-compliant Joomla template** while maintaining minimal core overrides for maximum upgrade compatibility.
 
 ### Core Principles
 1. **Non-Invasive**: Minimal Cassiopeia overrides
@@ -797,7 +797,7 @@ Moko-Cassiopeia aims to be the **most developer-friendly, user-customizable, and
 ## External Resources
 
 ### Official Links
-- **Full Roadmap**: [https://mokoconsulting.tech/support/joomla-cms/moko-cassiopeia-roadmap](https://mokoconsulting.tech/support/joomla-cms/moko-cassiopeia-roadmap)
+- **Full Roadmap**: [https://mokoconsulting.tech/support/joomla-cms/mokocassiopeia-roadmap](https://mokoconsulting.tech/support/joomla-cms/mokocassiopeia-roadmap)
 - **Repository**: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
 - **Issue Tracker**: [GitHub Issues](https://github.com/mokoconsulting-tech/moko-cassiopeia/issues)
 - **Changelog**: [CHANGELOG.md](../CHANGELOG.md)

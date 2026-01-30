@@ -8,10 +8,10 @@
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: MokoCassiopeia
- REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
- PATH: ./templates/moko-cassiopeia/custom.php
+ REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
+ PATH: ./templates/mokocassiopeia/custom.php
  VERSION: 03.06.02
- BRIEF: Custom entry template file for Moko-Cassiopeia with user-defined overrides
+ BRIEF: MokoCassiopeia with user-defined overrides
  */
 
 	function console_log($output, $with_script_tags = true) {

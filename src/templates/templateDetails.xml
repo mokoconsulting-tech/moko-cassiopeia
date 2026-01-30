@@ -191,7 +191,7 @@
 				<field name="useFontScheme" type="groupedlist" label="TPL_MOKOCASSIOPEIA_FONT_LABEL" default="0">
 					<option value="0">JNONE</option>
 					<group label="TPL_MOKOCASSIOPEIA_FONT_GROUP_LOCAL">
-						<option value="media/templates/site/moko-cassiopeia/css/global/fonts-local_roboto.css">Roboto (local)</option>
+						<option value="media/templates/site/mokocassiopeia/css/global/fonts-local_roboto.css">Roboto (local)</option>
 					</group>
 					<group label="TPL_MOKOCASSIOPEIA_FONT_GROUP_WEB">
 						<option value="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@100;300;400;700&amp;display=swap">Fira Sans (web)</option>
@@ -206,7 +206,7 @@
 					<option value="0">JNO</option>
 					<option value="1">JYES</option>
 				</field>
-				<field name="logoFile" type="media" default="media/templates/site/moko-cassiopeia/images/logo.svg" label="TPL_MOKOCASSIOPEIA_LOGO_LABEL" showon="brand:1" />
+				<field name="logoFile" type="media" default="media/templates/site/mokocassiopeia/images/logo.svg" label="TPL_MOKOCASSIOPEIA_LOGO_LABEL" showon="brand:1" />
 				<field name="siteTitle" type="text" default="" label="TPL_MOKOCASSIOPEIA_TITLE" filter="string" showon="brand:1" />
 				<field name="siteDescription" type="text" default="" label="TPL_MOKOCASSIOPEIA_TAGLINE_LABEL" description="TPL_MOKOCASSIOPEIA_TAGLINE_DESC" filter="string" showon="brand:1" />
 				<field name="fA6KitCode" type="text" default="" label="TPL_MOKOCASSIOPEIA_FA7KITCODE_LABEL" description="TPL_MOKOCASSIOPEIA_FA7KITCODE_DESC" filter="string" />

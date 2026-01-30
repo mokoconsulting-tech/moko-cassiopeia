@@ -18,7 +18,7 @@
   <update>
     <name>MokoCassiopeia</name>
     <description>Moko Consulting’s site template based on Cassiopeia.</description>
-    <element>moko-cassiopeia</element>
+    <element>mokocassiopeia</element>
     <type>template</type>
     <client>site</client>
 
@@ -31,7 +31,7 @@
     <infourl title='MokoCassiopeia'>https://github.com/mokoconsulting-tech/MokoCassiopeia</infourl>
 
     <downloads>
-      <downloadurl type='full' format='zip'>https://github.com/mokoconsulting-tech/MokoCassiopeia/releases/download/03.01.00/moko-cassiopeia-src-03.01.00.zip</downloadurl>
+      <downloadurl type='full' format='zip'>https://github.com/mokoconsulting-tech/MokoCassiopeia/releases/download/03.01.00/mokocassiopeia-src-03.01.00.zip</downloadurl>
       <sha256>sha256:858dd1a9a0aceecfe844a22d2a3557aea68687ae02363e04ff4c80bae0f29480</sha256>
     </downloads>
 
