@@ -147,9 +147,6 @@ jobs:
           echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
-          
-          # Ensure cleanup happens even on failure
-          trap 'rm -f ~/.ssh/deploy_key' EXIT
 
       - name: Deploy via rsync
         if: inputs.deployment-method == 'rsync'
@@ -250,6 +247,12 @@ jobs:
 
           echo "❌ Health check failed after ${TIMEOUT}s" >> $GITHUB_STEP_SUMMARY
           exit 1
+
+      - name: Cleanup SSH key
+        if: always() && (inputs.deployment-method == 'ssh' || inputs.deployment-method == 'rsync')
+        run: |
+          rm -f ~/.ssh/deploy_key
+          echo "SSH key cleaned up"
 
       - name: Update deployment status (success)
         if: success()
