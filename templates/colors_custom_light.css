@@ -64,7 +64,7 @@
 	/* Below Topbar Container */
 	--container-below-topbar-bg-image: ;
 	--container-below-topbar-bg-color: ;
-	--container-below-topbar-bg-position: auto;
+	--container-below-topbar-bg-position: center;
 	--container-below-topbar-bg-attachment: fixed;
 	--container-below-topbar-bg-repeat: repeat;
 	--container-below-topbar-bg-size: auto;
@@ -74,7 +74,7 @@
 	/* Top A Container */
 	--container-top-a-bg-image: ;
 	--container-top-a-bg-color: ;
-	--container-top-a-bg-position: auto;
+	--container-top-a-bg-position: center;
 	--container-top-a-bg-attachment: fixed;
 	--container-top-a-bg-repeat: repeat;
 	--container-top-a-bg-size: auto;
@@ -84,7 +84,7 @@
 	/* Top B Container */
 	--container-top-b-bg-image: ;
 	--container-top-b-bg-color: ;
-	--container-top-b-bg-position: auto;
+	--container-top-b-bg-position: center;
 	--container-top-b-bg-attachment: fixed;
 	--container-top-b-bg-repeat: repeat;
 	--container-top-b-bg-size: auto;
@@ -98,7 +98,7 @@
 	/* Sidebar Container */
 	--container-sidebar-bg-image: ;
 	--container-sidebar-bg-color: ;
-	--container-sidebar-bg-position: auto;
+	--container-sidebar-bg-position: center;
 	--container-sidebar-bg-attachment: scroll;
 	--container-sidebar-bg-repeat: repeat;
 	--container-sidebar-bg-size: auto;
@@ -108,7 +108,7 @@
 	/* Bottom A Container */
 	--container-bottom-a-bg-image: ;
 	--container-bottom-a-bg-color: ;
-	--container-bottom-a-bg-position: auto;
+	--container-bottom-a-bg-position: center;
 	--container-bottom-a-bg-attachment: fixed;
 	--container-bottom-a-bg-repeat: repeat;
 	--container-bottom-a-bg-size: auto;
@@ -118,7 +118,7 @@
 	/* Bottom B Container */
 	--container-bottom-b-bg-image: ;
 	--container-bottom-b-bg-color: ;
-	--container-bottom-b-bg-position: auto;
+	--container-bottom-b-bg-position: center;
 	--container-bottom-b-bg-attachment: fixed;
 	--container-bottom-b-bg-repeat: repeat;
 	--container-bottom-b-bg-size: auto;
