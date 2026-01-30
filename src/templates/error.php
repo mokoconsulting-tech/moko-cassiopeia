@@ -87,6 +87,12 @@ try {
 // Scripts
 $wa->useScript('template.js');
 
+// Smart Bootstrap component loading - only load what's needed
+if ($this->countModules('drawer-left', true) || $this->countModules('drawer-right', true)) {
+	// Load Bootstrap Offcanvas component for drawers
+	HTMLHelper::_('bootstrap.offcanvas');
+}
+
 // Meta
 $this->setMetaData('viewport', 'width=device-width, initial-scale=1');
 

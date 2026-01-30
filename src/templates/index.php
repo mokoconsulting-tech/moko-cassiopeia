@@ -205,6 +205,12 @@ if ($this->countModules('sidebar-right', true)) { $hasClass .= ' has-sidebar-rig
 if ($this->countModules('drawer-left', true))   { $hasClass .= ' has-drawer-left'; }
 if ($this->countModules('drawer-right', true))  { $hasClass .= ' has-drawer-right'; }
 
+// Smart Bootstrap component loading - only load what's needed
+if ($this->countModules('drawer-left', true) || $this->countModules('drawer-right', true)) {
+	// Load Bootstrap Offcanvas component for drawers
+	HTMLHelper::_('bootstrap.offcanvas');
+}
+
 // Container
 $wrapper      = $this->params->get('fluidContainer') ? 'wrapper-fluid' : 'wrapper-static';
 $stickyHeader = $this->params->get('stickyHeader') ? 'position-sticky sticky-top' : '';
