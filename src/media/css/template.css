@@ -10,7 +10,7 @@
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: MokoCassiopeia
- PATH: ./media/templates/site/moko-cassiopeia/css/template.css
+ PATH: ./media/templates/site/mokocassiopeia/css/template.css
  VERSION: 03.05.00
  BRIEF: Main stylesheet providing layout, typography, and component styles for MokoCassiopeia
  */
@@ -2601,10 +2601,10 @@ progress {
 	font-size: 1rem;
 	font-weight: 400;
 	line-height: 1;
-	color: hsl(210, 11%, 15%);
-	background-color: var(--body-color);
+	color: var(--input-color);
+	background-color: var(--input-bg);
 	background-clip: padding-box;
-	border: 1px solid hsl(210, 14%, 83%);
+	border: 1px solid var(--input-border-color);
 	-webkit-appearance: none;
 	-moz-appearance: none;
 	appearance: none;
@@ -2633,12 +2633,12 @@ progress {
 }
 
 .form-control:focus {
-	color: hsl(210, 11%, 15%);
-	background-color: var(--body-color);
-	border-color: #8894aa;
+	color: var(--input-color);
+	background-color: var(--input-bg);
+	border-color: var(--input-focus-border-color);
 	outline: 0;
-	-webkit-box-shadow: 0 0 0 0.25rem rgba(1, 1, 86, 0.25);
-	box-shadow: 0 0 0 0.25rem rgba(1, 1, 86, 0.25);
+	-webkit-box-shadow: var(--input-focus-box-shadow);
+	box-shadow: var(--input-focus-box-shadow);
 }
 
 .form-control::-webkit-date-and-time-value {
@@ -2646,32 +2646,33 @@ progress {
 }
 
 .form-control::-webkit-input-placeholder {
-	color: hsl(210, 7%, 46%);
+	color: var(--input-placeholder-color);
 	opacity: 1;
 }
 
 .form-control::-moz-placeholder {
-	color: hsl(210, 7%, 46%);
+	color: var(--input-placeholder-color);
 	opacity: 1;
 }
 
 .form-control:-ms-input-placeholder {
-	color: hsl(210, 7%, 46%);
+	color: var(--input-placeholder-color);
 	opacity: 1;
 }
 
 .form-control::-ms-input-placeholder {
-	color: hsl(210, 7%, 46%);
+	color: var(--input-placeholder-color);
 	opacity: 1;
 }
 
 .form-control::placeholder {
-	color: hsl(210, 7%, 46%);
+	color: var(--input-placeholder-color);
 	opacity: 1;
 }
 
 .form-control:disabled {
-	background-color: hsl(210, 16%, 93%);
+	background-color: var(--input-disabled-bg);
+	border-color: var(--input-disabled-border-color);
 	opacity: 1;
 }
 
@@ -14011,10 +14012,6 @@ meter {
 	border-bottom-left-radius: 0;
 }
 
-.article-index .toclink.active {
-	color: currentColor;
-}
-
 .j-main-container .alert {
 	margin: 0.75rem;
 }
@@ -14182,7 +14179,6 @@ meter {
 
 .form-control {
 	max-width: 100%;
-	background-color: var(--body-color);
 }
 
 .form-control.input-xlarge {
@@ -14372,7 +14368,6 @@ fieldset>* {
 
 .container-header nav {
 	padding: 0;
-	margin-top: 0.25em;
 }
 
 .container-header .site-description {
@@ -14411,7 +14406,6 @@ fieldset>* {
 	-webkit-box-pack: justify;
 	-ms-flex-pack: justify;
 	justify-content: space-between;
-	padding-bottom: 0.3em;
 	background-color: var(--nav-bg-color);
 	border-width: var(--border-width);
 	border-top: solid var(--accent-color-primary);
@@ -14592,6 +14586,7 @@ li.current a {
 
 .container-header .mod-finder {
 	color: var(--body-color);
+	margin-block-end: 0;
 }
 
 .container-header .mod-finder a {
@@ -14614,7 +14609,7 @@ li.current a {
 }
 
 .icon-white {
-	color: var(--body-color);
+	color: var(--body-bg);
 }
 
 .input-group-text::before {
@@ -16782,103 +16777,7 @@ body:not(.has-sidebar-right) .site-grid .container-component {
 
 form .form-control,
 form .form-select {
-	border-color: #C7C7C7
-}
-
-/* --- TOC right-rail container (non-invasive) --- */
-.container-toc-right {
-	float: right;
-	width: 280px;
-	margin: 0 0 1.25rem 1.25rem;
-	/* gap from main content */
-	position: relative;
-	z-index: 1;
-	color: var(--container-toc-color);
-}
-
-/* Make the inner nav sticky without touching bootstrap-toc styles */
-.container-toc-right>nav[id='toc'] {
-	position: sticky;
-	top: 6rem;
-	/* adjust to sit below your header/nav */
-	max-height: calc(100vh - 7rem);
-	overflow: auto;
-	background: var(--container-toc-bg);
-	border: 1px solid rgba(0, 0, 0, .08);
-	border-radius: .75rem;
-	padding: 1rem;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, .06);
-}
-
-/* Optional: title spacing if you render a heading inside #toc */
-.container-toc-right>nav[id='toc']>.toc-title {
-	margin: 0 0 .5rem 0;
-	font-weight: 600;
-	border-bottom: 1px solid rgba(0, 0, 0, .06);
-	padding-bottom: .5rem;
-}
-
-/* Responsive: stack on smaller screens */
-@media (max-width: 991.98px) {
-	.container-toc-right {
-		float: none;
-		width: 100%;
-		margin: 1rem 0;
-	}
-
-	.container-toc-right>nav[id='toc'] {
-		position: relative;
-		top: auto;
-		max-height: 300px;
-	}
-}
-
-/* --- TOC left-rail container (non-invasive) --- */
-.container-toc-left {
-	float: left;
-	width: 280px;
-	margin: 0 1.25rem 1.25rem 0;
-	/* space on right side for main content */
-	position: relative;
-	z-index: 1;
-	color: var(--container-toc-color);
-}
-
-/* Make the inner nav sticky without altering bootstrap-toc core styles */
-.container-toc-left>nav[id='toc'] {
-	position: sticky;
-	top: 6rem;
-	/* adjust if your site header height differs */
-	max-height: calc(100vh - 7rem);
-	overflow: auto;
-	background: var(--bs-body-bg, #fff);
-	border: 1px solid rgba(0, 0, 0, .08);
-	border-radius: .75rem;
-	padding: 1rem;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, .06);
-}
-
-/* Optional: TOC title styling */
-.container-toc-left>nav[id='toc']>.toc-title {
-	margin: 0 0 .5rem 0;
-	font-weight: 600;
-	border-bottom: 1px solid rgba(0, 0, 0, .06);
-	padding-bottom: .5rem;
-}
-
-/* Responsive: stack under content on smaller screens */
-@media (max-width: 991.98px) {
-	.container-toc-left {
-		float: none;
-		width: 100%;
-		margin: 1rem 0;
-	}
-
-	.container-toc-left>nav[id='toc'] {
-		position: relative;
-		top: auto;
-		max-height: 300px;
-	}
+	border-color: var(--input-border-color);
 }
 
 .container-below-topbar {

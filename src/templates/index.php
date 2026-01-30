@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+/* Copyright (C) 2026 Moko Consulting <hello@mokoconsulting.tech>
 
  This file is part of a Moko Consulting project.
 
@@ -61,22 +61,7 @@ $params_developmentmode = $this->params->get('developmentmode', false);
 $params_theme_enabled      = $this->params->get('theme_enabled', 1);
 $params_theme_fab_enabled  = $this->params->get('theme_fab_enabled', 1);
 $params_theme_fab_pos      = $this->params->get('theme_fab_pos', 'br');
-/*
-// Bootstrap behaviors (assets handled via WAM)
-HTMLHelper::_('bootstrap.framework');
-HTMLHelper::_('bootstrap.alert');
-HTMLHelper::_('bootstrap.button');
-HTMLHelper::_('bootstrap.carousel');
-HTMLHelper::_('bootstrap.collapse');
-HTMLHelper::_('bootstrap.dropdown');
-HTMLHelper::_('bootstrap.modal');
-HTMLHelper::_('bootstrap.offcanvas');
-HTMLHelper::_('bootstrap.popover');
-HTMLHelper::_('bootstrap.scrollspy');
-HTMLHelper::_('bootstrap.tab');
-HTMLHelper::_('bootstrap.tooltip');
-HTMLHelper::_('bootstrap.toast');
-*/
+
 // Detecting Active Variables
 $option    = $input->getCmd('option', '');
 $view      = $input->getCmd('view', '');
@@ -112,29 +97,32 @@ $darkKey   = 'template.dark.' . $colorDarkKey;
 try {
 	$wa->useStyle('template.light.colors_standard');
 } catch (\Throwable $e) {
-	$wa->registerAndUseStyle('template.light.colors_standard', $templatePath . '/css/global/light/colors_standard.css');
+	$wa->registerAndUseStyle('template.light.colors_standard', $templatePath . '/css/colors/light/colors_standard.css');
 }
 
 try {
 	$wa->useStyle('template.dark.colors_standard');
 } catch (\Throwable $e) {
-	$wa->registerAndUseStyle('template.dark.colors_standard', $templatePath . '/css/global/dark/colors_standard.css');
+	$wa->registerAndUseStyle('template.dark.colors_standard', $templatePath . '/css/colors/dark/colors_standard.css');
 }
 
 try {
 	$wa->useStyle($lightKey);
 } catch (\Throwable $e) {
-	$wa->registerAndUseStyle('template.light.dynamic', $templatePath . '/css/global/light/' . $colorLightKey . '.css');
+	$wa->registerAndUseStyle('template.light.dynamic', $templatePath . '/css/colors/light/' . $colorLightKey . '.css');
 }
 
 try {
 	$wa->useStyle($darkKey);
 } catch (\Throwable $e) {
-	$wa->registerAndUseStyle('template.dark.dynamic', $templatePath . '/css/global/dark/' . $colorDarkKey . '.css');
+	$wa->registerAndUseStyle('template.dark.dynamic', $templatePath . '/css/colors/dark/' . $colorDarkKey . '.css');
 }
 
 // Scripts
 $wa->useScript('template.js');
+
+// Load Osaka font for site title
+$wa->useStyle('template.font.osaka');
 
 // Load GTM script if GTM is enabled
 if (!empty($params_googletagmanager) && !empty($params_googletagmanagerid)) {
@@ -205,13 +193,12 @@ if ($logoFile !== '') {
 		false,
 		0
 	);
-} elseif ($this->params->get('siteTitle')) {
-	$brandHtml = '<span class="site-title" title="' . $sitename . '">'
-			   . htmlspecialchars($this->params->get('siteTitle'), ENT_COMPAT, 'UTF-8')
-			   . '</span>';
 } else {
-	// Fallback to a bundled image (relative to media paths)
-	$brandHtml = HTMLHelper::_('image', 'full_logo.png', $sitename, ['class' => 'logo d-inline-block', 'loading' => 'eager', 'decoding' => 'async'], true, 0);
+	// If no logo file, show the title (defaults to "MokoCassiopeia" if not set)
+	$siteTitle = $this->params->get('siteTitle', 'MokoCassiopeia');
+	$brandHtml = '<span class="site-title" title="' . $sitename . '">'
+			   . htmlspecialchars($siteTitle, ENT_COMPAT, 'UTF-8')
+			   . '</span>';
 }
 
 // Layout flags
@@ -220,6 +207,12 @@ if ($this->countModules('sidebar-left', true))  { $hasClass .= ' has-sidebar-lef
 if ($this->countModules('sidebar-right', true)) { $hasClass .= ' has-sidebar-right'; }
 if ($this->countModules('drawer-left', true))   { $hasClass .= ' has-drawer-left'; }
 if ($this->countModules('drawer-right', true))  { $hasClass .= ' has-drawer-right'; }
+
+// Smart Bootstrap component loading - only load what's needed
+if ($this->countModules('drawer-left', true) || $this->countModules('drawer-right', true)) {
+	// Load Bootstrap Offcanvas component for drawers
+	HTMLHelper::_('bootstrap.offcanvas');
+}
 
 // Container
 $wrapper      = $this->params->get('fluidContainer') ? 'wrapper-fluid' : 'wrapper-static';

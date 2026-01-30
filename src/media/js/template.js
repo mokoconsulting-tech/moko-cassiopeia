@@ -11,16 +11,11 @@
  INGROUP: MokoCassiopeia
  PATH: ./media/templates/site/moko-cassiopeia/js/template.js
  VERSION: 03.06.01
- BRIEF: Consolidated JavaScript for MokoCassiopeia template including theme, TOC, and utilities
+ BRIEF: Consolidated JavaScript for MokoCassiopeia template including theme and utilities
  */
 
 (function (win, doc) {
 	"use strict";
-
-	// ========================================================================
-	// BOOTSTRAP TOC (inline minified version)
-	// ========================================================================
-	!function(a){"use strict";window.Toc={helpers:{findOrFilter:function(e,t){var n=e.find(t);return e.filter(t).add(n).filter(":not([data-toc-skip])")},generateUniqueIdBase:function(e){return a(e).text().trim().replace(/\'/gi,"").replace(/[& +$,:;=?@"#{}|^~[`%!'<>\]\.\/\(\)\*\\\n\t\b\v]/g,"-").replace(/-{2,}/g,"-").substring(0,64).replace(/^-+|-+$/gm,"").toLowerCase()||e.tagName.toLowerCase()},generateUniqueId:function(e){for(var t=this.generateUniqueIdBase(e),n=0;;n++){var r=t;if(0<n&&(r+="-"+n),!document.getElementById(r))return r}},generateAnchor:function(e){if(e.id)return e.id;var t=this.generateUniqueId(e);return e.id=t},createNavList:function(){return a('<ul class="nav navbar-nav"></ul>')},createChildNavList:function(e){var t=this.createNavList();return e.append(t),t},generateNavEl:function(e,t){var n=a('<a class="nav-link"></a>');n.attr("href","#"+e),n.text(t);var r=a("<li></li>");return r.append(n),r},generateNavItem:function(e){var t=this.generateAnchor(e),n=a(e),r=n.data("toc-text")||n.text();return this.generateNavEl(t,r)},getTopLevel:function(e){for(var t=1;t<=6;t++){if(1<this.findOrFilter(e,"h"+t).length)return t}return 1},getHeadings:function(e,t){var n="h"+t,r="h"+(t+1);return this.findOrFilter(e,n+","+r)},getNavLevel:function(e){return parseInt(e.tagName.charAt(1),10)},populateNav:function(r,a,e){var i,s=r,c=this;e.each(function(e,t){var n=c.generateNavItem(t);c.getNavLevel(t)===a?s=r:i&&s===r&&(s=c.createChildNavList(i)),s.append(n),i=n})},parseOps:function(e){var t;return(t=e.jquery?{$nav:e}:e).$scope=t.$scope||a(document.body),t}},init:function(e){(e=this.helpers.parseOps(e)).$nav.attr("data-toggle","toc");var t=this.helpers.createChildNavList(e.$nav),n=this.helpers.getTopLevel(e.$scope),r=this.helpers.getHeadings(e.$scope,n);this.helpers.populateNav(t,n,r)}},a(function(){a('nav[data-toggle="toc"]').each(function(e,t){var n=a(t);Toc.init(n)})})}(jQuery);
 
 	// ========================================================================
 	// THEME INITIALIZATION (Early theme application)
@@ -197,35 +192,20 @@
 	}
 
 	/**
-	 * Initialize Bootstrap TOC if #toc element exists.
-	 */
-	function initTOC() {
-		if (typeof win.Toc !== "undefined" && doc.querySelector("#toc")) {
-			win.Toc.init({
-				$nav: $("#toc"),
-				$scope: $("main")
-			});
-		}
-	}
-
-	/**
 	 * Initialize offcanvas drawer buttons for left/right drawers.
+	 * Bootstrap handles drawers automatically via data-bs-toggle="offcanvas"
+	 * This function is kept for backwards compatibility but only runs if drawers exist.
 	 */
 	function initDrawers() {
-		var leftBtn = doc.querySelector(".drawer-toggle-left");
-		var rightBtn = doc.querySelector(".drawer-toggle-right");
-		if (leftBtn) {
-			leftBtn.addEventListener("click", function () {
-				var target = doc.querySelector(leftBtn.getAttribute("data-bs-target"));
-				if (target && typeof bootstrap !== 'undefined') new bootstrap.Offcanvas(target).show();
-			});
+		// Check if any drawer buttons exist before initializing
+		var hasDrawers = doc.querySelector(".drawer-toggle-left") || doc.querySelector(".drawer-toggle-right");
+		if (!hasDrawers) {
+			return; // No drawers, skip initialization
 		}
-		if (rightBtn) {
-			rightBtn.addEventListener("click", function () {
-				var target = doc.querySelector(rightBtn.getAttribute("data-bs-target"));
-				if (target && typeof bootstrap !== 'undefined') new bootstrap.Offcanvas(target).show();
-			});
-		}
+
+		// Bootstrap 5 handles offcanvas automatically via data-bs-toggle attribute
+		// No manual initialization needed if Bootstrap is loaded correctly
+		// The buttons already have data-bs-toggle="offcanvas" and data-bs-target="#drawer-*"
 	}
 
 	/**
@@ -305,7 +285,6 @@
 		win.addEventListener("scroll", handleScroll);
 
 		// Init features
-		initTOC();
 		initDrawers();
 		initBackTop();
 	}

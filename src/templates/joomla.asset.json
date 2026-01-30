@@ -4,7 +4,7 @@
 	"description": "MokoCassiopeia template assets",
 	"license": "GPL-3.0-or-later",
 	"x-header": {
-		"copyright_year": 2025,
+		"copyright_year": 2026,
 		"author": "Jonathan Miller",
 		"owner": "Moko Consulting",
 		"contact": "hello@mokoconsulting.tech",
@@ -44,6 +44,12 @@
 			"name": "template.user.min",
 			"type": "style",
 			"uri": "media/templates/site/mokocassiopeia/css/user.min.css",
+			"attributes": {"media": "all"}
+		},
+		{
+			"name": "template.font.osaka",
+			"type": "style",
+			"uri": "media/templates/site/mokocassiopeia/css/fonts/osaka.css",
 			"attributes": {"media": "all"}
 		},
 		{

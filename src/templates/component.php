@@ -1,5 +1,5 @@
 <?php
-/* Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+/* Copyright (C) 2026 Moko Consulting <hello@mokoconsulting.tech>
 
  This file is part of a Moko Consulting project.
 
@@ -45,21 +45,6 @@ $params_custom_head_start  = $this->params->get('custom_head_start', null);
 $params_custom_head_end    = $this->params->get('custom_head_end', null);
 $params_developmentmode = $this->params->get('developmentmode', false);
 
-// Bootstrap behaviors (assets handled via WAM)
-HTMLHelper::_('bootstrap.framework');
-HTMLHelper::_('bootstrap.alert');
-HTMLHelper::_('bootstrap.button');
-HTMLHelper::_('bootstrap.carousel');
-HTMLHelper::_('bootstrap.collapse');
-HTMLHelper::_('bootstrap.dropdown');
-HTMLHelper::_('bootstrap.modal');
-HTMLHelper::_('bootstrap.offcanvas');
-HTMLHelper::_('bootstrap.popover');
-HTMLHelper::_('bootstrap.scrollspy');
-HTMLHelper::_('bootstrap.tab');
-HTMLHelper::_('bootstrap.tooltip');
-HTMLHelper::_('bootstrap.toast');
-
 // Detecting Active Variables
 $option    = $input->getCmd('option', '');
 $view      = $input->getCmd('view', '');
@@ -85,14 +70,6 @@ $templatePath = 'media/templates/site/mokocassiopeia';
 
 // Core template CSS
 $wa->useStyle('template.base');   // css/template.css
-$wa->useStyle('template.vendor.social-media-demo');   // css/user.css
-
-// Optional vendor CSS
-$wa->useStyle('vendor.bootstrap-toc');
-
-// Optional demo/showcase CSS (available for use, not loaded by default)
-// To use: Add 'template.global.social-media-demo' to your article/module
-// $wa->useStyle('template.global.social-media-demo');
 
 // Color theme (light + optional dark)
 $colorLightKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_LightColorName));
@@ -102,28 +79,29 @@ $darkKey   = 'template.dark.' . $colorDarkKey;
 try {
 	$wa->useStyle('template.light.colors_standard');
 } catch (\Throwable $e) {
-	$wa->registerAndUseStyle('template.light.colors_standard', $templatePath . '/css/global/light/colors_standard.css');
+	$wa->registerAndUseStyle('template.light.colors_standard', $templatePath . '/css/colors/light/colors_standard.css');
 }
 try {
 	$wa->useStyle('template.dark.colors_standard');
 } catch (\Throwable $e) {
-	$wa->registerAndUseStyle('template.dark.colors_standard', $templatePath . '/css/global/dark/colors_standard.css');
+	$wa->registerAndUseStyle('template.dark.colors_standard', $templatePath . '/css/colors/dark/colors_standard.css');
 }
 try {
 	$wa->useStyle($lightKey);
 } catch (\Throwable $e) {
-	$wa->registerAndUseStyle('template.light.dynamic', $templatePath . '/css/global/light/' . $colorLightKey . '.css');
+	$wa->registerAndUseStyle('template.light.dynamic', $templatePath . '/css/colors/light/' . $colorLightKey . '.css');
 }
 try {
 	$wa->useStyle($darkKey);
 } catch (\Throwable $e) {
-	$wa->registerAndUseStyle('template.dark.dynamic', $templatePath . '/css/global/dark/' . $colorDarkKey . '.css');
+	$wa->registerAndUseStyle('template.dark.dynamic', $templatePath . '/css/colors/dark/' . $colorDarkKey . '.css');
 }
 
 // Scripts
 $wa->useScript('template.js');
-$wa->useScript('theme-init.js');
-$wa->useScript('vendor.bootstrap-toc.js');
+
+// Load Osaka font for site title
+$wa->useStyle('template.font.osaka');
 
 /**
  * VirtueMart detection:

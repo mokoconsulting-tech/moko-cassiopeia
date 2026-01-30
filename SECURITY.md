@@ -123,6 +123,25 @@ Security posture is reinforced through operational controls:
 * Consistent path normalization and whitespace hygiene checks where required for release correctness.
 * Least privilege for GitHub Actions permissions.
 
+### Template Security Features
+
+**Custom Head Content Injection**
+
+The template provides Custom Head Code fields (`custom_head_start` and `custom_head_end`) that allow administrators to inject custom HTML, CSS, and JavaScript code. This is an intentional feature for:
+
+* Adding analytics scripts (Google Analytics, Google Tag Manager)
+* Custom meta tags
+* Third-party integrations
+* Custom styling
+
+**Security Considerations:**
+
+* These fields use `filter="raw"` to allow HTML/JS injection
+* **Access is restricted to Joomla administrators only** via template configuration
+* This is not an XSS vulnerability as it requires administrator privileges
+* Administrators should only add trusted code from verified sources
+* Regular security audits should review custom head content
+
 This policy does not guarantee that all vulnerabilities will be prevented. It defines how risk is managed when issues are discovered.
 
 ## Safe Harbor
@@ -162,4 +181,5 @@ If you want credit, include the name or handle to list in an advisory. If you pr
 
 | Date       | Change Summary                                                                                   | Author          |
 | ---------- | ------------------------------------------------------------------------------------------------ | --------------- |
+| 2026-01-30 | Added Template Security Features section documenting custom head content injection controls.    | Copilot Agent   |
 | 2025-12-18 | Initial publication of security policy, intake channels, triage targets, and disclosure process. | Moko Consulting |

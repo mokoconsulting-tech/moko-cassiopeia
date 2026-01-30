@@ -1,0 +1,13 @@
+/**
+ * @package     MokoCassiopeia
+ * @copyright   (C) 2026 Moko Consulting <hello@mokoconsulting.tech>
+ * @license     GNU General Public License version 3 or later
+ */
+
+@font-face {
+font-family: 'Osaka';
+src: url('../../fonts/osaka-re.ttf') format('truetype');
+font-weight: normal;
+font-style: normal;
+font-display: swap;
+}

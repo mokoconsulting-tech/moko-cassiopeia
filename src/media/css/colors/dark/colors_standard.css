@@ -10,7 +10,7 @@
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: MokoCassiopeia
- PATH: ./media/templates/site/moko-cassiopeia/css/global/dark/colors_standard.css
+ PATH: ./media/templates/site/mokocassiopeia/css/global/dark/colors_standard.css
  VERSION: 03.05.00
  BRIEF: Standard dark mode color definitions for MokoCassiopeia template
  */
@@ -35,7 +35,7 @@
 	--color-active: var(--mainmenu-nav-link-color);
 
 	/* Header background (kept same image; works over dark bg) */
-	--header-background-image: url('../../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');	--header-background-attachment: fixed;
+	--header-background-image: url('../../../../../../media/templates/site/mokocassiopeia/images/bg.svg');	--header-background-attachment: fixed;
 	--header-background-repeat: repeat;
 	--header-background-size: auto;
 
@@ -246,6 +246,16 @@
 	--focus-ring-opacity: .6;
 	--focus-ring-color: #5472ff66;
 
+	/* Forms and inputs - adapted for dark mode */
+	--input-color: #e6ebf1;
+	--input-bg: #1a2332;
+	--input-border-color: #3a4250;
+	--input-focus-border-color: #5472ff;
+	--input-focus-box-shadow: 0 0 0 0.25rem rgba(84, 114, 255, 0.25);
+	--input-placeholder-color: #8894aa;
+	--input-disabled-bg: #0f1318;
+	--input-disabled-border-color: #2b323b;
+	
 	--form-valid-color: #78d694;
 	--form-valid-border-color: #78d694;
 	--form-invalid-color: #ff8e86;
