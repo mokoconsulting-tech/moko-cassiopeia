@@ -221,7 +221,7 @@
 	--focus-ring-color: #01015640;
 	/* Forms and inputs */
 	--input-color: hsl(210, 11%, 15%);
-	--input-bg: #ffffff;
+	--input-bg: hsl(210, 20%, 98%);
 	--input-border-color: hsl(210, 14%, 83%);
 	--input-focus-border-color: #8894aa;
 	--input-focus-box-shadow: 0 0 0 0.25rem rgba(1, 1, 86, 0.25);

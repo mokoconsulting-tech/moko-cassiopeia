@@ -17,6 +17,17 @@
 
 /* Add your custom CSS here */
 
+/* Site title styling - match nav background color */
+.site-title {
+	color: var(--nav-bg-color);
+	font-weight: 600;
+	font-size: 1.5rem;
+}
+
+.container-header .navbar-brand .site-title {
+	color: var(--nav-bg-color);
+}
+
 /* Enhanced search button styling */
 .mod-finder__search.input-group button,
 .container-search button[type="submit"] {
@@ -38,6 +49,51 @@
 .container-search button[type="submit"]:focus {
 	outline: 0;
 	box-shadow: 0 0 0 0.25rem rgba(var(--btn-focus-shadow-rgb), .5);
+}
+
+/* Enhanced container-search styling */
+.container-header .container-search {
+	position: relative;
+}
+
+.container-search .mod-finder__search.input-group {
+	display: flex;
+	align-items: stretch;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	border-radius: 0.25rem;
+	overflow: hidden;
+	transition: box-shadow 0.2s ease-in-out;
+}
+
+.container-search .mod-finder__search.input-group:focus-within {
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.container-search .form-control,
+.container-search .awesomplete input {
+	border-right: none;
+	padding: 0.6rem 1rem;
+	font-size: 0.95rem;
+	border-radius: 0.25rem 0 0 0.25rem;
+}
+
+.container-search .form-control:focus,
+.container-search .awesomplete input:focus {
+	border-color: var(--input-focus-border-color);
+	box-shadow: none;
+}
+
+.container-search button[type="submit"],
+.container-search .input-group button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 3rem;
+	font-weight: 500;
+}
+
+.container-search .icon-search {
+	font-size: 1rem;
 }
 
 /* Responsive header menu and search layout improvements */
