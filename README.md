@@ -105,8 +105,8 @@ Moko-Cassiopeia supports custom color schemes for both light and dark modes:
 -   **Custom**: Create your own custom colors by adding `colors_custom.css` files
 
 To use custom colors:
-1. Create `src/media/css/colors/light/colors_custom.css` for light mode
-2. Create `src/media/css/colors/dark/colors_custom.css` for dark mode  
+1. Create `media/templates/site/moko-cassiopeia/css/colors/light/colors_custom.css` for light mode
+2. Create `media/templates/site/moko-cassiopeia/css/colors/dark/colors_custom.css` for dark mode
 3. Define your CSS variables in these files (see existing `colors_standard.css` for reference)
 4. Select "Custom" in template settings under **Variables & Palettes**
 
