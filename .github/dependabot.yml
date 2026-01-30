@@ -8,9 +8,6 @@
 # VERSION: 01.00.00
 # BRIEF: Dependabot configuration for automated dependency updates and security patches
 # NOTE: Monitors GitHub Actions for vulnerabilities and keeps ecosystem secure
-# NOTE: Reviewers and assignees are synced from MokoStandards. Repositories must have
-#       the "mokoconsulting-tech/maintainers" team configured. Individual assignees
-#       may be customized per repository if needed.
 
 version: 2
 updates:

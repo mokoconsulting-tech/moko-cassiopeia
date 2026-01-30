@@ -31,13 +31,14 @@ Exit codes:
 import argparse
 import hashlib
 import json
+import os
 import pickle
 import sys
 import xml.etree.ElementTree as ET
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 
 # Version
@@ -145,7 +146,6 @@ class DetectionCache:
             with open(cache_file, 'wb') as f:
                 pickle.dump(result, f)
         except (pickle.PickleError, OSError):
-            # Ignore cache write failures: cache is optional optimization
             pass
 
     def clear(self) -> None:
@@ -154,7 +154,6 @@ class DetectionCache:
             try:
                 cache_file.unlink()
             except OSError:
-                # Ignore failures to delete cache files: stale cache entries are non-critical
                 pass
 
 
@@ -229,6 +228,7 @@ class PlatformDetector:
         indicators: List[str] = []
         metadata: Dict[str, str] = {}
 
+        manifest_patterns = ["**/*.xml"]
         skip_dirs = {".git", "vendor", "node_modules", ".github"}
 
         for xml_file in self.repo_path.glob("**/*.xml"):

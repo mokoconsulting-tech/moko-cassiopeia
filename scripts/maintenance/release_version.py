@@ -27,12 +27,13 @@ NOTE: Updates CHANGELOG.md and optionally updates VERSION in files
 """
 
 import argparse
+import json
 import re
 import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 
 class VersionReleaser:
