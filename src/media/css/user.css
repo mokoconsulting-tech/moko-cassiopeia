@@ -16,3 +16,66 @@
  */
 
 /* Add your custom CSS here */
+
+/* Enhanced search button styling */
+.mod-finder__search.input-group button,
+.container-search button[type="submit"] {
+	background-color: var(--color-primary);
+	color: var(--mainmenu-nav-link-color);
+	border-color: var(--color-primary);
+	padding: 0.6rem 1rem;
+	border-radius: 0 0.25rem 0.25rem 0;
+	transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.mod-finder__search.input-group button:hover,
+.container-search button[type="submit"]:hover {
+	background-color: var(--color-hover);
+	border-color: var(--color-hover);
+}
+
+.mod-finder__search.input-group button:focus,
+.container-search button[type="submit"]:focus {
+	outline: 0;
+	box-shadow: 0 0 0 0.25rem rgba(var(--btn-focus-shadow-rgb), .5);
+}
+
+/* Responsive header menu and search layout improvements */
+@media (max-width: 991.98px) {
+	.container-header .container-nav {
+		flex-direction: column;
+	}
+	
+	.container-header .container-nav nav {
+		width: 100%;
+		margin-bottom: 1rem;
+	}
+	
+	.container-header .container-search {
+		width: 100%;
+		margin-top: 0.5rem;
+	}
+	
+	.mod-finder__search.input-group {
+		max-width: 100%;
+	}
+}
+
+@media (min-width: 992px) {
+	.container-header .container-nav {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		gap: 2rem;
+	}
+	
+	.container-header .container-nav nav {
+		flex: 1;
+	}
+	
+	.container-header .container-search {
+		flex: 0 0 auto;
+		min-width: 300px;
+		margin-top: 0;
+	}
+}
