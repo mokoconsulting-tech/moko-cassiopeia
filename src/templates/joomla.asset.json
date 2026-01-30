@@ -217,6 +217,19 @@
 			"type": "style",
 			"uri": "media/templates/site/mokocassiopeia/css/vendor/vm.css",
 			"attributes": {"media": "all"}
+		},
+		{
+			"name": "vendor.bootstrap-toc",
+			"type": "style",
+			"uri": "media/templates/site/mokocassiopeia/vendor/bootstrap-toc/bootstrap-toc.css",
+			"attributes": {"media": "all"}
+		},
+		{
+			"name": "vendor.bootstrap-toc.js",
+			"type": "script",
+			"uri": "media/templates/site/mokocassiopeia/vendor/bootstrap-toc/bootstrap-toc.js",
+			"dependencies": ["jquery"],
+			"attributes": {"defer": true}
 		}
 	]
 }

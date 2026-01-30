@@ -1,0 +1,46 @@
+/*!
+ * Bootstrap Table of Contents v1.0.1 (https://afeld.github.io/bootstrap-toc/)
+ * Copyright 2015 Aidan Feldman
+ * Licensed under MIT (https://github.com/afeld/bootstrap-toc/blob/gh-pages/LICENSE.md)
+ */
+
+/* All levels of nav */
+nav[data-toggle='toc'] .nav > li > a {
+  display: block;
+  padding: 4px 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--cassiopeia-color-link, #0d6efd);
+}
+nav[data-toggle='toc'] .nav > li > a:hover,
+nav[data-toggle='toc'] .nav > li > a:focus {
+  padding-left: 19px;
+  color: var(--cassiopeia-color-hover, #0a58ca);
+  text-decoration: none;
+  background-color: transparent;
+  border-left: 1px solid var(--cassiopeia-color-primary, #0d6efd);
+}
+nav[data-toggle='toc'] .nav > .active > a,
+nav[data-toggle='toc'] .nav > .active:hover > a,
+nav[data-toggle='toc'] .nav > .active:focus > a {
+  padding-left: 18px;
+  font-weight: bold;
+  color: var(--cassiopeia-color-primary, #0d6efd);
+  background-color: transparent;
+  border-left: 2px solid var(--cassiopeia-color-primary, #0d6efd);
+}
+
+/* Nav: second level (shown on .active) */
+nav[data-toggle='toc'] .nav .nav {
+  display: none; /* Hide by default, but at >768px, show it */
+  padding-bottom: 10px;
+}
+nav[data-toggle='toc'] .nav > .active > ul {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  nav[data-toggle='toc'] .nav .nav {
+    display: block;
+  }
+}

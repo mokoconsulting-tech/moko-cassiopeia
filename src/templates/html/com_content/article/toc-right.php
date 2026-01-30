@@ -11,7 +11,7 @@
  * INGROUP: MokoCassiopeia
  * PATH: ./templates/mokocassiopeia/html/com_content/article/toc-right.php
  * VERSION: 03.06.02
- * BRIEF: Article layout with table of contents on the right side
+ * BRIEF: Article layout with table of contents on the right side using Bootstrap TOC
  */
 
 defined('_JEXEC') or die;
@@ -20,7 +20,11 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Associations;
 use Joomla\CMS\Layout\LayoutHelper;
-use Joomla\Component\Content\Administrator\Extension\ContentComponent;
+
+// Load Bootstrap TOC assets
+$wa = Factory::getApplication()->getDocument()->getWebAssetManager();
+$wa->useStyle('vendor.bootstrap-toc');
+$wa->useScript('vendor.bootstrap-toc.js');
 
 // Get article params
 $params = $this->item->params;
@@ -29,14 +33,14 @@ $urls = json_decode($this->item->urls);
 $canEdit = $params->get('access-edit');
 $info = $params->get('info_block_position', 0);
 
-// Check if associations are implemented. If they are, define the parameter.
+// Check if associations are implemented
 $assocParam = (Associations::isEnabled() && $params->get('show_associations'));
 ?>
 
 <div class="com-content-article item-page<?php echo $this->pageclass_sfx; ?>">
     <div class="row">
         <!-- Article Content -->
-        <div class="col-lg-9 col-md-8 order-md-1">
+        <div class="col-lg-9 col-md-8 order-md-1" data-toc-scope>
             <meta itemprop="inLanguage" content="<?php echo ($this->item->language === '*') ? Factory::getApplication()->get('language') : $this->item->language; ?>" />
 
             <?php if ($this->params->get('show_page_heading')) : ?>
@@ -103,60 +107,13 @@ $assocParam = (Associations::isEnabled() && $params->get('show_associations'));
         <!-- Table of Contents - Right Side -->
         <div class="col-lg-3 col-md-4 order-md-2 mb-4">
             <div class="sticky-top toc-wrapper" style="top: 20px;">
-                <nav id="toc" class="toc-container">
+                <nav id="toc" data-toggle="toc" class="toc-container">
                     <h5 class="toc-title"><?php echo HTMLHelper::_('string.truncate', $this->item->title, 50); ?></h5>
-                    <nav id="toc-nav" class="nav flex-column"></nav>
                 </nav>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-(function() {
-    'use strict';
-    document.addEventListener('DOMContentLoaded', function() {
-        const content = document.querySelector('.article-content');
-        const tocNav = document.getElementById('toc-nav');
-        
-        if (!content || !tocNav) return;
-        
-        const headings = content.querySelectorAll('h2, h3, h4, h5, h6');
-        
-        if (headings.length === 0) {
-            document.getElementById('toc').style.display = 'none';
-            return;
-        }
-        
-        headings.forEach((heading, index) => {
-            if (!heading.id) {
-                heading.id = 'heading-' + index;
-            }
-            
-            const link = document.createElement('a');
-            link.className = 'nav-link';
-            link.href = '#' + heading.id;
-            link.textContent = heading.textContent;
-            
-            const level = parseInt(heading.tagName.substring(1));
-            link.style.paddingLeft = ((level - 2) * 15 + 10) + 'px';
-            
-            tocNav.appendChild(link);
-        });
-        
-        tocNav.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetId = this.getAttribute('href').substring(1);
-                const target = document.getElementById(targetId);
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
-    });
-})();
-</script>
 
 <style>
 .toc-container {
@@ -171,28 +128,8 @@ $assocParam = (Associations::isEnabled() && $params->get('show_associations'));
     font-size: 1rem;
     font-weight: 600;
     color: var(--cassiopeia-color-text, #212529);
-}
-
-#toc-nav .nav-link {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-    color: var(--cassiopeia-color-link, #0d6efd);
-    text-decoration: none;
-    display: block;
-    border-left: 2px solid transparent;
-    transition: all 0.2s ease;
-}
-
-#toc-nav .nav-link:hover {
-    color: var(--cassiopeia-color-hover, #0a58ca);
-    background-color: var(--cassiopeia-color-hover-bg, rgba(0, 0, 0, 0.05));
-    border-left-color: var(--cassiopeia-color-primary, #0d6efd);
-}
-
-#toc-nav .nav-link.active {
-    color: var(--cassiopeia-color-primary, #0d6efd);
-    border-left-color: var(--cassiopeia-color-primary, #0d6efd);
-    background-color: var(--cassiopeia-color-hover-bg, rgba(0, 0, 0, 0.05));
+    border-bottom: 1px solid var(--cassiopeia-color-border, #dee2e6);
+    padding-bottom: 0.5rem;
 }
 
 @media (max-width: 767.98px) {
