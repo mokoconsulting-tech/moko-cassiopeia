@@ -42,6 +42,8 @@ $params_custom_head_end    = $params->get('custom_head_end', '');
 $params_developmentmode = $params->get('developmentmode', false);
 
 // ------------------ Params ------------------
+$fluidContainer  = (bool)   $params->get('fluidContainer', 0);
+$wrapper         = $fluidContainer ? 'wrapper-fluid' : 'wrapper-static';
 $stickyHeader    = (bool)   $params->get('stickyHeader', 0);
 
 // Drawer icon params (escaped)
