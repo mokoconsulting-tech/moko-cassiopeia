@@ -25,8 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **README**: Updated title to "README - MokoCassiopeia (VERSION: 03.06.03)"
 - **README**: Fixed custom color variables instructions with correct file paths
 - **README**: Updated example CSS variables to use actual template variable names (e.g., `--color-link` instead of `--cassiopeia-color-link`)
+- **README**: Added note that custom color files are excluded from version control via `.gitignore`
 - **TOC CSS**: Updated bootstrap-toc.css to use template color variables for proper theme integration
 - **Version**: Updated version to 03.06.03 across all files
+
+### Documentation
+- Clarified that `colors_custom.css` files are gitignored to prevent fork-specific customizations from being committed
 
 ## [03.06.02] - 2026-01-30
 

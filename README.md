@@ -211,6 +211,8 @@ MokoCassiopeia supports custom color schemes:
 3. Define CSS variables (reference `colors_standard.css` for structure)
 4. Select "Custom" palette in template settings
 
+**Note:** Custom color files are excluded from version control (`.gitignore`) to prevent fork-specific customizations from being committed.
+
 **Example CSS Variables:**
 
 ```css
