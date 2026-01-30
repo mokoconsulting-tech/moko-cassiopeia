@@ -10,7 +10,7 @@
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: MokoCassiopeia
- PATH: ./media/templates/site/moko-cassiopeia/css/global/dark/colors_alternative.css
+ PATH: ./media/templates/site/mokocassiopeia/css/global/dark/colors_alternative.css
  VERSION: 03.05.00
  BRIEF: Alternative dark mode color definitions for MokoCassiopeia template
  */
@@ -34,7 +34,7 @@
 	--color-hover: #224FAA;
 
 	/* Header background (kept same image; works over dark bg) */
-	--header-background-image: url('../../../../../../media/templates/site/moko-cassiopeia/images/bg.svg');	--header-background-attachment: fixed;
+	--header-background-image: url('../../../../../../media/templates/site/mokocassiopeia/images/bg.svg');	--header-background-attachment: fixed;
 	--header-background-repeat: repeat;
 	--header-background-size: auto;
 
