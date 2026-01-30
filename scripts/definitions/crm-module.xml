@@ -7,7 +7,7 @@
     <description>Standard repository structure for MokoCRM (Dolibarr) modules</description>
     <repository-type>crm-module</repository-type>
     <platform>mokokrm</platform>
-    <last-updated>2026-01-07T00:00:00Z</last-updated>
+    <last-updated>2026-01-30T00:00:00Z</last-updated>
     <maintainer>Moko Consulting</maintainer>
   </metadata>
 
@@ -17,7 +17,7 @@
       <file extension="md">
         <name>README.md</name>
         <description>Developer-focused documentation for contributors and maintainers</description>
-        <required>true</required>
+        <requirement-status>required</requirement-status>
         <audience>developer</audience>
         <stub-content><![CDATA[# {MODULE_NAME}
 
@@ -61,21 +61,21 @@ See LICENSE file for details.
       <file extension="md">
         <name>CONTRIBUTING.md</name>
         <description>Contribution guidelines</description>
-        <required>true</required>
+        <requirement-status>required</requirement-status>
         <audience>contributor</audience>
       </file>
 
       <file extension="md">
         <name>ROADMAP.md</name>
         <description>Project roadmap with version goals and milestones</description>
-        <required>false</required>
+        <requirement-status>optional</requirement-status>
         <audience>general</audience>
       </file>
 
       <file extension="">
         <name>LICENSE</name>
         <description>License file (GPL-3.0-or-later) - Default for Dolibarr/CRM modules</description>
-        <required>true</required>
+        <requirement-status>required</requirement-status>
         <audience>general</audience>
         <template>templates/licenses/GPL-3.0</template>
         <license-type>GPL-3.0-or-later</license-type>
@@ -84,14 +84,14 @@ See LICENSE file for details.
       <file extension="md">
         <name>CHANGELOG.md</name>
         <description>Version history and changes</description>
-        <required>true</required>
+        <requirement-status>required</requirement-status>
         <audience>general</audience>
       </file>
 
       <file>
         <name>Makefile</name>
         <description>Build automation using MokoStandards templates</description>
-        <required>true</required>
+        <requirement-status>required</requirement-status>
         <always-overwrite>true</always-overwrite>
         <audience>developer</audience>
         <source>
@@ -110,14 +110,14 @@ See LICENSE file for details.
       <file extension="editorconfig">
         <name>.editorconfig</name>
         <description>Editor configuration for consistent coding style</description>
-        <required>true</required>
+        <requirement-status>required</requirement-status>
         <audience>developer</audience>
       </file>
 
       <file extension="gitignore">
         <name>.gitignore</name>
         <description>Git ignore patterns - preserved during sync operations</description>
-        <required>true</required>
+        <requirement-status>required</requirement-status>
         <always-overwrite>false</always-overwrite>
         <audience>developer</audience>
       </file>
@@ -125,7 +125,7 @@ See LICENSE file for details.
       <file extension="gitattributes">
         <name>.gitattributes</name>
         <description>Git attributes configuration</description>
-        <required>true</required>
+        <requirement-status>required</requirement-status>
         <audience>developer</audience>
       </file>
     </root-files>
@@ -136,14 +136,14 @@ See LICENSE file for details.
       <directory path="src">
         <name>src</name>
         <description>Module source code for deployment</description>
-        <required>true</required>
+        <requirement-status>required</requirement-status>
         <purpose>Contains the actual module code that gets deployed to Dolibarr</purpose>
 
         <files>
           <file extension="md">
             <name>README.md</name>
             <description>End-user documentation deployed with the module</description>
-            <required>true</required>
+            <requirement-status>required</requirement-status>
             <audience>end-user</audience>
             <stub-content><![CDATA[# {MODULE_NAME}
 
@@ -183,7 +183,7 @@ See CHANGELOG.md for version history.
           <file extension="php">
             <name>core/modules/mod{ModuleName}.class.php</name>
             <description>Main module descriptor file</description>
-            <required>true</required>
+            <requirement-status>required</requirement-status>
             <audience>developer</audience>
           </file>
         </files>
@@ -192,13 +192,13 @@ See CHANGELOG.md for version history.
           <directory path="src/core">
             <name>core</name>
             <description>Core module files</description>
-            <required>true</required>
+            <requirement-status>required</requirement-status>
           </directory>
 
           <directory path="src/langs">
             <name>langs</name>
             <description>Language translation files</description>
-            <required>true</required>
+            <requirement-status>required</requirement-status>
           </directory>
 
           <directory path="src/sql">
@@ -237,14 +237,14 @@ See CHANGELOG.md for version history.
       <directory path="docs">
         <name>docs</name>
         <description>Developer and technical documentation</description>
-        <required>true</required>
+        <requirement-status>required</requirement-status>
         <purpose>Contains technical documentation, API docs, architecture diagrams</purpose>
 
         <files>
           <file extension="md">
             <name>index.md</name>
             <description>Documentation index</description>
-            <required>true</required>
+            <requirement-status>required</requirement-status>
           </file>
         </files>
       </directory>
@@ -253,7 +253,7 @@ See CHANGELOG.md for version history.
       <directory path="scripts">
         <name>scripts</name>
         <description>Build and maintenance scripts</description>
-        <required>true</required>
+        <requirement-status>required</requirement-status>
         <purpose>Contains scripts for building, testing, and deploying</purpose>
 
         <files>
@@ -290,14 +290,14 @@ See CHANGELOG.md for version history.
       <directory path="tests">
         <name>tests</name>
         <description>Test files</description>
-        <required>true</required>
+        <requirement-status>required</requirement-status>
         <purpose>Contains unit tests, integration tests, and test fixtures</purpose>
 
         <subdirectories>
           <directory path="tests/unit">
             <name>unit</name>
             <description>Unit tests</description>
-            <required>true</required>
+            <requirement-status>required</requirement-status>
           </directory>
 
           <directory path="tests/integration">

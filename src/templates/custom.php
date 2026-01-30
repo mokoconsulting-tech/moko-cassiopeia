@@ -5,6 +5,8 @@
 
  SPDX-License-Identifier: GPL-3.0-or-later
 
+
+
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
  INGROUP: MokoCassiopeia

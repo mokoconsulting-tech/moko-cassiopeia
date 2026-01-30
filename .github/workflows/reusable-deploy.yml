@@ -76,7 +76,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -128,10 +128,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v4
         with:
           name: deployment-package-${{ needs.detect.outputs.project-type }}
           path: ./dist
@@ -139,6 +139,10 @@ jobs:
       - name: Setup SSH key
         if: inputs.deployment-method == 'ssh' || inputs.deployment-method == 'rsync'
         run: |
+          if [ -z "${{ secrets.DEPLOY_KEY }}" ]; then
+            echo "Error: DEPLOY_KEY secret is not set"
+            exit 1
+          fi
           mkdir -p ~/.ssh
           echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
@@ -243,6 +247,12 @@ jobs:
 
           echo "❌ Health check failed after ${TIMEOUT}s" >> $GITHUB_STEP_SUMMARY
           exit 1
+
+      - name: Cleanup SSH key
+        if: always() && (inputs.deployment-method == 'ssh' || inputs.deployment-method == 'rsync')
+        run: |
+          rm -f ~/.ssh/deploy_key
+          echo "SSH key cleaned up"
 
       - name: Update deployment status (success)
         if: success()

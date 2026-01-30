@@ -4,12 +4,14 @@
 
  SPDX-License-Identifier: GPL-3.0-or-later
 
+
+
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia
+ INGROUP: MokoCassiopeia
  PATH: ./media/templates/site/moko-cassiopeia/js/mod_menu/menu-metismenu-es5.js
  VERSION: 03.05.00
- BRIEF: ES5-compatible MetisMenu script for Joomla mod_menu in Moko-Cassiopeia
+ BRIEF: ES5-compatible MetisMenu script for Joomla mod_menu in MokoCassiopeia
  */
 
 (function () {
@@ -17,7 +19,7 @@
 
 	/**
 	 * @package     Joomla.Site
-	 * @subpackage  Templates.Moko-Cassiopeia
+	 * @subpackage  Templates.MokoCassiopeia
 	 * @copyright   (C) 2020 Open Source Matters, Inc. <https://www.joomla.org>
 	 * @license     GNU General Public License version 2 or later; see LICENSE.txt
 	 * @since       4.0.0

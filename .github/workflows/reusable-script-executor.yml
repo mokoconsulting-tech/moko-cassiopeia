@@ -65,11 +65,11 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Setup Python
         if: endsWith(inputs.script_path, '.py')
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ inputs.python_version }}
 
@@ -182,7 +182,7 @@ jobs:
 
       - name: Upload script output
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: script-output-${{ github.run_id }}
           path: |

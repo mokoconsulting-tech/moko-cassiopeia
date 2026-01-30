@@ -28,7 +28,6 @@ VERSION: 05.00.00
 BRIEF: Validate copyright headers and file information in repository files
 """
 
-import os
 import sys
 from pathlib import Path
 from typing import List, Tuple, Dict
