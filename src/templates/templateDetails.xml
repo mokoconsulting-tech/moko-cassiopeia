@@ -36,7 +36,6 @@
 		<filename>joomla.asset.json</filename>
 		<filename>offline.php</filename>
 		<filename>templateDetails.xml</filename>
-		<folder>html</folder>
 	</files>
 	<stylesheets>
 		<stylesheet>media/templates/site/mokocassiopeia/css/editor.css</stylesheet>

@@ -20,6 +20,10 @@
 - Updated version to 03.06.02
 - Updated all documentation to use MokoCassiopeia
 
+### Removed
+- Removed logo.svg and favicon.ico files
+- Removed all template overrides (html folder and contents)
+
 ## [03.06.00] 2026-01-28
 ### Changed
 - Updated version to 03.06.00 across all files
