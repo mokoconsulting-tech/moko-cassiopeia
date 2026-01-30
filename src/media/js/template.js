@@ -6,10 +6,10 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia
+ INGROUP: MokoCassiopeia
  PATH: ./media/templates/site/moko-cassiopeia/js/template.js
  VERSION: 03.06.01
- BRIEF: Consolidated JavaScript for Moko-Cassiopeia template including theme, TOC, and utilities
+ BRIEF: Consolidated JavaScript for MokoCassiopeia template including theme, TOC, and utilities
  */
 
 (function (win, doc) {
