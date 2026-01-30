@@ -39,6 +39,7 @@ MokoCassiopeia is a modern, lightweight enhancement layer built on top of Joomla
 - [Changelog](#-changelog)
 - [Support](#-support)
 - [Contributing](#-contributing)
+- [Included Libraries](#-included-libraries)
 - [License](#-license)
 
 ---
@@ -383,6 +384,59 @@ We welcome contributions! Please see [CONTRIBUTING.md](./CONTRIBUTING.md) for gu
 ### Development Workflow
 
 See [Workflow Guide](./docs/WORKFLOW_GUIDE.md) for detailed Git workflow.
+
+---
+
+## 📦 Included Libraries
+
+MokoCassiopeia includes the following third-party libraries to provide enhanced functionality:
+
+### Bootstrap TOC
+
+- **Version**: 1.0.1
+- **Author**: Aidan Feldman
+- **License**: MIT License
+- **Source**: [GitHub Repository](https://github.com/afeld/bootstrap-toc)
+- **Dist Files**: [Distribution Folder](https://github.com/afeld/bootstrap-toc/tree/gh-pages/dist)
+- **Purpose**: Automatically generates a table of contents from article headings with scrollspy support
+- **Location**: `src/media/vendor/bootstrap-toc/`
+- **Integration**: Registered in `joomla.asset.json` as `vendor.bootstrap-toc` (CSS) and `vendor.bootstrap-toc.js` (JavaScript)
+- **Usage**: Activated when using `toc-left` or `toc-right` article layouts
+- **Features**:
+  - Automatic TOC generation from H1-H6 headings
+  - Hierarchical nested navigation
+  - Active state highlighting with scrollspy
+  - Responsive design (collapses on mobile)
+  - Smooth scrolling to sections
+  - Automatic unique ID generation for headings
+
+### Font Awesome 7 Free
+
+- **Version**: 7.0 (Free)
+- **License**: Font Awesome Free License
+- **Source**: [Font Awesome](https://fontawesome.com)
+- **Purpose**: Provides 2,000+ vector icons for interface elements
+- **Location**: `src/media/vendor/fa7free/`
+- **Integration**: Fully integrated into Joomla's asset manager
+- **Styles Available**: Solid, Regular, Brands
+
+### Bootstrap 5
+
+- **Version**: 5.x (via Joomla)
+- **License**: MIT License
+- **Source**: [Bootstrap](https://getbootstrap.com)
+- **Purpose**: Provides responsive grid system and utility classes
+- **Integration**: Inherited from Joomla's Cassiopeia template, extended with additional helpers
+- **Components Used**: Grid, utilities, modal, dropdown, collapse, offcanvas, tooltip, popover, scrollspy
+
+### Integration Method
+
+All third-party libraries are:
+- ✅ Properly licensed and attributed
+- ✅ Registered in Joomla's Web Asset Manager (`joomla.asset.json`)
+- ✅ Loaded on-demand to optimize performance
+- ✅ Versioned and documented for maintenance
+- ✅ Compatible with Joomla 4.4.x and 5.x
 
 ---
 
