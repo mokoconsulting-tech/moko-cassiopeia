@@ -193,22 +193,19 @@
 
 	/**
 	 * Initialize offcanvas drawer buttons for left/right drawers.
+	 * Bootstrap handles drawers automatically via data-bs-toggle="offcanvas"
+	 * This function is kept for backwards compatibility but only runs if drawers exist.
 	 */
 	function initDrawers() {
-		var leftBtn = doc.querySelector(".drawer-toggle-left");
-		var rightBtn = doc.querySelector(".drawer-toggle-right");
-		if (leftBtn) {
-			leftBtn.addEventListener("click", function () {
-				var target = doc.querySelector(leftBtn.getAttribute("data-bs-target"));
-				if (target && typeof bootstrap !== 'undefined') new bootstrap.Offcanvas(target).show();
-			});
+		// Check if any drawer buttons exist before initializing
+		var hasDrawers = doc.querySelector(".drawer-toggle-left") || doc.querySelector(".drawer-toggle-right");
+		if (!hasDrawers) {
+			return; // No drawers, skip initialization
 		}
-		if (rightBtn) {
-			rightBtn.addEventListener("click", function () {
-				var target = doc.querySelector(rightBtn.getAttribute("data-bs-target"));
-				if (target && typeof bootstrap !== 'undefined') new bootstrap.Offcanvas(target).show();
-			});
-		}
+
+		// Bootstrap 5 handles offcanvas automatically via data-bs-toggle attribute
+		// No manual initialization needed if Bootstrap is loaded correctly
+		// The buttons already have data-bs-toggle="offcanvas" and data-bs-target="#drawer-*"
 	}
 
 	/**
