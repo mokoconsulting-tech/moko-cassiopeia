@@ -181,4 +181,5 @@ If you want credit, include the name or handle to list in an advisory. If you pr
 
 | Date       | Change Summary                                                                                   | Author          |
 | ---------- | ------------------------------------------------------------------------------------------------ | --------------- |
+| 2026-01-30 | Added Template Security Features section documenting custom head content injection controls.    | Copilot Agent   |
 | 2025-12-18 | Initial publication of security policy, intake channels, triage targets, and disclosure process. | Moko Consulting |

@@ -2672,6 +2672,7 @@ progress {
 
 .form-control:disabled {
 	background-color: var(--input-disabled-bg);
+	border-color: var(--input-disabled-border-color);
 	opacity: 1;
 }
 
