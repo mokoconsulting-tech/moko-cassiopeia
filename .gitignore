@@ -205,6 +205,13 @@ htdocs/tmp/
 htdocs/logs/
 
 # ============================================================
+# Template Customizations
+# ============================================================
+# Ignore custom color scheme files to prevent fork-specific customizations
+src/media/css/colors/light/colors_custom.css
+src/media/css/colors/dark/colors_custom.css
+
+# ============================================================
 # Joomla Core
 # ============================================================
 /.htaccess

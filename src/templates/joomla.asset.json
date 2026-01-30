@@ -142,30 +142,6 @@
 			"attributes": {"defer": true}
 		},
 		{
-			"name": "theme-init.js",
-			"type": "script",
-			"uri": "media/templates/site/moko-cassiopeia/js/theme-init.js",
-			"attributes": {"defer": true}
-		},
-		{
-			"name": "theme-init.min.js",
-			"type": "script",
-			"uri": "media/templates/site/moko-cassiopeia/js/theme-init.min.js",
-			"attributes": {"defer": true}
-		},
-		{
-			"name": "darkmode-toggle.js",
-			"type": "script",
-			"uri": "media/templates/site/moko-cassiopeia/js/darkmode-toggle.js",
-			"attributes": {"defer": true}
-		},
-		{
-			"name": "darkmode-toggle.min.js",
-			"type": "script",
-			"uri": "media/templates/site/moko-cassiopeia/js/darkmode-toggle.min.js",
-			"attributes": {"defer": true}
-		},
-		{
 			"name": "gtm.js",
 			"type": "script",
 			"uri": "media/templates/site/moko-cassiopeia/js/gtm.js",

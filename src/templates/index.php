@@ -42,6 +42,11 @@ $params_googleanalyticsid  = $this->params->get('googleanalyticsid', null);
 $params_custom_head_start  = $this->params->get('custom_head_start', null);
 $params_custom_head_end    = $this->params->get('custom_head_end', null);
 $params_developmentmode = $this->params->get('developmentmode', false);
+
+// Theme params
+$params_theme_enabled      = $this->params->get('theme_enabled', 1);
+$params_theme_fab_enabled  = $this->params->get('theme_fab_enabled', 1);
+$params_theme_fab_pos      = $this->params->get('theme_fab_pos', 'br');
 /*
 // Bootstrap behaviors (assets handled via WAM)
 HTMLHelper::_('bootstrap.framework');
@@ -116,6 +121,11 @@ try {
 
 // Scripts
 $wa->useScript('template.js');
+
+// Load GTM script if GTM is enabled
+if (!empty($params_googletagmanager) && !empty($params_googletagmanagerid)) {
+	$wa->useScript('gtm.js');
+}
 
 /**
  * VirtueMart detection:
@@ -204,8 +214,8 @@ $stickyHeader = $this->params->get('stickyHeader') ? 'position-sticky sticky-top
 // Meta
 $this->setMetaData('viewport', 'width=device-width, initial-scale=1');
 
-if ($this->params->get('faKitCode')) {
-	$faKit = "https://kit.fontawesome.com/" . $this->params->get('faKitCode') . ".js";
+if ($this->params->get('fA6KitCode')) {
+	$faKit = "https://kit.fontawesome.com/" . $this->params->get('fA6KitCode') . ".js";
 	HTMLHelper::_('script', $faKit, ['crossorigin' => 'anonymous']);
 } else {
 		try {
@@ -250,6 +260,7 @@ $wa->useStyle('template.user');   // css/user.css
 	<?php if (trim($params_custom_head_start)) : ?><?php echo $params_custom_head_start; ?><?php endif; ?>
 	<jdoc:include type="head" />
 
+	<?php if ($params_theme_enabled) : ?>
 	<script>
 	  // Early theme application to avoid FOUC
 	  (function () {
@@ -258,9 +269,11 @@ $wa->useStyle('template.user');   // css/user.css
 		  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 		  var theme = stored ? stored : (prefersDark ? 'dark' : 'light');
 		  document.documentElement.setAttribute('data-bs-theme', theme);
+		  document.documentElement.setAttribute('data-aria-theme', theme);
 		} catch (e) {}
 	  })();
 	</script>
+	<?php endif; ?>
 
 	<script>
 	  // Facebook in-app browser warning banner
@@ -289,7 +302,10 @@ $wa->useStyle('template.user');   // css/user.css
 
 	<?php if (trim($params_custom_head_end)) : ?><?php echo $params_custom_head_end; ?><?php endif; ?>
 </head>
-<body data-bs-spy="scroll" data-bs-target="#toc" class="site <?php
+<body data-bs-spy="scroll" data-bs-target="#toc" 
+	data-theme-fab-enabled="<?php echo $params_theme_fab_enabled ? '1' : '0'; ?>" 
+	data-theme-fab-pos="<?php echo htmlspecialchars($params_theme_fab_pos, ENT_QUOTES, 'UTF-8'); ?>"
+	class="site <?php
 	echo $option . ' ' . $wrapper
 	   . ' view-' . $view
 	   . ($layout ? ' layout-' . $layout : ' no-layout')
