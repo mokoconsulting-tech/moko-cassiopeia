@@ -85,7 +85,6 @@ $templatePath = 'media/templates/site/mokocassiopeia';
 
 // Core template CSS
 $wa->useStyle('template.base');   // css/template.css
-$wa->useStyle('template.vendor.social-media-demo');   // css/user.css
 
 // Optional vendor CSS
 $wa->useStyle('vendor.bootstrap-toc');
