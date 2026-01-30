@@ -661,16 +661,63 @@ The following versions represent our planned annual major releases, each buildin
 
 ### 🚧 In Development
 
-#### Soft Offline Mode (v2.1.5 - Mentioned)
-**Status**: Planned/In Development  
-**Description**: Keep selected categories accessible during maintenance mode
+#### Soft Offline Mode (v03.07.00 - Planned)
+**Status**: Planned for v03.07.00  
+**Priority**: High  
+**Description**: Keep selected categories accessible during site maintenance mode with persistent links to essential pages
+
 **Use Cases**:
 - Legal documents remain viewable during downtime
-- Policy pages accessible for compliance
-- Terms of service always available
-**Configuration**:
-- Admin-selectable categories
-- Per-category offline access control
+- Policy pages accessible for compliance requirements
+- Terms of service always available to users
+- Privacy policy accessible at all times
+- Essential public information during maintenance
+
+**Technical Specifications**:
+- **Configuration Method**: Template parameters in `templateDetails.xml`
+- **Category Access**: Category IDs stored as comma-separated values
+- **Persistent Links**: Direct article/menu item links always visible
+- **Access Control**: Check in `offline.php` template file
+- **Content Rendering**: Use Joomla's content component to fetch articles
+- **Security**: Maintain proper access levels and permissions
+
+**Implementation Plan**:
+1. Add category selection field to template parameters
+2. Add persistent link configuration (Terms of Service, Privacy Policy, etc.)
+3. Modify `offline.php` to check for allowed categories
+4. Add persistent link display in offline mode header/footer
+5. Implement category content fetching during offline mode
+6. Add styling for offline mode category display and persistent links
+7. Test with various category and link configurations
+8. Document admin configuration steps
+
+**Configuration Interface**:
+- **Category Field Type**: Category multiselect in template settings
+  - **Label**: "Categories Accessible During Offline Mode"
+  - **Default**: None (all content hidden by default)
+- **Persistent Links**: Text fields for essential always-available links
+  - **Terms of Service URL**: Direct link to TOS article/page
+  - **Privacy Policy URL**: Direct link to privacy policy
+  - **Contact URL**: Optional contact page link
+  - **Custom Link 1-3**: Additional persistent links if needed
+- **Admin Path**: System → Site Templates → MokoCassiopeia → Advanced → Offline Mode Settings
+
+**Persistent Links Feature**:
+- **Display Location**: Footer of offline page
+- **Styling**: Clearly visible, accessible links
+- **Format**: "Terms of Service | Privacy Policy | Contact"
+- **Behavior**: Links bypass offline mode restrictions
+- **Validation**: Check if URLs are valid Joomla routes
+
+**Benefits**:
+- ✅ Compliance: Keep legal pages accessible
+- ✅ Transparency: Users can access essential information
+- ✅ Flexibility: Admin control over which categories remain visible
+- ✅ Security: Respects Joomla access levels
+- ✅ Legal Protection: Terms of Service always accessible
+- ✅ User Trust: Privacy policy always available
+
+**Milestone**: Target release v03.07.00 (Q2 2026)
 
 #### TODO Tracking System
 **Status**: Mentioned in CHANGELOG (v03.05.00)  
@@ -715,11 +762,12 @@ The following versions represent our planned annual major releases, each buildin
 ## Development Priorities
 
 ### Immediate Focus (v03.x - 2026)
-1. **TODO Tracking System**: Implement separate file for issue tracking
-2. **Soft Offline Mode**: Complete category-based offline access
-3. **Security Updates**: Maintain Dependabot and CodeQL scans
-4. **Documentation**: Keep docs synchronized with features
-5. **Bug Fixes**: Address reported issues and edge cases
+1. **Bootstrap TOC Integration**: Complete and document v1.0.1 implementation ✅
+2. **Soft Offline Mode**: Implement category-based offline access (Target: v03.07.00)
+3. **TODO Tracking System**: Implement separate file for issue tracking
+4. **Security Updates**: Maintain Dependabot and CodeQL scans
+5. **Documentation**: Keep docs synchronized with features
+6. **Bug Fixes**: Address reported issues and edge cases
 
 ### v04.00.00 Priorities (2027) - Template Foundation
 1. **WCAG 2.1 AA Compliance**: Full template accessibility audit and implementation

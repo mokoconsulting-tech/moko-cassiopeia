@@ -397,7 +397,7 @@ MokoCassiopeia includes the following third-party libraries to provide enhanced 
 - **Author**: Aidan Feldman
 - **License**: MIT License
 - **Source**: [GitHub Repository](https://github.com/afeld/bootstrap-toc)
-- **Dist Files**: [Distribution Folder](https://github.com/afeld/bootstrap-toc/tree/gh-pages/dist)
+- **Release**: [v1.0.1 Release](https://github.com/afeld/bootstrap-toc/releases/tag/v1.0.1)
 - **Purpose**: Automatically generates a table of contents from article headings with scrollspy support
 - **Location**: `src/media/vendor/bootstrap-toc/`
 - **Integration**: Registered in `joomla.asset.json` as `vendor.bootstrap-toc` (CSS) and `vendor.bootstrap-toc.js` (JavaScript)
@@ -409,6 +409,7 @@ MokoCassiopeia includes the following third-party libraries to provide enhanced 
   - Responsive design (collapses on mobile)
   - Smooth scrolling to sections
   - Automatic unique ID generation for headings
+- **Customizations**: CSS adapted to use Cassiopeia CSS variables for theme compatibility
 
 ### Font Awesome 7 Free
 
