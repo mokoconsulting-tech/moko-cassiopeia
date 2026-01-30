@@ -1,6 +1,6 @@
-# Quick Start Guide - Moko Cassiopeia Development
+# Quick Start Guide - MokoCassiopeia Development
 
-Get up and running with Moko Cassiopeia development in minutes.
+Get up and running with MokoCassiopeia development in minutes.
 
 ## Prerequisites
 
@@ -17,8 +17,8 @@ Before you begin, ensure you have:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/mokoconsulting-tech/moko-cassiopeia.git
-cd moko-cassiopeia
+git clone https://github.com/mokoconsulting-tech/MokoCassiopeia.git
+cd MokoCassiopeia
 ```
 
 ### 2. Install Development Dependencies
@@ -107,7 +107,7 @@ make package
 
 # Check package contents
 ls -lh dist/
-unzip -l dist/moko-cassiopeia-*.zip
+unzip -l dist/mokocassiopeia-*.zip
 ```
 
 ## VS Code Integration

@@ -7,17 +7,17 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia.Documentation
- REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
+ INGROUP: MokoCassiopeia.Documentation
+ REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
  FILE: docs/README.md
- VERSION: 03.06.00
- BRIEF: Documentation index for Moko-Cassiopeia template
+ VERSION: 03.06.02
+ BRIEF: Documentation index for MokoCassiopeia template
  PATH: /docs/README.md
 -->
 
-# Moko-Cassiopeia Documentation
+# MokoCassiopeia Documentation
 
-This directory contains comprehensive documentation for the Moko-Cassiopeia Joomla template.
+This directory contains comprehensive documentation for the MokoCassiopeia Joomla template.
 
 ## Documentation Overview
 
@@ -87,8 +87,8 @@ This project adheres to [MokoStandards](https://github.com/mokoconsulting-tech/M
 
 ## Additional Resources
 
-* **Repository**: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
-* **Issue Tracker**: [GitHub Issues](https://github.com/mokoconsulting-tech/moko-cassiopeia/issues)
+* **Repository**: [https://github.com/mokoconsulting-tech/MokoCassiopeia](https://github.com/mokoconsulting-tech/MokoCassiopeia)
+* **Issue Tracker**: [GitHub Issues](https://github.com/mokoconsulting-tech/MokoCassiopeia/issues)
 * **Changelog**: [CHANGELOG.md](../CHANGELOG.md)
 * **License**: [GPL-3.0-or-later](../LICENSE)
 
@@ -102,10 +102,10 @@ This project adheres to [MokoStandards](https://github.com/mokoconsulting-tech/M
 ## Metadata
 
 * Document: docs/README.md
-* Repository: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
+* Repository: [https://github.com/mokoconsulting-tech/MokoCassiopeia](https://github.com/mokoconsulting-tech/MokoCassiopeia)
 * Path: /docs/README.md
 * Owner: Moko Consulting
-* Version: 03.06.00
+* Version: 03.06.02
 * Status: Active
 * Effective Date: 2026-01-09
 

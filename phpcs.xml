@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <ruleset name="Joomla Coding Standards">
-    <description>Joomla coding standards for Moko-Cassiopeia</description>
+    <description>Joomla coding standards for MokoCassiopeia</description>
 
     <!-- Show progress and sniff names -->
     <arg value="ps"/>

@@ -7,22 +7,22 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template
- INGROUP: Moko-Cassiopeia.Governance
- REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
+ INGROUP: MokoCassiopeia.Governance
+ REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
  FILE: GOVERNANCE.md
- VERSION: 03.06.00
- BRIEF: Project governance model, roles, and decision processes for Moko-Cassiopeia.
+ VERSION: 03.06.02
+ BRIEF: Project governance model, roles, and decision processes for MokoCassiopeia.
  PATH: /GOVERNANCE.md
  NOTE: This document defines authority, decision making, and escalation paths.
 -->
 
 ## Governance Overview
 
-This document defines the governance framework for the Moko-Cassiopeia project. The objective is to ensure clear ownership, predictable decision making, and accountable stewardship across development, releases, and community interaction.
+This document defines the governance framework for the MokoCassiopeia project. The objective is to ensure clear ownership, predictable decision making, and accountable stewardship across development, releases, and community interaction.
 
 ## Project Ownership
 
-Moko-Cassiopeia is owned and maintained by **Moko Consulting**. Final authority for project direction, releases, and policy enforcement resides with the project owner.
+MokoCassiopeia is owned and maintained by **Moko Consulting**. Final authority for project direction, releases, and policy enforcement resides with the project owner.
 
 ## Roles and Responsibilities
 
@@ -100,7 +100,7 @@ This project is managed from Tennessee, USA. This statement is informational and
 ## Metadata
 
 * **Document:** GOVERNANCE.md
-* **Repository:** [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
+* **Repository:** [https://github.com/mokoconsulting-tech/MokoCassiopeia](https://github.com/mokoconsulting-tech/MokoCassiopeia)
 * **Path:** /GOVERNANCE.md
 * **Owner:** Moko Consulting
 * **Version:** 03.06.00

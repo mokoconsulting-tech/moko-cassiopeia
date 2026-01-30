@@ -7,11 +7,11 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia
- REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
- PATH: ./templates/moko-cassiopeia/component.php
- VERSION: 03.06.00
- BRIEF: Main template index file for Moko-Cassiopeia rendering site layout
+ INGROUP: MokoCassiopeia
+ REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
+ PATH: ./templates/mokocassiopeia/component.php
+ VERSION: 03.06.02
+ BRIEF: Main template index file for MokoCassiopeia rendering site layout
  */
 
 
@@ -79,7 +79,7 @@ $final     = $pageTitle !== ''
 $this->setTitle($final);
 
 // Template/Media path
-$templatePath = 'media/templates/site/moko-cassiopeia';
+$templatePath = 'media/templates/site/mokocassiopeia';
 
 // Core template CSS
 $wa->useStyle('template.base');   // css/template.css

@@ -7,11 +7,11 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia
- REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
- PATH: ./templates/moko-cassiopeia/index.php
- VERSION: 03.06.00
- BRIEF: Main template index file for Moko-Cassiopeia rendering site layout
+ INGROUP: MokoCassiopeia
+ REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
+ PATH: ./templates/mokocassiopeia/index.php
+ VERSION: 03.06.02
+ BRIEF: Main template index file for MokoCassiopeia rendering site layout
  */
 
 
@@ -84,7 +84,7 @@ $final     = $pageTitle !== ''
 $this->setTitle($final);
 
 // Template/Media path
-$templatePath = 'media/templates/site/moko-cassiopeia';
+$templatePath = 'media/templates/site/mokocassiopeia';
 
 // Core template CSS
 $wa->useStyle('template.base');   // css/template.css
@@ -510,7 +510,7 @@ $wa->useStyle('template.user');   // css/user.css
 </footer>
 
 <?php if ($this->params->get('backTop') == 1) : ?>
-	<a href="#top" id="back-top" class="back-to-top-link" aria-label="<?php echo Text::_('TPL_MOKO-CASSIOPEIA_BACKTOTOP'); ?>">
+	<a href="#top" id="back-top" class="back-to-top-link" aria-label="<?php echo Text::_('TPL_MOKOCASSIOPEIA_BACKTOTOP'); ?>">
 		<span class="icon-arrow-up icon-fw" aria-hidden="true"></span>
 	</a>
 <?php endif; ?>

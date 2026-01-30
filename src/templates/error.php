@@ -7,11 +7,11 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia
- REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
- PATH: ./templates/moko-cassiopeia/error.php
- VERSION: 03.06.00
- BRIEF: Error page template file for Moko-Cassiopeia
+ INGROUP: MokoCassiopeia
+ REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
+ PATH: ./templates/mokocassiopeia/error.php
+ VERSION: 03.06.02
+ BRIEF: Error page template file for MokoCassiopeia
  */
 
 defined('_JEXEC') or die;
@@ -63,7 +63,7 @@ $params_leftIcon  = htmlspecialchars($params->get('drawerLeftIcon',  'fa-solid f
 $params_rightIcon = htmlspecialchars($params->get('drawerRightIcon', 'fa-solid fa-chevron-right'),  ENT_QUOTES, 'UTF-8');
 
 // Template/Media path
-$templatePath = 'media/templates/site/moko-cassiopeia';
+$templatePath = 'media/templates/site/mokocassiopeia';
 
 // ===========================
 // Web Asset Manager (WAM) — matches your joomla.asset.json
@@ -448,7 +448,7 @@ $debugOn   = defined('JDEBUG') && JDEBUG;
 </footer>
 
 <?php if ($this->params->get('backTop') == 1) : ?>
-	<a href="#top" id="back-top" class="back-to-top-link" aria-label="<?php echo Text::_('TPL_MOKO-CASSIOPEIA_BACKTOTOP'); ?>">
+	<a href="#top" id="back-top" class="back-to-top-link" aria-label="<?php echo Text::_('TPL_MOKOCASSIOPEIA_BACKTOTOP'); ?>">
 		<span class="icon-arrow-up icon-fw" aria-hidden="true"></span>
 	</a>
 <?php endif; ?>

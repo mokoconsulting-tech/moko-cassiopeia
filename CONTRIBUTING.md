@@ -7,18 +7,18 @@
 
  # FILE INFORMATION
  DEFGROUP: Joomla.Template
- INGROUP: Moko-Cassiopeia.Governance
- REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
+ INGROUP: MokoCassiopeia.Governance
+ REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
  FILE: CONTRIBUTING.md
- VERSION: 03.06.00
- BRIEF: Contribution guidelines for the Moko-Cassiopeia project.
+ VERSION: 03.06.02
+ BRIEF: Contribution guidelines for the MokoCassiopeia project.
  PATH: /CONTRIBUTING.md
  NOTE: This document defines contribution workflow, standards, and governance alignment.
 -->
 
 ## Contributing
 
-This document defines how to contribute to the Moko-Cassiopeia project. The goal is to ensure changes are reviewable, auditable, and aligned with project governance and release processes.
+This document defines how to contribute to the MokoCassiopeia project. The goal is to ensure changes are reviewable, auditable, and aligned with project governance and release processes.
 
 ## Scope
 
@@ -43,8 +43,8 @@ For first-time contributors:
 
 ```bash
 # Clone the repository
-git clone https://github.com/mokoconsulting-tech/moko-cassiopeia.git
-cd moko-cassiopeia
+git clone https://github.com/mokoconsulting-tech/MokoCassiopeia.git
+cd MokoCassiopeia
 ```
 
 See [docs/QUICK_START.md](./docs/QUICK_START.md) for detailed setup instructions.
@@ -130,7 +130,7 @@ Participation in this project is governed by the Code of Conduct. Unacceptable b
 ## Metadata
 
 * **Document:** CONTRIBUTING.md
-* **Repository:** [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
+* **Repository:** [https://github.com/mokoconsulting-tech/MokoCassiopeia](https://github.com/mokoconsulting-tech/MokoCassiopeia)
 * **Path:** /CONTRIBUTING.md
 * **Owner:** Moko Consulting
 * **Version:** 03.06.00

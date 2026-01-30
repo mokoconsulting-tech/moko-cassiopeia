@@ -1,222 +1,235 @@
 {
 	"$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
-	"name": "moko-cassiopeia",
-	"description": "Moko-Cassiopeia template assets",
+	"name": "mokocassiopeia",
+	"description": "MokoCassiopeia template assets",
 	"license": "GPL-3.0-or-later",
 	"x-header": {
 		"copyright_year": 2025,
 		"author": "Jonathan Miller",
 		"owner": "Moko Consulting",
 		"contact": "hello@mokoconsulting.tech",
-		"project": "Moko-Cassiopeia Template",
+		"project": "MokoCassiopeia Template",
 		"spdx_license": "GPL-3.0-or-later",
 		"notice": "This file is part of a Moko Consulting project.",
 		"disclaimer": "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License; either version 3 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program. If not, see https://www.gnu.org/licenses/.",
-		"repo": "https://github.com/mokoconsulting-tech/moko-cassiopeia",
+		"repo": "https://github.com/mokoconsulting-tech/MokoCassiopeia",
 		"file_information": {
 			"defgroup": "Joomla.Template.Site",
-			"ingroup": "Moko-Cassiopeia.Template.Assets",
-			"path": "./media/templates/site/moko-cassiopeia/joomla.asset.json",
-			"version": "03.06.00",
-			"brief": "Joomla asset registry for Moko-Cassiopeia"
+			"ingroup": "MokoCassiopeia.Template.Assets",
+			"path": "./media/templates/site/mokocassiopeia/joomla.asset.json",
+			"version": "03.06.02",
+			"brief": "Joomla asset registry for MokoCassiopeia"
 		}
 	},
 	"assets": [
 		{
 			"name": "template.base",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/template.css",
+			"uri": "media/templates/site/mokocassiopeia/css/template.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.base.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/template.min.css",
+			"uri": "media/templates/site/mokocassiopeia/css/template.min.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.user",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/user.css",
+			"uri": "media/templates/site/mokocassiopeia/css/user.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.user.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/user.min.css",
+			"uri": "media/templates/site/mokocassiopeia/css/user.min.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.editor",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/editor.css",
+			"uri": "media/templates/site/mokocassiopeia/css/editor.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.editor.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/editor.min.css",
+			"uri": "media/templates/site/mokocassiopeia/css/editor.min.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.light.colors_standard",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/colors/light/colors_standard.css",
+			"uri": "media/templates/site/mokocassiopeia/css/colors/light/colors_standard.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.light.colors_standard.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/colors/light/colors_standard.min.css",
+			"uri": "media/templates/site/mokocassiopeia/css/colors/light/colors_standard.min.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.light.colors_alternative",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/colors/light/colors_alternative.css",
+			"uri": "media/templates/site/mokocassiopeia/css/colors/light/colors_alternative.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.light.colors_alternative.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/colors/light/colors_alternative.min.css",
+			"uri": "media/templates/site/mokocassiopeia/css/colors/light/colors_alternative.min.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.light.colors_custom",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/colors/light/colors_custom.css",
+			"uri": "media/templates/site/mokocassiopeia/css/colors/light/colors_custom.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.light.colors_custom.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/colors/light/colors_custom.min.css",
+			"uri": "media/templates/site/mokocassiopeia/css/colors/light/colors_custom.min.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.dark.colors_standard",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/colors/dark/colors_standard.css",
+			"uri": "media/templates/site/mokocassiopeia/css/colors/dark/colors_standard.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.dark.colors_standard.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/colors/dark/colors_standard.min.css",
+			"uri": "media/templates/site/mokocassiopeia/css/colors/dark/colors_standard.min.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.dark.colors_alternative",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/colors/dark/colors_alternative.css",
+			"uri": "media/templates/site/mokocassiopeia/css/colors/dark/colors_alternative.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.dark.colors_alternative.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/colors/dark/colors_alternative.min.css"
+			"uri": "media/templates/site/mokocassiopeia/css/colors/dark/colors_alternative.min.css"
 		},
 		{
 			"name": "template.dark.colors_custom",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/colors/dark/colors_custom.css",
+			"uri": "media/templates/site/mokocassiopeia/css/colors/dark/colors_custom.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.dark.colors_custom.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/colors/dark/colors_custom.min.css",
+			"uri": "media/templates/site/mokocassiopeia/css/colors/dark/colors_custom.min.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "template.js",
 			"type": "script",
-			"uri": "media/templates/site/moko-cassiopeia/js/template.js",
+			"uri": "media/templates/site/mokocassiopeia/js/template.js",
 			"attributes": {"defer": true}
 		},
 		{
 			"name": "template.js.min",
 			"type": "script",
-			"uri": "media/templates/site/moko-cassiopeia/js/template.min.js",
+			"uri": "media/templates/site/mokocassiopeia/js/template.min.js",
 			"attributes": {"defer": true}
 		},
 		{
 			"name": "gtm.js",
 			"type": "script",
-			"uri": "media/templates/site/moko-cassiopeia/js/gtm.js",
+			"uri": "media/templates/site/mokocassiopeia/js/gtm.js",
 			"attributes": {"defer": true}
 		},
 		{
 			"name": "gtm.min.js",
 			"type": "script",
-			"uri": "media/templates/site/moko-cassiopeia/js/gtm.min.js",
+			"uri": "media/templates/site/mokocassiopeia/js/gtm.min.js",
 			"attributes": {"defer": true}
 		},
 		{
 			"name": "vendor.fa7free.all",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/all.css"
+			"uri": "media/templates/site/mokocassiopeia/vendor/fa7free/css/all.css"
 		},
 		{
 			"name": "vendor.fa7free.all.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/all.min.css",
+			"uri": "media/templates/site/mokocassiopeia/vendor/fa7free/css/all.min.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "vendor.fa7free.brands",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/brands.css",
+			"uri": "media/templates/site/mokocassiopeia/vendor/fa7free/css/brands.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "vendor.fa7free.brands.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/brands.min.css",
+			"uri": "media/templates/site/mokocassiopeia/vendor/fa7free/css/brands.min.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "vendor.fa7free.fontawesome",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/fontawesome.css",
+			"uri": "media/templates/site/mokocassiopeia/vendor/fa7free/css/fontawesome.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "vendor.fa7free.fontawesome.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/fontawesome.min.css",
+			"uri": "media/templates/site/mokocassiopeia/vendor/fa7free/css/fontawesome.min.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "vendor.fa7free.regular",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/regular.css",
+			"uri": "media/templates/site/mokocassiopeia/vendor/fa7free/css/regular.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "vendor.fa7free.regular.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/regular.min.css",
+			"uri": "media/templates/site/mokocassiopeia/vendor/fa7free/css/regular.min.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "vendor.fa7free.solid",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/solid.css",
+			"uri": "media/templates/site/mokocassiopeia/vendor/fa7free/css/solid.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "vendor.fa7free.solid.min",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/vendor/fa7free/css/solid.min.css",
+			"uri": "media/templates/site/mokocassiopeia/vendor/fa7free/css/solid.min.css",
 			"attributes": {"media": "all"}
 		},
 		{
 			"name": "vendor.vm",
 			"type": "style",
-			"uri": "media/templates/site/moko-cassiopeia/css/vendor/vm.css",
+			"uri": "media/templates/site/mokocassiopeia/css/vendor/vm.css",
 			"attributes": {"media": "all"}
+		},
+		{
+			"name": "vendor.bootstrap-toc",
+			"type": "style",
+			"uri": "media/templates/site/mokocassiopeia/vendor/bootstrap-toc/bootstrap-toc.css",
+			"attributes": {"media": "all"}
+		},
+		{
+			"name": "vendor.bootstrap-toc.js",
+			"type": "script",
+			"uri": "media/templates/site/mokocassiopeia/vendor/bootstrap-toc/bootstrap-toc.js",
+			"dependencies": ["jquery"],
+			"attributes": {"defer": true}
 		}
 	]
 }
