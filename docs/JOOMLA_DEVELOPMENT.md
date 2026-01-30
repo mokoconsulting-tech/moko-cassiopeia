@@ -354,3 +354,23 @@ For issues or questions:
 ## License
 
 All scripts and workflows are licensed under GPL-3.0-or-later, same as the main project.
+
+---
+
+## Metadata
+
+* Document: docs/JOOMLA_DEVELOPMENT.md
+* Repository: [https://github.com/mokoconsulting-tech/MokoCassiopeia](https://github.com/mokoconsulting-tech/MokoCassiopeia)
+* Path: /docs/JOOMLA_DEVELOPMENT.md
+* Owner: Moko Consulting
+* Version: 03.06.03
+* Status: Active
+* Effective Date: 2026-01-30
+* Classification: Public Open Source Documentation
+
+## Revision History
+
+| Date       | Change Summary                                        | Author          |
+| ---------- | ----------------------------------------------------- | --------------- |
+| 2026-01-30 | Updated metadata to MokoStandards format             | GitHub Copilot  |
+| 2025-01-04 | Initial Joomla development guide created             | GitHub Copilot  |

@@ -476,6 +476,19 @@ Dark mode ranges are inverted for better contrast on dark backgrounds.
 
 ---
 
-**Version**: 03.06.03  
-**Last Updated**: 2026-01-30  
-**Maintainer**: Moko Consulting
+## Metadata
+
+* Document: docs/CSS_VARIABLES.md
+* Repository: [https://github.com/mokoconsulting-tech/MokoCassiopeia](https://github.com/mokoconsulting-tech/MokoCassiopeia)
+* Path: /docs/CSS_VARIABLES.md
+* Owner: Moko Consulting
+* Version: 03.06.03
+* Status: Active
+* Effective Date: 2026-01-30
+* Classification: Public Open Source Documentation
+
+## Revision History
+
+| Date       | Change Summary                                        | Author          |
+| ---------- | ----------------------------------------------------- | --------------- |
+| 2026-01-30 | Initial CSS variables reference documentation created | GitHub Copilot |

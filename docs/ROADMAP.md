@@ -886,12 +886,12 @@ Have ideas for future features? We welcome community input!
 ## Metadata
 
 * Document: docs/ROADMAP.md
-* Repository: [https://github.com/mokoconsulting-tech/moko-cassiopeia](https://github.com/mokoconsulting-tech/moko-cassiopeia)
+* Repository: [https://github.com/mokoconsulting-tech/MokoCassiopeia](https://github.com/mokoconsulting-tech/MokoCassiopeia)
 * Path: /docs/ROADMAP.md
 * Owner: Moko Consulting
 * Version: 03.06.03
 * Status: Active
-* Last Updated: 2026-01-30
+* Effective Date: 2026-01-30
 * Classification: Public Open Source Documentation
 
 ## Revision History

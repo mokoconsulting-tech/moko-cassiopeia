@@ -118,6 +118,7 @@ This project adheres to [MokoStandards](https://github.com/mokoconsulting-tech/M
 * Version: 03.06.03
 * Status: Active
 * Effective Date: 2026-01-30
+* Classification: Public Open Source Documentation
 
 ## Revision History
 
