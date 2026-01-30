@@ -91,8 +91,8 @@ $wa->useStyle('template.vendor.social-media-demo');   // css/user.css
 $wa->useStyle('vendor.bootstrap-toc');
 
 // Optional demo/showcase CSS (available for use, not loaded by default)
-// To use: Add 'template.global.social-media-demo' to your article/module
-// $wa->useStyle('template.global.social-media-demo');
+// To use: Create the CSS file and register it in joomla.asset.json, then add to your article/module
+// Example: $wa->useStyle('template.social-media-demo');
 
 // Color theme (light + optional dark)
 $colorLightKey  = strtolower(preg_replace('/[^a-z0-9_.-]/i', '', $params_LightColorName));
