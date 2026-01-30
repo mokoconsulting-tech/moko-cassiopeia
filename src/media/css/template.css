@@ -2601,10 +2601,10 @@ progress {
 	font-size: 1rem;
 	font-weight: 400;
 	line-height: 1;
-	color: hsl(210, 11%, 15%);
-	background-color: var(--body-color);
+	color: var(--input-color);
+	background-color: var(--input-bg);
 	background-clip: padding-box;
-	border: 1px solid hsl(210, 14%, 83%);
+	border: 1px solid var(--input-border-color);
 	-webkit-appearance: none;
 	-moz-appearance: none;
 	appearance: none;
@@ -2633,12 +2633,12 @@ progress {
 }
 
 .form-control:focus {
-	color: hsl(210, 11%, 15%);
-	background-color: var(--body-color);
-	border-color: #8894aa;
+	color: var(--input-color);
+	background-color: var(--input-bg);
+	border-color: var(--input-focus-border-color);
 	outline: 0;
-	-webkit-box-shadow: 0 0 0 0.25rem rgba(1, 1, 86, 0.25);
-	box-shadow: 0 0 0 0.25rem rgba(1, 1, 86, 0.25);
+	-webkit-box-shadow: var(--input-focus-box-shadow);
+	box-shadow: var(--input-focus-box-shadow);
 }
 
 .form-control::-webkit-date-and-time-value {
@@ -2646,32 +2646,32 @@ progress {
 }
 
 .form-control::-webkit-input-placeholder {
-	color: hsl(210, 7%, 46%);
+	color: var(--input-placeholder-color);
 	opacity: 1;
 }
 
 .form-control::-moz-placeholder {
-	color: hsl(210, 7%, 46%);
+	color: var(--input-placeholder-color);
 	opacity: 1;
 }
 
 .form-control:-ms-input-placeholder {
-	color: hsl(210, 7%, 46%);
+	color: var(--input-placeholder-color);
 	opacity: 1;
 }
 
 .form-control::-ms-input-placeholder {
-	color: hsl(210, 7%, 46%);
+	color: var(--input-placeholder-color);
 	opacity: 1;
 }
 
 .form-control::placeholder {
-	color: hsl(210, 7%, 46%);
+	color: var(--input-placeholder-color);
 	opacity: 1;
 }
 
 .form-control:disabled {
-	background-color: hsl(210, 16%, 93%);
+	background-color: var(--input-disabled-bg);
 	opacity: 1;
 }
 

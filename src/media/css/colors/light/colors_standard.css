@@ -219,6 +219,16 @@
 	--focus-ring-width: .25rem;
 	--focus-ring-opacity: .25;
 	--focus-ring-color: #01015640;
+	/* Forms and inputs */
+	--input-color: hsl(210, 11%, 15%);
+	--input-bg: #ffffff;
+	--input-border-color: hsl(210, 14%, 83%);
+	--input-focus-border-color: #8894aa;
+	--input-focus-box-shadow: 0 0 0 0.25rem rgba(1, 1, 86, 0.25);
+	--input-placeholder-color: hsl(210, 7%, 46%);
+	--input-disabled-bg: hsl(210, 16%, 93%);
+	--input-disabled-border-color: hsl(210, 14%, 83%);
+	
 	--form-valid-color: #448344;
 	--form-valid-border-color: #448344;
 	--form-invalid-color: #a51f18;
