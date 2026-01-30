@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- =========================================================================
-	Copyright (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+	Copyright (C) 2026 Moko Consulting <hello@mokoconsulting.tech>
 
 	This file is part of a Moko Consulting project.
 
@@ -37,10 +37,10 @@
 	</updateservers>
 	<name>mokocassiopeia</name>
 	<version>03.06.03</version>
-	<creationDate>2025-12-23</creationDate>
+	<creationDate>2026-01-30</creationDate>
 	<author>Jonathan Miller || Moko Consulting</author>
 	<authorEmail>hello@mokoconsulting.tech</authorEmail>
-	<copyright>(C)GNU General Public License Version 3 - 2025 Moko Consulting</copyright>
+	<copyright>(C)GNU General Public License Version 3 - 2026 Moko Consulting</copyright>
 	<description>TPL_MOKOCASSIOPEIA_XML_DESCRIPTION</description>
 	<inheritable>1</inheritable>
 	<files>
@@ -114,7 +114,7 @@
 			</fieldset>
 
 			<!-- Google tab -->
-			<fieldset name="google">
+			<fieldset name="google" label="TPL_MOKOCASSIOPEIA_GOOGLE_FIELDSET_LABEL">
 				<field name="googletagmanager" type="radio" label="TPL_MOKOCASSIOPEIA_GOOGLETAGMANAGER_LABEL" description="TPL_MOKOCASSIOPEIA_GOOGLETAGMANAGER_DESC" layout="joomla.form.field.radio.switcher" filter="boolean">
 					<option value="0">JNO</option>
 					<option value="1">JYES</option>
@@ -134,7 +134,7 @@
 			</fieldset>
 
 			<!-- Drawers tab -->
-			<fieldset name="drawers">
+			<fieldset name="drawers" label="TPL_MOKOCASSIOPEIA_DRAWERS_FIELDSET_LABEL">
 				<field name="drawerLeftIcon" type="text" default="fa-solid fa-chevron-right" label="TPL_MOKOCASSIOPEIA_DRAWER_LEFT_ICON_LABEL" description="TPL_MOKOCASSIOPEIA_DRAWER_LEFT_ICON_DESC" filter="string" />
 				<field name="drawerRightIcon" type="text" default="fa-solid fa-chevron-left" label="TPL_MOKOCASSIOPEIA_DRAWER_RIGHT_ICON_LABEL" description="TPL_MOKOCASSIOPEIA_DRAWER_RIGHT_ICON_DESC" filter="string" />
 			</fieldset>

@@ -3,7 +3,7 @@
  * @package     Joomla.Site
  * @subpackage  Templates.MokoCassiopeia
  *
- * @copyright   (C) 2025 Moko Consulting <hello@mokoconsulting.tech>
+ * @copyright   (C) 2026 Moko Consulting <hello@mokoconsulting.tech>
  * @license     GNU General Public License version 3 or later; see LICENSE.txt
  * 
  * FILE INFORMATION
