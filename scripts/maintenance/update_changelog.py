@@ -27,10 +27,8 @@ NOTE: Follows Keep a Changelog format, supports Added/Changed/Deprecated/Removed
 """
 
 import argparse
-import os
 import re
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 
