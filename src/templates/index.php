@@ -214,8 +214,8 @@ $stickyHeader = $this->params->get('stickyHeader') ? 'position-sticky sticky-top
 // Meta
 $this->setMetaData('viewport', 'width=device-width, initial-scale=1');
 
-if ($this->params->get('faKitCode')) {
-	$faKit = "https://kit.fontawesome.com/" . $this->params->get('faKitCode') . ".js";
+if ($this->params->get('fA6KitCode')) {
+	$faKit = "https://kit.fontawesome.com/" . $this->params->get('fA6KitCode') . ".js";
 	HTMLHelper::_('script', $faKit, ['crossorigin' => 'anonymous']);
 } else {
 		try {
@@ -260,6 +260,7 @@ $wa->useStyle('template.user');   // css/user.css
 	<?php if (trim($params_custom_head_start)) : ?><?php echo $params_custom_head_start; ?><?php endif; ?>
 	<jdoc:include type="head" />
 
+	<?php if ($params_theme_enabled) : ?>
 	<script>
 	  // Early theme application to avoid FOUC
 	  (function () {
@@ -268,9 +269,11 @@ $wa->useStyle('template.user');   // css/user.css
 		  var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
 		  var theme = stored ? stored : (prefersDark ? 'dark' : 'light');
 		  document.documentElement.setAttribute('data-bs-theme', theme);
+		  document.documentElement.setAttribute('data-aria-theme', theme);
 		} catch (e) {}
 	  })();
 	</script>
+	<?php endif; ?>
 
 	<script>
 	  // Facebook in-app browser warning banner
