@@ -2,6 +2,8 @@
  * Bootstrap Table of Contents v1.0.1 (https://afeld.github.io/bootstrap-toc/)
  * Copyright 2015 Aidan Feldman
  * Licensed under MIT (https://github.com/afeld/bootstrap-toc/blob/gh-pages/LICENSE.md)
+ * 
+ * Modified for MokoCassiopeia to use template color variables for theme integration
  */
 
 /* All levels of nav */
@@ -10,24 +12,24 @@ nav[data-toggle='toc'] .nav > li > a {
   padding: 4px 20px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--cassiopeia-color-link, #0d6efd);
+  color: var(--link-color, var(--color-link, #0d6efd));
 }
 nav[data-toggle='toc'] .nav > li > a:hover,
 nav[data-toggle='toc'] .nav > li > a:focus {
   padding-left: 19px;
-  color: var(--cassiopeia-color-hover, #0a58ca);
+  color: var(--link-hover-color, var(--color-hover, #0a58ca));
   text-decoration: none;
   background-color: transparent;
-  border-left: 1px solid var(--cassiopeia-color-primary, #0d6efd);
+  border-left: 1px solid var(--link-color, var(--color-link, #0d6efd));
 }
 nav[data-toggle='toc'] .nav > .active > a,
 nav[data-toggle='toc'] .nav > .active:hover > a,
 nav[data-toggle='toc'] .nav > .active:focus > a {
   padding-left: 18px;
   font-weight: bold;
-  color: var(--cassiopeia-color-primary, #0d6efd);
+  color: var(--link-color, var(--color-link, #0d6efd));
   background-color: transparent;
-  border-left: 2px solid var(--cassiopeia-color-primary, #0d6efd);
+  border-left: 2px solid var(--link-color, var(--color-link, #0d6efd));
 }
 
 /* Nav: second level (shown on .active) */

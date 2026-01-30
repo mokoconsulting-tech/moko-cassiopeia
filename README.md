@@ -15,7 +15,7 @@
 
 # MokoCassiopeia
 
-**Version:** 03.06.02  
+**Version:** 03.06.03  
 **A Modern, Lightweight Joomla Template Based on Cassiopeia**
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -206,20 +206,20 @@ Access template configuration via **System → Site Templates → MokoCassiopeia
 
 MokoCassiopeia supports custom color schemes:
 
-1. Create `src/media/css/colors/light/colors_custom.css` for light mode
-2. Create `src/media/css/colors/dark/colors_custom.css` for dark mode
+1. Create `media/templates/site/mokocassiopeia/css/colors/light/colors_custom.css` for light mode
+2. Create `media/templates/site/mokocassiopeia/css/colors/dark/colors_custom.css` for dark mode
 3. Define CSS variables (reference `colors_standard.css` for structure)
 4. Select "Custom" palette in template settings
 
 **Example CSS Variables:**
 
 ```css
-:root {
-  --cassiopeia-color-primary: #1e40af;
-  --cassiopeia-color-link: #2563eb;
-  --cassiopeia-color-hover: #1d4ed8;
-  --cassiopeia-color-text: #1f2937;
-  --cassiopeia-color-bg: #ffffff;
+:root[data-bs-theme="light"] {
+  --color-primary: #1e40af;
+  --color-link: #2563eb;
+  --color-hover: #1d4ed8;
+  --body-color: #1f2937;
+  --body-bg: #ffffff;
 }
 ```
 
@@ -335,6 +335,7 @@ See the [CHANGELOG.md](./CHANGELOG.md) for detailed version history.
 
 ### Recent Releases
 
+- **[03.06.03]** (2026-01-30) - README updates and TOC color variable improvements
 - **[03.06.02]** (2026-01-30) - Complete rebrand to MokoCassiopeia, removed all overrides
 - **[03.06.00]** (2026-01-28) - Version standardization
 - **[03.05.01]** (2026-01-09) - Security and compliance improvements
@@ -479,6 +480,7 @@ All third-party libraries and assets remain the property of their respective aut
 
 | Date       | Version  | Change Summary                                                            | Author                          |
 | ---------- | -------- | ------------------------------------------------------------------------- | ------------------------------- |
+| 2026-01-30 | 03.06.03 | Updated README title, fixed custom color variables instructions, improved TOC color scheme integration | Copilot Agent                   |
 | 2026-01-30 | 03.06.02 | Regenerated README with comprehensive documentation and updated structure | Copilot Agent                   |
 | 2026-01-30 | 03.06.02 | Complete rebrand to MokoCassiopeia, removed overrides                     | Copilot Agent                   |
 | 2026-01-05 | 03.00.00 | Initial publication of template documentation and feature overview        | Moko Consulting                 |

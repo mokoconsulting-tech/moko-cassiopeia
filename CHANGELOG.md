@@ -8,16 +8,25 @@
  DEFGROUP: Joomla.Template.Site
  INGROUP: MokoCassiopeia.Documentation
  PATH: ./CHANGELOG.md
- VERSION: 03.06.02
+ VERSION: 03.06.03
  BRIEF: Changelog file documenting version history of MokoCassiopeia
  -->
 
-# Changelog — MokoCassiopeia (VERSION: 03.06.02)
+# Changelog — MokoCassiopeia (VERSION: 03.06.03)
 
 All notable changes to the MokoCassiopeia Joomla template are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [03.06.03] - 2026-01-30
+
+### Changed
+- **README**: Updated title to "README - MokoCassiopeia (VERSION: 03.06.03)"
+- **README**: Fixed custom color variables instructions with correct file paths
+- **README**: Updated example CSS variables to use actual template variable names (e.g., `--color-link` instead of `--cassiopeia-color-link`)
+- **TOC CSS**: Updated bootstrap-toc.css to use template color variables for proper theme integration
+- **Version**: Updated version to 03.06.03 across all files
 
 ## [03.06.02] - 2026-01-30
 

@@ -10,7 +10,7 @@
  INGROUP: MokoCassiopeia.Governance
  REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
  FILE: GOVERNANCE.md
- VERSION: 03.06.02
+ VERSION: 03.06.03
  BRIEF: Project governance model, roles, and decision processes for MokoCassiopeia.
  PATH: /GOVERNANCE.md
  NOTE: This document defines authority, decision making, and escalation paths.

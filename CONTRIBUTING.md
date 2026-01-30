@@ -10,7 +10,7 @@
  INGROUP: MokoCassiopeia.Governance
  REPO: https://github.com/mokoconsulting-tech/MokoCassiopeia
  FILE: CONTRIBUTING.md
- VERSION: 03.06.02
+ VERSION: 03.06.03
  BRIEF: Contribution guidelines for the MokoCassiopeia project.
  PATH: /CONTRIBUTING.md
  NOTE: This document defines contribution workflow, standards, and governance alignment.
