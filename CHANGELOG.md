@@ -14,21 +14,55 @@
 
 # Changelog — MokoCassiopeia (VERSION: 03.06.02)
 
-## [03.06.02] 2026-01-30
+All notable changes to the MokoCassiopeia Joomla template are documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [03.06.02] - 2026-01-30
+
+### Major Rebrand
+This release includes a complete rebrand from "Moko-Cassiopeia" (hyphenated) to "MokoCassiopeia" (camelCase).
+
 ### Changed
-- Changed name from Moko-Cassiopeia to MokoCassiopeia across all files and folders
-- Updated version to 03.06.02
-- Updated all documentation to use MokoCassiopeia
+- **Naming Convention**: Changed template identifier from `moko-cassiopeia` to `mokocassiopeia` across all files
+- **Display Name**: Updated from "Moko-Cassiopeia" to "MokoCassiopeia" in all documentation and language files
+- **Language Constants**: Renamed all language keys from `TPL_MOKO-CASSIOPEIA_*` to `TPL_MOKOCASSIOPEIA_*`
+- **Language Files**: Renamed from `tpl_moko-cassiopeia.*` to `tpl_mokocassiopeia.*` (4 files)
+- **Media Paths**: Updated from `media/templates/site/moko-cassiopeia/` to `media/templates/site/mokocassiopeia/`
+- **Repository URLs**: Updated all references to use `MokoCassiopeia` casing
+- **Template Element**: Changed Joomla extension element name from `moko-cassiopeia` to `mokocassiopeia`
+- **Documentation**: Updated all markdown files, XML manifests, and code comments
 
 ### Removed
-- Removed logo.svg and favicon.ico files
-- Removed all template overrides (html folder and contents)
+- **Default Assets**: Removed `logo.svg` and `favicon.ico` to allow clean installations
+- **Template Overrides**: Removed all template override files (48 files, ~4,500 lines)
+  - Removed `src/templates/html/` folder entirely
+  - Removed overrides for: com_content, com_contact, com_engage, mod_menu, mod_custom, mod_gabble, layouts/chromes
+  - Template now inherits all rendering from Joomla Cassiopeia defaults
+  - Updated `templateDetails.xml` to remove html folder reference
 
-## [03.06.00] 2026-01-28
+### Breaking Changes
+⚠️ **Important**: This release contains breaking changes:
+- Existing installations will see template name change in Joomla admin
+- Custom code referencing old language constants (`TPL_MOKO-CASSIOPEIA_*`) will need updates
+- Custom code referencing old media paths will need updates
+- Sites relying on custom template overrides will revert to Cassiopeia defaults
+- Extension element name changed (may require reinstallation in some cases)
+
+### Migration Notes
+- Backup your site before upgrading
+- Review any custom code for references to old naming convention
+- Test thoroughly after upgrade, especially if using custom overrides
+
+## [03.06.00] - 2026-01-28
+
 ### Changed
 - Updated version to 03.06.00 across all files
+- Standardized version numbering format
 
-## [03.05.01] 2026-01-09
+## [03.05.01] - 2026-01-09
+
 ### Added
 - Added `dependency-review.yml` workflow for dependency vulnerability scanning
 - Added `standards-compliance.yml` workflow for MokoStandards validation
@@ -37,71 +71,91 @@
 
 ### Changed
 - Removed custom `codeql-analysis.yml` workflow (repository uses GitHub's default CodeQL setup)
-
-### Changed
 - Enforced repository compliance with MokoStandards requirements
 - Improved security posture with automated scanning and dependency management
 
-## [03.05.00] 2026-01-04
-- Created `.github/workflows`
+## [03.05.00] - 2026-01-04
+
+### Added
+- Created `.github/workflows` directory structure
+
+### Changed
 - Replaced `./CODE_OF_CONDUCT.md` from `MokoStandards`
 - Replaced `./CONTRIBUTING.md` from `MokoStandards`
 - TODO split to own file
 
-## [03.01.00] 2025-12-16
-- Created `.github/workflows/`
+## [03.01.00] - 2025-12-16
 
-## [03.00] 2025-12-09
-### Removed
- - `./CODE_OF_CONDUCT.md`
- - `./CONTRIBUTING.md`
- 
-### Updated
- - Copyright Headers to MokoCodingDefaults standards
- - Fixed `./templates/mokocassiopeia/index.php` color style injection
- - Upgraded `FontAwesome 6` to `FontAwesome 7 Free`
- - Added `Font Awesome 7 Free` style fallback
-
-## [02.01.05] 2025-09-04
-- Removed vmbasic.css
-- Repaired temaplte.css and colors_standard.css
-
-## [2.00.00] 2025-08-30
 ### Added
-* **Dark Mode Toggle**
-	* Frontend toggle switch included in template.
-	* JavaScript handles switching between light/dark modes.
-	* Dark mode CSS rules applied across template styles.
-	* Automatic persistence of user choice (via localStorage).
+- Created `.github/workflows/` directory for GitHub Actions
 
-* **Header Parameters Update**
+## [03.00.00] - 2025-12-09
 
-	* Added **logo parameter support** in template settings.
-	* Updated metadata & copyright header.
+### Changed
+- Copyright Headers updated to MokoCodingDefaults standards
+- Fixed `./templates/mokocassiopeia/index.php` color style injection
+- Upgraded Font Awesome 6 to Font Awesome 7 Free
+- Added Font Awesome 7 Free style fallback
 
-* **Expanded TOC (Table of Contents)**
+### Removed
+- Removed `./CODE_OF_CONDUCT.md` (replaced with MokoStandards version)
+- Removed `./CONTRIBUTING.md` (replaced with MokoStandards version)
 
-	* Automatic TOC injection when enabled.
-	* User selects placement via article > options > layout (`toc-left` or `toc-right`).
+## [02.01.05] - 2025-09-04
 
-### Updated
+### Changed
+- Repaired template.css and colors_standard.css
 
-* Cleaned up `index.php` by removing **skip-to-content** duplicate calls.
-* Consolidated JavaScript asset loading (ensuring dark-mode script is loaded correctly from external JS file).
-* Streamlined CSS for **toggle switch**, ensuring it inherits Bootstrap/Cassiopeia defaults.
-* General accessibility refinements in typography and color contrast.
-* Fixed missing **logo param** in header output.
-* Corrected stylesheet inconsistencies between Bootstrap 5 helpers and template overrides.
-* Patched redundant calls in script includes.
+### Removed
+- Removed vmbasic.css
 
-## 01.00.00
+## [02.00.00] - 2025-08-30
 
-* **Initial Public Release** with:
+### Added - Dark Mode Toggle
+- Frontend toggle switch included in template
+- JavaScript handles switching between light/dark modes
+- Dark mode CSS rules applied across template styles
+- Automatic persistence of user choice (via localStorage)
+- Admins can override default mode in template settings
 
-	* Font Awesome 6
-	* Bootstrap 5 helpers
-	* Automatic Table of Contents (TOC) utility
-	* Moko Expansions: Google Tag Manager / GA4 hooks
+### Added - Header Parameters Update
+- Added logo parameter support in template settings
+- Updated metadata & copyright header
 
-For the full development roadmap, visit:
-[Moko-Cassiopeia Roadmap](https://mokoconsulting.tech/support/joomla-cms/mokocassiopeia-roadmap)
+### Added - Expanded TOC (Table of Contents)
+- Automatic TOC injection when enabled
+- User selects placement via article > options > layout (`toc-left` or `toc-right`)
+
+### Changed
+- Cleaned up `index.php` by removing skip-to-content duplicate calls
+- Consolidated JavaScript asset loading (ensuring dark-mode script is loaded correctly from external JS file)
+- Streamlined CSS for toggle switch, ensuring it inherits Bootstrap/Cassiopeia defaults
+- General accessibility refinements in typography and color contrast
+- Fixed missing logo param in header output
+- Corrected stylesheet inconsistencies between Bootstrap 5 helpers and template overrides
+- Patched redundant calls in script includes
+
+## [01.00.00] - 2025-01-01
+
+### Added - Initial Public Release
+- Font Awesome 6 integration (later upgraded to FA7)
+- Bootstrap 5 helpers (grid, utility classes)
+- Automatic Table of Contents (TOC) utility
+- Moko Expansions: Google Tag Manager / GA4 hooks
+- Built on top of Joomla's default Cassiopeia template
+- Minimal core template overrides for maximum upgrade compatibility
+
+---
+
+## Links
+
+- **Full Roadmap**: [MokoCassiopeia Roadmap](https://mokoconsulting.tech/support/joomla-cms/mokocassiopeia-roadmap)
+- **Repository**: [GitHub](https://github.com/mokoconsulting-tech/MokoCassiopeia)
+- **Issue Tracker**: [GitHub Issues](https://github.com/mokoconsulting-tech/MokoCassiopeia/issues)
+
+## Version Format
+
+This project uses semantic versioning: `MAJOR.MINOR.PATCH`
+- **MAJOR**: Incompatible API changes or major overhauls
+- **MINOR**: New features, backwards-compatible
+- **PATCH**: Bug fixes, backwards-compatible
