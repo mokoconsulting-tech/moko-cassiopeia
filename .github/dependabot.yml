@@ -1,30 +1,16 @@
 # Copyright (C) 2026 Moko Consulting <hello@mokoconsulting.tech>
-#
-# This file is part of a Moko Consulting project.
-#
 # SPDX-License-Identifier: GPL-3.0-or-later
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program. If not, see <https://www.gnu.org/licenses/>.
-#
 # FILE INFORMATION
 # DEFGROUP: GitHub.Dependabot
-# INGROUP: Moko-Cassiopeia.Security
-# REPO: https://github.com/mokoconsulting-tech/moko-cassiopeia
+# INGROUP: MokoStandards.Security
+# REPO: https://github.com/mokoconsulting-tech/MokoStandards
 # PATH: /.github/dependabot.yml
 # VERSION: 01.00.00
 # BRIEF: Dependabot configuration for automated dependency updates and security patches
-# NOTE: Monitors GitHub Actions and Composer for vulnerabilities
+# NOTE: Monitors GitHub Actions for vulnerabilities and keeps ecosystem secure
+# NOTE: Reviewers and assignees are synced from MokoStandards. Repositories must have
+#       the "mokoconsulting-tech/maintainers" team configured. Individual assignees
+#       may be customized per repository if needed.
 
 version: 2
 updates:
@@ -33,7 +19,7 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 1
     labels:
       - "dependencies"
       - "security"
@@ -41,13 +27,70 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
-    
+    reviewers:
+      - "mokoconsulting-tech/maintainers"
+    assignees:
+      - "jmiller-moko"
+    # Group all updates together
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # Monitor Python dependencies for security updates
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 1
+    labels:
+      - "dependencies"
+      - "security"
+      - "automated"
+      - "python"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    reviewers:
+      - "mokoconsulting-tech/maintainers"
+    assignees:
+      - "jmiller-moko"
+    # Group all updates together
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+
+  # Monitor npm dependencies for security updates
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 1
+    labels:
+      - "dependencies"
+      - "security"
+      - "automated"
+      - "javascript"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    reviewers:
+      - "mokoconsulting-tech/maintainers"
+    assignees:
+      - "jmiller-moko"
+    # Group all updates together
+    groups:
+      npm-dependencies:
+        patterns:
+          - "*"
+
   # Monitor Composer dependencies for security updates
   - package-ecosystem: "composer"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "monthly"
+    open-pull-requests-limit: 1
     labels:
       - "dependencies"
       - "security"
@@ -56,10 +99,12 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
-    # Group all patch updates together
+    reviewers:
+      - "mokoconsulting-tech/maintainers"
+    assignees:
+      - "jmiller-moko"
+    # Group all updates together
     groups:
-      php-patches:
+      composer-dependencies:
         patterns:
           - "*"
-        update-types:
-          - "patch"

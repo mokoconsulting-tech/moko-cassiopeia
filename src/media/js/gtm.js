@@ -4,12 +4,14 @@
 
  SPDX-License-Identifier: GPL-3.0-or-later
 
+
+
  # FILE INFORMATION
  DEFGROUP: Joomla Template
  FILE: media/templates/site/moko-cassiopeia/js/gtm.js
  HEADER VERSION: 1.0
  VERSION: 2.0
- BRIEF: Safe, configurable Google Tag Manager loader for Moko-Cassiopeia.
+ BRIEF: Safe, configurable Google Tag Manager loader for MokoCassiopeia.
  PATH: ./media/templates/site/moko-cassiopeia/js/gtm.js
  NOTE: Place the <noscript> fallback iframe in your HTML template (index.php). A JS file
 			 cannot provide a true no-JS fallback by definition.

@@ -4,12 +4,14 @@
 
  SPDX-License-Identifier: GPL-3.0-or-later
 
+
+
  # FILE INFORMATION
  DEFGROUP: Joomla.Template.Site
- INGROUP: Moko-Cassiopeia
+ INGROUP: MokoCassiopeia
  PATH: ./media/templates/site/moko-cassiopeia/js/mod_menu/menu-metismenu.js
  VERSION: 03.05.00
- BRIEF: Modern MetisMenu script for Joomla mod_menu in Moko-Cassiopeia
+ BRIEF: Modern MetisMenu script for Joomla mod_menu in MokoCassiopeia
  */
 
 document.addEventListener('DOMContentLoaded', () => {
