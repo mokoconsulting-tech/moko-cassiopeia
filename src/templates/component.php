@@ -99,7 +99,6 @@ try {
 
 // Scripts
 $wa->useScript('template.js');
-$wa->useScript('theme-init.js');
 
 /**
  * VirtueMart detection:

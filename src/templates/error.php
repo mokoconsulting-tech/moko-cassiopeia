@@ -86,8 +86,6 @@ try {
 
 // Scripts
 $wa->useScript('template.js');
-$wa->useScript('theme-init.js');
-$wa->useScript('darkmode-toggle.js');
 
 // Meta
 $this->setMetaData('viewport', 'width=device-width, initial-scale=1');
