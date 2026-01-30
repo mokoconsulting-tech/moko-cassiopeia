@@ -22,10 +22,20 @@
 	color: var(--nav-bg-color);
 	font-weight: 600;
 	font-size: 1.5rem;
+	text-decoration: none;
 }
 
 .container-header .navbar-brand .site-title {
 	color: var(--nav-bg-color);
+	text-decoration: none;
+}
+
+.container-header .navbar-brand a {
+	text-decoration: none;
+}
+
+.brand-logo {
+	text-decoration: none;
 }
 
 /* Enhanced search button styling */
