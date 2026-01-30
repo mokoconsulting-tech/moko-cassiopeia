@@ -27,11 +27,12 @@ Exit codes:
 """
 
 import sys
+import os
 import argparse
 import xml.etree.ElementTree as ET
 import json
 from pathlib import Path
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Tuple, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
 
@@ -112,8 +113,6 @@ class RepositoryStructureValidator:
                     elif content.startswith('<?xml') or content.startswith('<'):
                         return "xml"
             except Exception:
-                # Intentionally ignore read/parse errors; fall through to the generic
-                # "Unable to detect schema format" ValueError raised below.
                 pass
 
             # Unable to detect format
