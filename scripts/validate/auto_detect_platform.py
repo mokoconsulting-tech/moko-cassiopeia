@@ -32,7 +32,6 @@ import argparse
 import hashlib
 import json
 import os
-import pickle
 import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, asdict
@@ -82,6 +81,23 @@ class DetectionResult:
             "metadata": self.metadata
         }
 
+    @classmethod
+    def from_dict(cls, data: Dict[str, any]) -> 'DetectionResult':
+        """Reconstruct DetectionResult from dictionary (deserialized JSON).
+
+        Args:
+            data: Dictionary with detection result data.
+
+        Returns:
+            DetectionResult instance.
+        """
+        return cls(
+            platform_type=PlatformType(data["platform_type"]),
+            confidence=data["confidence"],
+            indicators=data["indicators"],
+            metadata=data["metadata"]
+        )
+
 
 class DetectionCache:
     """Simple file-based cache for platform detection results.
@@ -122,15 +138,16 @@ class DetectionCache:
         Returns:
             Cached DetectionResult if available, None otherwise.
         """
-        cache_file = self.cache_dir / f"{self._get_cache_key(repo_path)}.pkl"
+        cache_file = self.cache_dir / f"{self._get_cache_key(repo_path)}.json"
 
         if not cache_file.exists():
             return None
 
         try:
-            with open(cache_file, 'rb') as f:
-                return pickle.load(f)
-        except (pickle.PickleError, OSError, EOFError):
+            with open(cache_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return DetectionResult.from_dict(data)
+        except (json.JSONDecodeError, KeyError, ValueError, OSError):
             return None
 
     def set(self, repo_path: Path, result: DetectionResult) -> None:
@@ -140,21 +157,25 @@ class DetectionCache:
             repo_path: Path to repository.
             result: Detection result to cache.
         """
-        cache_file = self.cache_dir / f"{self._get_cache_key(repo_path)}.pkl"
+        cache_file = self.cache_dir / f"{self._get_cache_key(repo_path)}.json"
 
         try:
-            with open(cache_file, 'wb') as f:
-                pickle.dump(result, f)
-        except (pickle.PickleError, OSError):
-            pass
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(result.to_dict(), f, indent=2)
+        except (OSError, TypeError) as e:
+            # Cache write failure is not critical, log and continue
+            import sys
+            print(f"Warning: Failed to write cache file: {e}", file=sys.stderr)
 
     def clear(self) -> None:
         """Clear all cached detection results."""
         for cache_file in self.cache_dir.glob("*.pkl"):
             try:
                 cache_file.unlink()
-            except OSError:
-                pass
+            except OSError as e:
+                # Log error but continue clearing other files
+                import sys
+                print(f"Warning: Failed to delete cache file {cache_file}: {e}", file=sys.stderr)
 
 
 class PlatformDetector:
@@ -228,7 +249,6 @@ class PlatformDetector:
         indicators: List[str] = []
         metadata: Dict[str, str] = {}
 
-        manifest_patterns = ["**/*.xml"]
         skip_dirs = {".git", "vendor", "node_modules", ".github"}
 
         for xml_file in self.repo_path.glob("**/*.xml"):
